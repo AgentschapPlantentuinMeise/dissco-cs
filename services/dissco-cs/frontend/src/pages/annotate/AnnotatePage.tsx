@@ -1,0 +1,396 @@
+﻿import React, { useEffect, useRef, useState } from 'react';
+import { useMutation, useQuery, queryCache } from 'react-query';
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate } from 'react-router-dom';
+import { madocClient } from '../../api/madoc-client';
+import { getSiteSlug } from '../../api/slug';
+import { useProject } from '../../hooks/use-project';
+import { useRouteContext } from '../../hooks/use-route-context';
+import { useDisscoCSNavigation } from '../../hooks/use-dissco-cs-navigation';
+import { disscoCSConfig } from '../../dissco-cs-config';
+import { CsPage } from '../../components/CsPage';
+import { LocaleString } from '../../components/LocaleString';
+import { AnnotateLayout } from './AnnotateLayout';
+import { OpenSeadragonViewer } from './viewer/OpenSeadragonViewer';
+import { CaptureModelForm } from './form/CaptureModelForm';
+import { createEmptyDocument, setFieldValue, setFieldSelector, collectSelectorStates, pathsEqual, DocumentPath } from './form/document';
+import { AnnotationDocument } from '../../capture-model/types/document';
+import { CaptureModel, StructureNode } from '../../capture-model/types/capture-model';
+import { BoxSelectorState } from '../../capture-model/types/selector-types';
+
+function getImageServiceId(canvas: any): string | undefined {
+  const annotation = canvas?.items?.[0]?.items?.[0];
+  const body = Array.isArray(annotation?.body) ? annotation.body[0] : annotation?.body;
+  const service = Array.isArray(body?.service) ? body.service[0] : body?.service;
+  return service?.id || service?.['@id'];
+}
+
+export function AnnotatePage() {
+  const { t } = useTranslation('dissco-cs');
+  const { projectId, manifestId } = useRouteContext();
+  const { data: project } = useProject();
+  const { requestNextUrl, isLoadingNext } = useDisscoCSNavigation();
+  const navigate = useNavigate();
+  const slug = getSiteSlug();
+
+  // Tasks are handed out randomly, not in a fixed sequence, so "previous" can only mean "the
+  // manifest I was on before" — tracked here as a simple visited stack, not derived from any list.
+  const [visited, setVisited] = useState<number[]>([]);
+
+  const [navBottom, setNavBottom] = useState(70);
+  useEffect(() => {
+    const navbar = document.querySelector('.cs-navbar') as HTMLElement | null;
+    if (navbar) setNavBottom(navbar.getBoundingClientRect().bottom);
+  }, []);
+
+  const { data: structure, isError: structureError, error: structureErrorObj } = useQuery(
+    ['manifest-structure', manifestId],
+    () => madocClient.getManifestStructure(manifestId!),
+    { enabled: !!manifestId, retry: false }
+  );
+  const canvases = structure?.items ?? [];
+  const [canvasIndex, setCanvasIndex] = useState(0);
+
+  const { data: canvasData } = useQuery(
+    ['canvas', canvases[canvasIndex]?.id],
+    () => madocClient.getSiteCanvas(canvases[canvasIndex].id),
+    { enabled: !!canvases[canvasIndex] }
+  );
+
+  const { data: prepared, isError: preparedError, error: preparedErrorObj } = useQuery(
+    ['prepare-claim', project?.id, manifestId],
+    () => madocClient.prepareClaim(project!.id, { manifestId }),
+    { enabled: !!project?.id && !!manifestId, retry: false }
+  );
+
+  const { data: model, isError: modelError, error: modelErrorObj } = useQuery<CaptureModel>(
+    ['capture-model', prepared?.model?.id],
+    () => madocClient.getCaptureModel(prepared!.model!.id),
+    { enabled: !!prepared?.model, retry: false }
+  );
+
+  const [annotationDocument, setAnnotationDocument] = useState<AnnotationDocument | null>(null);
+  const [activeStructure, setActiveStructure] = useState<(StructureNode & { type: 'model' }) | null>(null);
+  // One id per editing session, reused across every edit AND every save of this document — the
+  // server only merges a field's new value into the canonical document when that field carries
+  // `revision === revision.id` of the submitted revision (extract-valid-revision-changes.ts), so
+  // edits must be tagged with the SAME id that's later submitted as `revision.id`. A fresh id per
+  // save (e.g. crypto.randomUUID() at save time) would never match what was tagged on the fields.
+  const revisionIdRef = useRef<string>(crypto.randomUUID());
+  // Path of the field currently being drawn on the image, if any — coordinates are only valid for
+  // the canvas shown when drawing started, so switching canvas mid-draw cancels it (effect below).
+  const [drawingPath, setDrawingPath] = useState<DocumentPath | null>(null);
+
+  useEffect(() => {
+    setDrawingPath(null);
+  }, [canvasIndex]);
+
+  const handleRequestDraw = (path: DocumentPath) => setDrawingPath(path);
+  const handleCancelDraw = () => setDrawingPath(null);
+  const handleSelectorDrawn = (state: BoxSelectorState) => {
+    if (!drawingPath) return;
+    setAnnotationDocument(doc => (doc ? setFieldSelector(doc, drawingPath, state, revisionIdRef.current) : doc));
+    setDrawingPath(null);
+  };
+  const handleClearSelector = (path: DocumentPath) => {
+    setAnnotationDocument(doc => (doc ? setFieldSelector(doc, path, null, revisionIdRef.current) : doc));
+  };
+  // Regions already saved on other fields, shown as overlays — excludes the field currently being
+  // (re)drawn so its stale box doesn't sit underneath the live drag overlay.
+  const savedSelectors = annotationDocument
+    ? collectSelectorStates(annotationDocument).filter(entry => !pathsEqual(entry.path, drawingPath))
+    : [];
+
+  useEffect(() => {
+    if (model) console.log('[CS] full capture model', model);
+  }, [model]);
+
+  useEffect(() => {
+    if (annotationDocument) console.log('[CS] current document state', annotationDocument);
+  }, [annotationDocument]);
+
+  useEffect(() => {
+    if (model) {
+      revisionIdRef.current = crypto.randomUUID();
+      setAnnotationDocument(createEmptyDocument(model));
+    }
+  }, [model]);
+
+  const hasSaved = useRef(false);
+  const claimIdRef = useRef<string | undefined>(undefined);
+  // Holds the in-flight claim request itself, not just its resolved id — needed because a user
+  // can leave faster than the claim POST round-trips. Without awaiting this, releaseClaim would
+  // see claimIdRef.current still undefined, skip the abandon entirely, and the claim that finishes
+  // arriving moments later (after this component already unmounted) would never get released.
+  const claimPromiseRef = useRef<Promise<{ claim: any } | undefined> | null>(null);
+
+  // Resolves the claim's task id, waiting on the in-flight claim request if it hasn't landed yet
+  // (a user can act faster than the claim POST round-trips) — shared by releaseClaim and save.
+  const getClaimId = async (): Promise<string | undefined> => {
+    if (claimIdRef.current) return claimIdRef.current;
+    if (!claimPromiseRef.current) return undefined;
+    try {
+      const result = await claimPromiseRef.current;
+      return result?.claim?.id;
+    } catch {
+      return undefined; // Claim never succeeded.
+    }
+  };
+
+  // Fire-and-forget release, used by the effect cleanup below (unmount / browser back-button —
+  // cases we can't intercept). Also exposed as an awaitable so in-app navigation links can finish
+  // the release BEFORE the next page mounts and fetches, instead of racing it (see handleLeave).
+  const releaseClaim = async () => {
+    if (hasSaved.current) return;
+
+    const claimId = await getClaimId();
+    if (!claimId) return;
+
+    console.log('[CS] releasing claim', { manifestId, claimId });
+    try {
+      const result = await madocClient.updateTask(claimId, { status: -1, status_text: 'abandoned' });
+      console.log('[CS] abandon result', result);
+      // ProjectDetail.tsx's manifest list is cached under ['collection', collectionId] — invalidate by
+      // prefix so the "Choose where to start" grid re-fetches and shows the manifest as available again.
+      queryCache.invalidateQueries('collection');
+    } catch (err) {
+      console.error('[CS] abandon failed', err);
+    }
+  };
+
+  // One combined effect, keyed by manifestId + prepared: claims on entry, releases on exit. Using a
+  // single effect matters because React Router does NOT remount when only manifestId changes.
+  // We depend on `prepared` so we can read the existing claim status before deciding what to do:
+  // - status >= 1 (saved/submitted): reuse the existing claim id, never abandon on leave.
+  // - no claim or status 0: create a fresh claim and abandon it on leave if nothing was saved.
+  useEffect(() => {
+    hasSaved.current = false;
+    claimIdRef.current = undefined;
+    claimPromiseRef.current = null;
+    setConfirmation(null);
+    setAdvancing(false);
+    setDrawingPath(null);
+
+    if (!project?.id || !manifestId) return;
+    if (!prepared) return; // wacht tot prepare-claim klaar is zodat we de bestaande status weten
+
+    const existingStatus = prepared.claim?.status as number | undefined;
+
+    // Bestaande claim (opgeslagen of ingediend): gebruik het bestaande claim-id en zet hasSaved
+    // op true zodat releaseClaim niets doet — de taakstatus blijft onaangeroerd.
+    if (existingStatus !== undefined && existingStatus >= 1) {
+      console.log('[CS] bestaande claim gevonden, geen nieuwe aanmaken', { existingStatus, claimId: prepared.claim?.id });
+      claimIdRef.current = prepared.claim?.id;
+      hasSaved.current = true;
+      return;
+    }
+
+    // Nieuwe claim of verlaten taak (status 0): maak aan en abandon bij verlaten.
+    console.log('[CS] claiming manifest', { projectId: project.id, manifestId });
+    const promise = madocClient.createResourceClaim(project.id, { manifestId, status: 0 });
+    claimPromiseRef.current = promise;
+    promise
+      .then(result => {
+        console.log('[CS] claim result', result);
+        claimIdRef.current = result?.claim?.id;
+        if (!claimIdRef.current) {
+          console.error('[CS] claim response has no claim.id — release will not work', result);
+        }
+      })
+      .catch(err => console.error('[CS] claim failed', err));
+
+    return () => {
+      releaseClaim();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.id, manifestId, prepared]);
+
+  const handleLeave = async (to: string) => {
+    await releaseClaim();
+    navigate(to);
+  };
+
+  const [save, { isLoading: saving }] = useMutation(async (status: 'draft' | 'submitted') => {
+    if (!model || !annotationDocument || !activeStructure) return;
+    await madocClient.createCaptureModelRevision(
+      {
+        captureModelId: model.id,
+        document: annotationDocument,
+        // Same id reused across saves (see revisionIdRef above) — the server upserts a revision
+        // row by id, so re-submitting with this id updates the same draft instead of creating a
+        // new one each time.
+        revision: { id: revisionIdRef.current, structureId: activeStructure.id, fields: activeStructure.fields, status },
+      },
+      status
+    );
+    hasSaved.current = true;
+
+    // createCaptureModelRevision only writes the model-api revision — the task itself (what the
+    // dashboard's task list queries) stays at its initial "assigned" status (0) unless we update
+    // it here too, same as releaseClaim does for abandoned claims.
+    const claimId = await getClaimId();
+    if (claimId) {
+      await madocClient.updateTask(claimId, {
+        status: status === 'draft' ? 1 : 2,
+        status_text: status === 'draft' ? 'in progress' : 'submitted',
+      });
+      queryCache.invalidateQueries('my-tasks');
+    }
+  });
+
+  // Asks for another random assignment (same endpoint as ProjectDetail's "Start" button) and goes
+  // there — falling back to the project page once none are left. Records the manifest we're
+  // leaving so "Vorige taak" has somewhere to go back to.
+  const goToNext = async () => {
+    const url = await requestNextUrl(undefined);
+    if (manifestId) setVisited(v => [...v, manifestId]);
+    await handleLeave(url ?? `/${disscoCSConfig.collectiesSlug}/${project?.slug}`);
+  };
+
+  const goToPrevious = async () => {
+    const prevManifestId = visited[visited.length - 1];
+    if (prevManifestId === undefined) return;
+    setVisited(v => v.slice(0, -1));
+    await handleLeave(`/${disscoCSConfig.collectiesSlug}/${project?.slug}/manifests/${prevManifestId}/annotate`);
+  };
+
+  // Shows a brief confirmation toast, then moves on to the next task — used for both save actions,
+  // so the user always gets feedback that the save succeeded before the page changes under them.
+  const [confirmation, setConfirmation] = useState<string | null>(null);
+  const [advancing, setAdvancing] = useState(false);
+  const handleSaveAndAdvance = async (status: 'draft' | 'submitted') => {
+    setAdvancing(true);
+    await save(status);
+    setConfirmation(status === 'draft' ? t('annotate_saved_draft', 'Opgeslagen als concept') : t('annotate_submitted', 'Ingediend'));
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    await goToNext();
+  };
+
+  if (structureError || preparedError || modelError) {
+    const err = structureErrorObj || preparedErrorObj || modelErrorObj;
+    return (
+      <CsPage>
+        <div className="cs-main-wrapper py-16 text-center text-red-600">
+          {t('annotate_error_loading', 'Fout bij laden van de taak: {{error}}', {
+            error: err instanceof Error ? err.message : String(err),
+          })}
+        </div>
+      </CsPage>
+    );
+  }
+
+  if (prepared && !prepared.model) {
+    return (
+      <CsPage>
+        <div className="cs-main-wrapper py-16 text-center text-gray-500">
+          {t('annotate_no_capture_model', 'Dit project heeft geen capture model geconfigureerd, dus deze taak kan niet getoond worden.')}
+        </div>
+      </CsPage>
+    );
+  }
+
+
+  if (!project || !model || !annotationDocument) {
+    return (
+      <CsPage>
+        <div className="cs-main-wrapper py-16 text-center text-gray-500">{t('pdp_loading')}</div>
+      </CsPage>
+    );
+  }
+
+  const isSubmittedTask = !!prepared && (prepared.claim?.status as number) >= 2;
+
+  const manifestUrl = `${window.location.origin}/s/${slug}/madoc/api/manifests/${manifestId}/export/source`;
+  const currentCanvas = canvases[canvasIndex];
+  const csSlug = disscoCSConfig.collectiesSlug;
+
+  const handleChange = (path: DocumentPath, value: unknown) => {
+    setAnnotationDocument(doc => (doc ? setFieldValue(doc, path, value, revisionIdRef.current) : doc));
+  };
+
+  return (
+    <CsPage>
+      {/* navBottom is measured from the actual navbar, not guessed, so this section's height
+          exactly fills the rest of the viewport — no page-level scrollbar on top of the panel's own. */}
+      <div className="flex flex-col" style={{ height: `calc(100vh - ${navBottom}px)` }}>
+        <div className="px-4 py-2 border-b border-gray-300 flex items-center justify-between flex-shrink-0">
+          <nav className="text-[0.85rem] text-gray-500" aria-label="Breadcrumb">
+            <Link
+              to={`/${csSlug}`}
+              onClick={e => {
+                e.preventDefault();
+                handleLeave(`/${csSlug}`);
+              }}
+              className="text-[var(--cs-primary)] no-underline hover:underline"
+            >
+              {t('nav_projects', 'Projecten')}
+            </Link>
+            <span className="mx-1">›</span>
+            <Link
+              to={`/${csSlug}/${project.slug}`}
+              onClick={e => {
+                e.preventDefault();
+                handleLeave(`/${csSlug}/${project.slug}`);
+              }}
+              className="text-[var(--cs-primary)] no-underline hover:underline"
+            >
+              <LocaleString>{project.label}</LocaleString>
+            </Link>
+            <span className="mx-1">›</span>
+            <LocaleString>{currentCanvas?.label ?? { en: ['...'] }}</LocaleString>
+          </nav>
+          <div className="flex items-center gap-2">
+            <button
+              className="text-[0.85rem] text-[var(--cs-primary)] border border-[var(--cs-primary)] rounded px-2 py-1 disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled={visited.length === 0}
+              onClick={goToPrevious}
+            >
+              ← {t('annotate_prev_task', 'Vorige taak')}
+            </button>
+            <button
+              className="text-[0.85rem] text-[var(--cs-primary)] border border-[var(--cs-primary)] rounded px-2 py-1 disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled={isLoadingNext}
+              onClick={goToNext}
+            >
+              {t('annotate_next_task', 'Volgende taak')} →
+            </button>
+          </div>
+        </div>
+        <AnnotateLayout
+          manifestUrl={manifestUrl}
+          osdViewer={
+            <OpenSeadragonViewer
+              imageServiceId={getImageServiceId(canvasData?.canvas)}
+              canvasIndex={canvasIndex}
+              totalCanvases={canvases.length}
+              onPrevCanvas={canvasIndex > 0 ? () => setCanvasIndex(i => i - 1) : undefined}
+              onNextCanvas={canvasIndex < canvases.length - 1 ? () => setCanvasIndex(i => i + 1) : undefined}
+              drawingSelector={!!drawingPath}
+              onSelectorDrawn={handleSelectorDrawn}
+              onCancelDrawing={handleCancelDraw}
+              savedSelectors={savedSelectors}
+            />
+          }
+          form={
+            <CaptureModelForm
+              model={model}
+              document={annotationDocument}
+              onChange={handleChange}
+              onSaveDraft={() => handleSaveAndAdvance('draft')}
+              onSubmit={() => handleSaveAndAdvance('submitted')}
+              onActiveStructureChange={setActiveStructure}
+              saving={saving || advancing}
+              confirmation={confirmation}
+              drawingPath={drawingPath}
+              onRequestDraw={handleRequestDraw}
+              onCancelDraw={handleCancelDraw}
+              onClearSelector={handleClearSelector}
+              readOnly={isSubmittedTask}
+              readOnlyBanner={isSubmittedTask ? t('annotate_already_submitted', 'Deze taak is al ingediend en kan niet meer worden gewijzigd.') : undefined}
+            />
+          }
+        />
+      </div>
+    </CsPage>
+  );
+}

@@ -1,0 +1,56 @@
+:root {
+  --cs-primary:   #1a5b66;
+  --cs-secondary: #00a877;
+  --cs-accent:    #139b94;
+  --cs-dark:      #124048;
+}
+
+/*
+  Shared wrapper used across all citizen science pages.
+  padding-top schuift de content onder de vaste navbar (zie .cs-navbar
+  hieronder) — hier gezet i.p.v. per pagina, zodat het altijd consistent is.
+*/
+.cs-bootstrap-wrapper {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #f8f9fa;
+  color: #212529;
+  min-height: 100vh;
+  padding-top: 70px;
+}
+
+/* Centered content container */
+.cs-container {
+  width: 100%;
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 15px;
+  box-sizing: border-box;
+}
+
+/* Auto-fill project card grid */
+.cs-projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 30px;
+}
+
+/* Fixed navbar */
+.cs-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  z-index: 200;
+  background-color: #ffffff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .cs-navbar {
+    height: auto;
+    min-height: 70px;
+  }
+}

@@ -1,0 +1,201 @@
+import { getJwt } from './jwt';
+import { getSiteSlug } from './slug';
+
+async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const jwt = getJwt();
+
+  const response = await fetch(`/api/dissco-cs${path}`, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
+      ...(init?.headers || {}),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`DiSSCo CS API request failed: ${response.status}`);
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return response.json();
+}
+
+export type ForumTopic = {
+  id: string;
+  site_id: number;
+  author_user_id: number;
+  author_name: string;
+  title: string;
+  task_url: string | null;
+  body: string;
+  created_at: string;
+  last_activity: string;
+};
+
+export type ForumTopicWithReplyCount = ForumTopic & { reply_count: number; last_seen_reply_count: number | null };
+
+export type ForumReply = {
+  id: string;
+  topic_id: string;
+  site_id: number;
+  author_user_id: number;
+  author_name: string;
+  body: string;
+  created_at: string;
+};
+
+export type ForumTopicWithReplies = ForumTopic & { replies: ForumReply[] };
+
+export const forumApi = {
+  listTopics: () => csFetch<{ topics: ForumTopicWithReplyCount[] }>('/forum/topics'),
+
+  createTopic: (data: { title: string; taskUrl: string; body: string }) =>
+    csFetch<ForumTopic>('/forum/topics', { method: 'POST', body: JSON.stringify(data) }),
+
+  getTopic: (topicId: string) => csFetch<ForumTopicWithReplies>(`/forum/topics/${topicId}`),
+
+  createReply: (topicId: string, body: string) =>
+    csFetch<ForumReply>(`/forum/topics/${topicId}/replies`, {
+      method: 'POST',
+      body: JSON.stringify({ body }),
+    }),
+
+  visitForum: () => csFetch<void>('/forum/topics/visit', { method: 'POST' }),
+
+  deleteTopic: (topicId: string) => csFetch<void>(`/forum/topics/${topicId}`, { method: 'DELETE' }),
+};
+
+// Order here is the default display order (navbar + page management) for sites that
+// haven't customized it yet — must match SITE_PAGE_KEYS in services/dissco-cs/api/src/db.ts.
+export const SITE_PAGE_KEYS = ['institutions', 'forum', 'about', 'help', 'contact'] as const;
+export type SitePageKey = (typeof SITE_PAGE_KEYS)[number];
+export type SitePageLang = 'nl' | 'en' | 'fr' | 'de';
+
+export type SitePage = {
+  site_id: number;
+  page_key: SitePageKey;
+  is_active: boolean;
+  content: Partial<Record<SitePageLang, string>>;
+  contact_email: string | null;
+  show_contact_form: boolean;
+  sort_order: number;
+  updated_at: string;
+};
+
+export const sitePagesApi = {
+  list: () => csFetch<{ pages: SitePage[] }>(`/site-pages?slug=${getSiteSlug()}`),
+
+  setActive: (key: SitePageKey, isActive: boolean) =>
+    csFetch<void>(`/site-pages/${key}`, { method: 'PUT', body: JSON.stringify({ isActive }) }),
+
+  setContent: (key: SitePageKey, lang: SitePageLang, contentMd: string) =>
+    csFetch<void>(`/site-pages/${key}/content`, { method: 'PUT', body: JSON.stringify({ lang, contentMd }) }),
+
+  setContactEmail: (email: string) =>
+    csFetch<void>('/site-pages/contact/email', { method: 'PUT', body: JSON.stringify({ email }) }),
+
+  setShowContactForm: (showForm: boolean) =>
+    csFetch<void>('/site-pages/contact/show-form', { method: 'PUT', body: JSON.stringify({ showForm }) }),
+
+  setOrder: (order: SitePageKey[]) =>
+    csFetch<void>('/site-pages/order', { method: 'PUT', body: JSON.stringify({ order }) }),
+};
+
+export const contactApi = {
+  send: (data: { name: string; email: string; message: string; website: string }) =>
+    csFetch<void>(`/contact?slug=${getSiteSlug()}`, { method: 'POST', body: JSON.stringify(data) }),
+};
+
+export const ANNOUNCEMENT_TARGET_TYPES = ['homepage', 'projects', 'project'] as const;
+export type AnnouncementTargetType = (typeof ANNOUNCEMENT_TARGET_TYPES)[number];
+
+export type Announcement = {
+  id: string;
+  site_id: number;
+  title: string;
+  description: string;
+  target_type: AnnouncementTargetType;
+  target_project_slug: string | null;
+  is_active: boolean;
+  start_date: string | null;
+  end_date: string | null;
+  created_at: string;
+};
+
+export type AnnouncementInput = {
+  title: string;
+  description: string;
+  targetType: AnnouncementTargetType;
+  targetProjectSlug: string | null;
+  isActive: boolean;
+  startDate: string | null;
+  endDate: string | null;
+};
+
+export const announcementsApi = {
+  listAdmin: () => csFetch<{ announcements: Announcement[] }>('/announcements'),
+
+  listActive: (target: AnnouncementTargetType, projectSlug?: string) =>
+    csFetch<{ announcements: Announcement[] }>(
+      `/announcements/active?slug=${getSiteSlug()}&target=${target}${
+        projectSlug ? `&projectSlug=${encodeURIComponent(projectSlug)}` : ''
+      }`
+    ),
+
+  create: (data: AnnouncementInput) =>
+    csFetch<Announcement>('/announcements', { method: 'POST', body: JSON.stringify(data) }),
+
+  update: (id: Announcement['id'], data: AnnouncementInput) =>
+    csFetch<Announcement>(`/announcements/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  remove: (id: Announcement['id']) => csFetch<void>(`/announcements/${id}`, { method: 'DELETE' }),
+};
+
+export type Institution = {
+  id: number;
+  site_id: number;
+  slug: string;
+  name: Partial<Record<SitePageLang, string>>;
+  description: Partial<Record<SitePageLang, string>>;
+  email: string | null;
+  phone: string | null;
+  website: string | null;
+  logo: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type InstitutionInput = {
+  name: Partial<Record<SitePageLang, string>>;
+  description: Partial<Record<SitePageLang, string>>;
+  email: string | null;
+  phone: string | null;
+  website: string | null;
+  logo: string | null;
+  isActive: boolean;
+};
+
+export const institutionsApi = {
+  listActive: () => csFetch<{ institutions: Institution[] }>(`/institutions/active?slug=${getSiteSlug()}`),
+
+  getActive: (slug: string) => csFetch<Institution>(`/institutions/active/${slug}?slug=${getSiteSlug()}`),
+
+  listAdmin: () => csFetch<{ institutions: Institution[] }>('/institutions'),
+
+  create: (data: InstitutionInput) =>
+    csFetch<Institution>('/institutions', { method: 'POST', body: JSON.stringify(data) }),
+
+  update: (id: Institution['id'], data: InstitutionInput) =>
+    csFetch<Institution>(`/institutions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  remove: (id: Institution['id']) => csFetch<void>(`/institutions/${id}`, { method: 'DELETE' }),
+
+  setOrder: (order: Institution['id'][]) =>
+    csFetch<void>('/institutions/order', { method: 'PUT', body: JSON.stringify({ order }) }),
+};

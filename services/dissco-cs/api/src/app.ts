@@ -1,0 +1,36 @@
+import { existsSync, readFileSync } from 'node:fs';
+
+import { serveStatic } from '@hono/node-server/serve-static';
+import { Hono } from 'hono';
+
+import { DisscoCSRepository } from './db.js';
+import { announcementsRoutes } from './routes/announcements.routes.js';
+import { contactRoutes } from './routes/contact.routes.js';
+import { forumRoutes } from './routes/forum.routes.js';
+import { institutionsRoutes } from './routes/institutions.routes.js';
+import { sitePagesRoutes } from './routes/site-pages.routes.js';
+
+export function createDisscoCSApp(repository: DisscoCSRepository): Hono {
+  const app = new Hono();
+
+  app.get('/api/dissco-cs/health', c => c.text('ok'));
+  app.route('/api/dissco-cs/forum', forumRoutes(repository));
+  app.route('/api/dissco-cs/site-pages', sitePagesRoutes(repository));
+  app.route('/api/dissco-cs/contact', contactRoutes(repository));
+  app.route('/api/dissco-cs/announcements', announcementsRoutes(repository));
+  app.route('/api/dissco-cs/institutions', institutionsRoutes(repository));
+
+  // Frontend static serving — only active in Docker where frontend-dist is bundled in.
+  if (existsSync('./frontend-dist/index.html')) {
+    const indexHtml = readFileSync('./frontend-dist/index.html', 'utf-8');
+
+    app.use('/cs-assets/*', serveStatic({
+      root: './frontend-dist',
+      rewriteRequestPath: path => path.replace('/cs-assets', ''),
+    }));
+
+    app.get('/s/*', c => c.html(indexHtml));
+  }
+
+  return app;
+}

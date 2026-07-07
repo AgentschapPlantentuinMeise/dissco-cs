@@ -19,6 +19,7 @@ services:
       - config-service
       - storage-api
       - okra
+      - dissco-cs-api
     links:
       - tasks-api
       - model-api
@@ -26,6 +27,7 @@ services:
       - config-service
       - storage-api
       - okra
+      - dissco-cs-api
 
   madoc-ts-vite:
     build:
@@ -155,6 +157,9 @@ services:
       - POSTGRES_SEARCH_API_USER=${POSTGRES_SEARCH_API_USER}
       - POSTGRES_SEARCH_API_SCHEMA=${POSTGRES_SEARCH_API_SCHEMA}
       - POSTGRES_SEARCH_API_PASSWORD=${POSTGRES_SEARCH_API_PASSWORD}
+      - POSTGRES_DISSCO_CS_USER=${POSTGRES_DISSCO_CS_USER}
+      - POSTGRES_DISSCO_CS_SCHEMA=${POSTGRES_DISSCO_CS_SCHEMA}
+      - POSTGRES_DISSCO_CS_PASSWORD=${POSTGRES_DISSCO_CS_PASSWORD}
 
     ports:
       - "${PORTS_SHARED_POSTGRES:-5400}:5432"
@@ -181,6 +186,30 @@ services:
     volumes:
       - ./configuration/schemas:/app/configurator/schemas
       - ./configuration/defaults:/app/configurator/default_config
+
+  dissco-cs-api:
+    build:
+      context: services/dissco-cs
+    environment:
+      - MIGRATE=true
+      - POSTGRES_HOST=shared-postgres
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_DISSCO_CS_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_DISSCO_CS_PASSWORD}
+      - POSTGRES_SCHEMA=${POSTGRES_DISSCO_CS_SCHEMA}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - MADOC_GATEWAY_URL=http://gateway:8080
+      - MADOC_SERVICE_JWT_PATH=/app/service-jwt-responses/dissco-cs-api.json
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURITY=${SMTP_SECURITY}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - MAIL_FROM_USER=${MAIL_FROM_USER}
+    volumes:
+      - ./var/jwt:/app/service-jwt-responses
+    links:
+      - shared-postgres
 
   storage-api:
     tty: true
