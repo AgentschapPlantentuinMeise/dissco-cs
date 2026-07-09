@@ -137,8 +137,8 @@ export class DisscoCSRepository {
         CREATE TABLE IF NOT EXISTS ${this.schemaRef}.announcements (
           id BIGSERIAL PRIMARY KEY,
           site_id INTEGER NOT NULL,
-          title TEXT NOT NULL,
-          description TEXT NOT NULL,
+          title JSONB NOT NULL DEFAULT '{}'::jsonb,
+          description JSONB NOT NULL DEFAULT '{}'::jsonb,
           target_type TEXT NOT NULL,
           target_project_slug TEXT,
           is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -151,6 +151,22 @@ export class DisscoCSRepository {
       await client.query(`
         CREATE INDEX IF NOT EXISTS announcements_site_target_idx
         ON ${this.schemaRef}.announcements (site_id, target_type, target_project_slug)
+      `);
+
+      await client.query(`
+        DO $$
+        BEGIN
+          IF (
+            SELECT data_type FROM information_schema.columns
+            WHERE table_schema = '${appConfig.postgresSchema}' AND table_name = 'announcements' AND column_name = 'title'
+          ) = 'text' THEN
+            ALTER TABLE ${this.schemaRef}.announcements
+              ALTER COLUMN title TYPE JSONB USING jsonb_build_object('nl', title, 'en', title, 'fr', title, 'de', title),
+              ALTER COLUMN title SET DEFAULT '{}'::jsonb,
+              ALTER COLUMN description TYPE JSONB USING jsonb_build_object('nl', description, 'en', description, 'fr', description, 'de', description),
+              ALTER COLUMN description SET DEFAULT '{}'::jsonb;
+          END IF;
+        END $$;
       `);
 
       await client.query(`

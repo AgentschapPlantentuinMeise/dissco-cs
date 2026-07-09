@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+import { SitePageLang } from './site-pages.repository.js';
 
 export const ANNOUNCEMENT_TARGET_TYPES = ['homepage', 'projects', 'project'] as const;
 export type AnnouncementTargetType = (typeof ANNOUNCEMENT_TARGET_TYPES)[number];
@@ -6,8 +7,8 @@ export type AnnouncementTargetType = (typeof ANNOUNCEMENT_TARGET_TYPES)[number];
 export type Announcement = {
   id: string;
   site_id: number;
-  title: string;
-  description: string;
+  title: Partial<Record<SitePageLang, string>>;
+  description: Partial<Record<SitePageLang, string>>;
   target_type: AnnouncementTargetType;
   target_project_slug: string | null;
   is_active: boolean;
@@ -59,8 +60,8 @@ export class AnnouncementsRepository {
 
   async createAnnouncement(input: {
     siteId: number;
-    title: string;
-    description: string;
+    title: Partial<Record<SitePageLang, string>>;
+    description: Partial<Record<SitePageLang, string>>;
     targetType: AnnouncementTargetType;
     targetProjectSlug: string | null;
     isActive: boolean;
@@ -76,8 +77,8 @@ export class AnnouncementsRepository {
     `,
       [
         input.siteId,
-        input.title,
-        input.description,
+        JSON.stringify(input.title),
+        JSON.stringify(input.description),
         input.targetType,
         input.targetProjectSlug,
         input.isActive,
@@ -93,8 +94,8 @@ export class AnnouncementsRepository {
     siteId: number,
     id: number,
     input: {
-      title: string;
-      description: string;
+      title: Partial<Record<SitePageLang, string>>;
+      description: Partial<Record<SitePageLang, string>>;
       targetType: AnnouncementTargetType;
       targetProjectSlug: string | null;
       isActive: boolean;
@@ -113,8 +114,8 @@ export class AnnouncementsRepository {
       [
         id,
         siteId,
-        input.title,
-        input.description,
+        JSON.stringify(input.title),
+        JSON.stringify(input.description),
         input.targetType,
         input.targetProjectSlug,
         input.isActive,

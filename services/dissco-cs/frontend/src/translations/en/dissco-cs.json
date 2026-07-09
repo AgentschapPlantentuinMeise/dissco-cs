@@ -128,6 +128,7 @@
   "sm_announcements_cancel": "Cancel",
   "sm_announcements_confirm_delete": "Are you sure you want to delete this announcement?",
   "sm_announcements_delete": "Delete",
+  "sm_announcements_edit": "Edit announcement",
   "sm_announcements_empty": "No announcements have been created yet.",
   "sm_announcements_field_active": "Active",
   "sm_announcements_field_description": "Description",

@@ -127,6 +127,7 @@
   "sm_announcements_cancel": "Abbrechen",
   "sm_announcements_confirm_delete": "Möchten Sie diese Meldung wirklich löschen?",
   "sm_announcements_delete": "Löschen",
+  "sm_announcements_edit": "Meldung bearbeiten",
   "sm_announcements_empty": "Es wurden noch keine Meldungen erstellt.",
   "sm_announcements_field_active": "Aktiv",
   "sm_announcements_field_description": "Beschreibung",

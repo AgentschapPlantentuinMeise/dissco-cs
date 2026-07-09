@@ -116,8 +116,8 @@ export type AnnouncementTargetType = (typeof ANNOUNCEMENT_TARGET_TYPES)[number];
 export type Announcement = {
   id: string;
   site_id: number;
-  title: string;
-  description: string;
+  title: Partial<Record<SitePageLang, string>>;
+  description: Partial<Record<SitePageLang, string>>;
   target_type: AnnouncementTargetType;
   target_project_slug: string | null;
   is_active: boolean;
@@ -127,8 +127,8 @@ export type Announcement = {
 };
 
 export type AnnouncementInput = {
-  title: string;
-  description: string;
+  title: Partial<Record<SitePageLang, string>>;
+  description: Partial<Record<SitePageLang, string>>;
   targetType: AnnouncementTargetType;
   targetProjectSlug: string | null;
   isActive: boolean;

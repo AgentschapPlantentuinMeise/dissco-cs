@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { HrefLink } from '../../utility/href-link';
@@ -6,9 +6,13 @@ import { CsPage } from '../../components/CsPage';
 import { ToggleSwitch } from '../../components/ToggleSwitch';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { TrashIcon } from '../../icons/TrashIcon';
+import { PencilIcon } from '../../icons/PencilIcon';
 import { ArrowLeftIcon } from '../../icons/ArrowLeftIcon';
-import { announcementsApi, Announcement, AnnouncementInput, AnnouncementTargetType } from '../../api/cs-api';
+import { disscoCSConfig } from '../../dissco-cs-config';
+import { announcementsApi, Announcement, AnnouncementInput, AnnouncementTargetType, SitePageLang } from '../../api/cs-api';
 import { useProjectList } from '../../hooks/use-project-list';
+
+const LANGUAGES = disscoCSConfig.supportedLanguages;
 
 function getLabelText(label: any, fallback: string): string {
   if (!label) return fallback;
@@ -21,6 +25,10 @@ function toDateInputValue(iso: string | null): string {
   return iso.slice(0, 10);
 }
 
+function displayText(text: Partial<Record<SitePageLang, string>>, fallback: string): string {
+  return text.nl || text.en || text.fr || text.de || fallback;
+}
+
 function targetLabel(t: (key: string) => string, announcement: Announcement): string {
   if (announcement.target_type === 'homepage') return t('sm_announcements_target_homepage');
   if (announcement.target_type === 'projects') return t('sm_announcements_target_projects');
@@ -28,8 +36,8 @@ function targetLabel(t: (key: string) => string, announcement: Announcement): st
 }
 
 const emptyDraft: AnnouncementInput = {
-  title: '',
-  description: '',
+  title: {},
+  description: {},
   targetType: 'homepage',
   targetProjectSlug: null,
   isActive: true,
@@ -44,32 +52,58 @@ export const Announcements: React.FC = () => {
   const announcements = data?.announcements ?? [];
   const projects = (projectsResponse?.projects ?? []).filter((p: any) => p.status === 1);
 
-  const [isCreating, setIsCreating] = useState(false);
+  const [editingId, setEditingId] = useState<Announcement['id'] | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [draft, setDraft] = useState<AnnouncementInput>(emptyDraft);
+  const [selectedLang, setSelectedLang] = useState<SitePageLang>(LANGUAGES[0].code);
   const [pendingDeleteId, setPendingDeleteId] = useState<Announcement['id'] | null>(null);
 
   const refresh = () => refetch();
 
   const startCreate = () => {
+    setEditingId(null);
     setDraft(emptyDraft);
-    setIsCreating(true);
+    setSelectedLang(LANGUAGES[0].code);
+    setIsFormOpen(true);
   };
 
-  const cancelCreate = () => {
-    setIsCreating(false);
+  const startEdit = (announcement: Announcement) => {
+    setEditingId(announcement.id);
+    setDraft({
+      title: announcement.title,
+      description: announcement.description,
+      targetType: announcement.target_type,
+      targetProjectSlug: announcement.target_project_slug,
+      isActive: announcement.is_active,
+      startDate: announcement.start_date,
+      endDate: announcement.end_date,
+    });
+    setSelectedLang(LANGUAGES[0].code);
+    setIsFormOpen(true);
+  };
+
+  const cancelForm = () => {
+    setIsFormOpen(false);
+    setEditingId(null);
     setDraft(emptyDraft);
   };
 
+  const allTitlesFilled = LANGUAGES.every(lang => (draft.title[lang.code] ?? '').trim().length > 0);
+  const allDescriptionsFilled = LANGUAGES.every(lang => (draft.description[lang.code] ?? '').trim().length > 0);
   const canSave =
-    draft.title.trim().length > 0 &&
-    draft.description.trim().length > 0 &&
+    allTitlesFilled &&
+    allDescriptionsFilled &&
     (draft.targetType !== 'project' || !!draft.targetProjectSlug) &&
     (!draft.startDate || !draft.endDate || draft.startDate <= draft.endDate);
 
   const save = async () => {
     if (!canSave) return;
-    await announcementsApi.create(draft);
-    cancelCreate();
+    if (editingId !== null) {
+      await announcementsApi.update(editingId, draft);
+    } else {
+      await announcementsApi.create(draft);
+    }
+    cancelForm();
     refresh();
   };
 
@@ -113,7 +147,7 @@ export const Announcements: React.FC = () => {
 
           {isLoading && <p className="text-center py-5">{t('loading_projects')}</p>}
 
-          {!isLoading && announcements.length === 0 && !isCreating && (
+          {!isLoading && announcements.length === 0 && !isFormOpen && (
             <p className="text-gray-600">{t('sm_announcements_empty')}</p>
           )}
 
@@ -122,7 +156,7 @@ export const Announcements: React.FC = () => {
               {announcements.map(announcement => (
                 <li key={announcement.id} className="flex items-center justify-between gap-4 px-4 py-3">
                   <div className="min-w-0">
-                    <p className="font-semibold m-0">{announcement.title}</p>
+                    <p className="font-semibold m-0 truncate">{displayText(announcement.title, announcement.id)}</p>
                     <p className="text-sm text-gray-500 m-0">
                       {targetLabel(t, announcement)}
                       {(announcement.start_date || announcement.end_date) && (
@@ -143,8 +177,16 @@ export const Announcements: React.FC = () => {
                     <ToggleSwitch
                       checked={announcement.is_active}
                       onChange={() => void toggleActive(announcement)}
-                      label={announcement.title}
+                      label={displayText(announcement.title, announcement.id)}
                     />
+                    <button
+                      onClick={() => startEdit(announcement)}
+                      aria-label={t('sm_pages_edit')}
+                      title={t('sm_pages_edit')}
+                      className="bg-transparent border-none cursor-pointer text-gray-500 hover:text-[var(--cs-primary)] p-1"
+                    >
+                      <PencilIcon />
+                    </button>
                     <button
                       onClick={() => setPendingDeleteId(announcement.id)}
                       aria-label={t('sm_announcements_delete')}
@@ -159,23 +201,42 @@ export const Announcements: React.FC = () => {
             </ul>
           )}
 
-          {isCreating && (
+          {isFormOpen && (
             <div
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 overflow-y-auto"
-              onClick={cancelCreate}
+              onClick={cancelForm}
             >
               <div
                 className="bg-white rounded-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.2)] p-6 max-w-xl w-full my-8"
                 onClick={e => e.stopPropagation()}
               >
-                <h2 className="text-xl font-semibold text-[var(--cs-primary)] mb-4">{t('sm_announcements_new')}</h2>
+                <h2 className="text-xl font-semibold text-[var(--cs-primary)] mb-4">
+                  {editingId !== null ? t('sm_announcements_edit') : t('sm_announcements_new')}
+                </h2>
+
+                <div className="flex gap-2 mb-4">
+                  {LANGUAGES.map(lang => (
+                    <button
+                      key={lang.code}
+                      onClick={() => setSelectedLang(lang.code)}
+                      className={`px-3 py-1 rounded-full text-sm font-medium border ${
+                        selectedLang === lang.code
+                          ? 'bg-[var(--cs-primary)] text-white border-[var(--cs-primary)]'
+                          : 'bg-transparent text-gray-600 border-gray-300'
+                      }`}
+                    >
+                      {t(`lang_${lang.code}`)}
+                      {!(draft.title[lang.code] ?? '').trim() && <span className="text-red-500 ml-1">•</span>}
+                    </button>
+                  ))}
+                </div>
 
                 <label className="flex flex-col gap-1 mb-4">
                   <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_title')} *</span>
                   <input
                     type="text"
-                    value={draft.title}
-                    onChange={e => setDraft(prev => ({ ...prev, title: e.target.value }))}
+                    value={draft.title[selectedLang] ?? ''}
+                    onChange={e => setDraft(prev => ({ ...prev, title: { ...prev.title, [selectedLang]: e.target.value } }))}
                     className="border border-gray-300 rounded-lg p-2"
                   />
                 </label>
@@ -183,8 +244,10 @@ export const Announcements: React.FC = () => {
                 <label className="flex flex-col gap-1 mb-4">
                   <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_description')} *</span>
                   <textarea
-                    value={draft.description}
-                    onChange={e => setDraft(prev => ({ ...prev, description: e.target.value }))}
+                    value={draft.description[selectedLang] ?? ''}
+                    onChange={e =>
+                      setDraft(prev => ({ ...prev, description: { ...prev.description, [selectedLang]: e.target.value } }))
+                    }
                     className="border border-gray-300 rounded-lg p-2 min-h-[90px]"
                   />
                 </label>
@@ -258,6 +321,7 @@ export const Announcements: React.FC = () => {
                   <button
                     onClick={() => void save()}
                     disabled={!canSave}
+                    title={!canSave ? t('sm_pages_fill_all_langs') : undefined}
                     className={`px-4 py-2 rounded-full text-sm font-semibold border-none ${
                       canSave
                         ? 'bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)]'
@@ -267,11 +331,12 @@ export const Announcements: React.FC = () => {
                     {t('sm_pages_save')}
                   </button>
                   <button
-                    onClick={cancelCreate}
+                    onClick={cancelForm}
                     className="px-4 py-2 rounded-full text-sm font-semibold border border-gray-300 bg-transparent cursor-pointer hover:bg-gray-50"
                   >
                     {t('sm_announcements_cancel')}
                   </button>
+                  {!canSave && <span className="text-sm text-gray-500">{t('sm_pages_fill_all_langs')}</span>}
                 </div>
               </div>
             </div>

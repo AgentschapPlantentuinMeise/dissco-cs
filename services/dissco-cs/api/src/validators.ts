@@ -76,6 +76,15 @@ export function isIsoDateOrNull(value: unknown): value is string | null {
   return typeof value === 'string' && !Number.isNaN(Date.parse(value));
 }
 
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+export function endOfDayIfDateOnly(value: string | null): string | null {
+  if (value === null || !DATE_ONLY_PATTERN.test(value)) {
+    return value;
+  }
+  return `${value}T23:59:59.999`;
+}
+
 export function isOptionalString(value: unknown): value is string | null | undefined {
   return value === null || value === undefined || typeof value === 'string';
 }
@@ -152,8 +161,8 @@ export function parseInstitutionBody(payload: InstitutionBody | null): Instituti
 export function parseAnnouncementBody(
   payload: AnnouncementBody | null
 ): {
-  title: string;
-  description: string;
+  title: Partial<Record<SitePageLang, string>>;
+  description: Partial<Record<SitePageLang, string>>;
   targetType: AnnouncementTargetType;
   targetProjectSlug: string | null;
   isActive: boolean;
@@ -162,8 +171,8 @@ export function parseAnnouncementBody(
 } | null {
   if (
     !payload ||
-    !isNonEmptyString(payload.title) ||
-    !isNonEmptyString(payload.description) ||
+    !isMultilingualText(payload.title, true) ||
+    !isMultilingualText(payload.description, true) ||
     !isAnnouncementTargetType(payload.targetType) ||
     typeof payload.isActive !== 'boolean' ||
     !isIsoDateOrNull(payload.startDate ?? null) ||
@@ -176,11 +185,10 @@ export function parseAnnouncementBody(
     return null;
   }
 
-  if (
-    isNonEmptyString(payload.startDate) &&
-    isNonEmptyString(payload.endDate) &&
-    Date.parse(payload.startDate) > Date.parse(payload.endDate)
-  ) {
+  const startDate = (payload.startDate as string | null) ?? null;
+  const endDate = endOfDayIfDateOnly((payload.endDate as string | null) ?? null);
+
+  if (isNonEmptyString(startDate) && isNonEmptyString(endDate) && Date.parse(startDate) > Date.parse(endDate)) {
     return null;
   }
 
@@ -190,7 +198,7 @@ export function parseAnnouncementBody(
     targetType: payload.targetType,
     targetProjectSlug: payload.targetType === 'project' ? (payload.targetProjectSlug as string) : null,
     isActive: payload.isActive,
-    startDate: (payload.startDate as string | null) ?? null,
-    endDate: (payload.endDate as string | null) ?? null,
+    startDate,
+    endDate,
   };
 }

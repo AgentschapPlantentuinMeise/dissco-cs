@@ -127,6 +127,7 @@
   "sm_announcements_cancel": "Annuler",
   "sm_announcements_confirm_delete": "Êtes-vous sûr de vouloir supprimer cette annonce ?",
   "sm_announcements_delete": "Supprimer",
+  "sm_announcements_edit": "Modifier l'annonce",
   "sm_announcements_empty": "Aucune annonce n'a encore été créée.",
   "sm_announcements_field_active": "Active",
   "sm_announcements_field_description": "Description",

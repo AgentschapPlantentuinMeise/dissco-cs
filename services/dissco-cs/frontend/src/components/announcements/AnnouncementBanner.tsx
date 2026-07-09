@@ -17,10 +17,12 @@ export const AnnouncementBanner: React.FC<{ target: AnnouncementTargetType; proj
   target,
   projectSlug,
 }) => {
-  const { t } = useTranslation('dissco-cs');
+  const { t, i18n } = useTranslation('dissco-cs');
   const { data } = useQuery(['active-announcements', target, projectSlug], () =>
     announcementsApi.listActive(target, projectSlug)
   );
+  const text = (field: Announcement['title']) =>
+    field[i18n.language as keyof Announcement['title']] || field.nl || '';
   const [dismissedIds, setDismissedIds] = useState<Announcement['id'][]>([]);
 
   const announcements = data?.announcements ?? [];
@@ -43,8 +45,8 @@ export const AnnouncementBanner: React.FC<{ target: AnnouncementTargetType; proj
           className="relative flex items-start gap-3 rounded-lg border-l-4 border-[var(--cs-secondary)] bg-[var(--cs-light,#f3f8f8)] py-3 pl-4 pr-10 shadow-[0_1px_4px_rgba(0,0,0,0.07)]"
         >
           <div>
-            <p className="font-semibold text-[var(--cs-primary)] m-0">{announcement.title}</p>
-            <p className="text-sm text-gray-700 mt-1 mb-0">{announcement.description}</p>
+            <p className="font-semibold text-[var(--cs-primary)] m-0">{text(announcement.title)}</p>
+            <p className="text-sm text-gray-700 mt-1 mb-0">{text(announcement.description)}</p>
           </div>
           <button
             onClick={() => {
