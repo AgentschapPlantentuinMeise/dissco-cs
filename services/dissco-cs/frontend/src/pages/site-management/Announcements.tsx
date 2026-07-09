@@ -202,14 +202,8 @@ export const Announcements: React.FC = () => {
           )}
 
           {isFormOpen && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 overflow-y-auto"
-              onClick={cancelForm}
-            >
-              <div
-                className="bg-white rounded-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.2)] p-6 max-w-xl w-full my-8"
-                onClick={e => e.stopPropagation()}
-              >
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 overflow-y-auto">
+              <div className="bg-white rounded-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.2)] p-6 max-w-xl w-full my-8">
                 <h2 className="text-xl font-semibold text-[var(--cs-primary)] mb-4">
                   {editingId !== null ? t('sm_announcements_edit') : t('sm_announcements_new')}
                 </h2>
