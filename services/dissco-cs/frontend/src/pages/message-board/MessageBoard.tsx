@@ -8,6 +8,7 @@ import { forumApi, ForumTopicWithReplyCount, ForumReply } from '../../api/cs-api
 import { TrashIcon } from '../../icons/TrashIcon';
 import { ChevronIcon } from '../../icons/ChevronIcon';
 import { ArrowRightIcon } from '../../icons/ArrowRightIcon';
+import { SearchIcon } from '../../icons/SearchIcon';
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString('nl-BE', { dateStyle: 'short', timeStyle: 'short' });
@@ -15,11 +16,11 @@ const formatDate = (iso: string) =>
 const btnPrimary = 'bg-[var(--cs-primary)] text-white border-none px-[18px] py-[10px] rounded text-[0.95rem] font-medium cursor-pointer transition-colors duration-200 hover:bg-[var(--cs-dark)]';
 const btnGhost = 'bg-transparent border border-gray-300 px-3 py-1.5 rounded text-[0.85rem] text-gray-600 cursor-pointer whitespace-nowrap transition-[border-color,color] duration-200 hover:border-[var(--cs-primary)] hover:text-[var(--cs-primary)]';
 
-const filterBtnClass = (isActive: boolean) =>
-  'border rounded-full px-[14px] py-[5px] text-[0.85rem] cursor-pointer transition-[border-color,background-color,color] duration-200 ' +
+const filterRowClass = (isActive: boolean) =>
+  'block w-full text-left px-[10px] py-2 rounded-md text-[0.85rem] cursor-pointer transition-colors duration-200 ' +
   (isActive
-    ? 'bg-[var(--cs-primary)] border-[var(--cs-primary)] text-white'
-    : 'bg-transparent border-gray-300 text-gray-600 hover:border-[var(--cs-primary)] hover:text-[var(--cs-primary)]');
+    ? 'bg-[var(--cs-primary)]/10 text-[var(--cs-primary)] font-semibold'
+    : 'text-gray-600 hover:bg-gray-100 hover:text-[var(--cs-primary)]');
 
 const inputClass = 'py-[9px] px-3 border border-gray-300 rounded text-[0.95rem] font-[inherit] resize-y transition-colors duration-200 focus:outline-none focus:border-[var(--cs-primary)]';
 
@@ -129,7 +130,7 @@ export const MessageBoard: React.FC = () => {
 
   return (
     <CsPage>
-      <div className="max-w-[800px] mx-auto px-5 pt-10 pb-16">
+      <div className="cs-container pt-10 pb-16">
         <header className="flex justify-between items-center mb-4">
           <h1 className="text-4xl text-[var(--cs-primary)] m-0">{t('forum_title')}</h1>
           <button className={btnPrimary} onClick={() => setShowNewForm(v => !v)}>
@@ -138,113 +139,127 @@ export const MessageBoard: React.FC = () => {
         </header>
 
 
-        <input
-          className={`${inputClass} w-full mb-5 box-border`}
-          type="search"
-          placeholder={t('forum_search_placeholder')}
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 items-start">
+          <div className="order-2 lg:order-1 min-w-0">
+            {showNewForm && (
+              <MessageForm
+                onSubmit={handleSubmitMessage}
+                onCancel={() => setShowNewForm(false)}
+              />
+            )}
 
-        <div className="flex gap-2 mb-5 flex-wrap">
-          {(['mine', 'unread', 'unanswered'] as const).map(f => (
-            <button
-              key={f}
-              className={filterBtnClass(activeFilter === f)}
-              onClick={() => setActiveFilter((cur: typeof activeFilter) => cur === f ? null : f)}
-            >
-              {f === 'mine' ? t('forum_filter_mine') : f === 'unread' ? t('forum_filter_unread') : t('forum_filter_unanswered')}
-            </button>
-          ))}
-        </div>
+            {displayTopics.length === 0 && !showNewForm && (
+              <p className="text-gray-500 text-[0.95rem] text-center py-10">
+                {activeFilter || searchQuery.trim()
+                  ? t('forum_empty_search_or_filter')
+                  : t('forum_empty_start')}
+              </p>
+            )}
 
-        {showNewForm && (
-          <MessageForm
-            onSubmit={handleSubmitMessage}
-            onCancel={() => setShowNewForm(false)}
-          />
-        )}
-
-        {displayTopics.length === 0 && !showNewForm && (
-          <p className="text-gray-500 text-[0.95rem] text-center py-10">
-            {activeFilter || searchQuery.trim()
-              ? t('forum_empty_search_or_filter')
-              : t('forum_empty_start')}
-          </p>
-        )}
-
-        <div className="flex flex-col gap-2">
-          {displayTopics.map((msg: ForumTopicWithReplyCount) => {
-            const unread = isUnread(msg);
-            const replies = repliesByTopic[msg.id] || [];
-            return (
-              <div key={msg.id} className="border border-gray-200 rounded-lg px-4 py-3 bg-white">
-                <div className="flex justify-between items-center gap-3 mb-1">
-                  <div>
-                    <h3 className={`m-0 mb-[2px] text-[0.95rem] text-[var(--cs-primary)] flex items-center gap-[6px] ${unread ? 'font-bold' : 'font-medium'}`}>
-                      {unread && <span className="inline-block w-2 h-2 rounded-full bg-green-500 flex-shrink-0" aria-label="nieuw" />}
-                      {msg.title}
-                    </h3>
-                    <span className="text-xs text-gray-400">{msg.author_name} · {formatDate(msg.created_at)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button className={`${btnGhost} flex items-center gap-1`} onClick={() => handleToggleExpand(msg.id)}>
-                      {msg.reply_count > 0
-                        ? msg.reply_count === 1
-                          ? `${msg.reply_count} ${t('forum_btn_replies_one')}`
-                          : `${msg.reply_count} ${t('forum_btn_replies_many')}`
-                        : t('forum_btn_reply')}
-                      <ChevronIcon className={`transition-transform duration-200 ${expandedId === msg.id ? 'rotate-180' : ''}`} />
-                    </button>
-                    {user?.scope.includes('site.admin') && (
-                      <button
-                        className="bg-transparent border-none cursor-pointer text-gray-600 text-base px-1 flex items-center hover:text-[var(--cs-primary)] transition-colors duration-200"
-                        onClick={() => setPendingDeleteTopicId(msg.id)}
-                        aria-label={t('forum_btn_delete')}
-                        title={t('forum_btn_delete')}
-                      >
-                        <TrashIcon />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <p className="text-[0.9rem] text-[#555] leading-[1.4] my-1 mb-[6px] line-clamp-2">{msg.body}</p>
-
-                {msg.task_url && (
-                  <a href={msg.task_url} className="inline-flex items-center gap-1 text-[0.85rem] text-[var(--cs-primary)] no-underline mb-1 hover:underline" target="_blank" rel="noopener noreferrer">
-                    {t('forum_view_task')} <ArrowRightIcon aria-hidden="true" />
-                  </a>
-                )}
-
-                {expandedId === msg.id && (
-                  <div className="mt-3 border-t border-gray-100 pt-3 flex flex-col gap-2">
-                    {replies.length > 0 && (
-                      <div className="flex flex-col gap-[6px]">
-                        {replies.map(reply => (
-                          <div key={reply.id} className="bg-gray-50 border-l-[3px] border-[var(--cs-primary)] rounded-r-[6px] py-2 px-3 ml-2">
-                            <span className="text-xs text-gray-400">{reply.author_name} · {formatDate(reply.created_at)}</span>
-                            <p className="m-0 mt-1 text-[0.9rem] text-gray-800 leading-[1.5]">{reply.body}</p>
-                          </div>
-                        ))}
+            <div className="flex flex-col gap-2.5">
+              {displayTopics.map((msg: ForumTopicWithReplyCount) => {
+                const unread = isUnread(msg);
+                const replies = repliesByTopic[msg.id] || [];
+                return (
+                  <div key={msg.id} className={`flex bg-white rounded-lg shadow-sm border border-gray-100 border-l-4 ${unread ? 'border-l-[var(--cs-secondary)]' : 'border-l-transparent'} px-4 py-3.5`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start gap-3 mb-1">
+                        <div className="min-w-0">
+                          <h3 className={`m-0 mb-[2px] text-[0.95rem] text-[var(--cs-primary)] flex items-center gap-[6px] ${unread ? 'font-bold' : 'font-medium'}`}>
+                            {unread && <span className="inline-block w-2 h-2 rounded-full bg-[var(--cs-secondary)] flex-shrink-0" aria-label="nieuw" />}
+                            {msg.title}
+                          </h3>
+                          <span className="text-xs text-gray-400">{msg.author_name} · {formatDate(msg.created_at)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button className={`${btnGhost} flex items-center gap-1`} onClick={() => handleToggleExpand(msg.id)}>
+                            {msg.reply_count > 0
+                              ? msg.reply_count === 1
+                                ? `${msg.reply_count} ${t('forum_btn_replies_one')}`
+                                : `${msg.reply_count} ${t('forum_btn_replies_many')}`
+                              : t('forum_btn_reply')}
+                            <ChevronIcon className={`transition-transform duration-200 ${expandedId === msg.id ? 'rotate-180' : ''}`} />
+                          </button>
+                          {user?.scope.includes('site.admin') && (
+                            <button
+                              className="bg-transparent border-none cursor-pointer text-gray-600 text-base px-1 flex items-center hover:text-[var(--cs-primary)] transition-colors duration-200"
+                              onClick={() => setPendingDeleteTopicId(msg.id)}
+                              aria-label={t('forum_btn_delete')}
+                              title={t('forum_btn_delete')}
+                            >
+                              <TrashIcon />
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    )}
-                    <form className="flex flex-col gap-[14px] mt-1" onSubmit={e => handleSubmitReply(e, msg.id)}>
-                      <textarea
-                        className={inputClass}
-                        value={replyDrafts[msg.id] || ''}
-                        onChange={e => setReplyDrafts(prev => ({ ...prev, [msg.id]: e.target.value }))}
-                        placeholder={t('forum_form_placeholder_reply')}
-                        rows={2}
-                        required
-                      />
-                      <button type="submit" className={btnPrimary}>{t('forum_form_submit_reply')}</button>
-                    </form>
+
+                      <p className="text-[0.9rem] text-[#555] leading-[1.4] my-1 mb-[6px] line-clamp-2">{msg.body}</p>
+
+                      {msg.task_url && (
+                        <a href={msg.task_url} className="inline-flex items-center gap-1 text-[0.85rem] text-[var(--cs-primary)] no-underline mb-1 hover:underline" target="_blank" rel="noopener noreferrer">
+                          {t('forum_view_task')} <ArrowRightIcon aria-hidden="true" />
+                        </a>
+                      )}
+
+                      {expandedId === msg.id && (
+                        <div className="mt-3 border-t border-gray-100 pt-3 flex flex-col gap-2">
+                          {replies.length > 0 && (
+                            <div className="flex flex-col gap-[6px]">
+                              {replies.map(reply => (
+                                <div key={reply.id} className="bg-gray-50 border-l-[3px] border-[var(--cs-primary)] rounded-r-[6px] py-2 px-3 ml-2">
+                                  <span className="text-xs text-gray-400">{reply.author_name} · {formatDate(reply.created_at)}</span>
+                                  <p className="m-0 mt-1 text-[0.9rem] text-gray-800 leading-[1.5]">{reply.body}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <form className="flex flex-col gap-[14px] mt-1" onSubmit={e => handleSubmitReply(e, msg.id)}>
+                            <textarea
+                              className={inputClass}
+                              value={replyDrafts[msg.id] || ''}
+                              onChange={e => setReplyDrafts(prev => ({ ...prev, [msg.id]: e.target.value }))}
+                              placeholder={t('forum_form_placeholder_reply')}
+                              rows={2}
+                              required
+                            />
+                            <button type="submit" className={btnPrimary}>{t('forum_form_submit_reply')}</button>
+                          </form>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
+                );
+              })}
+            </div>
+          </div>
+
+          <aside className="order-1 lg:order-2 flex flex-col gap-6 lg:sticky lg:top-[90px]">
+            <div className="relative">
+              <SearchIcon className="absolute left-[11px] top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" aria-hidden="true" />
+              <input
+                className={`${inputClass} w-full pl-9 box-border`}
+                type="search"
+                placeholder={t('forum_search_placeholder')}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-500 m-0 mb-3">{t('forum_filters_heading')}</p>
+              <div className="flex flex-col gap-1">
+                {(['mine', 'unread', 'unanswered'] as const).map(f => (
+                  <button
+                    key={f}
+                    className={filterRowClass(activeFilter === f)}
+                    onClick={() => setActiveFilter((cur: typeof activeFilter) => cur === f ? null : f)}
+                  >
+                    {f === 'mine' ? t('forum_filter_mine') : f === 'unread' ? t('forum_filter_unread') : t('forum_filter_unanswered')}
+                  </button>
+                ))}
               </div>
-            );
-          })}
+            </div>
+          </aside>
         </div>
 
         {pendingDeleteTopicId !== null && (

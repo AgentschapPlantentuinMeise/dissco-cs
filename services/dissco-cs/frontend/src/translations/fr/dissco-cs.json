@@ -81,6 +81,7 @@
   "forum_filter_mine": "Mes messages",
   "forum_filter_unanswered": "Sans réponse",
   "forum_filter_unread": "Non lus",
+  "forum_filters_heading": "Filtres",
   "forum_form_label_body": "Message",
   "forum_form_label_link": "Lien vers la tâche",
   "forum_form_label_title": "Titre",
