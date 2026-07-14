@@ -5,6 +5,14 @@ export function getJwt(): string | undefined {
   return cookies.get(`madoc/${getSiteSlug()}`) || undefined;
 }
 
+// Client-side equivalent of Madoc's /logout route: erases the (non-httpOnly) JWT cookie
+// so getJwt()/getCurrentUser() see the user as logged out again. Used when a user cancels
+// out of the post-login terms gate instead of accepting the new terms.
+export function clearJwt(): void {
+  const slug = getSiteSlug();
+  cookies.erase(`madoc/${slug}`, { path: `/s/${slug}` });
+}
+
 export type CurrentUser = {
   id: number;
   name: string;

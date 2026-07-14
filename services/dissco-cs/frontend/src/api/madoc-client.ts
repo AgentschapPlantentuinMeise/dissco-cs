@@ -62,6 +62,7 @@ export type InvitationResponse =
   | { id: string; message: unknown; role: string; site_role: string };
 
 export type SiteTerms = { id: string; createdAt: string; terms?: { markdown: string; text: string } };
+export type TermsStatus = { hasTerms: boolean; hasAccepted: boolean };
 
 export const madocClient = {
   // -- dissco-cs auth pages (register/login/forgot-password/set-password) --
@@ -71,7 +72,7 @@ export const madocClient = {
   register: (data: { name: string; email: string; capToken: string; code?: string; termsAccepted?: boolean }) =>
     publicPost<{ ok: true; emailSent: boolean }>('/auth/register', data),
   login: (data: { email: string; password: string }) =>
-    publicPost<{ user: { id: number; name: string } }>('/auth/login', data),
+    publicPost<{ user: { id: number; name: string }; terms: TermsStatus }>('/auth/login', data),
   forgotPassword: (data: { email: string }) => publicPost<{ ok: true }>('/auth/forgot-password', data),
   setPassword: (data: { c1: string; c2: string; password: string }) =>
     publicPost<{ user: { id: number; name: string } | null }>('/auth/set-password', data),
@@ -103,6 +104,7 @@ export const madocClient = {
       `/api/madoc/projects/${projectId}/random`,
       { method: 'POST', body: { ...body, type: 'manifest', claim: false } }
     ),
+  acceptTerms: () => request<void>('/api/madoc/terms/accept', { method: 'POST' }),
   getCaptureModel: (id: string) => request<any>(`/api/madoc/crowdsourcing/model/${id}`),
   createCaptureModelRevision: (req: unknown, status?: string) =>
     request<any>(`/api/madoc/crowdsourcing/model/${(req as any).captureModelId}/revision`, {

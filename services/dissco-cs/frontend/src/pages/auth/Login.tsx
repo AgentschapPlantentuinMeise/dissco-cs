@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/CsPage';
+import { TermsModal } from '../../components/TermsModal';
 import { HrefLink } from '../../utility/href-link';
-import { madocClient } from '../../api/madoc-client';
+import { madocClient, SiteTerms } from '../../api/madoc-client';
+import { clearJwt } from '../../api/jwt';
 
 export const Login: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
@@ -13,18 +15,57 @@ export const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'error'>('idle');
   const [error, setError] = useState('');
+  const [pendingTerms, setPendingTerms] = useState<SiteTerms | null>(null);
+
+  const redirectAfterLogin = () => {
+    const redirect = searchParams.get('redirect');
+    window.location.href = redirect && redirect.startsWith('/') ? redirect : '/';
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('sending');
     try {
-      await madocClient.login({ email, password });
-      const redirect = searchParams.get('redirect');
-      window.location.href = redirect && redirect.startsWith('/') ? redirect : '/';
+      const loginResult = await madocClient.login({ email, password });
+
+      if (!loginResult.terms) {
+        // Fail closed: if we can't determine terms status, don't let the user through -
+        // silently skipping the check would defeat the point of the gate.
+        throw new Error(t('login_form_error'));
+      }
+
+      if (loginResult.terms.hasTerms && !loginResult.terms.hasAccepted) {
+        const { latest } = await madocClient.getTerms();
+        if (latest) {
+          setPendingTerms(latest);
+          setStatus('idle');
+          return;
+        }
+      }
+
+      redirectAfterLogin();
     } catch (err) {
       setStatus('error');
       setError(err instanceof Error ? err.message : t('login_form_error'));
     }
+  };
+
+  const acceptTermsAndContinue = async () => {
+    setStatus('sending');
+    try {
+      await madocClient.acceptTerms();
+      redirectAfterLogin();
+    } catch (err) {
+      setStatus('error');
+      setError(err instanceof Error ? err.message : t('login_terms_accept_error'));
+      setPendingTerms(null);
+    }
+  };
+
+  const cancelTerms = () => {
+    clearJwt();
+    setPendingTerms(null);
+    setStatus('idle');
   };
 
   return (
@@ -72,7 +113,7 @@ export const Login: React.FC = () => {
               </HrefLink>
               <button
                 type="submit"
-                disabled={status === 'sending'}
+                disabled={status === 'sending' || !!pendingTerms}
                 className="bg-[var(--cs-primary)] text-white px-5 py-2 rounded-full text-sm font-semibold border-none cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
               >
                 {t('login_form_submit')}
@@ -81,6 +122,19 @@ export const Login: React.FC = () => {
           </form>
         </div>
       </div>
+
+      {pendingTerms && (
+        <TermsModal
+          title={t('login_terms_modal_title')}
+          intro={t('login_terms_modal_intro')}
+          terms={pendingTerms}
+          acceptLabel={t('login_terms_accept_button')}
+          cancelLabel={t('login_terms_cancel_button')}
+          onAccept={acceptTermsAndContinue}
+          onCancel={cancelTerms}
+          disabled={status === 'sending'}
+        />
+      )}
     </CsPage>
   );
 };

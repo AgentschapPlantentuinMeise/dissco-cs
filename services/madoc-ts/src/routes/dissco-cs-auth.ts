@@ -221,7 +221,18 @@ export const loginJson: RouteMiddleware<{ slug: string }, { email: string; passw
     sites,
   };
 
-  context.response.body = { user: { id: user.id, name: user.name } };
+  // Same building blocks getUserFromJwt() uses to compute terms status for Madoc's own
+  // server-rendered pages (see TermsPopup.tsx / site-terms.tsx) - read directly here since
+  // the dissco-cs SPA needs this at login time, before any JWT/site-scoped session exists.
+  const site = await context.siteManager.getSiteBySlug(context.params.slug);
+  const latestTerms = await context.siteManager.getLatestTermsId(site.id);
+  const siteUser = await context.siteManager.getSiteUserById(user.id, site.id);
+  const terms = {
+    hasTerms: !!latestTerms,
+    hasAccepted: !latestTerms || !!siteUser.terms_accepted?.includes(latestTerms.id),
+  };
+
+  context.response.body = { user: { id: user.id, name: user.name }, terms };
 };
 
 export const forgotPasswordJson: RouteMiddleware<{ slug: string }, { email: string }> = async context => {

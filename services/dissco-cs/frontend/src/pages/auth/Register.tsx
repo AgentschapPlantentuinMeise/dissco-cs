@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/CsPage';
-import { CsMarkdown } from '../../components/CsMarkdown';
+import { TermsModal } from '../../components/TermsModal';
 import { HrefLink } from '../../utility/href-link';
 import { madocClient, InvitationResponse, SiteTerms } from '../../api/madoc-client';
 import { useUser } from '../../hooks/use-current-user';
@@ -198,42 +198,18 @@ export const Register: React.FC = () => {
       </div>
 
       {showTermsPopup && terms && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={() => setShowTermsPopup(false)}
-        >
-          <div
-            className="bg-white rounded-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.2)] p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto"
-            onClick={e => e.stopPropagation()}
-          >
-            <h2 className="text-2xl text-[var(--cs-primary)] mb-4">{t('register_terms_modal_title')}</h2>
-            {terms.terms?.markdown ? (
-              <CsMarkdown content={terms.terms.markdown} />
-            ) : (
-              <p className="text-gray-800 whitespace-pre-line">{terms.terms?.text}</p>
-            )}
-            <div className="flex items-center gap-3 mt-6">
-              <button
-                type="button"
-                onClick={() => {
-                  setTermsAccepted(true);
-                  setShowTermsPopup(false);
-                  doRegister(true);
-                }}
-                className="px-4 py-2 rounded-full text-sm font-semibold border-none bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)]"
-              >
-                {t('register_terms_accept_button')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowTermsPopup(false)}
-                className="px-4 py-2 rounded-full text-sm font-semibold border border-gray-300 bg-transparent cursor-pointer hover:bg-gray-50"
-              >
-                {t('register_terms_close_button')}
-              </button>
-            </div>
-          </div>
-        </div>
+        <TermsModal
+          title={t('register_terms_modal_title')}
+          terms={terms}
+          acceptLabel={t('register_terms_accept_button')}
+          cancelLabel={t('register_terms_close_button')}
+          onAccept={() => {
+            setTermsAccepted(true);
+            setShowTermsPopup(false);
+            doRegister(true);
+          }}
+          onCancel={() => setShowTermsPopup(false)}
+        />
       )}
     </CsPage>
   );
