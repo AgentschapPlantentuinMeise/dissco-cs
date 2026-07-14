@@ -4,6 +4,7 @@ import { getSiteSlug } from './api/slug';
 import { disscoCSConfig } from './dissco-cs-config';
 import { SitePagesProvider } from './contexts/SitePagesContext';
 import { PageGate } from './components/PageGate';
+import { AuthGate } from './components/AuthGate';
 import { Homepage } from './pages/homepage/Homepage';
 import { Projects } from './pages/projects/Projects';
 import { ProjectDetail } from './pages/project-detail/ProjectDetail';
@@ -21,6 +22,10 @@ import { Announcements } from './pages/site-management/Announcements';
 import { UserManagement } from './pages/site-management/UserManagement';
 import { PageManagement } from './pages/site-management/PageManagement';
 import { InstitutionManagement } from './pages/site-management/InstitutionManagement';
+import { Login } from './pages/auth/Login';
+import { Register } from './pages/auth/Register';
+import { ForgotPassword } from './pages/auth/ForgotPassword';
+import { SetPassword } from './pages/auth/SetPassword';
 
 const slug = disscoCSConfig.collectiesSlug;
 
@@ -31,23 +36,29 @@ export const App: React.FC = () => {
     <BrowserRouter basename={basename}>
       <SitePagesProvider>
         <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/set-password" element={<SetPassword />} />
+          <Route path="/reset-password" element={<SetPassword />} />
+          <Route path="/activate-account" element={<SetPassword />} />
           <Route path="/" element={<Homepage />} />
           <Route path="/about" element={<PageGate pageKey="about"><About /></PageGate>} />
           <Route path="/help" element={<PageGate pageKey="help"><Help /></PageGate>} />
           <Route path="/institutions" element={<PageGate pageKey="institutions"><Institutions /></PageGate>} />
           <Route path="/institutions/:slug" element={<PageGate pageKey="institutions"><InstitutionDetail /></PageGate>} />
-          <Route path="/messageboard" element={<PageGate pageKey="forum"><MessageBoard /></PageGate>} />
+          <Route path="/messageboard" element={<PageGate pageKey="forum"><AuthGate><MessageBoard /></AuthGate></PageGate>} />
           <Route path="/contact" element={<PageGate pageKey="contact"><Contact /></PageGate>} />
-          <Route path="/my-tasks" element={<UserDashboard />} />
-          <Route path="/beheer" element={<SiteManagement />} />
-          <Route path="/beheer/projecten" element={<ProjectManagement />} />
-          <Route path="/beheer/meldingen" element={<Announcements />} />
-          <Route path="/beheer/gebruikers" element={<UserManagement />} />
-          <Route path="/beheer/paginas" element={<PageManagement />} />
-          <Route path="/beheer/instituten" element={<InstitutionManagement />} />
+          <Route path="/my-tasks" element={<AuthGate><UserDashboard /></AuthGate>} />
+          <Route path="/beheer" element={<AuthGate requireAdmin><SiteManagement /></AuthGate>} />
+          <Route path="/beheer/projecten" element={<AuthGate requireAdmin><ProjectManagement /></AuthGate>} />
+          <Route path="/beheer/meldingen" element={<AuthGate requireAdmin><Announcements /></AuthGate>} />
+          <Route path="/beheer/gebruikers" element={<AuthGate requireAdmin><UserManagement /></AuthGate>} />
+          <Route path="/beheer/paginas" element={<AuthGate requireAdmin><PageManagement /></AuthGate>} />
+          <Route path="/beheer/instituten" element={<AuthGate requireAdmin><InstitutionManagement /></AuthGate>} />
           <Route path={`/${slug}`} element={<Projects />} />
           <Route path={`/${slug}/:slug`} element={<ProjectDetail />} />
-          <Route path={`/${slug}/:slug/manifests/:manifestId/annotate`} element={<AnnotatePage />} />
+          <Route path={`/${slug}/:slug/manifests/:manifestId/annotate`} element={<AuthGate><AnnotatePage /></AuthGate>} />
         </Routes>
       </SitePagesProvider>
     </BrowserRouter>

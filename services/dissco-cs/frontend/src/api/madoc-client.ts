@@ -36,7 +36,46 @@ function publicRequest<T>(endpoint: string, query?: Record<string, unknown>): Pr
   return request<T>(`/s/${getSiteSlug()}/madoc/api${endpoint}${qs}`);
 }
 
+/**
+ * Site-scoped "public" API POST, served at /s/{slug}/madoc/api/...
+ * Unlike request(), this surfaces the server's `{ error }` JSON message (e.g. "Incorrect
+ * email or password") instead of a generic status-code string, since the auth pages that
+ * use this need to show that message to the user.
+ */
+async function publicPost<T>(endpoint: string, body: unknown): Promise<T> {
+  const response = await fetch(`/s/${getSiteSlug()}/madoc/api${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || `Request failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export type InvitationResponse =
+  | { expired: true }
+  | { id: string; message: unknown; role: string; site_role: string };
+
+export type SiteTerms = { id: string; createdAt: string; terms?: { markdown: string; text: string } };
+
 export const madocClient = {
+  // -- dissco-cs auth pages (register/login/forgot-password/set-password) --
+  getInvitation: (code: string) => publicRequest<InvitationResponse>('/auth/invitation', { code }),
+  // Existing, unmodified Madoc route - not part of the dissco-cs-auth.ts addition.
+  getTerms: () => publicRequest<{ latest: SiteTerms | null }>('/terms'),
+  register: (data: { name: string; email: string; capToken: string; code?: string; termsAccepted?: boolean }) =>
+    publicPost<{ ok: true; emailSent: boolean }>('/auth/register', data),
+  login: (data: { email: string; password: string }) =>
+    publicPost<{ user: { id: number; name: string } }>('/auth/login', data),
+  forgotPassword: (data: { email: string }) => publicPost<{ ok: true }>('/auth/forgot-password', data),
+  setPassword: (data: { c1: string; c2: string; password: string }) =>
+    publicPost<{ user: { id: number; name: string } | null }>('/auth/set-password', data),
+
   // -- publicRequest-based (site-scoped public reads) --
   getSiteProjects: (query?: { page?: number }) => publicRequest<any>('/projects', query),
   getSiteProject: (id: string | number) => publicRequest<any>(`/projects/${id}`),

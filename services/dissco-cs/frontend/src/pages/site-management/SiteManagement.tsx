@@ -1,7 +1,5 @@
 ﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate } from 'react-router-dom';
-import { useUser } from '../../hooks/use-current-user';
 import { getSiteSlug } from '../../api/slug';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/CsPage';
@@ -23,10 +21,7 @@ const TILES: Tile[] = [
 
 export const SiteManagement: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
-  const user = useUser();
   const siteSlug = getSiteSlug();
-
-  if (!user || !user.scope.includes('site.admin')) return <Navigate to="/" />;
 
   return (
     <CsPage>

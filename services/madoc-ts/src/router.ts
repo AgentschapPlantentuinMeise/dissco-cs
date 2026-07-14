@@ -283,6 +283,13 @@ import { siteUserAutocomplete } from './routes/site/site-user-autocomplete';
 import { siteUserImage } from './routes/site/site-user-image';
 import { siteUserProfile } from './routes/site/site-user-profile';
 import { parseJwt } from './middleware/parse-jwt';
+import {
+  forgotPasswordJson,
+  invitationJson,
+  loginJson,
+  registerJson,
+  setPasswordJson,
+} from './routes/dissco-cs-auth';
 import { userDetails } from './routes/user/details';
 import { accountEntryRedirect } from './routes/user/account-entry-redirect';
 import { forgotPassword } from './routes/user/forgot-password';
@@ -772,6 +779,23 @@ export const router = new TypedRouter({
     { isPublic: true },
   ],
   'post-reset-password': [TypedRouter.POST, '/s/:slug/reset-password', resetPasswordPage],
+
+  // dissco-cs fork addition: JSON auth API for the dissco-cs frontend's own pages.
+  'dissco-cs-auth-invitation': [
+    TypedRouter.GET,
+    '/s/:slug/madoc/api/auth/invitation',
+    invitationJson,
+    { isPublic: true },
+  ],
+  'dissco-cs-auth-register': [TypedRouter.POST, '/s/:slug/madoc/api/auth/register', registerJson],
+  'dissco-cs-auth-login': [TypedRouter.POST, '/s/:slug/madoc/api/auth/login', loginJson],
+  'dissco-cs-auth-forgot-password': [
+    TypedRouter.POST,
+    '/s/:slug/madoc/api/auth/forgot-password',
+    forgotPasswordJson,
+  ],
+  'dissco-cs-auth-set-password': [TypedRouter.POST, '/s/:slug/madoc/api/auth/set-password', setPasswordJson],
+
   'refresh-login': [TypedRouter.POST, '/s/:slug/auth/refresh', refreshToken],
   'api-authentication': [TypedRouter.POST, '/s/:slug/auth/api-token', authenticateApi],
   'get-login-refresh': [TypedRouter.GET, '/s/:slug/login/refresh', loginRefresh],

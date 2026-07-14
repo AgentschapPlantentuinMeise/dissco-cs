@@ -1,9 +1,9 @@
 ﻿import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { Navigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useUser } from '../../hooks/use-current-user';
+import { getSiteSlug } from '../../api/slug';
 import { madocClient } from '../../api/madoc-client';
 import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
 import { parseUrn } from '../../utility/parse-urn';
@@ -176,7 +176,10 @@ export const UserDashboard: React.FC = () => {
     { enabled: !!user }
   );
 
-  if (!user) return <Navigate to="/login" />;
+  if (!user) {
+    window.location.href = `/s/${getSiteSlug()}/login`;
+    return null;
+  }
 
   const tasks: CrowdsourcingTask[] = tasksData?.tasks ?? [];
 
