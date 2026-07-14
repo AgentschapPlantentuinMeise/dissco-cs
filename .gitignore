@@ -19,3 +19,13 @@ services/madoc-next
 scripts
 notes
 .vscode/*
+
+# Ingevulde deploy-secrets (sjablonen .env.dev.example/.env.prod.example blijven wel getrackt)
+.env.dev
+.env.prod
+
+# Gebouwde image-bundels ("docker save" output) -- enkel via scp naar de server, nooit in git
+*.tar
+
+# Persoonlijk draaiboek met omgeving-specifieke gegevens (gebruikersnaam, VM-IP), niet gedeeld
+docs/deploy-dev-server.md

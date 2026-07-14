@@ -1,0 +1,12 @@
+# Extra, enkel voor de dev/testomgeving: een mailcatcher zodat testers
+# registratie-/wachtwoord-reset-mails kunnen bekijken zonder echte mailserver.
+# Gebruik samen met docker-compose.release.yml, NIET op productie:
+# docker compose -f docker-compose.release.yml -f docker-compose.dev.yml --env-file .env.dev up -d
+services:
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      # Bewust open voor testers (geen login op Mailpit) -- zie docs/deploy-dev-server.md.
+      - "8025:8025"
