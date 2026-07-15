@@ -252,7 +252,12 @@
   "set_password_form_submit": "Wachtwoord instellen",
   "set_password_form_error": "Er ging iets mis. Probeer het opnieuw.",
   "set_password_invalid_link": "Deze link is ongeldig of verlopen.",
-  "set_password_error_length": "Het wachtwoord moet minstens 8 tekens lang zijn.",
-  "set_password_error_complexity": "Het wachtwoord moet minstens 1 letter en 1 cijfer bevatten.",
-  "set_password_error_mismatch": "De wachtwoorden komen niet overeen."
+  "set_password_req_length": "Minstens 8 tekens",
+  "set_password_req_uppercase": "Een hoofdletter",
+  "set_password_req_lowercase": "Een kleine letter",
+  "set_password_req_number": "Een cijfer",
+  "set_password_req_special": "Een speciaal teken",
+  "set_password_error_mismatch": "De wachtwoorden komen niet overeen.",
+  "password_toggle_show": "Toon wachtwoord",
+  "password_toggle_hide": "Verberg wachtwoord"
 }

@@ -253,7 +253,12 @@
   "set_password_form_submit": "Set password",
   "set_password_form_error": "Something went wrong. Please try again.",
   "set_password_invalid_link": "This link is invalid or has expired.",
-  "set_password_error_length": "Password must be at least 8 characters long.",
-  "set_password_error_complexity": "Password must contain at least 1 letter and 1 number.",
-  "set_password_error_mismatch": "The passwords don't match."
+  "set_password_req_length": "At least 8 characters",
+  "set_password_req_uppercase": "An uppercase letter",
+  "set_password_req_lowercase": "A lowercase letter",
+  "set_password_req_number": "A number",
+  "set_password_req_special": "A special character",
+  "set_password_error_mismatch": "The passwords don't match.",
+  "password_toggle_show": "Show password",
+  "password_toggle_hide": "Hide password"
 }

@@ -252,7 +252,12 @@
   "set_password_form_submit": "Définir le mot de passe",
   "set_password_form_error": "Une erreur s'est produite. Veuillez réessayer.",
   "set_password_invalid_link": "Ce lien n'est plus valide ou a expiré.",
-  "set_password_error_length": "Le mot de passe doit comporter au moins 8 caractères.",
-  "set_password_error_complexity": "Le mot de passe doit contenir au moins 1 lettre et 1 chiffre.",
-  "set_password_error_mismatch": "Les mots de passe ne correspondent pas."
+  "set_password_req_length": "Au moins 8 caractères",
+  "set_password_req_uppercase": "Une majuscule",
+  "set_password_req_lowercase": "Une minuscule",
+  "set_password_req_number": "Un chiffre",
+  "set_password_req_special": "Un caractère spécial",
+  "set_password_error_mismatch": "Les mots de passe ne correspondent pas.",
+  "password_toggle_show": "Afficher le mot de passe",
+  "password_toggle_hide": "Masquer le mot de passe"
 }

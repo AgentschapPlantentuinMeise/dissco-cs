@@ -252,7 +252,12 @@
   "set_password_form_submit": "Passwort festlegen",
   "set_password_form_error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
   "set_password_invalid_link": "Dieser Link ist ungültig oder abgelaufen.",
-  "set_password_error_length": "Das Passwort muss mindestens 8 Zeichen lang sein.",
-  "set_password_error_complexity": "Das Passwort muss mindestens 1 Buchstaben und 1 Zahl enthalten.",
-  "set_password_error_mismatch": "Die Passwörter stimmen nicht überein."
+  "set_password_req_length": "Mindestens 8 Zeichen",
+  "set_password_req_uppercase": "Ein Großbuchstabe",
+  "set_password_req_lowercase": "Ein Kleinbuchstabe",
+  "set_password_req_number": "Eine Zahl",
+  "set_password_req_special": "Ein Sonderzeichen",
+  "set_password_error_mismatch": "Die Passwörter stimmen nicht überein.",
+  "password_toggle_show": "Passwort anzeigen",
+  "password_toggle_hide": "Passwort verbergen"
 }

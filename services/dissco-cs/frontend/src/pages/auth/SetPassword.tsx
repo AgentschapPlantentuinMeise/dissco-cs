@@ -3,17 +3,19 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/CsPage';
 import { madocClient } from '../../api/madoc-client';
+import { EyeIcon } from '../../icons/EyeIcon';
+import { EyeOffIcon } from '../../icons/EyeOffIcon';
 
 // Mirrors validatePasswordStrength() in services/madoc-ts/src/routes/dissco-cs-auth.ts -
 // this is client-side feedback only, the server call is the real source of truth.
-function checkPasswordStrength(password: string): string | null {
-  if (password.length < 8) {
-    return 'set_password_error_length';
-  }
-  if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
-    return 'set_password_error_complexity';
-  }
-  return null;
+function getPasswordRequirements(password: string) {
+  return [
+    { key: 'set_password_req_length', met: password.length >= 8 },
+    { key: 'set_password_req_uppercase', met: /[A-Z]/.test(password) },
+    { key: 'set_password_req_lowercase', met: /[a-z]/.test(password) },
+    { key: 'set_password_req_number', met: /[0-9]/.test(password) },
+    { key: 'set_password_req_special', met: /[^a-zA-Z0-9]/.test(password) },
+  ];
 }
 
 export const SetPassword: React.FC = () => {
@@ -24,6 +26,8 @@ export const SetPassword: React.FC = () => {
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [status, setStatus] = useState<'idle' | 'sending' | 'error'>('idle');
   const [error, setError] = useState('');
   const [linkValid, setLinkValid] = useState<boolean | null>(null);
@@ -38,8 +42,9 @@ export const SetPassword: React.FC = () => {
       .catch(() => setLinkValid(false));
   }, [c1, c2]);
 
-  const strengthKey = password ? checkPasswordStrength(password) : null;
-  const canSubmit = !strengthKey && password === confirmPassword && password.length > 0;
+  const passwordRequirements = getPasswordRequirements(password);
+  const passwordValid = passwordRequirements.every(req => req.met);
+  const canSubmit = passwordValid && password === confirmPassword && password.length > 0;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,25 +87,56 @@ export const SetPassword: React.FC = () => {
           <form onSubmit={submit} className="flex flex-col gap-4">
             <label className="flex flex-col gap-1">
               <span className="text-sm font-medium text-gray-700">{t('set_password_form_password')}</span>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="border border-gray-300 rounded-lg p-2"
-              />
-              {strengthKey && <span className="text-sm text-red-700">{t(strengthKey)}</span>}
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="border border-gray-300 rounded-lg p-2 w-full pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  aria-label={t(showPassword ? 'password_toggle_hide' : 'password_toggle_show')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-500 flex items-center p-1"
+                >
+                  {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              </div>
+              {password && (
+                <ul className="flex flex-col gap-0.5 mt-1">
+                  {passwordRequirements.map(req => (
+                    <li
+                      key={req.key}
+                      className={`text-sm ${req.met ? 'text-green-700' : 'text-gray-500'}`}
+                    >
+                      <span aria-hidden="true">{req.met ? '✓' : '○'}</span> {t(req.key)}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </label>
 
             <label className="flex flex-col gap-1">
               <span className="text-sm font-medium text-gray-700">{t('set_password_form_confirm')}</span>
-              <input
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
-                className="border border-gray-300 rounded-lg p-2"
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  required
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  className="border border-gray-300 rounded-lg p-2 w-full pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(v => !v)}
+                  aria-label={t(showConfirmPassword ? 'password_toggle_hide' : 'password_toggle_show')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-500 flex items-center p-1"
+                >
+                  {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              </div>
               {confirmPassword && confirmPassword !== password && (
                 <span className="text-sm text-red-700">{t('set_password_error_mismatch')}</span>
               )}

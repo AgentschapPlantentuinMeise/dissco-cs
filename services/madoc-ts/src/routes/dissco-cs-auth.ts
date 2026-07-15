@@ -22,11 +22,20 @@ const DEFAULT_TRANSCRIBER_ROLE = 'transcriber';
 const RESET_LINK_MAX_AGE_DAYS = 1;
 
 function validatePasswordStrength(password: string): { valid: boolean; reason?: string } {
-  if (!password || password.length < 8) {
-    return { valid: false, reason: 'Password must be at least 8 characters long' };
-  }
-  if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
-    return { valid: false, reason: 'Password must contain at least one letter and one number' };
+  const isValid =
+    !!password &&
+    password.length >= 8 &&
+    /[a-z]/.test(password) &&
+    /[A-Z]/.test(password) &&
+    /[0-9]/.test(password) &&
+    /[^a-zA-Z0-9]/.test(password);
+
+  if (!isValid) {
+    return {
+      valid: false,
+      reason:
+        'Password must be at least 8 characters long and contain an uppercase letter, a lowercase letter, a number and a special character',
+    };
   }
   return { valid: true };
 }
