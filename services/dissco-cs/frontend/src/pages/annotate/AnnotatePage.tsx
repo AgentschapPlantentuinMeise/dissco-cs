@@ -25,6 +25,18 @@ function getImageServiceId(canvas: any): string | undefined {
   return service?.id || service?.['@id'];
 }
 
+// crypto.randomUUID() only exists in secure contexts (https/localhost); this dev
+// deployment is served over plain http, so fall back to crypto.getRandomValues,
+// which is available everywhere.
+function generateUUID(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 export function AnnotatePage() {
   const { t } = useTranslation('dissco-cs');
   const { projectId, manifestId } = useRouteContext();
@@ -76,7 +88,7 @@ export function AnnotatePage() {
   // `revision === revision.id` of the submitted revision (extract-valid-revision-changes.ts), so
   // edits must be tagged with the SAME id that's later submitted as `revision.id`. A fresh id per
   // save (e.g. crypto.randomUUID() at save time) would never match what was tagged on the fields.
-  const revisionIdRef = useRef<string>(crypto.randomUUID());
+  const revisionIdRef = useRef<string>(generateUUID());
   // Path of the field currently being drawn on the image, if any — coordinates are only valid for
   // the canvas shown when drawing started, so switching canvas mid-draw cancels it (effect below).
   const [drawingPath, setDrawingPath] = useState<DocumentPath | null>(null);
@@ -111,7 +123,7 @@ export function AnnotatePage() {
 
   useEffect(() => {
     if (model) {
-      revisionIdRef.current = crypto.randomUUID();
+      revisionIdRef.current = generateUUID();
       setAnnotationDocument(createEmptyDocument(model));
     }
   }, [model]);
