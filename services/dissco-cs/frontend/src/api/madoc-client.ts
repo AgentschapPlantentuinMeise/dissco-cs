@@ -76,6 +76,7 @@ export const madocClient = {
   forgotPassword: (data: { email: string }) => publicPost<{ ok: true }>('/auth/forgot-password', data),
   setPassword: (data: { c1: string; c2: string; password: string }) =>
     publicPost<{ user: { id: number; name: string } | null }>('/auth/set-password', data),
+  checkReset: (data: { c1: string; c2: string }) => publicRequest<{ valid: boolean }>('/auth/check-reset', data),
 
   // -- publicRequest-based (site-scoped public reads) --
   getSiteProjects: (query?: { page?: number }) => publicRequest<any>('/projects', query),

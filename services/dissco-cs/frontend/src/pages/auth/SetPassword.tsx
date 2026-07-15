@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/CsPage';
@@ -26,6 +26,17 @@ export const SetPassword: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'error'>('idle');
   const [error, setError] = useState('');
+  const [linkValid, setLinkValid] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!c1 || !c2) {
+      return;
+    }
+    madocClient
+      .checkReset({ c1, c2 })
+      .then(res => setLinkValid(res.valid))
+      .catch(() => setLinkValid(false));
+  }, [c1, c2]);
 
   const strengthKey = password ? checkPasswordStrength(password) : null;
   const canSubmit = !strengthKey && password === confirmPassword && password.length > 0;
@@ -46,7 +57,7 @@ export const SetPassword: React.FC = () => {
     }
   };
 
-  if (!c1 || !c2) {
+  if (!c1 || !c2 || linkValid === false) {
     return (
       <CsPage>
         <div className="cs-main-wrapper pt-10 pb-16">

@@ -284,6 +284,7 @@ import { siteUserImage } from './routes/site/site-user-image';
 import { siteUserProfile } from './routes/site/site-user-profile';
 import { parseJwt } from './middleware/parse-jwt';
 import {
+  checkResetJson,
   forgotPasswordJson,
   invitationJson,
   loginJson,
@@ -795,6 +796,12 @@ export const router = new TypedRouter({
     forgotPasswordJson,
   ],
   'dissco-cs-auth-set-password': [TypedRouter.POST, '/s/:slug/madoc/api/auth/set-password', setPasswordJson],
+  'dissco-cs-auth-check-reset': [
+    TypedRouter.GET,
+    '/s/:slug/madoc/api/auth/check-reset',
+    checkResetJson,
+    { isPublic: true },
+  ],
 
   'refresh-login': [TypedRouter.POST, '/s/:slug/auth/refresh', refreshToken],
   'api-authentication': [TypedRouter.POST, '/s/:slug/auth/api-token', authenticateApi],

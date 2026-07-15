@@ -280,6 +280,34 @@ export const forgotPasswordJson: RouteMiddleware<{ slug: string }, { email: stri
   context.response.body = { ok: true };
 };
 
+// Read-only mirror of the validity checks in setPasswordJson below - lets the frontend find
+// out up front (on page load) whether a reset link is already used/expired, without spending
+// it. Only setPasswordJson (via setUserPassword) may consume the link.
+export const checkResetJson: RouteMiddleware<{ slug: string }> = async context => {
+  const c1 = context.query.c1 as string | undefined;
+  const c2 = context.query.c2 as string | undefined;
+
+  if (!c1 || !c2) {
+    context.response.body = { valid: false };
+    return;
+  }
+
+  try {
+    const resetRow = await context.siteManager.getPasswordReset(c1, c2);
+
+    const shouldExpire = new Date();
+    shouldExpire.setDate(shouldExpire.getDate() - RESET_LINK_MAX_AGE_DAYS);
+    if (shouldExpire.getTime() > resetRow.created.getTime()) {
+      context.response.body = { valid: false };
+      return;
+    }
+
+    context.response.body = { valid: true };
+  } catch (e) {
+    context.response.body = { valid: false };
+  }
+};
+
 export const setPasswordJson: RouteMiddleware<
   { slug: string },
   { c1: string; c2: string; password: string }
