@@ -208,7 +208,16 @@ export const registerJson: RouteMiddleware<
 export const loginJson: RouteMiddleware<{ slug: string }, { email: string; password: string }> = async context => {
   const { email, password } = context.requestBody;
 
-  const resp = await context.siteManager.verifyLogin(email, password);
+  // verifyLogin() looks up the user by email via slonik's connection.one(), which throws
+  // a NotFoundError (rather than returning undefined) when the email doesn't exist - catch
+  // that here so an unknown account gives the same "Incorrect email or password" response
+  // as a wrong password, instead of an unhandled 404 with no JSON body.
+  let resp;
+  try {
+    resp = await context.siteManager.verifyLogin(email, password);
+  } catch (err) {
+    resp = undefined;
+  }
   if (!resp) {
     throw new NotAuthorized('Incorrect email or password');
   }
