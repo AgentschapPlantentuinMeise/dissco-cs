@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/CsPage';
 import { ToggleSwitch } from '../../components/ToggleSwitch';
+import { SaveButton } from '../../components/SaveButton';
+import { ActiveStatusToggle } from '../../components/ActiveStatusToggle';
 import { PencilIcon } from '../../icons/PencilIcon';
 import { ArrowUpIcon } from '../../icons/ArrowUpIcon';
 import { ArrowDownIcon } from '../../icons/ArrowDownIcon';
@@ -15,6 +17,17 @@ const CONTENT_PAGE_KEYS: SitePageKey[] = ['about', 'help', 'contact', 'welcome']
 const LANGUAGES = disscoCSConfig.supportedLanguages;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// contact/help/forum/institutions share their title with the navbar and public page,
+// so they resolve to that single translation key; about/welcome keep their own
+// (shorter / distinct) label here, hence the fallback.
+const MERGED_PAGE_TITLE_KEY: Partial<Record<SitePageKey, string>> = {
+  contact: 'nav_contact',
+  help: 'nav_help',
+  forum: 'nav_messageboard',
+  institutions: 'nav_institutions',
+};
+const pageLabelKey = (key: SitePageKey) => MERGED_PAGE_TITLE_KEY[key] ?? `sm_pages_page_${key}`;
+
 export const PageManagement: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
   const { pages, loading, refresh } = useSitePages();
@@ -22,7 +35,7 @@ export const PageManagement: React.FC = () => {
   const [selectedLang, setSelectedLang] = useState<SitePageLang>(LANGUAGES[0].code);
   const [draftContent, setDraftContent] = useState<SitePage['content']>({});
   const [draftContactEmail, setDraftContactEmail] = useState('');
-  const [draftShowContactForm, setDraftShowContactForm] = useState(true);
+  const [draftShowContactForm, setDraftShowContactForm] = useState(false);
   const [saved, setSaved] = useState(false);
 
   // Pages are fetched once on app load; re-fetch on entering this screen so content added
@@ -39,7 +52,7 @@ export const PageManagement: React.FC = () => {
     const page = pages.find(p => p.page_key === selectedKey);
     setDraftContent(page?.content ?? {});
     setDraftContactEmail(page?.contact_email ?? '');
-    setDraftShowContactForm(page?.show_contact_form ?? true);
+    setDraftShowContactForm(page?.show_contact_form ?? false);
     setSaved(false);
   }, [selectedKey, loading]);
 
@@ -47,6 +60,14 @@ export const PageManagement: React.FC = () => {
 
   const toggleActive = async (key: SitePageKey) => {
     await sitePagesApi.setActive(key, !isActive(key));
+    refresh();
+  };
+
+  const toggleShowContactForm = async () => {
+    const next = !draftShowContactForm;
+    setDraftShowContactForm(next);
+    setSaved(false);
+    await sitePagesApi.setShowContactForm(next);
     refresh();
   };
 
@@ -69,7 +90,6 @@ export const PageManagement: React.FC = () => {
     if (!selectedKey || !canSave) return;
     await Promise.all([
       ...LANGUAGES.map(lang => sitePagesApi.setContent(selectedKey, lang.code, draftContent[lang.code] ?? '')),
-      ...(isContact ? [sitePagesApi.setShowContactForm(draftShowContactForm)] : []),
       ...(isContact && draftShowContactForm ? [sitePagesApi.setContactEmail(draftContactEmail.trim())] : []),
     ]);
     refresh();
@@ -99,20 +119,17 @@ export const PageManagement: React.FC = () => {
                   >
                     <span
                       className={`truncate min-w-0 ${selectedKey === key ? 'font-semibold' : ''}`}
-                      title={t(`sm_pages_page_${key}`)}
+                      title={t(pageLabelKey(key))}
                     >
-                      {t(`sm_pages_page_${key}`)}
+                      {t(pageLabelKey(key))}
                     </span>
 
                     <span className="flex items-center gap-3 flex-shrink-0">
-                      <span className="text-xs text-gray-500 w-12">
-                        {isActive(key) ? t('sm_pages_active') : t('sm_pages_inactive')}
-                      </span>
-
-                      <ToggleSwitch
-                        checked={isActive(key)}
+                      <ActiveStatusToggle
+                        active={isActive(key)}
                         onChange={() => void toggleActive(key)}
-                        label={t(`sm_pages_page_${key}`)}
+                        label={t(pageLabelKey(key))}
+                        labelWidthClassName="w-12"
                       />
 
                       <span className="w-7 flex justify-center">
@@ -155,11 +172,11 @@ export const PageManagement: React.FC = () => {
               <div className="bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold text-[var(--cs-primary)]">
-                    {t(`sm_pages_page_${selectedKey}`)}
+                    {t(pageLabelKey(selectedKey))}
                   </h2>
                   <button
                     onClick={() => setSelectedKey(null)}
-                    aria-label={t('sm_pages_close')}
+                    aria-label={t('common_close')}
                     className="bg-transparent border-none cursor-pointer text-gray-500 hover:text-gray-800 text-lg leading-none p-1"
                   >
                     ✕
@@ -204,10 +221,7 @@ export const PageManagement: React.FC = () => {
                     <div className="flex items-center gap-3 mt-4">
                       <ToggleSwitch
                         checked={draftShowContactForm}
-                        onChange={() => {
-                          setDraftShowContactForm(prev => !prev);
-                          setSaved(false);
-                        }}
+                        onChange={() => void toggleShowContactForm()}
                         label={t('sm_pages_contact_show_form')}
                       />
                       <span className="text-sm font-medium text-gray-700">{t('sm_pages_contact_show_form')}</span>
@@ -232,21 +246,14 @@ export const PageManagement: React.FC = () => {
                 )}
 
                 <div className="flex items-center gap-3 mt-4">
-                  <button
+                  <SaveButton
                     onClick={() => void saveContent()}
                     disabled={!canSave}
-                    title={!canSave ? t('sm_pages_fill_all_langs') : undefined}
-                    className={`px-4 py-2 rounded-full text-sm font-semibold border-none ${
-                      canSave
-                        ? 'bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)]'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    }`}
-                  >
-                    {t('sm_pages_save')}
-                  </button>
+                    title={!canSave ? t('common_fill_required_fields') : undefined}
+                  />
 
                   {!allLangsFilled && (
-                    <span className="text-sm text-gray-500">{t('sm_pages_fill_all_langs')}</span>
+                    <span className="text-sm text-gray-500">{t('common_fill_required_fields')}</span>
                   )}
                   {allLangsFilled && !emailValid && (
                     <span className="text-sm text-gray-500">{t('sm_pages_contact_email_invalid')}</span>
@@ -256,7 +263,7 @@ export const PageManagement: React.FC = () => {
                 {saved && (
                   <div className="mt-4 flex items-center gap-2 bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-2">
                     <span aria-hidden="true">✓</span>
-                    <span className="text-sm font-medium">{t('sm_pages_saved')}</span>
+                    <span className="text-sm font-medium">{t('common_saved')}</span>
                   </div>
                 )}
               </div>

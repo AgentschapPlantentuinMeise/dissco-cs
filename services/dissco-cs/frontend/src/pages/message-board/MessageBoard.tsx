@@ -5,7 +5,7 @@ import { MessageForm, MessageFormData } from '../../components/messageform/Messa
 import { useUser } from '../../hooks/use-current-user';
 import { useTranslation } from 'react-i18next';
 import { forumApi, ForumTopicWithReplyCount, ForumReply } from '../../api/cs-api';
-import { TrashIcon } from '../../icons/TrashIcon';
+import { DeleteIconButton } from '../../components/DeleteIconButton';
 import { ChevronIcon } from '../../icons/ChevronIcon';
 import { ArrowRightIcon } from '../../icons/ArrowRightIcon';
 import { SearchIcon } from '../../icons/SearchIcon';
@@ -132,9 +132,9 @@ export const MessageBoard: React.FC = () => {
     <CsPage>
       <div className="cs-container pt-10 pb-16">
         <header className="flex justify-between items-center mb-4">
-          <h1 className="text-4xl text-[var(--cs-primary)] m-0">{t('forum_title')}</h1>
+          <h1 className="text-4xl text-[var(--cs-primary)] m-0">{t('nav_messageboard')}</h1>
           <button className={btnPrimary} onClick={() => setShowNewForm(v => !v)}>
-            {showNewForm ? t('forum_btn_cancel') : t('forum_btn_new_message')}
+            {showNewForm ? t('common_cancel') : t('forum_btn_new_message')}
           </button>
         </header>
 
@@ -181,14 +181,7 @@ export const MessageBoard: React.FC = () => {
                             <ChevronIcon className={`transition-transform duration-200 ${expandedId === msg.id ? 'rotate-180' : ''}`} />
                           </button>
                           {user?.scope.includes('site.admin') && (
-                            <button
-                              className="bg-transparent border-none cursor-pointer text-gray-600 text-base px-1 flex items-center hover:text-[var(--cs-primary)] transition-colors duration-200"
-                              onClick={() => setPendingDeleteTopicId(msg.id)}
-                              aria-label={t('forum_btn_delete')}
-                              title={t('forum_btn_delete')}
-                            >
-                              <TrashIcon />
-                            </button>
+                            <DeleteIconButton onClick={() => setPendingDeleteTopicId(msg.id)} />
                           )}
                         </div>
                       </div>
@@ -265,8 +258,8 @@ export const MessageBoard: React.FC = () => {
         {pendingDeleteTopicId !== null && (
           <ConfirmDialog
             message={t('forum_confirm_delete')}
-            confirmLabel={t('forum_btn_delete')}
-            cancelLabel={t('forum_btn_cancel')}
+            confirmLabel={t('common_delete')}
+            cancelLabel={t('common_cancel')}
             onConfirm={confirmDeleteTopic}
             onCancel={() => setPendingDeleteTopicId(null)}
           />

@@ -54,7 +54,7 @@ export class SitePagesRepository {
         is_active: true,
         content: {},
         contact_email: null,
-        show_contact_form: true,
+        show_contact_form: false,
         sort_order: defaultIndex,
         updated_at: new Date(),
       };

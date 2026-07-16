@@ -3,9 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/CsPage';
-import { ToggleSwitch } from '../../components/ToggleSwitch';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { TrashIcon } from '../../icons/TrashIcon';
+import { DeleteIconButton } from '../../components/DeleteIconButton';
+import { SaveButton } from '../../components/SaveButton';
+import { CancelButton } from '../../components/CancelButton';
+import { ActiveStatusToggle } from '../../components/ActiveStatusToggle';
+import { ActiveToggleField } from '../../components/ActiveToggleField';
 import { PencilIcon } from '../../icons/PencilIcon';
 import { ArrowLeftIcon } from '../../icons/ArrowLeftIcon';
 import { disscoCSConfig } from '../../dissco-cs-config';
@@ -171,11 +174,8 @@ export const Announcements: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-xs text-gray-500 w-16 text-right">
-                      {announcement.is_active ? t('sm_pages_active') : t('sm_pages_inactive')}
-                    </span>
-                    <ToggleSwitch
-                      checked={announcement.is_active}
+                    <ActiveStatusToggle
+                      active={announcement.is_active}
                       onChange={() => void toggleActive(announcement)}
                       label={displayText(announcement.title, announcement.id)}
                     />
@@ -187,14 +187,7 @@ export const Announcements: React.FC = () => {
                     >
                       <PencilIcon />
                     </button>
-                    <button
-                      onClick={() => setPendingDeleteId(announcement.id)}
-                      aria-label={t('sm_announcements_delete')}
-                      title={t('sm_announcements_delete')}
-                      className="bg-transparent border-none cursor-pointer text-gray-600 text-base px-1 flex items-center hover:text-[var(--cs-primary)] transition-colors duration-200"
-                    >
-                      <TrashIcon />
-                    </button>
+                    <DeleteIconButton onClick={() => setPendingDeleteId(announcement.id)} />
                   </div>
                 </li>
               ))}
@@ -202,7 +195,7 @@ export const Announcements: React.FC = () => {
           )}
 
           {isFormOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 overflow-y-auto">
+            <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 pb-4 pt-20 overflow-y-auto">
               <div className="bg-white rounded-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.2)] p-6 max-w-xl w-full my-8">
                 <h2 className="text-xl font-semibold text-[var(--cs-primary)] mb-4">
                   {editingId !== null ? t('sm_announcements_edit') : t('sm_announcements_new')}
@@ -302,35 +295,19 @@ export const Announcements: React.FC = () => {
                   </label>
                 </div>
 
-                <label className="flex items-center gap-3 mb-6">
-                  <ToggleSwitch
-                    checked={draft.isActive}
-                    onChange={() => setDraft(prev => ({ ...prev, isActive: !prev.isActive }))}
-                    label={t('sm_announcements_field_active')}
-                  />
-                  <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_active')}</span>
-                </label>
+                <ActiveToggleField
+                  checked={draft.isActive}
+                  onChange={() => setDraft(prev => ({ ...prev, isActive: !prev.isActive }))}
+                />
 
                 <div className="flex items-center gap-3">
-                  <button
+                  <SaveButton
                     onClick={() => void save()}
                     disabled={!canSave}
-                    title={!canSave ? t('sm_pages_fill_all_langs') : undefined}
-                    className={`px-4 py-2 rounded-full text-sm font-semibold border-none ${
-                      canSave
-                        ? 'bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)]'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    }`}
-                  >
-                    {t('sm_pages_save')}
-                  </button>
-                  <button
-                    onClick={cancelForm}
-                    className="px-4 py-2 rounded-full text-sm font-semibold border border-gray-300 bg-transparent cursor-pointer hover:bg-gray-50"
-                  >
-                    {t('sm_announcements_cancel')}
-                  </button>
-                  {!canSave && <span className="text-sm text-gray-500">{t('sm_pages_fill_all_langs')}</span>}
+                    title={!canSave ? t('common_fill_required_fields') : undefined}
+                  />
+                  <CancelButton onClick={cancelForm} />
+                  {!canSave && <span className="text-sm text-gray-500">{t('common_fill_required_fields')}</span>}
                 </div>
               </div>
             </div>
@@ -339,8 +316,8 @@ export const Announcements: React.FC = () => {
           {pendingDeleteId !== null && (
             <ConfirmDialog
               message={t('sm_announcements_confirm_delete')}
-              confirmLabel={t('sm_announcements_delete')}
-              cancelLabel={t('sm_announcements_cancel')}
+              confirmLabel={t('common_delete')}
+              cancelLabel={t('common_cancel')}
               onConfirm={() => void confirmDelete()}
               onCancel={() => setPendingDeleteId(null)}
             />

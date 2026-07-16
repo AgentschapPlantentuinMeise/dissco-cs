@@ -127,7 +127,7 @@ export class DisscoCSRepository {
           content JSONB NOT NULL DEFAULT '{}'::jsonb,
           contact_email TEXT,
           sort_order INTEGER NOT NULL DEFAULT 0,
-          show_contact_form BOOLEAN NOT NULL DEFAULT TRUE,
+          show_contact_form BOOLEAN NOT NULL DEFAULT FALSE,
           updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
           PRIMARY KEY (site_id, page_key)
         )

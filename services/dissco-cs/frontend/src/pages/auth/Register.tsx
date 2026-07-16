@@ -202,7 +202,7 @@ export const Register: React.FC = () => {
           title={t('register_terms_modal_title')}
           terms={terms}
           acceptLabel={t('register_terms_accept_button')}
-          cancelLabel={t('register_terms_close_button')}
+          cancelLabel={t('common_close')}
           onAccept={() => {
             setTermsAccepted(true);
             setShowTermsPopup(false);

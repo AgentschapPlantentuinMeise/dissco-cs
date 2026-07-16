@@ -72,7 +72,7 @@ export const MessageForm: React.FC<Props> = ({ onSubmit, onCancel, initialTaskUr
             className="bg-transparent border border-gray-300 px-3 py-1.5 rounded text-[0.85rem] text-gray-600 cursor-pointer whitespace-nowrap transition-[border-color,color] duration-200 hover:border-[var(--cs-primary)] hover:text-[var(--cs-primary)]"
             onClick={onCancel}
           >
-            {t('forum_btn_cancel') || 'Annuleren'}
+            {t('common_cancel') || 'Annuleren'}
           </button>
         )}
       </div>

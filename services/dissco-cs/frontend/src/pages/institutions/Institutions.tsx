@@ -17,7 +17,7 @@ export const Institutions: React.FC = () => {
         <div className="cs-container">
 
           <header className="mb-4">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('institutions_title')}</h1>
+            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('nav_institutions')}</h1>
             <p className="text-lg leading-relaxed text-gray-600 mb-6">{t('institutions_intro')}</p>
           </header>
 

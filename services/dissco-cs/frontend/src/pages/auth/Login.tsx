@@ -136,7 +136,7 @@ export const Login: React.FC = () => {
           }
           terms={pendingTerms}
           acceptLabel={t('login_terms_accept_button')}
-          cancelLabel={t('login_terms_cancel_button')}
+          cancelLabel={t('common_cancel')}
           onAccept={acceptTermsAndContinue}
           onCancel={cancelTerms}
           disabled={status === 'sending'}

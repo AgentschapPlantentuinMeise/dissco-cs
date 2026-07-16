@@ -39,13 +39,13 @@ export const Contact: React.FC = () => {
         <div className="cs-container max-w-2xl">
 
           <header className="mb-4">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('contact_title')}</h1>
+            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('nav_contact')}</h1>
           </header>
 
         
 
           <section className="mb-8">
-            {dbContent ? <CsMarkdown content={dbContent} /> : <p className="text-base text-gray-600">{t('contact_empty')}</p>}
+            {dbContent ? <CsMarkdown content={dbContent} /> : <p className="text-base text-gray-600">{t('common_no_content')}</p>}
           </section>
 
           {showForm && (

@@ -16,13 +16,13 @@ export const Help: React.FC = () => {
         <div className="cs-container">
 
           <header className="mb-4">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('help_title')}</h1>
+            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('nav_help')}</h1>
           </header>
 
         
 
           <section>
-            {dbContent ? <CsMarkdown content={dbContent} /> : <p className="text-base text-gray-600">{t('help_empty')}</p>}
+            {dbContent ? <CsMarkdown content={dbContent} /> : <p className="text-base text-gray-600">{t('common_no_content')}</p>}
           </section>
 
         </div>
