@@ -126,7 +126,14 @@ export const Login: React.FC = () => {
       {pendingTerms && (
         <TermsModal
           title={t('login_terms_modal_title')}
-          intro={t('login_terms_modal_intro')}
+          intro={
+            <>
+              {t('login_terms_modal_intro')}{' '}
+              <HrefLink href="/contact" className="text-[var(--cs-primary)]">
+                {t('login_terms_modal_contact_link')}
+              </HrefLink>
+            </>
+          }
           terms={pendingTerms}
           acceptLabel={t('login_terms_accept_button')}
           cancelLabel={t('login_terms_cancel_button')}

@@ -4,7 +4,7 @@ import { SiteTerms } from '../api/madoc-client';
 
 type TermsModalProps = {
   title: string;
-  intro?: string;
+  intro?: React.ReactNode;
   terms: SiteTerms;
   acceptLabel: string;
   cancelLabel: string;
