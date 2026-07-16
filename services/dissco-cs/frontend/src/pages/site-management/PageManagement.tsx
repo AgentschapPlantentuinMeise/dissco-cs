@@ -11,7 +11,7 @@ import { disscoCSConfig } from '../../dissco-cs-config';
 import { sitePagesApi, SitePage, SitePageKey, SitePageLang } from '../../api/cs-api';
 import { useSitePages } from '../../contexts/SitePagesContext';
 
-const CONTENT_PAGE_KEYS: SitePageKey[] = ['about', 'help', 'contact'];
+const CONTENT_PAGE_KEYS: SitePageKey[] = ['about', 'help', 'contact', 'welcome'];
 const LANGUAGES = disscoCSConfig.supportedLanguages;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -192,6 +192,12 @@ export const PageManagement: React.FC = () => {
                   placeholder={t('sm_pages_content_placeholder')}
                   className="w-full min-h-[260px] border border-gray-300 rounded-lg p-3 font-mono text-sm"
                 />
+
+                {selectedKey === 'welcome' && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    {t('sm_pages_welcome_hint')} <code>{'{{name}}'}</code>
+                  </p>
+                )}
 
                 {isContact && (
                   <>

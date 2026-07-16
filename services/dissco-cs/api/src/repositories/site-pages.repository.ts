@@ -2,10 +2,10 @@ import { Pool, PoolClient } from 'pg';
 
 // Order here is the default display order (navbar + page management) for sites that
 // haven't customized it yet — see `sort_order` on the `site_pages` table.
-export const SITE_PAGE_KEYS = ['institutions', 'forum', 'about', 'help', 'contact'] as const;
+export const SITE_PAGE_KEYS = ['institutions', 'forum', 'about', 'help', 'contact', 'welcome'] as const;
 export type SitePageKey = (typeof SITE_PAGE_KEYS)[number];
 
-export const SITE_PAGE_CONTENT_KEYS = ['about', 'help', 'contact'] as const;
+export const SITE_PAGE_CONTENT_KEYS = ['about', 'help', 'contact', 'welcome'] as const;
 export type SitePageContentKey = (typeof SITE_PAGE_CONTENT_KEYS)[number];
 
 export const SITE_PAGE_LANGS = ['nl', 'en', 'fr', 'de'] as const;

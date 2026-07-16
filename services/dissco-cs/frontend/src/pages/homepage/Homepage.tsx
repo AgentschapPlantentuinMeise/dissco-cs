@@ -4,6 +4,7 @@ import { useProjectList } from '../../hooks/use-project-list';
 import { CsPage } from '../../components/CsPage';
 import { ProjectCard } from '../../components/projectcard/ProjectCard';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
+import { WelcomeModal } from '../../components/WelcomeModal';
 import { ArrowDownIcon } from '../../icons/ArrowDownIcon';
 import { disscoCSConfig } from '../../dissco-cs-config';
 
@@ -27,6 +28,7 @@ export const Homepage: React.FC = () => {
 
   return (
     <CsPage>
+      <WelcomeModal />
       <div className="cs-main-wrapper">
 
         <header

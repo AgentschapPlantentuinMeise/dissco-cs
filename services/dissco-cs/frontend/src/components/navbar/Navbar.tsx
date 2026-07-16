@@ -114,7 +114,7 @@ export const Navbar: React.FC = () => {
 
           {pages.map(page => {
             const nav = SITE_PAGE_NAV[page.page_key];
-            if (!page.is_active || (nav.requiresLogin && !user)) {
+            if (!nav || !page.is_active || (nav.requiresLogin && !user)) {
               return null;
             }
 

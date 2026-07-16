@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/CsPage';
 import { madocClient } from '../../api/madoc-client';
+import { getSiteSlug } from '../../api/slug';
 import { EyeIcon } from '../../icons/EyeIcon';
 import { EyeOffIcon } from '../../icons/EyeOffIcon';
 
@@ -20,6 +21,8 @@ function getPasswordRequirements(password: string) {
 
 export const SetPassword: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
+  const location = useLocation();
+  const isActivation = location.pathname.endsWith('/activate-account');
   const [searchParams] = useSearchParams();
   const c1 = searchParams.get('c1') || '';
   const c2 = searchParams.get('c2') || '';
@@ -55,7 +58,8 @@ export const SetPassword: React.FC = () => {
     setStatus('sending');
     try {
       await madocClient.setPassword({ c1, c2, password });
-      window.location.href = '/';
+      const siteRoot = `/s/${getSiteSlug()}/`;
+      window.location.href = isActivation ? `${siteRoot}?welcome=1` : siteRoot;
     } catch (err) {
       setStatus('error');
       setError(err instanceof Error ? err.message : t('set_password_form_error'));

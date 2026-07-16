@@ -57,6 +57,8 @@
   "sm_pages_page_forum": "Forum",
   "sm_pages_page_about": "About",
   "sm_pages_page_help": "Help",
+  "sm_pages_page_welcome": "Welcome message",
+  "sm_pages_welcome_hint": "Tip: insert the user's name with the code:",
   "sm_pages_page_institutions": "Institutions",
   "sm_pages_active": "Active",
   "sm_pages_edit": "Edit content",

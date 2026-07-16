@@ -163,7 +163,10 @@ export const registerJson: RouteMiddleware<
 
   await context.siteManager.resetUserPassword(idHash, sharedHash, createdUser.id, true);
 
-  const resetLink = `${gatewayHost}/s/${site.slug}/set-password?c1=${codeForUser}&c2=${idHash}`;
+  // Distinct from forgotPasswordJson's reset link below: this path lets the frontend
+  // (SetPassword.tsx) tell a first-time account activation apart from a password reset,
+  // so it can show the welcome message only after activation.
+  const resetLink = `${gatewayHost}/s/${site.slug}/activate-account?c1=${codeForUser}&c2=${idHash}`;
 
   try {
     const vars = {

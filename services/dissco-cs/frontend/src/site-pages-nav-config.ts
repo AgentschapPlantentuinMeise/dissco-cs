@@ -7,7 +7,9 @@ type SitePageNavEntry = {
   requiresLogin?: boolean;
 };
 
-export const SITE_PAGE_NAV: Record<SitePageKey, SitePageNavEntry> = {
+// Partial: not every page key (e.g. 'welcome', which is a one-off modal, not a page)
+// has a navbar entry.
+export const SITE_PAGE_NAV: Partial<Record<SitePageKey, SitePageNavEntry>> = {
   institutions: { labelKey: 'nav_institutions', href: '/institutions' },
   forum: { labelKey: 'nav_messageboard', href: '/messageboard', requiresLogin: true },
   about: { labelKey: 'nav_about', href: '/about' },

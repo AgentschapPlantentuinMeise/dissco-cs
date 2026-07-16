@@ -71,7 +71,7 @@ export const forumApi = {
 
 // Order here is the default display order (navbar + page management) for sites that
 // haven't customized it yet — must match SITE_PAGE_KEYS in services/dissco-cs/api/src/db.ts.
-export const SITE_PAGE_KEYS = ['institutions', 'forum', 'about', 'help', 'contact'] as const;
+export const SITE_PAGE_KEYS = ['institutions', 'forum', 'about', 'help', 'contact', 'welcome'] as const;
 export type SitePageKey = (typeof SITE_PAGE_KEYS)[number];
 export type SitePageLang = 'nl' | 'en' | 'fr' | 'de';
 
