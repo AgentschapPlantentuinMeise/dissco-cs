@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CaptureModel, ModelFields, NestedModelFields, StructureNode } from '../../../capture-model/types/capture-model';
 import { AnnotationDocument } from '../../../capture-model/types/document';
 import { BaseField } from '../../../capture-model/types/field-types';
@@ -306,6 +307,7 @@ export function CaptureModelForm({
   readOnly,
   readOnlyBanner,
 }: CaptureModelFormProps) {
+  const { t } = useTranslation('dissco-cs');
   const selectorControls: SelectorControls = { drawingPath, onRequestDraw, onCancelDraw, onClearSelector };
   // A choice node just picks between alternative 'model' nodes — this stack lets the user
   // step back through nested choices instead of re-rendering a separate "choice screen".
@@ -396,14 +398,14 @@ export function CaptureModelForm({
               onClick={onSaveDraft}
               disabled={saving}
             >
-              Opslaan als concept
+              {t('task_save_draft')}
             </button>
             <button
               className="px-4 py-2 bg-[var(--cs-primary)] text-white rounded text-[0.9rem] disabled:opacity-50"
               onClick={handleSubmit}
               disabled={saving}
             >
-              Indienen
+              {t('task_submit')}
             </button>
             {confirmation && (
               <span className="text-[0.9rem] text-[var(--cs-primary)] font-medium">

@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
+import { useQuery, useMutation, queryCache } from 'react-query';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useUser } from '../../hooks/use-current-user';
 import { getSiteSlug } from '../../api/slug';
@@ -11,6 +11,8 @@ import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/CsPage';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { InternationalString } from '../../components/LocaleString';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { DeleteIconButton } from '../../components/DeleteIconButton';
 
 const collectiesSlug = disscoCSConfig.collectiesSlug;
 
@@ -83,9 +85,10 @@ interface TaskTableProps {
   language: string;
   t: (key: string) => string;
   linkable?: boolean;
+  onRelease?: (task: CrowdsourcingTask) => void;
 }
 
-function TaskTable({ tasks, userName, language, t, linkable = true }: TaskTableProps) {
+function TaskTable({ tasks, userName, language, t, linkable = true, onRelease }: TaskTableProps) {
   return (
     <div className="bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] overflow-hidden">
       <table className="w-full border-collapse">
@@ -94,6 +97,7 @@ function TaskTable({ tasks, userName, language, t, linkable = true }: TaskTableP
             <th className={thClass}>{t('my_tasks_col_task')}</th>
             <th className={thClass}>{t('my_tasks_col_project')}</th>
             <th className={thClass}>{t('my_tasks_col_status')}</th>
+            {onRelease && <th className={thClass} />}
           </tr>
         </thead>
         <tbody>
@@ -119,6 +123,11 @@ function TaskTable({ tasks, userName, language, t, linkable = true }: TaskTableP
                 <td className={tdClass}>
                   <span className={`${badgeBase} ${BADGE_CLASSES[badge.variant]}`}>{t(badge.label)}</span>
                 </td>
+                {onRelease && (
+                  <td className={tdClass}>
+                    <DeleteIconButton onClick={() => onRelease(task)} />
+                  </td>
+                )}
               </tr>
             );
           })}
@@ -136,6 +145,19 @@ export const UserDashboard: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useUser();
   const [activeTab, setActiveTab] = useState<'saved' | 'done'>('saved');
+  const [releaseTarget, setReleaseTarget] = useState<CrowdsourcingTask | null>(null);
+
+  // Zelfde abandon-patroon als AnnotatePage.tsx's releaseClaim: status -1 zodat de bestaande
+  // filters (status !== -1) de taak meteen als losgelaten behandelen, geen nieuwe status nodig.
+  const [releaseTask] = useMutation(
+    (task: CrowdsourcingTask) => madocClient.updateTask(task.id, { status: -1, status_text: 'abandoned' }),
+    {
+      onSuccess: () => {
+        queryCache.invalidateQueries('my-tasks');
+        queryCache.invalidateQueries('collection');
+      },
+    }
+  );
 
   const { data: tasksData, status: tasksStatus } = useQuery(
     ['my-tasks', { userId: user?.id }],
@@ -275,7 +297,7 @@ export const UserDashboard: React.FC = () => {
               savedTasks.length === 0 ? (
                 <div className="px-6 py-12 text-center text-gray-500">{t('my_tasks_empty')}</div>
               ) : (
-                <TaskTable tasks={savedTasks} userName={user.name} language={i18n.language} t={t} />
+                <TaskTable tasks={savedTasks} userName={user.name} language={i18n.language} t={t} onRelease={setReleaseTarget} />
               )
             ) : (
               doneTasks.length === 0 ? (
@@ -331,6 +353,19 @@ export const UserDashboard: React.FC = () => {
             )}
           </div>
         </div>
+
+        {releaseTarget && (
+          <ConfirmDialog
+            message={t('my_tasks_release_confirm')}
+            confirmLabel={t('common_delete')}
+            cancelLabel={t('common_cancel')}
+            onConfirm={() => {
+              void releaseTask(releaseTarget);
+              setReleaseTarget(null);
+            }}
+            onCancel={() => setReleaseTarget(null)}
+          />
+        )}
       </div>
     </CsPage>
   );

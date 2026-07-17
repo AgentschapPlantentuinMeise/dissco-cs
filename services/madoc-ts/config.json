@@ -1,7 +1,7 @@
 {
   "cookieName": "madoc",
-  "tokenExpires": 1209600,
-  "tokenRefresh": 172800,
+  "tokenExpires": 28800,
+  "tokenRefresh": 3600,
   "defaultSiteConfiguration": {
     "allowCollectionNavigation": true,
     "allowManifestNavigation": true,
