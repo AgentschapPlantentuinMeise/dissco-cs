@@ -12,11 +12,11 @@ interface Tile {
 }
 
 const TILES: Tile[] = [
-  { href: '/beheer/projecten', titleKey: 'sm_tile_projects_title', descKey: 'sm_tile_projects_desc' },
-  { href: '/beheer/meldingen', titleKey: 'sm_tile_announcements_title', descKey: 'sm_tile_announcements_desc' },
+  { href: '/manage/projects', titleKey: 'sm_tile_projects_title', descKey: 'sm_tile_projects_desc' },
+  { href: '/manage/announcements', titleKey: 'sm_tile_announcements_title', descKey: 'sm_tile_announcements_desc' },
   { href: '/admin/global/users', titleKey: 'sm_tile_users_title', descKey: 'sm_tile_users_desc' },
-  { href: '/beheer/paginas', titleKey: 'sm_tile_pages_title', descKey: 'sm_tile_pages_desc' },
-  { href: '/beheer/instituten', titleKey: 'sm_tile_institutions_title', descKey: 'sm_tile_institutions_desc' },
+  { href: '/manage/pages', titleKey: 'sm_tile_pages_title', descKey: 'sm_tile_pages_desc' },
+  { href: '/manage/institutions', titleKey: 'sm_tile_institutions_title', descKey: 'sm_tile_institutions_desc' },
 ];
 
 export const SiteManagement: React.FC = () => {

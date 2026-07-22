@@ -127,7 +127,7 @@ export const InstitutionManagement: React.FC = () => {
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container">
-          <HrefLink href="/beheer" className="inline-flex items-center gap-1 text-[var(--cs-primary)] no-underline font-medium hover:underline">
+          <HrefLink href="/manage" className="inline-flex items-center gap-1 text-[var(--cs-primary)] no-underline font-medium hover:underline">
             <ArrowLeftIcon aria-hidden="true" /> {t('sm_back_to_hub')}
           </HrefLink>
 

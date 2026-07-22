@@ -9,6 +9,7 @@ import { MailIcon } from '../../icons/MailIcon';
 import { PhoneIcon } from '../../icons/PhoneIcon';
 import { GlobeIcon } from '../../icons/GlobeIcon';
 import { institutionsApi, Institution } from '../../api/cs-api';
+import { StatBanner } from '../../components/StatBanner';
 
 // Placeholder cijfers tot projecten en statistieken effectief aan een instituut gekoppeld kunnen worden.
 const mockOverview = {
@@ -125,7 +126,23 @@ export const InstitutionDetail: React.FC = () => {
                 )}
               </div>
 
-              {/* Projects, with progress overview + leaderboard alongside */}
+              {/* Stats hero banner — same signature as the volunteer dashboard */}
+              <StatBanner
+                className="mb-12"
+                stats={[
+                  {
+                    value: `${mockOverview.tasksCompletedPct}%`,
+                    label: t('card_completed'),
+                    note: `${formatNumber(mockOverview.tasksTotal)} ${t('institution_progress_tasks')}`,
+                  },
+                  { value: mockOverview.projectsActive, label: t('institution_projects_active') },
+                  { value: mockOverview.projectsCompleted, label: t('institution_projects_completed') },
+                  { value: formatNumber(mockVolunteers), label: t('institution_stats_volunteers') },
+                ]}
+                trailing={<MockBadge label={t('institution_mock_badge')} />}
+              />
+
+              {/* Projects, with leaderboard alongside */}
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-14">
                 <div>
                   <div className="mb-4">
@@ -155,49 +172,20 @@ export const InstitutionDetail: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-7">
-                  <div>
-                    <div className="mb-3">
-                      <MockBadge label={t('institution_mock_badge')} />
-                    </div>
-                    <div className="text-3xl font-bold text-[var(--cs-secondary)] leading-none">{mockOverview.tasksCompletedPct}%</div>
-                    <div className="text-sm text-gray-500 mt-1 mb-3.5">
-                      {t('card_completed')} · {formatNumber(mockOverview.tasksTotal)} {t('institution_progress_tasks')}
-                    </div>
-                    <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden mb-4">
-                      <div className="h-full bg-[var(--cs-secondary)]" style={{ width: `${mockOverview.tasksCompletedPct}%` }} />
-                    </div>
-                    <div className="grid grid-cols-3 border-t border-gray-100 pt-3.5 text-center">
-                      <div>
-                        <div className="text-lg font-bold text-[var(--cs-primary)] leading-none tabular-nums">{mockOverview.projectsActive}</div>
-                        <div className="text-[0.68rem] text-gray-500 mt-1">{t('institution_projects_active')}</div>
-                      </div>
-                      <div className="border-l border-gray-100">
-                        <div className="text-lg font-bold text-[var(--cs-primary)] leading-none tabular-nums">{mockOverview.projectsCompleted}</div>
-                        <div className="text-[0.68rem] text-gray-500 mt-1">{t('institution_projects_completed')}</div>
-                      </div>
-                      <div className="border-l border-gray-100">
-                        <div className="text-lg font-bold text-[var(--cs-primary)] leading-none tabular-nums">{formatNumber(mockVolunteers)}</div>
-                        <div className="text-[0.68rem] text-gray-500 mt-1">{t('institution_stats_volunteers')}</div>
-                      </div>
-                    </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="text-xs font-bold uppercase tracking-wider text-gray-500">{t('institution_leaderboard_title')}</div>
+                    <MockBadge label={t('institution_mock_badge')} />
                   </div>
-
-                  <div className="border-t border-gray-100 pt-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="text-xs font-bold uppercase tracking-wider text-gray-500">{t('institution_leaderboard_title')}</div>
-                      <MockBadge label={t('institution_mock_badge')} />
-                    </div>
-                    <ol className="list-none m-0 p-0 flex flex-col">
-                      {mockLeaderboard.map(entry => (
-                        <li key={entry.rank} className="flex items-baseline gap-2.5 py-2 border-b border-gray-100 last:border-b-0 text-sm">
-                          <span className="w-[1.2em] text-gray-500 tabular-nums">{entry.rank}</span>
-                          <span className="flex-1 text-gray-700">{entry.name}</span>
-                          <span className="text-gray-500 tabular-nums">{formatNumber(entry.tasks)}</span>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
+                  <ol className="list-none m-0 p-0 flex flex-col">
+                    {mockLeaderboard.map(entry => (
+                      <li key={entry.rank} className="flex items-baseline gap-2.5 py-2 border-b border-gray-100 last:border-b-0 text-sm">
+                        <span className="w-[1.2em] text-gray-500 tabular-nums">{entry.rank}</span>
+                        <span className="flex-1 text-gray-700">{entry.name}</span>
+                        <span className="text-gray-500 tabular-nums">{formatNumber(entry.tasks)}</span>
+                      </li>
+                    ))}
+                  </ol>
                 </div>
               </div>
             </>

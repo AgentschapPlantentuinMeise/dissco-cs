@@ -13,9 +13,8 @@ import { disscoCSConfig } from '../../dissco-cs-config';
 export const ProjectDetail: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
   const { data: project } = useProject();
-  const { projectId } = useRouteContext();
   const navigate = useNavigate();
-  const slug = disscoCSConfig.collectiesSlug;
+
 
   const { data: notStartedCollection } = useQuery(
     ['collection', project?.collection_id],
@@ -29,7 +28,7 @@ export const ProjectDetail: React.FC = () => {
   );
 
   const navigateToFirstCanvas = async (manifestId: number) => {
-    navigate(`/${slug}/${project!.slug}/manifests/${manifestId}/annotate`);
+    navigate(`/explore/${project!.slug}/manifests/${manifestId}/annotate`);
   };
 
   const [startRandom, { isLoading: isStarting }] = useMutation(async () => {
@@ -40,7 +39,7 @@ export const ProjectDetail: React.FC = () => {
         await navigateToFirstCanvas(result.manifest);
       }
     } catch {
-      navigate(`/projects/${project.slug}/manifests`);
+      navigate(`/explore/${project.slug}/manifests`);
     }
   });
 

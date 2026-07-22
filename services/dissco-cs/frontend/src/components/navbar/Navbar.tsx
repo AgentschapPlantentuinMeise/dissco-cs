@@ -48,7 +48,7 @@ export const Navbar: React.FC = () => {
     useDropdownMenu(LANGUAGES.length);
   const currentLang = LANGUAGES.find(l => l.code === i18n.language) || LANGUAGES[0];
 
-  const collectiesSlug = disscoCSConfig.collectiesSlug;
+ 
 
   useLayoutEffect(() => {
     document.body.classList.add('cs-active');
@@ -104,8 +104,8 @@ export const Navbar: React.FC = () => {
 
           <li>
             <HrefLink
-              href={`/${collectiesSlug}`}
-              className={navLinkClass(location.pathname.startsWith(`/${collectiesSlug}`))}
+              href="/explore"
+              className={navLinkClass(location.pathname.startsWith('/explore'))}
               onClick={() => setMenuOpen(false)}
             >
               {t('nav_projects')}
@@ -185,13 +185,13 @@ export const Navbar: React.FC = () => {
                   className={`${isOpen ? 'block' : 'hidden'} absolute top-[calc(100%+10px)] right-0 bg-white rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.12)] min-w-[200px] z-[100] list-none p-[6px_0] m-0 max-[768px]:static max-[768px]:shadow-none max-[768px]:rounded-none max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:min-w-0`}
                   role="menu"
                 >
-                  <li><HrefLink href="/my-tasks" className={dropdownItemClass} {...itemProps[0]}>{t('nav_my_tasks')}</HrefLink></li>
+                  <li><HrefLink href="/my-dashboard" className={dropdownItemClass} {...itemProps[0]}>{t('nav_dashboard')}</HrefLink></li>
                   <li><a href={`/s/${siteSlug}/account`} className={dropdownItemClass} {...itemProps[1]}>{t('nav_profile_settings')}</a></li>
                   {showReview && (
                     <li><a href={`/s/${siteSlug}/reviews`} className={dropdownItemClass} {...itemProps[idxReview]}>{t('nav_review')}</a></li>
                   )}
                   {showAdmin && (
-                    <li><HrefLink href="/beheer" className={dropdownItemClass} {...itemProps[idxSiteAdmin]}>{t('nav_site_admin')}</HrefLink></li>
+                    <li><HrefLink href="/manage" className={dropdownItemClass} {...itemProps[idxSiteAdmin]}>{t('nav_site_admin')}</HrefLink></li>
                   )}
                   <li className="border-t border-[#eee] mt-1 pt-1">
                     <a

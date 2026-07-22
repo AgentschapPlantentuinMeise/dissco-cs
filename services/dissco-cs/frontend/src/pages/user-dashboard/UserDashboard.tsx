@@ -14,7 +14,7 @@ import { InternationalString } from '../../components/LocaleString';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { DeleteIconButton } from '../../components/DeleteIconButton';
 
-const collectiesSlug = disscoCSConfig.collectiesSlug;
+
 
 const PROJECT_CHART_COLORS = ['#4361ee', '#e63946', '#f4a261', '#2a9d8f', '#9b5de5', '#f15bb5', '#43aa8b', '#ffb703'];
 
@@ -65,12 +65,12 @@ function buildTaskLink(task: CrowdsourcingTask): string {
   const parsedSubject = parseUrn(task.subject);
   if (!parsedSubject) return `/tasks/${task.id}`;
   if (parsedSubject.type === 'manifest') {
-    return `/${collectiesSlug}/${projectSlug}/manifests/${parsedSubject.id}/annotate`;
+    return `/explore/${projectSlug}/manifests/${parsedSubject.id}/annotate`;
   }
   if (parsedSubject.type === 'canvas' && task.subject_parent) {
     const parsedParent = parseUrn(task.subject_parent);
     if (parsedParent && parsedParent.type === 'manifest') {
-      return `/${collectiesSlug}/${projectSlug}/manifests/${parsedParent.id}/annotate`;
+      return `/explore/${projectSlug}/manifests/${parsedParent.id}/annotate`;
     }
   }
   return `/tasks/${task.id}`;

@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/CsPage';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { MessageForm, MessageFormData } from '../../components/messageform/MessageForm';
@@ -37,6 +38,9 @@ export const MessageBoard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'mine' | 'unread' | 'unanswered' | null>(null);
   const [pendingDeleteTopicId, setPendingDeleteTopicId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const deepLinkTopicId = searchParams.get('topic');
+  const didHandleDeepLink = useRef(false);
 
   useEffect(() => {
     forumApi.listTopics().then(res => {
@@ -46,6 +50,23 @@ export const MessageBoard: React.FC = () => {
       });
     }).catch(() => setTopics([]));
   }, []);
+
+  // Open het topic uit de ?topic=<id> deep-link (vanaf de dashboard-widget) automatisch, één keer,
+  // zodra de topics geladen zijn. De ref voorkomt dat het topic zich meteen weer opent na sluiten.
+  useEffect(() => {
+    if (didHandleDeepLink.current || !deepLinkTopicId || topics.length === 0) return;
+    if (!topics.some(m => m.id === deepLinkTopicId)) return;
+    didHandleDeepLink.current = true;
+
+    setExpandedId(deepLinkTopicId);
+    forumApi.getTopic(deepLinkTopicId).then(detail => {
+      setRepliesByTopic(prev => ({ ...prev, [deepLinkTopicId]: detail.replies }));
+      setTopics(prev => prev.map(m =>
+        m.id === deepLinkTopicId ? { ...m, last_seen_reply_count: detail.replies.length } : m
+      ));
+    });
+    document.getElementById(`topic-${deepLinkTopicId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [deepLinkTopicId, topics]);
 
   useEffect(() => {
     window.dispatchEvent(new Event('mb_updated'));
@@ -161,7 +182,7 @@ export const MessageBoard: React.FC = () => {
                 const unread = isUnread(msg);
                 const replies = repliesByTopic[msg.id] || [];
                 return (
-                  <div key={msg.id} className={`flex bg-white rounded-lg shadow-sm border border-gray-100 border-l-4 ${unread ? 'border-l-[var(--cs-secondary)]' : 'border-l-transparent'} px-4 py-3.5`}>
+                  <div key={msg.id} id={`topic-${msg.id}`} className={`flex bg-white rounded-lg shadow-sm border border-gray-100 border-l-4 ${unread ? 'border-l-[var(--cs-secondary)]' : 'border-l-transparent'} px-4 py-3.5`}>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start gap-3 mb-1">
                         <div className="min-w-0">

@@ -14,8 +14,6 @@ export const disscoCSConfig = {
   heroBgUrl: new URL('./images/backgroundflower.png', import.meta.url).href,
   heroBgCredit: 'Maarten Strack van Schijndel',
 
-  collectiesSlug: 'collecties',
-
   supportedLanguages: [
     { label: 'Nederlands', code: 'nl' },
     { label: 'English', code: 'en' },

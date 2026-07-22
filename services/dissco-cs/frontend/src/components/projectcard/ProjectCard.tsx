@@ -31,7 +31,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ projectSummaryData }) 
     ? projectSummaryData.thumbnail
     : projectSummaryData.thumbnail?.id || projectSummaryData.templateOptions?.image || null;
 
-  const projectLink = `/${disscoCSConfig.collectiesSlug}/${projectSummaryData.slug || projectSummaryData.id}`;
+  const projectLink = `/explore/${projectSummaryData.slug || projectSummaryData.id}`;
 
   return (
     <Link

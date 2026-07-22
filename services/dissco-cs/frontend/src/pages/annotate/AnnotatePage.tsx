@@ -256,14 +256,14 @@ export function AnnotatePage() {
   const goToNext = async () => {
     const url = await requestNextUrl(undefined);
     if (manifestId) setVisited(v => [...v, manifestId]);
-    await handleLeave(url ?? `/${disscoCSConfig.collectiesSlug}/${project?.slug}`);
+    await handleLeave(url ?? `/explore/${project?.slug}`);
   };
 
   const goToPrevious = async () => {
     const prevManifestId = visited[visited.length - 1];
     if (prevManifestId === undefined) return;
     setVisited(v => v.slice(0, -1));
-    await handleLeave(`/${disscoCSConfig.collectiesSlug}/${project?.slug}/manifests/${prevManifestId}/annotate`);
+    await handleLeave(`/explore/${project?.slug}/manifests/${prevManifestId}/annotate`);
   };
 
   // Shows a brief confirmation toast, then moves on to the next task — used for both save actions,
@@ -314,7 +314,7 @@ export function AnnotatePage() {
 
   const manifestUrl = `${window.location.origin}/s/${slug}/madoc/api/manifests/${manifestId}/export/source`;
   const currentCanvas = canvases[canvasIndex];
-  const csSlug = disscoCSConfig.collectiesSlug;
+  
 
   const handleChange = (path: DocumentPath, value: unknown) => {
     setAnnotationDocument(doc => (doc ? setFieldValue(doc, path, value, revisionIdRef.current) : doc));
@@ -328,10 +328,10 @@ export function AnnotatePage() {
         <div className="px-4 py-2 border-b border-gray-300 flex items-center justify-between flex-shrink-0">
           <nav className="text-[0.85rem] text-gray-500" aria-label="Breadcrumb">
             <Link
-              to={`/${csSlug}`}
+              to="/explore"
               onClick={e => {
                 e.preventDefault();
-                handleLeave(`/${csSlug}`);
+                handleLeave("/explore");
               }}
               className="text-[var(--cs-primary)] no-underline hover:underline"
             >
@@ -339,10 +339,10 @@ export function AnnotatePage() {
             </Link>
             <span className="mx-1">›</span>
             <Link
-              to={`/${csSlug}/${project.slug}`}
+              to={`/explore/${project.slug}`}
               onClick={e => {
                 e.preventDefault();
-                handleLeave(`/${csSlug}/${project.slug}`);
+                handleLeave(`/explore/${project.slug}`);
               }}
               className="text-[var(--cs-primary)] no-underline hover:underline"
             >
