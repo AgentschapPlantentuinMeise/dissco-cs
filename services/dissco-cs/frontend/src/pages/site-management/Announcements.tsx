@@ -17,6 +17,10 @@ import { useProjectList } from '../../hooks/use-project-list';
 
 const LANGUAGES = disscoCSConfig.supportedLanguages;
 
+function defaultLang(currentLanguage: string): SitePageLang {
+  return (LANGUAGES.find(lang => lang.code === currentLanguage)?.code ?? LANGUAGES[0].code) as SitePageLang;
+}
+
 function getLabelText(label: any, fallback: string): string {
   if (!label) return fallback;
   const firstLang = Object.keys(label)[0];
@@ -28,8 +32,8 @@ function toDateInputValue(iso: string | null): string {
   return iso.slice(0, 10);
 }
 
-function displayText(text: Partial<Record<SitePageLang, string>>, fallback: string): string {
-  return text.nl || text.en || text.fr || text.de || fallback;
+function displayText(text: Partial<Record<SitePageLang, string>>, fallback: string, lang: string): string {
+  return text[lang as SitePageLang] || text.nl || text.en || text.fr || text.de || fallback;
 }
 
 function targetLabel(t: (key: string) => string, announcement: Announcement): string {
@@ -49,7 +53,7 @@ const emptyDraft: AnnouncementInput = {
 };
 
 export const Announcements: React.FC = () => {
-  const { t } = useTranslation('dissco-cs');
+  const { t, i18n } = useTranslation('dissco-cs');
   const { data, isLoading, refetch } = useQuery('admin-announcements', () => announcementsApi.listAdmin());
   const { data: projectsResponse } = useProjectList();
   const announcements = data?.announcements ?? [];
@@ -58,7 +62,7 @@ export const Announcements: React.FC = () => {
   const [editingId, setEditingId] = useState<Announcement['id'] | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [draft, setDraft] = useState<AnnouncementInput>(emptyDraft);
-  const [selectedLang, setSelectedLang] = useState<SitePageLang>(LANGUAGES[0].code);
+  const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
   const [pendingDeleteId, setPendingDeleteId] = useState<Announcement['id'] | null>(null);
 
   const refresh = () => refetch();
@@ -66,7 +70,7 @@ export const Announcements: React.FC = () => {
   const startCreate = () => {
     setEditingId(null);
     setDraft(emptyDraft);
-    setSelectedLang(LANGUAGES[0].code);
+    setSelectedLang(defaultLang(i18n.language));
     setIsFormOpen(true);
   };
 
@@ -81,7 +85,7 @@ export const Announcements: React.FC = () => {
       startDate: announcement.start_date,
       endDate: announcement.end_date,
     });
-    setSelectedLang(LANGUAGES[0].code);
+    setSelectedLang(defaultLang(i18n.language));
     setIsFormOpen(true);
   };
 
@@ -148,7 +152,7 @@ export const Announcements: React.FC = () => {
             </button>
           </div>
 
-          {isLoading && <p className="text-center py-5">{t('loading_projects')}</p>}
+          {isLoading && <p className="text-center py-5">{t('loading_announcements')}</p>}
 
           {!isLoading && announcements.length === 0 && !isFormOpen && (
             <p className="text-gray-600">{t('sm_announcements_empty')}</p>
@@ -159,7 +163,7 @@ export const Announcements: React.FC = () => {
               {announcements.map(announcement => (
                 <li key={announcement.id} className="flex items-center justify-between gap-4 px-4 py-3">
                   <div className="min-w-0">
-                    <p className="font-semibold m-0 truncate">{displayText(announcement.title, announcement.id)}</p>
+                    <p className="font-semibold m-0 truncate">{displayText(announcement.title, announcement.id, i18n.language)}</p>
                     <p className="text-sm text-gray-500 m-0">
                       {targetLabel(t, announcement)}
                       {(announcement.start_date || announcement.end_date) && (
@@ -177,7 +181,7 @@ export const Announcements: React.FC = () => {
                     <ActiveStatusToggle
                       active={announcement.is_active}
                       onChange={() => void toggleActive(announcement)}
-                      label={displayText(announcement.title, announcement.id)}
+                      label={displayText(announcement.title, announcement.id, i18n.language)}
                     />
                     <button
                       onClick={() => startEdit(announcement)}

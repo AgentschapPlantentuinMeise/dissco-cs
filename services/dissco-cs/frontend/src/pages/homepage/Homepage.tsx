@@ -32,12 +32,12 @@ export const Homepage: React.FC = () => {
       <div className="cs-main-wrapper">
 
         <header
-          className="bg-[var(--cs-primary)] bg-[length:auto_100%] bg-[right_center] bg-no-repeat py-20 text-left text-white relative mt-0"
+          className="bg-[var(--cs-primary)] bg-[length:auto_100%] bg-[right_center] bg-no-repeat py-10 text-left text-white relative mt-0"
           style={{ backgroundImage: `var(--hero-bg, url(${disscoCSConfig.heroBgUrl}))` } as React.CSSProperties}
         >
           <div className="cs-container">
-            <h1 className="text-[38px] font-light leading-tight mb-5 text-white mt-0" dangerouslySetInnerHTML={{ __html: t('hero_title') }} />
-            <p className="text-[20px] text-white/90 max-w-[650px] mb-8 leading-[1.5]" dangerouslySetInnerHTML={{ __html: t('hero_lead') }} />
+            <h1 className="text-[32px] font-light leading-tight mb-3 text-white mt-0" dangerouslySetInnerHTML={{ __html: t('hero_title') }} />
+            <p className="text-[20px] text-white/90 max-w-[650px] mb-5 leading-[1.5]" dangerouslySetInnerHTML={{ __html: t('hero_lead') }} />
             <div className="flex gap-4 items-center">
               <button className="inline-flex items-center gap-1 bg-[var(--cs-secondary)] text-white border-none px-6 py-2.5 rounded-full font-medium cursor-pointer text-base no-underline">
                 {t('btn_active')} <ArrowDownIcon aria-hidden="true" />
@@ -56,7 +56,7 @@ export const Homepage: React.FC = () => {
           <AnnouncementBanner target="homepage" />
         </div>
 
-        <main className="py-10">
+        <main className="pt-6 pb-10">
            <div className="cs-container">
             {isLoadingList && <p className="text-center py-5">{t('loading_projects')}</p>}
             {isClient && !isLoadingList && projects.length === 0 && (

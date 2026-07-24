@@ -15,6 +15,11 @@ import { useSitePages } from '../../contexts/SitePagesContext';
 
 const CONTENT_PAGE_KEYS: SitePageKey[] = ['about', 'help', 'contact', 'welcome'];
 const LANGUAGES = disscoCSConfig.supportedLanguages;
+
+function defaultLang(currentLanguage: string): SitePageLang {
+  return (LANGUAGES.find(lang => lang.code === currentLanguage)?.code ?? LANGUAGES[0].code) as SitePageLang;
+}
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // contact/help/forum/institutions share their title with the navbar and public page,
@@ -29,10 +34,10 @@ const MERGED_PAGE_TITLE_KEY: Partial<Record<SitePageKey, string>> = {
 const pageLabelKey = (key: SitePageKey) => MERGED_PAGE_TITLE_KEY[key] ?? `sm_pages_page_${key}`;
 
 export const PageManagement: React.FC = () => {
-  const { t } = useTranslation('dissco-cs');
+  const { t, i18n } = useTranslation('dissco-cs');
   const { pages, loading, refresh } = useSitePages();
   const [selectedKey, setSelectedKey] = useState<SitePageKey | null>(null);
-  const [selectedLang, setSelectedLang] = useState<SitePageLang>(LANGUAGES[0].code);
+  const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
   const [draftContent, setDraftContent] = useState<SitePage['content']>({});
   const [draftContactEmail, setDraftContactEmail] = useState('');
   const [draftShowContactForm, setDraftShowContactForm] = useState(false);

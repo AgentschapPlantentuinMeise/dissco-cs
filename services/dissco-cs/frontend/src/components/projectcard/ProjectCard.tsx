@@ -1,6 +1,7 @@
 ﻿import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import { madocClient } from '../../api/madoc-client';
 import { LocaleString } from '../LocaleString';
 import { disscoCSConfig } from '../../dissco-cs-config';
@@ -10,6 +11,7 @@ interface ProjectCardProps {
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({ projectSummaryData }) => {
+  const { t } = useTranslation('dissco-cs');
   const { data: fullProject, isLoading } = useQuery<any>(
     ['homepage-full-project', projectSummaryData.id],
     () => madocClient.getProject(projectSummaryData.id),
@@ -39,7 +41,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ projectSummaryData }) 
       className="flex flex-col bg-white rounded-lg overflow-hidden shadow-md transition-[transform,box-shadow] duration-200 cursor-pointer h-full no-underline text-inherit hover:-translate-y-1 hover:shadow-lg"
     >
       <div
-        className="h-[180px] w-full bg-cover bg-center bg-gray-200"
+        className="h-[140px] w-full bg-cover bg-center bg-gray-200"
         style={{ backgroundImage: imageUrl ? `url(${imageUrl})` : undefined }}
       />
       <div className="p-5 flex flex-col flex-grow">
@@ -47,19 +49,19 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ projectSummaryData }) 
           {projectSummaryData.label}
         </LocaleString>
         <p className="text-[0.95rem] text-gray-600 leading-[1.5] mb-5 flex-grow line-clamp-3">
-          <LocaleString>
-            {projectSummaryData.summary || { nl: ['Klik op dit project om mee te helpen.'] }}
+          <LocaleString defaultText={t('card_default_summary')}>
+            {projectSummaryData.summary}
           </LocaleString>
         </p>
 
         <div className="mt-auto">
           <div className="flex justify-between text-[0.85rem] mb-[5px]">
             {isLoading ? (
-              <span className="font-bold text-[var(--cs-primary)]">Laden...</span>
+              <span className="font-bold text-[var(--cs-primary)]">{t('card_loading')}</span>
             ) : (
               <>
                 <span className="font-bold text-[var(--cs-primary)]">{percentage}%</span>
-                <span className="text-gray-500">voltooid</span>
+                <span className="text-gray-500">{t('card_completed')}</span>
               </>
             )}
           </div>

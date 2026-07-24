@@ -107,7 +107,7 @@ export class AnnouncementsRepository {
       `
       UPDATE ${this.table('announcements')}
       SET title = $3, description = $4, target_type = $5, target_project_slug = $6,
-          is_active = $7, start_date = $8, end_date = $9
+          is_active = $7, start_date = $8, end_date = $9, created_at = NOW()
       WHERE id = $1 AND site_id = $2
       RETURNING *
     `,

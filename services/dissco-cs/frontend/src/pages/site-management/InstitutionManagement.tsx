@@ -16,6 +16,10 @@ import { institutionsApi, Institution, InstitutionInput, SitePageLang } from '..
 
 const LANGUAGES = disscoCSConfig.supportedLanguages;
 
+function defaultLang(currentLanguage: string): SitePageLang {
+  return (LANGUAGES.find(lang => lang.code === currentLanguage)?.code ?? LANGUAGES[0].code) as SitePageLang;
+}
+
 const emptyDraft: InstitutionInput = {
   name: {},
   description: {},
@@ -36,7 +40,7 @@ function fileToDataUrl(file: File): Promise<string> {
 }
 
 export const InstitutionManagement: React.FC = () => {
-  const { t } = useTranslation('dissco-cs');
+  const { t, i18n } = useTranslation('dissco-cs');
   const { data, isLoading, refetch } = useQuery('admin-institutions', () => institutionsApi.listAdmin());
   const institutions = data?.institutions ?? [];
 
@@ -44,7 +48,7 @@ export const InstitutionManagement: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [draft, setDraft] = useState<InstitutionInput>(emptyDraft);
   const [logoFileName, setLogoFileName] = useState<string | null>(null);
-  const [selectedLang, setSelectedLang] = useState<SitePageLang>(LANGUAGES[0].code);
+  const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
   const [pendingDeleteId, setPendingDeleteId] = useState<Institution['id'] | null>(null);
 
   const refresh = () => refetch();
@@ -53,7 +57,7 @@ export const InstitutionManagement: React.FC = () => {
     setEditingId(null);
     setDraft(emptyDraft);
     setLogoFileName(null);
-    setSelectedLang(LANGUAGES[0].code);
+    setSelectedLang(defaultLang(i18n.language));
     setIsFormOpen(true);
   };
 
@@ -69,7 +73,7 @@ export const InstitutionManagement: React.FC = () => {
       isActive: institution.is_active,
     });
     setLogoFileName(null);
-    setSelectedLang(LANGUAGES[0].code);
+    setSelectedLang(defaultLang(i18n.language));
     setIsFormOpen(true);
   };
 
