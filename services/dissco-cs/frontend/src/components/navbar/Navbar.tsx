@@ -1,12 +1,14 @@
-﻿import React, { useState, useEffect, useLayoutEffect } from 'react';
+﻿import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import useDropdownMenu from 'react-accessible-dropdown-menu-hook';
 import { stringify } from 'query-string';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { HrefLink } from '../../utility/href-link';
 import { useUser } from '../../hooks/use-current-user';
 import { PersonIcon } from '../../icons/PersonIcon';
+import { SearchIcon } from '../../icons/SearchIcon';
+import { CloseIcon } from '../../icons/CloseIcon';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { getSiteSlug } from '../../api/slug';
 import { forumApi } from '../../api/cs-api';
@@ -28,9 +30,13 @@ export const Navbar: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
   const [menuOpen, setMenuOpen] = useState(false);
   const [newMsgCount, setNewMsgCount] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const user = useUser();
   const siteSlug = getSiteSlug();
   const location = useLocation();
+  const navigate = useNavigate();
   const { pages } = useSitePages();
   const showAdmin = !!user && user.scope.includes('site.admin');
   // Let op: reviewer-rol (site_role/role) is niet beschikbaar in het JWT, enkel scope.
@@ -75,7 +81,18 @@ export const Navbar: React.FC = () => {
 
   useEffect(() => {
     setIsOpen(false);
+    setSearchOpen(false);
   }, [location]);
+
+  const submitSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
+    navigate(`/find?${stringify({ q: trimmed })}`);
+    setSearchOpen(false);
+    setSearchQuery('');
+    setMenuOpen(false);
+  };
 
   return (
     <nav className="cs-navbar">
@@ -135,6 +152,49 @@ export const Navbar: React.FC = () => {
               </li>
             );
           })}
+
+          {/* Search */}
+          <li className="relative max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:w-full max-[768px]:py-[10px]">
+            <div className="flex items-center gap-2">
+              {searchOpen && (
+                <form onSubmit={submitSearch} className="relative">
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    autoFocus
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    onBlur={() => {
+                      if (!searchQuery.trim()) setSearchOpen(false);
+                    }}
+                    placeholder={t('search_placeholder')}
+                    className="text-[0.9rem] border border-[#ddd] rounded-full pl-3 pr-7 py-1 outline-none focus:border-[var(--cs-primary)] w-[180px] max-[768px]:w-full"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery('');
+                        searchInputRef.current?.focus();
+                      }}
+                      aria-label={t('search_clear')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-400 p-0 flex items-center hover:text-[var(--cs-primary)]"
+                    >
+                      <CloseIcon style={{ fontSize: '0.75em' }} />
+                    </button>
+                  )}
+                </form>
+              )}
+              <button
+                type="button"
+                onClick={() => setSearchOpen(o => !o)}
+                aria-label={t('search_nav_label')}
+                className="bg-transparent border-none cursor-pointer text-gray-600 p-0 flex items-center hover:text-[var(--cs-primary)] transition-colors duration-200"
+              >
+                <SearchIcon style={{ fontSize: '1.1em' }} />
+              </button>
+            </div>
+          </li>
 
           {/* Language switcher */}
           <li className="relative max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:w-full">

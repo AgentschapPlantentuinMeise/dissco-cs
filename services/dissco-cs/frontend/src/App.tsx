@@ -13,6 +13,7 @@ import { About } from './pages/about/About';
 import { Help } from './pages/help/Help';
 import { Institutions } from './pages/institutions/Institutions';
 import { InstitutionDetail } from './pages/institutions/InstitutionDetail';
+import { SearchResults } from './pages/search/SearchResults';
 import { Contact } from './pages/contact/Contact';
 import { UserDashboard } from './pages/user-dashboard/UserDashboard';
 import { Dashboard } from './pages/dashboard/Dashboard';
@@ -58,6 +59,7 @@ export const App: React.FC = () => {
           <Route path="/manage/users" element={<AuthGate requireAdmin><UserManagement /></AuthGate>} />
           <Route path="/manage/pages" element={<AuthGate requireAdmin><PageManagement /></AuthGate>} />
           <Route path="/manage/institutions" element={<AuthGate requireAdmin><InstitutionManagement /></AuthGate>} />
+          <Route path="/find" element={<SearchResults />} />
           <Route path="/explore" element={<Projects />} />
           <Route path="/explore/:slug"element={<ProjectDetail />} />
           <Route path="/explore/:slug/manifests/:manifestId/annotate" element={<AuthGate><AnnotatePage /></AuthGate>} />

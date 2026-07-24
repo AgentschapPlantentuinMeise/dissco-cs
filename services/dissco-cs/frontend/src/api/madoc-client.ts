@@ -80,6 +80,21 @@ export const madocClient = {
 
   // -- publicRequest-based (site-scoped public reads) --
   getSiteProjects: (query?: { page?: number }) => publicRequest<any>('/projects', query),
+  getAllSiteProjects: async (): Promise<any[]> => {
+    const first = await publicRequest<any>('/projects', { page: 1 });
+    const totalPages = first?.pagination?.totalPages || 1;
+    const projects: any[] = first?.projects || [];
+
+    if (totalPages <= 1) {
+      return projects;
+    }
+
+    const rest = await Promise.all(
+      Array.from({ length: totalPages - 1 }, (_, i) => publicRequest<any>('/projects', { page: i + 2 }))
+    );
+
+    return projects.concat(...rest.map(page => page?.projects || []));
+  },
   getSiteProject: (id: string | number) => publicRequest<any>(`/projects/${id}`),
   getSiteCollection: (id: number, query?: Record<string, unknown>) =>
     publicRequest<any>(`/collections/${id}`, query),
