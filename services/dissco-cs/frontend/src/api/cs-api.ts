@@ -209,3 +209,74 @@ export const institutionsApi = {
   setOrder: (order: Institution['id'][]) =>
     csFetch<void>('/institutions/order', { method: 'PUT', body: JSON.stringify({ order }) }),
 };
+
+export type ProjectManualAttachmentMeta = { filename: string; mimeType: string; size: number };
+
+export type ProjectManual = {
+  id: number;
+  site_id: number;
+  title: Partial<Record<SitePageLang, string>>;
+  content: Partial<Record<SitePageLang, string>>;
+  updated_at: string;
+};
+
+export type ProjectManualSummary = ProjectManual & { linkedProjectSlugs: string[] };
+
+export type ProjectManualForVolunteer = {
+  id: number;
+  title: Partial<Record<SitePageLang, string>>;
+  content: Partial<Record<SitePageLang, string>>;
+  attachments: Partial<Record<SitePageLang, ProjectManualAttachmentMeta>>;
+};
+
+export type ProjectManualDetail = ProjectManual & {
+  attachments: Partial<Record<SitePageLang, ProjectManualAttachmentMeta>>;
+};
+
+export const projectManualsApi = {
+  getForProject: (projectSlug: string) =>
+    csFetch<ProjectManualForVolunteer>(`/projects/${encodeURIComponent(projectSlug)}/manual?slug=${getSiteSlug()}`),
+
+  getAdmin: (manualId: number) => csFetch<ProjectManualDetail>(`/manuals/${manualId}`),
+
+  attachmentUrl: (projectSlug: string, lang: SitePageLang) =>
+    `/api/dissco-cs/projects/${encodeURIComponent(projectSlug)}/manual/attachment/${lang}?slug=${getSiteSlug()}`,
+
+  setLink: (projectSlug: string, manualId: number | null) =>
+    csFetch<void>(`/projects/${encodeURIComponent(projectSlug)}/manual-link`, {
+      method: 'PUT',
+      body: JSON.stringify({ manualId }),
+    }),
+
+  list: () => csFetch<{ manuals: ProjectManualSummary[] }>('/manuals'),
+
+  create: (lang: SitePageLang, title: string) =>
+    csFetch<ProjectManual>('/manuals', { method: 'POST', body: JSON.stringify({ lang, title }) }),
+
+  remove: (manualId: number) => csFetch<void>(`/manuals/${manualId}`, { method: 'DELETE' }),
+
+  setTitle: (manualId: number, lang: SitePageLang, title: string) =>
+    csFetch<ProjectManual>(`/manuals/${manualId}/title`, { method: 'PUT', body: JSON.stringify({ lang, title }) }),
+
+  setContent: (manualId: number, lang: SitePageLang, content: string) =>
+    csFetch<void>(`/manuals/${manualId}/${lang}`, { method: 'PUT', body: JSON.stringify({ content }) }),
+
+  uploadAttachment: async (manualId: number, lang: SitePageLang, file: File): Promise<void> => {
+    const jwt = getJwt();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`/api/dissco-cs/manuals/${manualId}/${lang}/attachment`, {
+      method: 'PUT',
+      headers: jwt ? { Authorization: `Bearer ${jwt}` } : undefined,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`DiSSCo CS API request failed: ${response.status}`);
+    }
+  },
+
+  deleteAttachment: (manualId: number, lang: SitePageLang) =>
+    csFetch<void>(`/manuals/${manualId}/${lang}/attachment`, { method: 'DELETE' }),
+};

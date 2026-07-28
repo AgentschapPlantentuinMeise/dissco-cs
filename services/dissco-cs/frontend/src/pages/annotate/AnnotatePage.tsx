@@ -10,6 +10,8 @@ import { useDisscoCSNavigation } from '../../hooks/use-dissco-cs-navigation';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { CsPage } from '../../components/CsPage';
 import { LocaleString } from '../../components/LocaleString';
+import { ProjectManualModal } from '../../components/ProjectManualModal';
+import { BookIcon } from '../../icons/BookIcon';
 import { AnnotateLayout } from './AnnotateLayout';
 import { OpenSeadragonViewer } from './viewer/OpenSeadragonViewer';
 import { CaptureModelForm } from './form/CaptureModelForm';
@@ -48,6 +50,7 @@ export function AnnotatePage() {
   // Tasks are handed out randomly, not in a fixed sequence, so "previous" can only mean "the
   // manifest I was on before" — tracked here as a simple visited stack, not derived from any list.
   const [visited, setVisited] = useState<number[]>([]);
+  const [manualOpen, setManualOpen] = useState(false);
 
   const [navBottom, setNavBottom] = useState(70);
   useEffect(() => {
@@ -353,6 +356,12 @@ export function AnnotatePage() {
           </nav>
           <div className="flex items-center gap-2">
             <button
+              className="text-[0.85rem] text-[var(--cs-primary)] border border-[var(--cs-primary)] rounded px-2 py-1 flex items-center gap-1.5 leading-none cursor-pointer bg-white"
+              onClick={() => setManualOpen(true)}
+            >
+              <BookIcon aria-hidden="true" className="translate-y-px" /> {t('annotate_manual_button', 'Handleiding')}
+            </button>
+            <button
               className="text-[0.85rem] text-[var(--cs-primary)] border border-[var(--cs-primary)] rounded px-2 py-1 disabled:opacity-40 disabled:cursor-not-allowed"
               disabled={visited.length === 0}
               onClick={goToPrevious}
@@ -403,6 +412,8 @@ export function AnnotatePage() {
           }
         />
       </div>
+
+      <ProjectManualModal projectSlug={project.slug} open={manualOpen} onClose={() => setManualOpen(false)} />
     </CsPage>
   );
 }

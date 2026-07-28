@@ -1,10 +1,30 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
+import ReactMarkdown from 'react-markdown';
 import { Announcement, announcementsApi, AnnouncementTargetType } from '../../api/cs-api';
 import { BellIcon } from '../../icons/BellIcon';
 import { ChevronIcon } from '../../icons/ChevronIcon';
 import { useUser } from '../../hooks/use-current-user';
+
+// Compact overrides so markdown content fits the banner's small text-sm style instead of
+// CsMarkdown's full-page heading/paragraph sizes.
+const descriptionMarkdownComponents = {
+  p: ({ children }: { children?: React.ReactNode }) => (
+    <p className="text-sm text-gray-700 mt-1 mb-0 last:mb-0">{children}</p>
+  ),
+  a: ({ href, children }: { href?: string; children?: React.ReactNode }) => (
+    <a href={href} target="_blank" rel="noreferrer" className="text-[var(--cs-tertiary)] underline">
+      {children}
+    </a>
+  ),
+  ul: ({ children }: { children?: React.ReactNode }) => (
+    <ul className="text-sm text-gray-700 mt-1 mb-0 list-disc pl-5">{children}</ul>
+  ),
+  ol: ({ children }: { children?: React.ReactNode }) => (
+    <ol className="text-sm text-gray-700 mt-1 mb-0 list-decimal pl-5">{children}</ol>
+  ),
+};
 
 function storageKey(target: AnnouncementTargetType, projectSlug?: string): string {
   return `cs-announcements-collapsed-${target}${projectSlug ? `-${projectSlug}` : ''}`;
@@ -97,7 +117,7 @@ export const AnnouncementBanner: React.FC<{ target: AnnouncementTargetType; proj
           {announcements.map((announcement, index) => (
             <div key={announcement.id} className={index > 0 ? 'border-t border-black/10 pt-3' : undefined}>
               <p className="font-semibold text-[var(--cs-tertiary)] m-0">{text(announcement.title)}</p>
-              <p className="text-sm text-gray-700 mt-1 mb-0 whitespace-pre-line">{text(announcement.description)}</p>
+              <ReactMarkdown components={descriptionMarkdownComponents}>{text(announcement.description)}</ReactMarkdown>
             </div>
           ))}
         </div>

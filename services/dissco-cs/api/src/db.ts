@@ -4,12 +4,18 @@ import { appConfig } from './config.js';
 import { AnnouncementsRepository } from './repositories/announcements.repository.js';
 import { ForumRepository } from './repositories/forum.repository.js';
 import { InstitutionsRepository } from './repositories/institutions.repository.js';
+import { ProjectManualsRepository } from './repositories/project-manuals.repository.js';
 import { SitePagesRepository } from './repositories/site-pages.repository.js';
 
 export type { Announcement, AnnouncementTargetType } from './repositories/announcements.repository.js';
 export { ANNOUNCEMENT_TARGET_TYPES } from './repositories/announcements.repository.js';
 export type { ForumReply, ForumTopic, ForumTopicWithReplyCount } from './repositories/forum.repository.js';
 export type { Institution, InstitutionInput } from './repositories/institutions.repository.js';
+export type {
+  ProjectManual,
+  ProjectManualAttachmentMeta,
+  ProjectManualSummary,
+} from './repositories/project-manuals.repository.js';
 export type { SitePage, SitePageContentKey, SitePageKey, SitePageLang } from './repositories/site-pages.repository.js';
 export { SITE_PAGE_CONTENT_KEYS, SITE_PAGE_KEYS, SITE_PAGE_LANGS } from './repositories/site-pages.repository.js';
 
@@ -18,6 +24,7 @@ export class DisscoCSRepository {
   readonly sitePages: SitePagesRepository;
   readonly announcements: AnnouncementsRepository;
   readonly institutions: InstitutionsRepository;
+  readonly projectManuals: ProjectManualsRepository;
 
   private readonly pool: Pool;
   private readonly schemaRef: string;
@@ -42,6 +49,7 @@ export class DisscoCSRepository {
 
     this.forum = new ForumRepository(this.pool, this.schemaRef);
     this.sitePages = new SitePagesRepository(this.pool, this.schemaRef);
+    this.projectManuals = new ProjectManualsRepository(this.pool, this.schemaRef);
     this.announcements = new AnnouncementsRepository(this.pool, this.schemaRef);
     this.institutions = new InstitutionsRepository(this.pool, this.schemaRef);
   }
@@ -195,6 +203,49 @@ export class DisscoCSRepository {
       await client.query(`
         CREATE INDEX IF NOT EXISTS institutions_site_order_idx
         ON ${this.schemaRef}.institutions (site_id, sort_order)
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS ${this.schemaRef}.project_manuals (
+          id BIGSERIAL PRIMARY KEY,
+          site_id INTEGER NOT NULL,
+          title JSONB NOT NULL DEFAULT '{}'::jsonb,
+          content JSONB NOT NULL DEFAULT '{}'::jsonb,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS project_manuals_site_idx
+        ON ${this.schemaRef}.project_manuals (site_id)
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS ${this.schemaRef}.project_manual_links (
+          site_id INTEGER NOT NULL,
+          project_slug TEXT NOT NULL,
+          manual_id BIGINT NOT NULL REFERENCES ${this.schemaRef}.project_manuals (id) ON DELETE CASCADE,
+          PRIMARY KEY (site_id, project_slug)
+        )
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS project_manual_links_manual_idx
+        ON ${this.schemaRef}.project_manual_links (manual_id)
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS ${this.schemaRef}.project_manual_attachments (
+          id BIGSERIAL PRIMARY KEY,
+          manual_id BIGINT NOT NULL REFERENCES ${this.schemaRef}.project_manuals (id) ON DELETE CASCADE,
+          lang TEXT NOT NULL,
+          filename TEXT NOT NULL,
+          mime_type TEXT NOT NULL,
+          file_size INTEGER NOT NULL,
+          file_data BYTEA NOT NULL,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          UNIQUE (manual_id, lang)
+        )
       `);
 
       await client.query('COMMIT');

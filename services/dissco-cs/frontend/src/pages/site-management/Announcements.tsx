@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { HrefLink } from '../../utility/href-link';
@@ -14,6 +14,7 @@ import { ArrowLeftIcon } from '../../icons/ArrowLeftIcon';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { announcementsApi, Announcement, AnnouncementInput, AnnouncementTargetType, SitePageLang } from '../../api/cs-api';
 import { useProjectList } from '../../hooks/use-project-list';
+import { MarkdownToolbar } from '../../components/MarkdownToolbar';
 
 const LANGUAGES = disscoCSConfig.supportedLanguages;
 
@@ -64,6 +65,7 @@ export const Announcements: React.FC = () => {
   const [draft, setDraft] = useState<AnnouncementInput>(emptyDraft);
   const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
   const [pendingDeleteId, setPendingDeleteId] = useState<Announcement['id'] | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const refresh = () => refetch();
 
@@ -234,12 +236,18 @@ export const Announcements: React.FC = () => {
 
                 <label className="flex flex-col gap-1 mb-4">
                   <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_description')} *</span>
+                  <MarkdownToolbar
+                    textareaRef={textareaRef}
+                    value={draft.description[selectedLang] ?? ''}
+                    onChange={next => setDraft(prev => ({ ...prev, description: { ...prev.description, [selectedLang]: next } }))}
+                  />
                   <textarea
+                    ref={textareaRef}
                     value={draft.description[selectedLang] ?? ''}
                     onChange={e =>
                       setDraft(prev => ({ ...prev, description: { ...prev.description, [selectedLang]: e.target.value } }))
                     }
-                    className="border border-gray-300 rounded-lg p-2 min-h-[90px]"
+                    className="border border-gray-300 rounded-b-lg p-2 min-h-[90px]"
                   />
                 </label>
 

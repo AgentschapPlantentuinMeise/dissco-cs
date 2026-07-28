@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/CsPage';
@@ -12,6 +12,7 @@ import { ArrowLeftIcon } from '../../icons/ArrowLeftIcon';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { sitePagesApi, SitePage, SitePageKey, SitePageLang } from '../../api/cs-api';
 import { useSitePages } from '../../contexts/SitePagesContext';
+import { MarkdownToolbar } from '../../components/MarkdownToolbar';
 
 const CONTENT_PAGE_KEYS: SitePageKey[] = ['about', 'help', 'contact', 'welcome'];
 const LANGUAGES = disscoCSConfig.supportedLanguages;
@@ -42,6 +43,7 @@ export const PageManagement: React.FC = () => {
   const [draftContactEmail, setDraftContactEmail] = useState('');
   const [draftShowContactForm, setDraftShowContactForm] = useState(false);
   const [saved, setSaved] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Pages are fetched once on app load; re-fetch on entering this screen so content added
   // directly in the database (or saved from another tab) is reflected here.
@@ -205,14 +207,23 @@ export const PageManagement: React.FC = () => {
                   ))}
                 </div>
 
+                <MarkdownToolbar
+                  textareaRef={textareaRef}
+                  value={draftContent[selectedLang] ?? ''}
+                  onChange={next => {
+                    setDraftContent(prev => ({ ...prev, [selectedLang]: next }));
+                    setSaved(false);
+                  }}
+                />
                 <textarea
+                  ref={textareaRef}
                   value={draftContent[selectedLang] ?? ''}
                   onChange={e => {
                     setDraftContent(prev => ({ ...prev, [selectedLang]: e.target.value }));
                     setSaved(false);
                   }}
                   placeholder={t('sm_pages_content_placeholder')}
-                  className="w-full min-h-[260px] border border-gray-300 rounded-lg p-3 font-mono text-sm"
+                  className="w-full min-h-[260px] border border-gray-300 rounded-b-lg p-3 font-mono text-sm"
                 />
 
                 {selectedKey === 'welcome' && (

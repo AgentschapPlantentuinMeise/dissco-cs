@@ -36,8 +36,14 @@ export type InstitutionBody = {
   isActive?: unknown;
 };
 export type SetInstitutionsOrderBody = { order?: unknown };
+export type SetManualTitleBody = { lang?: unknown; title?: unknown };
+export type SetManualContentBody = { content?: unknown };
+export type SetManualLinkBody = { manualId?: unknown };
 
 export const MAX_LOGO_LENGTH = 3_000_000;
+export const MAX_MANUAL_TITLE_LENGTH = 200;
+export const MAX_MANUAL_CONTENT_LENGTH = 200_000;
+export const MAX_MANUAL_ATTACHMENT_LENGTH = 8_000_000;
 export const CONTACT_RATE_LIMIT = { maxAttempts: 5, windowMs: 10 * 60 * 1000 };
 
 export function getClientIp(c: { req: { header: (name: string) => string | undefined } }): string {
@@ -156,6 +162,50 @@ export function parseInstitutionBody(payload: InstitutionBody | null): Instituti
     logo: payload.logo ?? null,
     isActive: payload.isActive,
   };
+}
+
+export function isValidManualTitle(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0 && value.length <= MAX_MANUAL_TITLE_LENGTH;
+}
+
+export function isValidManualContent(value: unknown): value is string {
+  return typeof value === 'string' && value.length <= MAX_MANUAL_CONTENT_LENGTH;
+}
+
+export function parseSetManualTitleBody(payload: SetManualTitleBody | null): { lang: SitePageLang; title: string } | null {
+  if (!payload || !isSitePageLang(payload.lang) || !isValidManualTitle(payload.title)) {
+    return null;
+  }
+
+  return { lang: payload.lang, title: (payload.title as string).trim() };
+}
+
+export function parseSetManualContentBody(payload: SetManualContentBody | null): { content: string } | null {
+  if (!payload || !isValidManualContent(payload.content)) {
+    return null;
+  }
+
+  return { content: payload.content as string };
+}
+
+export function parseSetManualLinkBody(payload: SetManualLinkBody | null): { manualId: number | null } | null {
+  if (!payload) {
+    return null;
+  }
+
+  if (payload.manualId === null) {
+    return { manualId: null };
+  }
+
+  // BIGSERIAL-kolommen komen via pg als string terug (bigint-precisie), dus manual.id reist
+  // als JSON-string mee via createManual() -> setLink(); numerieke strings hier ook aanvaarden.
+  const manualId = typeof payload.manualId === 'string' ? Number(payload.manualId) : payload.manualId;
+
+  if (typeof manualId === 'number' && Number.isInteger(manualId)) {
+    return { manualId };
+  }
+
+  return null;
 }
 
 export function parseAnnouncementBody(

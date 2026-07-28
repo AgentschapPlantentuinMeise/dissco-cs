@@ -1,4 +1,4 @@
-﻿import React from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
@@ -9,12 +9,35 @@ import { projectProgressApi, ProjectProgress } from '../../api/cs-api';
 import { LocaleString } from '../../components/LocaleString';
 import { CsPage } from '../../components/CsPage';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
+import { ProjectManualModal } from '../../components/ProjectManualModal';
 import { disscoCSConfig } from '../../dissco-cs-config';
+
+function manualSeenKey(projectSlug: string): string {
+  return `project-manual-seen-${projectSlug}`;
+}
 
 export const ProjectDetail: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
   const { data: project } = useProject();
   const navigate = useNavigate();
+  const [manualOpen, setManualOpen] = useState(false);
+
+  // Auto-opens once per project per browser (AC2/AC3): only actually shows if the project
+  // has a manual linked — ProjectManualModal renders nothing otherwise, and markManualSeen
+  // is only called from its onShown callback, so a project without a manual (yet) keeps
+  // trying next visit instead of silently marking itself "seen".
+  useEffect(() => {
+    if (!project) return;
+    if (localStorage.getItem(manualSeenKey(project.slug)) !== '1') {
+      setManualOpen(true);
+    }
+  }, [project?.slug]);
+
+  const markManualSeen = () => {
+    if (project) {
+      localStorage.setItem(manualSeenKey(project.slug), '1');
+    }
+  };
 
 
   const { data: notStartedCollection } = useQuery(
@@ -120,12 +143,12 @@ export const ProjectDetail: React.FC = () => {
                 >
                   {isStarting ? t('pdp_starting') : t('pdp_btn_start')}
                 </button>
-                <a
+                <button
                   className="inline-block py-[11px] px-[26px] bg-transparent text-[var(--cs-primary)] text-[0.95rem] font-semibold border-2 border-[var(--cs-primary)] rounded cursor-pointer no-underline transition-[background-color,color,transform] duration-200 hover:bg-[var(--cs-primary)] hover:text-white hover:-translate-y-[1px]"
-                  href="/help"
+                  onClick={() => setManualOpen(true)}
                 >
                   {t('pdp_btn_guide')}
-                </a>
+                </button>
               </div>
             </div>
 
@@ -164,6 +187,13 @@ export const ProjectDetail: React.FC = () => {
 
         </div>
       </div>
+
+      <ProjectManualModal
+        projectSlug={project.slug}
+        open={manualOpen}
+        onClose={() => setManualOpen(false)}
+        onShown={markManualSeen}
+      />
     </CsPage>
   );
 };
