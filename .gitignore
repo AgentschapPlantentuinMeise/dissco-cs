@@ -29,3 +29,9 @@ notes
 
 # Persoonlijk draaiboek met omgeving-specifieke gegevens (gebruikersnaam, VM-IP), niet gedeeld
 docs/deploy-dev-server.md
+
+# Build-output van dissco-cs/api en dissco-cs/frontend -- de Dockerfile compileert dit altijd
+# vers in de container (COPY leest enkel src/package.json, nooit deze mappen), dus getrackte
+# kopieën zijn overbodig en raken meteen verouderd.
+services/dissco-cs/api/dist
+services/dissco-cs/frontend/dist
