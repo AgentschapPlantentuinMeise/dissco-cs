@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useProject } from '../../hooks/use-project';
 import { useRouteContext } from '../../hooks/use-route-context';
 import { madocClient } from '../../api/madoc-client';
+import { projectProgressApi, ProjectProgress } from '../../api/cs-api';
 import { LocaleString } from '../../components/LocaleString';
 import { CsPage } from '../../components/CsPage';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
@@ -25,6 +26,12 @@ export const ProjectDetail: React.FC = () => {
         hide_status: '1,2,3',
       }),
     { enabled: !!project }
+  );
+
+  const { data: progress } = useQuery<ProjectProgress>(
+    ['project-progress', project?.id],
+    () => projectProgressApi.get(project!.id),
+    { enabled: !!project, staleTime: 60000 }
   );
 
   const navigateToFirstCanvas = async (manifestId: number) => {
@@ -55,10 +62,8 @@ export const ProjectDetail: React.FC = () => {
     );
   }
 
-  const stats = project.statistics;
-  const completed = (stats?.[2] || 0) + (stats?.[3] || 0);
-  const total = (stats?.[0] || 0) + (stats?.[1] || 0) + (stats?.[2] || 0) + (stats?.[3] || 0);
-  const percentage = total <= 0 ? 0 : Math.max(0, Math.min(100, Math.round((completed / total) * 100)));
+  const transcribedPercentage = progress?.transcribedPercentage || 0;
+  const totalTasks = progress?.totalTasks || 0;
 
   const imageUrl = project.placeholderImage || null;
   const manifests = notStartedCollection?.collection?.items ?? [];
@@ -77,24 +82,26 @@ export const ProjectDetail: React.FC = () => {
               style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined}
             >
               <div className="absolute bottom-0 left-0 right-0 bg-[linear-gradient(transparent,rgba(0,0,0,0.72))] px-4 pb-[14px] pt-7 text-white">
-                <div className="flex justify-between items-baseline text-[0.8rem] mb-[6px] opacity-90">
-                  <span>{t('pdp_not_started')}</span>
-                  <span className="text-base font-bold">{percentage}%</span>
-                  <span>{t('pdp_completed')}</span>
+                <div className="grid grid-cols-2 gap-2 text-center text-[0.75rem] mb-[6px] opacity-90">
+                  <div>
+                    <div className="text-base font-bold">{transcribedPercentage}%</div>
+                    <div>{t('pdp_transcribed')}</div>
+                  </div>
+                  <div>
+                    <div className="text-base font-bold">{totalTasks}</div>
+                    <div>{t('pdp_tasks')}</div>
+                  </div>
                 </div>
                 <div className="h-[6px] bg-white/30 rounded-[3px] overflow-hidden">
                   <div
                     className="h-full bg-white rounded-[3px] transition-[width] duration-[0.6s] ease-in-out"
-                    style={{ width: `${percentage}%` }}
+                    style={{ width: `${transcribedPercentage}%` }}
                     role="progressbar"
-                    aria-valuenow={percentage}
+                    aria-valuenow={transcribedPercentage}
                     aria-valuemin={0}
                     aria-valuemax={100}
                   />
                 </div>
-                <p className="mt-[5px] text-[0.75rem] opacity-80 text-right mb-0">
-                  {(t('pdp_progress_count') as string || '').replace('{{done}}', String(completed)).replace('{{total}}', String(total))}
-                </p>
               </div>
             </div>
 

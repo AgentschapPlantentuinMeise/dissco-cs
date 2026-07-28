@@ -132,7 +132,7 @@ export const InstitutionDetail: React.FC = () => {
                 stats={[
                   {
                     value: `${mockOverview.tasksCompletedPct}%`,
-                    label: t('card_completed'),
+                    label: t('pdp_transcribed'),
                     note: `${formatNumber(mockOverview.tasksTotal)} ${t('institution_progress_tasks')}`,
                   },
                   { value: mockOverview.projectsActive, label: t('institution_projects_active') },
@@ -160,7 +160,7 @@ export const InstitutionDetail: React.FC = () => {
                           <div className="mt-auto">
                             <div className="flex justify-between text-xs mb-1">
                               <span className="font-bold text-[var(--cs-primary)]">{project.percentage}%</span>
-                              <span className="text-gray-500">{t('card_completed')}</span>
+                              <span className="text-gray-500">{t('pdp_transcribed')}</span>
                             </div>
                             <div className="h-[5px] bg-gray-200 rounded overflow-hidden">
                               <div className="h-full bg-[var(--cs-primary)] rounded" style={{ width: `${project.percentage}%` }} />

@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
-import { madocClient } from '../../api/madoc-client';
+import { projectProgressApi, ProjectProgress } from '../../api/cs-api';
 import { LocaleString } from '../LocaleString';
 import { disscoCSConfig } from '../../dissco-cs-config';
 
@@ -12,22 +12,13 @@ interface ProjectCardProps {
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({ projectSummaryData }) => {
   const { t } = useTranslation('dissco-cs');
-  const { data: fullProject, isLoading } = useQuery<any>(
-    ['homepage-full-project', projectSummaryData.id],
-    () => madocClient.getProject(projectSummaryData.id),
+  const { data: progress, isLoading } = useQuery<ProjectProgress>(
+    ['project-progress', projectSummaryData.id],
+    () => projectProgressApi.get(projectSummaryData.id),
     { staleTime: 60000 }
   );
 
-  let percentage = 0;
-  if (fullProject?.statistics) {
-    const stats: Record<string, number> = fullProject.statistics;
-    const totalTasks: number = (Object.values(stats) as number[]).reduce(
-      (a, b) => Math.max(a, 0) + Math.max(b, 0),
-      0
-    );
-    const completedTasks = Math.max(0, (stats['2'] || 0) + (stats['3'] || 0));
-    percentage = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
-  }
+  const percentage = progress?.transcribedPercentage || 0;
 
   const imageUrl = typeof projectSummaryData.thumbnail === 'string'
     ? projectSummaryData.thumbnail
@@ -61,7 +52,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ projectSummaryData }) 
             ) : (
               <>
                 <span className="font-bold text-[var(--cs-primary)]">{percentage}%</span>
-                <span className="text-gray-500">{t('card_completed')}</span>
+                <span className="text-gray-500">{t('pdp_transcribed')}</span>
               </>
             )}
           </div>

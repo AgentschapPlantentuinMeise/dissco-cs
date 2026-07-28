@@ -105,6 +105,16 @@ export const sitePagesApi = {
     csFetch<void>('/site-pages/order', { method: 'PUT', body: JSON.stringify({ order }) }),
 };
 
+export type ProjectProgress = {
+  transcribedPercentage: number;
+  totalTasks: number;
+};
+
+export const projectProgressApi = {
+  get: (projectId: string | number) =>
+    csFetch<ProjectProgress>(`/projects/${projectId}/progress?slug=${getSiteSlug()}`),
+};
+
 export const contactApi = {
   send: (data: { name: string; email: string; message: string; website: string }) =>
     csFetch<void>(`/contact?slug=${getSiteSlug()}`, { method: 'POST', body: JSON.stringify(data) }),
