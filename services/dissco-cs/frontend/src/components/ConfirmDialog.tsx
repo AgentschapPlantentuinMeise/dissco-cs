@@ -1,4 +1,5 @@
 import React from 'react';
+import { Modal } from './Modal';
 
 export const ConfirmDialog: React.FC<{
   message: string;
@@ -8,12 +9,11 @@ export const ConfirmDialog: React.FC<{
   onCancel: () => void;
 }> = ({ message, confirmLabel, cancelLabel, onConfirm, onCancel }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onCancel}>
-      <div
-        className="bg-white rounded-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.2)] p-6 max-w-sm w-full"
-        onClick={e => e.stopPropagation()}
-      >
-        <p className="text-gray-800 mb-6">{message}</p>
+    <Modal
+      open
+      onClose={onCancel}
+      size="sm"
+      footer={
         <div className="flex items-center gap-3">
           <button
             onClick={onConfirm}
@@ -28,7 +28,9 @@ export const ConfirmDialog: React.FC<{
             {cancelLabel}
           </button>
         </div>
-      </div>
-    </div>
+      }
+    >
+      <p className="text-gray-800">{message}</p>
+    </Modal>
   );
 };

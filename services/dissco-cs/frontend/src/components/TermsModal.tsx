@@ -1,5 +1,6 @@
 import React from 'react';
 import { CsMarkdown } from './CsMarkdown';
+import { Modal } from './Modal';
 import { SiteTerms } from '../api/madoc-client';
 
 type TermsModalProps = {
@@ -26,19 +27,13 @@ export const TermsModal: React.FC<TermsModalProps> = ({
   disabled,
 }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onCancel}>
-      <div
-        className="bg-white rounded-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.2)] p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto"
-        onClick={e => e.stopPropagation()}
-      >
-        <h2 className="text-2xl text-[var(--cs-primary)] mb-4">{title}</h2>
-        {intro && <p className="text-base text-gray-600 mb-4">{intro}</p>}
-        {terms.terms?.markdown ? (
-          <CsMarkdown content={terms.terms.markdown} />
-        ) : (
-          <p className="text-gray-800 whitespace-pre-line">{terms.terms?.text}</p>
-        )}
-        <div className="flex items-center gap-3 mt-6">
+    <Modal
+      open
+      onClose={onCancel}
+      title={title}
+      size="lg"
+      footer={
+        <div className="flex items-center gap-3">
           <button
             type="button"
             disabled={disabled}
@@ -56,7 +51,14 @@ export const TermsModal: React.FC<TermsModalProps> = ({
             {cancelLabel}
           </button>
         </div>
-      </div>
-    </div>
+      }
+    >
+      {intro && <p className="text-base text-gray-600 mb-4">{intro}</p>}
+      {terms.terms?.markdown ? (
+        <CsMarkdown content={terms.terms.markdown} />
+      ) : (
+        <p className="text-gray-800 whitespace-pre-line">{terms.terms?.text}</p>
+      )}
+    </Modal>
   );
 };

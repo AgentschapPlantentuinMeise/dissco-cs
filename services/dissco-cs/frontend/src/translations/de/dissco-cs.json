@@ -114,6 +114,7 @@
   "my_tasks_title": "Meine Aufgaben",
   "my_tasks_total": "Beiträge",
   "my_tasks_release_confirm": "Möchten Sie diese Aufgabe wirklich freigeben? Ihre gespeicherte Arbeit geht verloren und die Aufgabe wird wieder verfügbar.",
+  "welcome_popup_cta": "Loslegen",
   "dashboard_welcome": "Willkommen zurück, {{name}}",
   "dashboard_subtitle": "Überblick über Ihren Beitrag und offene Aufgaben bei {{platformName}}.",
   "dashboard_saved_tasks_subtitle": "{{count}} Aufgaben warten auf Sie",

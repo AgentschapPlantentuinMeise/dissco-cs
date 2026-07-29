@@ -7,18 +7,21 @@ type ModalProps = {
   onClose: () => void;
   title?: string;
   eyebrow?: string;
-  size?: 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg';
+  footer?: React.ReactNode;
   children: React.ReactNode;
 };
 
 const SIZE_CLASS: Record<NonNullable<ModalProps['size']>, string> = {
+  sm: 'max-w-sm',
   md: 'max-w-md',
   lg: 'max-w-xl',
 };
 
-// Generic modal shell (overlay + card), reused by ProjectManualModal — modeled after
-// WelcomeModal.tsx's overlay/transition pattern but made reusable across content types.
-export const Modal: React.FC<ModalProps> = ({ open, onClose, title, eyebrow, size = 'md', children }) => {
+// Generic modal shell (overlay + card) — modeled after WelcomeModal.tsx's original
+// overlay/transition pattern but made reusable across content types. Shared by
+// ProjectManualModal, ConfirmDialog, TermsModal and WelcomeModal.
+export const Modal: React.FC<ModalProps> = ({ open, onClose, title, eyebrow, size = 'md', footer, children }) => {
   const { t } = useTranslation('dissco-cs');
   const [entered, setEntered] = useState(false);
 
@@ -67,6 +70,7 @@ export const Modal: React.FC<ModalProps> = ({ open, onClose, title, eyebrow, siz
           </div>
         )}
         <div className="overflow-y-auto px-6 py-5">{children}</div>
+        {footer && <div className="flex-shrink-0 border-t border-gray-200 px-6 py-4">{footer}</div>}
       </div>
     </div>
   );

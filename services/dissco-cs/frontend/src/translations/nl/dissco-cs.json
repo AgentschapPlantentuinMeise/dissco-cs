@@ -114,6 +114,7 @@
   "my_tasks_title": "Mijn taken",
   "my_tasks_total": "Bijdragen",
   "my_tasks_release_confirm": "Weet je zeker dat je deze taak wil loslaten? Je opgeslagen werk gaat verloren en de taak komt weer beschikbaar.",
+  "welcome_popup_cta": "Aan de slag",
   "dashboard_welcome": "Welkom terug, {{name}}",
   "dashboard_subtitle": "Overzicht van je bijdrage en openstaande taken bij {{platformName}}.",
   "dashboard_saved_tasks_subtitle": "{{count}} taken wachten op jou",

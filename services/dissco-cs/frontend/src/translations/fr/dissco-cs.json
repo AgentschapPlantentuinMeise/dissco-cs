@@ -114,6 +114,7 @@
   "my_tasks_title": "Mes tâches",
   "my_tasks_total": "Contributions",
   "my_tasks_release_confirm": "Voulez-vous vraiment abandonner cette tâche ? Votre travail enregistré sera perdu et la tâche redeviendra disponible.",
+  "welcome_popup_cta": "Commencer",
   "dashboard_welcome": "Bon retour, {{name}}",
   "dashboard_subtitle": "Aperçu de votre contribution et des tâches en attente sur {{platformName}}.",
   "dashboard_saved_tasks_subtitle": "{{count}} tâches vous attendent",

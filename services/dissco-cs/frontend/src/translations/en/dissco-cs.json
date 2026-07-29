@@ -115,6 +115,7 @@
   "my_tasks_title": "My tasks",
   "my_tasks_total": "Contributions",
   "my_tasks_release_confirm": "Are you sure you want to release this task? Your saved work will be lost and the task will become available again.",
+  "welcome_popup_cta": "Get started",
   "dashboard_welcome": "Welcome back, {{name}}",
   "dashboard_subtitle": "Overview of your contribution and open tasks at {{platformName}}.",
   "dashboard_saved_tasks_subtitle": "{{count}} tasks are waiting for you",
