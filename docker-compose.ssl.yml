@@ -1,0 +1,13 @@
+# Optioneel: HTTPS toevoegen aan de gateway met een zelfondertekend certificaat.
+# Vereist een apart gebouwde gateway-ssl-image (services/gateway/Dockerfile.dev, zie
+# docs/deploy-dev-server.md sectie "HTTPS met een zelfondertekend certificaat")
+# en een certificaat/sleutel in ./var/certs/local-cert.pem + local-key.pem.
+# Gebruik: docker compose -f docker-compose.release.yml -f docker-compose.dev.yml -f docker-compose.ssl.yml --env-file .env.dev up -d
+services:
+
+  gateway:
+    image: dissco-cs/gateway-ssl:${IMAGE_TAG}
+    volumes:
+      - ./var/certs:/certs:ro
+    ports:
+      - "${PORTS_GATEWAY_HTTPS:-443}:443"
