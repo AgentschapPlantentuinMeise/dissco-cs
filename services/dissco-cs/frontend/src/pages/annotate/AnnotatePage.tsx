@@ -281,6 +281,12 @@ export function AnnotatePage() {
     await goToNext();
   };
 
+  // Same save as handleSaveAndAdvance('draft') but stays on the current task — no goToNext().
+  const handleSaveDraft = async () => {
+    await save('draft');
+    setConfirmation(t('annotate_saved_draft', 'Opgeslagen als concept'));
+  };
+
   if (structureError || preparedError || modelError) {
     const err = structureErrorObj || preparedErrorObj || modelErrorObj;
     return (
@@ -356,20 +362,20 @@ export function AnnotatePage() {
           </nav>
           <div className="flex items-center gap-2">
             <button
-              className="text-[0.85rem] text-[var(--cs-primary)] border border-[var(--cs-primary)] rounded px-2 py-1 flex items-center gap-1.5 leading-none cursor-pointer bg-white"
+              className="text-[0.85rem] text-[var(--cs-primary)] border border-[var(--cs-primary)] rounded px-2 py-1 inline-flex items-center gap-1.5 leading-none cursor-pointer bg-white"
               onClick={() => setManualOpen(true)}
             >
               <BookIcon aria-hidden="true" className="translate-y-px" /> {t('annotate_manual_button', 'Handleiding')}
             </button>
             <button
-              className="text-[0.85rem] text-[var(--cs-primary)] border border-[var(--cs-primary)] rounded px-2 py-1 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="text-[0.85rem] text-[var(--cs-primary)] border border-[var(--cs-primary)] rounded px-2 py-1 inline-flex items-center leading-none disabled:opacity-40 disabled:cursor-not-allowed"
               disabled={visited.length === 0}
               onClick={goToPrevious}
             >
               ← {t('annotate_prev_task', 'Vorige taak')}
             </button>
             <button
-              className="text-[0.85rem] text-[var(--cs-primary)] border border-[var(--cs-primary)] rounded px-2 py-1 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="text-[0.85rem] text-[var(--cs-primary)] border border-[var(--cs-primary)] rounded px-2 py-1 inline-flex items-center leading-none disabled:opacity-40 disabled:cursor-not-allowed"
               disabled={isLoadingNext}
               onClick={goToNext}
             >
@@ -397,7 +403,7 @@ export function AnnotatePage() {
               model={model}
               document={annotationDocument}
               onChange={handleChange}
-              onSaveDraft={() => handleSaveAndAdvance('draft')}
+              onSaveDraft={() => handleSaveDraft()}
               onSubmit={() => handleSaveAndAdvance('submitted')}
               onActiveStructureChange={setActiveStructure}
               saving={saving || advancing}
