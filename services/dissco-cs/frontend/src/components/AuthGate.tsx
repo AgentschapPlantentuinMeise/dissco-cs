@@ -1,13 +1,15 @@
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useUser } from '../hooks/use-current-user';
 
 export const AuthGate: React.FC<{ requireAdmin?: boolean; children: React.ReactNode }> = ({ requireAdmin, children }) => {
   const user = useUser();
-  const location = useLocation();
 
   if (!user) {
-    const redirect = encodeURIComponent(`${location.pathname}${location.search}`);
+    // useLocation().pathname excludes the router's basename (/s/{slug}), but Login's
+    // redirectAfterLogin does a raw window.location.href navigation with this value -
+    // it needs the basename included or the post-login redirect 404s.
+    const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
     return <Navigate to={`/login?redirect=${redirect}`} replace />;
   }
 

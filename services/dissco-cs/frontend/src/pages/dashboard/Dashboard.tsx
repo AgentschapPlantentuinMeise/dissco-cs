@@ -8,6 +8,7 @@ import { madocClient } from '../../api/madoc-client';
 import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
 import { parseUrn } from '../../utility/parse-urn';
 import { HrefLink } from '../../utility/href-link';
+import { buildTaskLink } from '../../utility/build-task-link';
 import { CsPage } from '../../components/CsPage';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { InternationalString } from '../../components/LocaleString';
@@ -45,23 +46,6 @@ function DonutChart({ segments }: { segments: ChartSegment[] }) {
       </ResponsiveContainer>
     </div>
   );
-}
-
-function buildTaskLink(task: CrowdsourcingTask): string {
-  const projectSlug = task.metadata?.project?.slug;
-  if (!projectSlug || !task.subject) return `/tasks/${task.id}`;
-  const parsedSubject = parseUrn(task.subject);
-  if (!parsedSubject) return `/tasks/${task.id}`;
-  if (parsedSubject.type === 'manifest') {
-    return `/explore/${projectSlug}/manifests/${parsedSubject.id}/annotate`;
-  }
-  if (parsedSubject.type === 'canvas' && task.subject_parent) {
-    const parsedParent = parseUrn(task.subject_parent);
-    if (parsedParent && parsedParent.type === 'manifest') {
-      return `/explore/${projectSlug}/manifests/${parsedParent.id}/annotate`;
-    }
-  }
-  return `/tasks/${task.id}`;
 }
 
 const formatDate = (iso: string) =>
@@ -154,6 +138,10 @@ export const Dashboard: React.FC = () => {
   const visibleTasks = Array.from(latestPerSubject.values());
 
   const savedTasks = visibleTasks.filter(task => s(task) === 1);
+  console.log('[Dashboard] savedTasks (status === 1):', savedTasks.length, savedTasks.map(task => ({
+    id: task.id, name: task.name, subject: task.subject,
+    project: task.metadata?.project ? { id: task.metadata.project.id, slug: task.metadata.project.slug } : undefined,
+  })));
   const doneCount = visibleTasks.filter(task => s(task) === 2 || s(task) === 3 || s(task) === 5).length;
   const userDoneCount = uniqueTasks.filter(task => s(task) === 2 || s(task) === 3 || s(task) === 5).length;
   const contributedTasks = visibleTasks;

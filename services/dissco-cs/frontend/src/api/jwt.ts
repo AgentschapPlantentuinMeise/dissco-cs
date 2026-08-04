@@ -13,6 +13,17 @@ export function clearJwt(): void {
   cookies.erase(`madoc/${slug}`, { path: `/s/${slug}` });
 }
 
+// Sends the user back to login when a gated API call 401s (typically an expired session
+// cookie). Returns a promise that never resolves, so the caller's fetch chain just stalls
+// until the browser finishes navigating away, instead of every page having to special-case
+// a 401 to avoid flashing a raw "request failed: 401" error first.
+export function redirectToExpiredLogin<T>(): Promise<T> {
+  const slug = getSiteSlug();
+  const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+  window.location.href = `/s/${slug}/login?redirect=${redirect}&expired=1`;
+  return new Promise<T>(() => {});
+}
+
 export type CurrentUser = {
   id: number;
   name: string;

@@ -1,11 +1,21 @@
 import queryString from 'query-string';
-import { getJwt } from './jwt';
+import { getJwt, redirectToExpiredLogin } from './jwt';
 import { getSiteSlug } from './slug';
 
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
 };
+
+// Lets callers branch on the status (e.g. 404 = missing site scope, per madoc-ts's
+// userWithScope, vs. a genuinely missing resource) instead of parsing the message string.
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, path: string, serverMessage?: string) {
+    super(serverMessage || `Madoc API request failed: ${status} ${path}`);
+    this.status = status;
+  }
+}
 
 async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   const jwt = getJwt();
@@ -19,8 +29,13 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
 
+  if (response.status === 401) {
+    return redirectToExpiredLogin<T>();
+  }
+
   if (!response.ok) {
-    throw new Error(`Madoc API request failed: ${response.status} ${path}`);
+    const data = await response.json().catch(() => ({}));
+    throw new ApiError(response.status, path, data.error);
   }
 
   if (response.status === 204) {
@@ -115,6 +130,10 @@ export const madocClient = {
     }),
   createResourceClaim: (projectId: string | number, claim: Record<string, unknown>) =>
     request<{ claim: any }>(`/api/madoc/projects/${projectId}/claim`, { method: 'POST', body: claim }),
+  // Verwijdert de eigen claim-taak volledig (i.p.v. 'm op status -1 te zetten) — bestaande
+  // upstream madoc-ts-route, zie routes/projects/delete-resource-claim.ts.
+  revokeResourceClaim: (projectId: string | number, claim: Record<string, unknown>) =>
+    request<void>(`/api/madoc/projects/${projectId}/revoke-claim`, { method: 'POST', body: claim }),
   randomlyAssignedManifest: (projectId: string | number, body: { collectionId?: number } = {}) =>
     request<{ remainingTasks: number; manifest: number; claim: any }>(
       `/api/madoc/projects/${projectId}/random`,

@@ -17,6 +17,8 @@ export const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [pendingTerms, setPendingTerms] = useState<SiteTerms | null>(null);
 
+  const sessionExpired = searchParams.get('expired') === '1';
+
   const redirectAfterLogin = () => {
     const redirect = searchParams.get('redirect');
     window.location.href = redirect && redirect.startsWith('/') ? redirect : '/';
@@ -81,6 +83,10 @@ export const Login: React.FC = () => {
               </HrefLink>
             </p>
           </header>
+
+          {sessionExpired && (
+            <p className="mb-4 text-sm text-gray-600 bg-gray-100 rounded-lg p-3">{t('login_session_expired')}</p>
+          )}
 
           <form onSubmit={submit} className="flex flex-col gap-4">
             <label className="flex flex-col gap-1">

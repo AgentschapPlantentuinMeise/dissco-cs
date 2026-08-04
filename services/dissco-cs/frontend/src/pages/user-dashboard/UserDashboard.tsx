@@ -8,6 +8,7 @@ import { madocClient } from '../../api/madoc-client';
 import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
 import { parseUrn } from '../../utility/parse-urn';
 import { HrefLink } from '../../utility/href-link';
+import { buildTaskLink } from '../../utility/build-task-link';
 import { CsPage } from '../../components/CsPage';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { InternationalString } from '../../components/LocaleString';
@@ -57,23 +58,6 @@ function getStatusBadge(status: number): { label: string; variant: string } {
   if (status === 3 || status === 2 || status === 5) return { label: 'my_tasks_status_done', variant: 'done' };
   if (status === -1) return { label: 'my_tasks_status_rejected', variant: 'rejected' };
   return { label: 'my_tasks_status_draft', variant: 'draft' };
-}
-
-function buildTaskLink(task: CrowdsourcingTask): string {
-  const projectSlug = task.metadata?.project?.slug;
-  if (!projectSlug || !task.subject) return `/tasks/${task.id}`;
-  const parsedSubject = parseUrn(task.subject);
-  if (!parsedSubject) return `/tasks/${task.id}`;
-  if (parsedSubject.type === 'manifest') {
-    return `/explore/${projectSlug}/manifests/${parsedSubject.id}/annotate`;
-  }
-  if (parsedSubject.type === 'canvas' && task.subject_parent) {
-    const parsedParent = parseUrn(task.subject_parent);
-    if (parsedParent && parsedParent.type === 'manifest') {
-      return `/explore/${projectSlug}/manifests/${parsedParent.id}/annotate`;
-    }
-  }
-  return `/tasks/${task.id}`;
 }
 
 const thClass = 'bg-gray-50 px-4 py-3 text-left text-[0.8rem] font-semibold text-gray-500 uppercase tracking-[0.04em] border-b border-gray-200 max-[600px]:hidden';

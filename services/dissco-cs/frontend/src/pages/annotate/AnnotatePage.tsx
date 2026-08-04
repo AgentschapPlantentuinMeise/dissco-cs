@@ -2,7 +2,8 @@
 import { useMutation, useQuery, queryCache } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
-import { madocClient } from '../../api/madoc-client';
+import { madocClient, ApiError } from '../../api/madoc-client';
+import { manifestClaimApi } from '../../api/cs-api';
 import { getSiteSlug } from '../../api/slug';
 import { useProject } from '../../hooks/use-project';
 import { useRouteContext } from '../../hooks/use-route-context';
@@ -11,11 +12,12 @@ import { disscoCSConfig } from '../../dissco-cs-config';
 import { CsPage } from '../../components/CsPage';
 import { LocaleString } from '../../components/LocaleString';
 import { ProjectManualModal } from '../../components/ProjectManualModal';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { BookIcon } from '../../icons/BookIcon';
 import { AnnotateLayout } from './AnnotateLayout';
 import { OpenSeadragonViewer } from './viewer/OpenSeadragonViewer';
 import { CaptureModelForm } from './form/CaptureModelForm';
-import { createEmptyDocument, setFieldValue, setFieldSelector, collectSelectorStates, pathsEqual, DocumentPath } from './form/document';
+import { createEmptyDocument, createBlankDocument, setFieldValue, setFieldSelector, collectSelectorStates, pathsEqual, DocumentPath } from './form/document';
 import { AnnotationDocument } from '../../capture-model/types/document';
 import { CaptureModel, StructureNode } from '../../capture-model/types/capture-model';
 import { BoxSelectorState } from '../../capture-model/types/selector-types';
@@ -77,6 +79,17 @@ export function AnnotatePage() {
     () => madocClient.prepareClaim(project!.id, { manifestId }),
     { enabled: !!project?.id && !!manifestId, retry: false }
   );
+  useEffect(() => {
+    if (prepared) {
+      console.log('[CS] prepareClaim resultaat', {
+        manifestId,
+        claimId: prepared.claim?.id,
+        claimStatus: prepared.claim?.status,
+        modelId: prepared.model?.id,
+        fullPrepared: prepared,
+      });
+    }
+  }, [prepared, manifestId]);
 
   const { data: model, isError: modelError, error: modelErrorObj } = useQuery<CaptureModel>(
     ['capture-model', prepared?.model?.id],
@@ -106,9 +119,13 @@ export function AnnotatePage() {
     if (!drawingPath) return;
     setAnnotationDocument(doc => (doc ? setFieldSelector(doc, drawingPath, state, revisionIdRef.current) : doc));
     setDrawingPath(null);
+    isDirty.current = true;
+    scheduleFirstAutosave();
   };
   const handleClearSelector = (path: DocumentPath) => {
     setAnnotationDocument(doc => (doc ? setFieldSelector(doc, path, null, revisionIdRef.current) : doc));
+    isDirty.current = true;
+    scheduleFirstAutosave();
   };
   // Regions already saved on other fields, shown as overlays — excludes the field currently being
   // (re)drawn so its stale box doesn't sit underneath the live drag overlay.
@@ -125,14 +142,20 @@ export function AnnotatePage() {
   }, [annotationDocument]);
 
   useEffect(() => {
-    if (model) {
-      revisionIdRef.current = generateUUID();
-      setAnnotationDocument(createEmptyDocument(model));
-    }
-  }, [model]);
+    if (!model || !prepared) return;
+    // Resuming your own active claim (status >= 1): keep the current document as-is. A genuinely
+    // new claim starts blank instead — the model's own `document` is shared per manifest and may
+    // still carry values from a previous, possibly abandoned, contribution by anyone.
+    const existingStatus = prepared.claim?.status as number | undefined;
+    const isResuming = existingStatus !== undefined && existingStatus >= 1;
+    setAnnotationDocument(isResuming ? createEmptyDocument(model) : createBlankDocument(model));
+  }, [model, prepared]);
 
   const hasSaved = useRef(false);
   const claimIdRef = useRef<string | undefined>(undefined);
+  // Set on every edit, cleared once that edit has actually been persisted — used to decide
+  // whether a periodic/first autosave has anything new to save.
+  const isDirty = useRef(false);
   // Holds the in-flight claim request itself, not just its resolved id — needed because a user
   // can leave faster than the claim POST round-trips. Without awaiting this, releaseClaim would
   // see claimIdRef.current still undefined, skip the abandon entirely, and the claim that finishes
@@ -157,17 +180,23 @@ export function AnnotatePage() {
   // the release BEFORE the next page mounts and fetches, instead of racing it (see handleLeave).
   const releaseClaim = async () => {
     if (hasSaved.current) return;
+    if (!project?.id || !manifestId) return;
 
     const claimId = await getClaimId();
     if (!claimId) return;
 
     console.log('[CS] releasing claim', { manifestId, claimId });
     try {
-      const result = await madocClient.updateTask(claimId, { status: -1, status_text: 'abandoned' });
-      console.log('[CS] abandon result', result);
+      // Deletes the claim task outright (upstream madoc-ts route), instead of leaving an
+      // 'abandoned' row behind — see AnnotatePage/manifest-claims discussion.
+      await madocClient.revokeResourceClaim(project.id, { manifestId });
       // ProjectDetail.tsx's manifest list is cached under ['collection', collectionId] — invalidate by
       // prefix so the "Choose where to start" grid re-fetches and shows the manifest as available again.
       queryCache.invalidateQueries('collection');
+      // Best-effort: madoc-ts only re-syncs the shared max-contributors counter when a NEW claim
+      // is created, never on an abandon — without this, a manifest that hit its contributor
+      // limit stays blocked for everyone (incl. this user) once its only active claim is released.
+      await manifestClaimApi.resync(project.id, manifestId).catch(err => console.error('[CS] resync failed', err));
     } catch (err) {
       console.error('[CS] abandon failed', err);
     }
@@ -185,6 +214,12 @@ export function AnnotatePage() {
     setConfirmation(null);
     setAdvancing(false);
     setDrawingPath(null);
+    isDirty.current = false;
+    setFirstSaveDone(false);
+    if (firstSaveTimerRef.current) {
+      clearTimeout(firstSaveTimerRef.current);
+      firstSaveTimerRef.current = null;
+    }
 
     if (!project?.id || !manifestId) return;
     if (!prepared) return; // wacht tot prepare-claim klaar is zodat we de bestaande status weten
@@ -192,17 +227,25 @@ export function AnnotatePage() {
     const existingStatus = prepared.claim?.status as number | undefined;
 
     // Bestaande claim (opgeslagen of ingediend): gebruik het bestaande claim-id en zet hasSaved
-    // op true zodat releaseClaim niets doet — de taakstatus blijft onaangeroerd.
+    // op true zodat releaseClaim niets doet — de taakstatus blijft onaangeroerd. Hergebruik de
+    // revisionId die op de taak staat (indien aanwezig) zodat een volgende autosave dezelfde
+    // capture_model_revision-rij bijwerkt in plaats van er een nieuwe bij te maken — oudere taken
+    // van vóór deze wijziging hebben nog geen opgeslagen revisionId, vandaar de fallback.
     if (existingStatus !== undefined && existingStatus >= 1) {
-      console.log('[CS] bestaande claim gevonden, geen nieuwe aanmaken', { existingStatus, claimId: prepared.claim?.id });
+      const existingRevisionId = prepared.claim?.state?.revisionId as string | undefined;
+      console.log('[CS] bestaande claim gevonden, geen nieuwe aanmaken', { existingStatus, claimId: prepared.claim?.id, existingRevisionId });
       claimIdRef.current = prepared.claim?.id;
+      revisionIdRef.current = existingRevisionId || generateUUID();
       hasSaved.current = true;
       return;
     }
 
-    // Nieuwe claim of verlaten taak (status 0): maak aan en abandon bij verlaten.
-    console.log('[CS] claiming manifest', { projectId: project.id, manifestId });
-    const promise = madocClient.createResourceClaim(project.id, { manifestId, status: 0 });
+    // Nieuwe claim of verlaten taak (status 0): maak aan en abandon bij verlaten. De revisionId
+    // wordt meegestuurd zodat de taak 'm bewaart (state.revisionId) en toekomstige heropeningen
+    // 'm hierboven kunnen hergebruiken.
+    revisionIdRef.current = generateUUID();
+    console.log('[CS] claiming manifest', { projectId: project.id, manifestId, revisionId: revisionIdRef.current });
+    const promise = madocClient.createResourceClaim(project.id, { manifestId, status: 0, revisionId: revisionIdRef.current });
     claimPromiseRef.current = promise;
     promise
       .then(result => {
@@ -215,6 +258,10 @@ export function AnnotatePage() {
       .catch(err => console.error('[CS] claim failed', err));
 
     return () => {
+      if (firstSaveTimerRef.current) {
+        clearTimeout(firstSaveTimerRef.current);
+        firstSaveTimerRef.current = null;
+      }
       releaseClaim();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -225,8 +272,33 @@ export function AnnotatePage() {
     navigate(to);
   };
 
+  // Expliciete, door de gebruiker aangevraagde variant van releaseClaim: die functie doet
+  // bewust NIETS zodra hasSaved true is (autosave heeft al gedraaid), maar hier wil de
+  // gebruiker de taak juist wél loslaten ondanks dat opgeslagen concept.
+  const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
+  const handleReleaseTask = async () => {
+    // Voor de netwerk-call, zodat de unmount-cleanup (releaseClaim) na de navigate() hieronder
+    // geen tweede (overbodige) abandon-call meer doet — zelfde reden als in `save` hierboven.
+    hasSaved.current = true;
+    if (project?.id && manifestId) {
+      try {
+        await madocClient.revokeResourceClaim(project.id, { manifestId });
+        queryCache.invalidateQueries('collection');
+        queryCache.invalidateQueries('my-tasks');
+        await manifestClaimApi.resync(project.id, manifestId).catch(err => console.error('[CS] resync failed', err));
+      } catch (err) {
+        console.error('[CS] release failed', err);
+      }
+    }
+    navigate(`/explore/${project?.slug}`);
+  };
+
   const [save, { isLoading: saving }] = useMutation(async (status: 'draft' | 'submitted') => {
     if (!model || !annotationDocument || !activeStructure) return;
+    // Set before the network call (not after) so that a user who navigates away while this save
+    // is still in flight can never race releaseClaim into sending an abandon for a task that's
+    // actually being saved.
+    hasSaved.current = true;
     await madocClient.createCaptureModelRevision(
       {
         captureModelId: model.id,
@@ -238,7 +310,7 @@ export function AnnotatePage() {
       },
       status
     );
-    hasSaved.current = true;
+    isDirty.current = false;
 
     // createCaptureModelRevision only writes the model-api revision — the task itself (what the
     // dashboard's task list queries) stays at its initial "assigned" status (0) unless we update
@@ -252,6 +324,21 @@ export function AnnotatePage() {
       queryCache.invalidateQueries('my-tasks');
     }
   });
+
+  const [firstSaveDone, setFirstSaveDone] = useState(false);
+  const firstSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Fires the very first background save ~2s after the user stops editing/drawing — only once
+  // per task; a later periodic save takes over after this succeeds.
+  const scheduleFirstAutosave = () => {
+    if (firstSaveDone || firstSaveTimerRef.current) return;
+    firstSaveTimerRef.current = setTimeout(async () => {
+      firstSaveTimerRef.current = null;
+      if (!isDirty.current) return;
+      await save('draft');
+      setFirstSaveDone(true);
+    }, 2000);
+  };
 
   // Asks for another random assignment (same endpoint as ProjectDetail's "Start" button) and goes
   // there — falling back to the project page once none are left. Records the manifest we're
@@ -289,6 +376,17 @@ export function AnnotatePage() {
 
   if (structureError || preparedError || modelError) {
     const err = structureErrorObj || preparedErrorObj || modelErrorObj;
+
+    if (err instanceof ApiError && err.status === 404) {
+      return (
+        <CsPage>
+          <div className="cs-main-wrapper py-16 text-center text-gray-600">
+            {t('annotate_no_access', 'Deze taak kan niet worden geladen. Mogelijk heb je geen toegang tot dit project, of bestaat de taak niet meer. Neem contact op met de sitebeheerder als dit niet klopt.')}
+          </div>
+        </CsPage>
+      );
+    }
+
     return (
       <CsPage>
         <div className="cs-main-wrapper py-16 text-center text-red-600">
@@ -327,6 +425,8 @@ export function AnnotatePage() {
 
   const handleChange = (path: DocumentPath, value: unknown) => {
     setAnnotationDocument(doc => (doc ? setFieldValue(doc, path, value, revisionIdRef.current) : doc));
+    isDirty.current = true;
+    scheduleFirstAutosave();
   };
 
   return (
@@ -383,6 +483,17 @@ export function AnnotatePage() {
             </button>
           </div>
         </div>
+        {firstSaveDone && !isSubmittedTask && (
+          <div className="px-4 py-2 bg-sky-50 border-b border-sky-200 text-sky-800 text-[0.85rem] flex-shrink-0 flex items-center justify-between gap-2">
+            <span>{t('annotate_autosaved_banner', 'Je voortgang is automatisch bewaard als concept. Deze taak staat op jouw naam tot je ze indient of vrijgeeft.')}</span>
+            <button
+              className="text-[var(--cs-primary)] underline whitespace-nowrap"
+              onClick={() => setReleaseConfirmOpen(true)}
+            >
+              {t('annotate_release_task', 'Taak vrijgeven')}
+            </button>
+          </div>
+        )}
         <AnnotateLayout
           manifestUrl={manifestUrl}
           osdViewer={
@@ -420,6 +531,19 @@ export function AnnotatePage() {
       </div>
 
       <ProjectManualModal projectSlug={project.slug} open={manualOpen} onClose={() => setManualOpen(false)} />
+
+      {releaseConfirmOpen && (
+        <ConfirmDialog
+          message={t('my_tasks_release_confirm')}
+          confirmLabel={t('common_delete')}
+          cancelLabel={t('common_cancel')}
+          onConfirm={() => {
+            setReleaseConfirmOpen(false);
+            void handleReleaseTask();
+          }}
+          onCancel={() => setReleaseConfirmOpen(false)}
+        />
+      )}
     </CsPage>
   );
 }

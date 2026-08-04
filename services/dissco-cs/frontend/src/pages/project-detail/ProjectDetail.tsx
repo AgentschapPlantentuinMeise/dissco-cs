@@ -4,8 +4,12 @@ import { useMutation, useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { useProject } from '../../hooks/use-project';
 import { useRouteContext } from '../../hooks/use-route-context';
+import { useUser } from '../../hooks/use-current-user';
 import { madocClient } from '../../api/madoc-client';
 import { projectProgressApi, ProjectProgress } from '../../api/cs-api';
+import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
+import { buildTaskLink } from '../../utility/build-task-link';
+import { HrefLink } from '../../utility/href-link';
 import { LocaleString } from '../../components/LocaleString';
 import { CsPage } from '../../components/CsPage';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
@@ -19,6 +23,7 @@ function manualSeenKey(projectSlug: string): string {
 export const ProjectDetail: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
   const { data: project } = useProject();
+  const user = useUser();
   const navigate = useNavigate();
   const [manualOpen, setManualOpen] = useState(false);
 
@@ -50,6 +55,28 @@ export const ProjectDetail: React.FC = () => {
       }),
     { enabled: !!project }
   );
+
+  // "Kies zelf waar je aan wilt starten" verbergt manifesten met status 1/2/3 zodat twee
+  // gebruikers hetzelfde manifest niet tegelijk kunnen claimen (zie docs/MANIFEST-CLAIMS.md) —
+  // maar dat verbergt ook de eigen opgeslagen taken (status 1) van de ingelogde gebruiker voor
+  // zichzelf. Aparte query zodat die apart getoond kunnen worden i.p.v. te verdwijnen.
+  const { data: ownTasksData } = useQuery(
+    ['project-own-saved-tasks', project?.id, user?.id],
+    () =>
+      madocClient.getTasks<CrowdsourcingTask>(1, {
+        type: 'crowdsourcing-task',
+        all_tasks: true,
+        assignee: `urn:madoc:user:${user!.id}`,
+        per_page: 100,
+        status: 1,
+        detail: true,
+      }),
+    { enabled: !!project && !!user }
+  );
+  const ownSavedTasks = (ownTasksData?.tasks ?? []).filter(task => task.metadata?.project?.slug === project?.slug);
+  console.log('[ProjectDetail] eigen opgeslagen taken in dit project (status 1):', ownSavedTasks.length, ownSavedTasks.map(task => ({
+    id: task.id, name: task.name, subject: task.subject,
+  })));
 
   const { data: progress } = useQuery<ProjectProgress>(
     ['project-progress', project?.id],
@@ -163,7 +190,7 @@ export const ProjectDetail: React.FC = () => {
           )}
 
           {manifests.length > 0 && (
-            <section className="mb-4">
+            <section className="mb-10">
               <h2 className="text-[1.2rem] font-semibold text-[var(--cs-primary)] mt-0 mb-5">{t('pdp_manifests_title')}</h2>
               <div className="grid [grid-template-columns:repeat(auto-fill,minmax(150px,1fr))] gap-[14px] max-[700px]:[grid-template-columns:repeat(auto-fill,minmax(120px,1fr))]">
                 {manifests.map((manifest: any) => (
@@ -181,6 +208,28 @@ export const ProjectDetail: React.FC = () => {
                     </LocaleString>
                   </button>
                 ))}
+              </div>
+            </section>
+          )}
+
+          {ownSavedTasks.length > 0 && (
+            <section className="mb-4">
+              <h2 className="text-[1.2rem] font-semibold text-[var(--cs-primary)] mt-0 mb-5">{t('pdp_saved_tasks_title')}</h2>
+              <div className="bg-white rounded-[10px] shadow-[0_2px_6px_rgba(0,0,0,0.07)] overflow-hidden">
+                {ownSavedTasks.map(task => {
+                  const href = buildTaskLink(task);
+                  const prefix = user!.name + ': ';
+                  const displayName = task.name?.startsWith(prefix) ? task.name.slice(prefix.length) : task.name;
+                  return (
+                    <HrefLink
+                      key={task.id}
+                      href={href}
+                      className="block px-4 py-3 text-[0.9rem] text-[var(--cs-primary)] no-underline font-medium border-b border-[#f0f0f0] last:border-b-0 hover:bg-gray-50"
+                    >
+                      {displayName}
+                    </HrefLink>
+                  );
+                })}
               </div>
             </section>
           )}

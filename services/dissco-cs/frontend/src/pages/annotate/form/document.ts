@@ -15,6 +15,37 @@ export function createEmptyDocument(model: CaptureModel): AnnotationDocument {
   return JSON.parse(JSON.stringify(model.document));
 }
 
+/** Clears every field's value/selector state and revision tags on a cloned document tree, in place. */
+function blankEntity(entity: AnnotationDocument): void {
+  for (const list of Object.values(entity.properties)) {
+    for (const item of list) {
+      if (isField(item)) {
+        item.value = undefined;
+        delete item.revision;
+        if (item.selector) {
+          item.selector.state = null;
+          item.selector.revisionId = null;
+          item.selector.revises = null;
+        }
+      } else {
+        blankEntity(item);
+      }
+    }
+  }
+}
+
+/**
+ * Same shape as the model's document (same fields/entities), but with every value and selector
+ * state cleared — used for a genuinely new claim, since the model's own `document` may still carry
+ * values from a previous, possibly abandoned, contribution (capture models are shared per manifest,
+ * not per user — see docs/MANIFEST-CLAIMS.md).
+ */
+export function createBlankDocument(model: CaptureModel): AnnotationDocument {
+  const clone: AnnotationDocument = JSON.parse(JSON.stringify(model.document));
+  blankEntity(clone);
+  return clone;
+}
+
 /** Shared by setFieldValue/setFieldSelector: walks to the field at `path` and replaces it with `updateField`'s result. */
 function updateFieldAtPath(
   document: AnnotationDocument,

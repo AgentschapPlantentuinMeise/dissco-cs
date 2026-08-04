@@ -59,6 +59,63 @@ export async function getMadocTaskStats(
   return response.json();
 }
 
+export async function getMadocTasksBySubjectAndType(
+  siteId: number,
+  subject: string,
+  type: string
+): Promise<{ tasks: Array<{ id: string }> }> {
+  const query = new URLSearchParams({ subject, type, all_tasks: 'true' });
+  const response = await fetch(`${appConfig.madocGatewayUrl}/api/tasks?${query}`, {
+    headers: {
+      Authorization: `Bearer ${getServiceJwt()}`,
+      'x-madoc-site-id': String(siteId),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Madoc tasks-by-subject request failed with status ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function getMadocTaskDetail(siteId: number, taskId: string): Promise<{
+  id: string;
+  status: number;
+  state?: { maxContributors?: number };
+  subtasks?: Array<{ type: string; status: number }>;
+}> {
+  const query = new URLSearchParams({ all: 'true', detail: 'true' });
+  const response = await fetch(`${appConfig.madocGatewayUrl}/api/tasks/${taskId}?${query}`, {
+    headers: {
+      Authorization: `Bearer ${getServiceJwt()}`,
+      'x-madoc-site-id': String(siteId),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Madoc task detail request failed with status ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function updateMadocTask(siteId: number, taskId: string, body: Record<string, unknown>): Promise<void> {
+  const response = await fetch(`${appConfig.madocGatewayUrl}/api/tasks/${taskId}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${getServiceJwt()}`,
+      'x-madoc-site-id': String(siteId),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Madoc task update failed with status ${response.status}`);
+  }
+}
+
 const siteIdBySlugCache = new Map<string, number>();
 
 export async function getSiteIdBySlug(slug: string): Promise<number | null> {

@@ -1,4 +1,4 @@
-import { getJwt } from './jwt';
+import { getJwt, redirectToExpiredLogin } from './jwt';
 import { getSiteSlug } from './slug';
 
 async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -12,6 +12,10 @@ async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
       ...(init?.headers || {}),
     },
   });
+
+  if (response.status === 401) {
+    return redirectToExpiredLogin<T>();
+  }
 
   if (!response.ok) {
     throw new Error(`DiSSCo CS API request failed: ${response.status}`);
@@ -113,6 +117,15 @@ export type ProjectProgress = {
 export const projectProgressApi = {
   get: (projectId: string | number) =>
     csFetch<ProjectProgress>(`/projects/${projectId}/progress?slug=${getSiteSlug()}`),
+};
+
+export const manifestClaimApi = {
+  // Herberekent de gedeelde max-contributors-teller na een abandon (zie AnnotatePage.tsx) —
+  // best-effort, madoc-ts synct die teller zelf enkel bij het aanmaken van een nieuwe claim.
+  resync: (projectId: string | number, manifestId: string | number) =>
+    csFetch<{ resynced: boolean }>(`/projects/${projectId}/manifests/${manifestId}/resync-claim?slug=${getSiteSlug()}`, {
+      method: 'POST',
+    }),
 };
 
 export const contactApi = {
@@ -271,6 +284,10 @@ export const projectManualsApi = {
       headers: jwt ? { Authorization: `Bearer ${jwt}` } : undefined,
       body: formData,
     });
+
+    if (response.status === 401) {
+      return redirectToExpiredLogin<void>();
+    }
 
     if (!response.ok) {
       throw new Error(`DiSSCo CS API request failed: ${response.status}`);
