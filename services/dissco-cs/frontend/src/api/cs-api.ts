@@ -1,5 +1,6 @@
 import { getJwt, redirectToExpiredLogin } from './jwt';
 import { getSiteSlug } from './slug';
+import { CrowdsourcingTask } from '../types/crowdsourcing-task';
 
 async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const jwt = getJwt();
@@ -126,6 +127,29 @@ export const manifestClaimApi = {
     csFetch<{ resynced: boolean }>(`/projects/${projectId}/manifests/${manifestId}/resync-claim?slug=${getSiteSlug()}`, {
       method: 'POST',
     }),
+};
+
+// A manifest-task stuck on "max contributors" whose underlying claims are all already -1 —
+// nothing to release, just a stale counter that needs resyncing (see StuckTasks.tsx).
+export type StuckManifestCounter = {
+  id: string;
+  name?: string;
+  subject: string;
+  modified_at: number;
+  maxContributors: number;
+  validCount: number;
+  metadata?: {
+    project?: { id: number; slug: string; label?: Record<string, string[]> | string };
+  };
+};
+
+export const stuckTasksApi = {
+  list: () => csFetch<{ tasks: CrowdsourcingTask[]; manifestCounters: StuckManifestCounter[] }>('/projects/stuck-tasks'),
+
+  release: (taskId: string) => csFetch<{ released: boolean }>(`/projects/stuck-tasks/${taskId}/release`, { method: 'POST' }),
+
+  resyncManifest: (containerId: string) =>
+    csFetch<{ resynced: boolean }>(`/projects/stuck-tasks/manifests/${containerId}/resync`, { method: 'POST' }),
 };
 
 export const contactApi = {

@@ -17,6 +17,7 @@ const TILES: Tile[] = [
   { href: '/admin/global/users', titleKey: 'sm_tile_users_title', descKey: 'sm_tile_users_desc' },
   { href: '/manage/pages', titleKey: 'sm_tile_pages_title', descKey: 'sm_tile_pages_desc' },
   { href: '/manage/institutions', titleKey: 'sm_tile_institutions_title', descKey: 'sm_tile_institutions_desc' },
+  { href: '/manage/stuck-tasks', titleKey: 'sm_tile_stuck_tasks_title', descKey: 'sm_tile_stuck_tasks_desc' },
 ];
 
 export const SiteManagement: React.FC = () => {

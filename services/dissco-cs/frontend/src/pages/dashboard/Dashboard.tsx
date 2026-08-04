@@ -9,9 +9,9 @@ import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
 import { parseUrn } from '../../utility/parse-urn';
 import { HrefLink } from '../../utility/href-link';
 import { buildTaskLink } from '../../utility/build-task-link';
+import { localeText } from '../../utility/locale-text';
 import { CsPage } from '../../components/CsPage';
 import { disscoCSConfig } from '../../dissco-cs-config';
-import { InternationalString } from '../../components/LocaleString';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { DeleteIconButton } from '../../components/DeleteIconButton';
 import { StatBanner } from '../../components/StatBanner';
@@ -20,13 +20,6 @@ import { forumApi, ForumTopicWithReplyCount } from '../../api/cs-api';
 
 
 const PROJECT_CHART_COLORS = ['#4361ee', '#e63946', '#f4a261', '#2a9d8f', '#9b5de5', '#f15bb5', '#43aa8b', '#ffb703'];
-
-function localeText(label: InternationalString | string | undefined, language: string): string {
-  if (!label) return '';
-  if (typeof label === 'string') return label;
-  const candidate = label[language] || Object.values(label)[0];
-  return candidate ? candidate.join(' ') : '';
-}
 
 interface ChartSegment { value: number; color: string; name: string }
 

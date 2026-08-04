@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 
 import { resolveSiteId, requestMadocUserIdentity } from '../jwt.js';
-import { getMadocProject, getMadocTasksBySubjectAndType, getMadocTaskDetail, updateMadocTask } from '../madoc-client.js';
+import { getMadocProject, getMadocTasksBySubjectAndType, resyncManifestTaskCounter } from '../madoc-client.js';
 
 type MadocProjectSummary = { id: number; task_id: string };
 
@@ -54,32 +54,13 @@ export function manifestClaimRoutes(): Hono {
       return c.json({ resynced: false });
     }
 
-    let detail: Awaited<ReturnType<typeof getMadocTaskDetail>>;
     try {
-      detail = await getMadocTaskDetail(siteId, containerTaskId);
+      const resynced = await resyncManifestTaskCounter(siteId, containerTaskId);
+      return c.json({ resynced });
     } catch (err) {
-      console.error('[manifest-claim] task detail fetch failed', { siteId, containerTaskId }, err);
+      console.error('[manifest-claim] task resync failed', { siteId, containerTaskId }, err);
       return c.text('Internal Server Error', 500);
     }
-
-    const maximum = detail.state?.maxContributors ? Number(detail.state.maxContributors) : undefined;
-    if (!maximum || detail.status === 3 || detail.status === -1 || detail.status === 1) {
-      return c.json({ resynced: false });
-    }
-
-    const validCount = (detail.subtasks ?? []).filter(t => t.type === 'crowdsourcing-task' && t.status !== -1).length;
-    if (validCount >= maximum) {
-      return c.json({ resynced: false });
-    }
-
-    try {
-      await updateMadocTask(siteId, containerTaskId, { status: 1, status_text: 'accepting contributions' });
-    } catch (err) {
-      console.error('[manifest-claim] task resync update failed', { siteId, containerTaskId }, err);
-      return c.text('Internal Server Error', 500);
-    }
-
-    return c.json({ resynced: true });
   });
 
   return app;
