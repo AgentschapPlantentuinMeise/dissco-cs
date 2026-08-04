@@ -340,6 +340,19 @@ export function AnnotatePage() {
     }, 2000);
   };
 
+  // Fase 3 (AC2): takes over once the first autosave has landed — catches edits made without a
+  // natural pause (e.g. typing continuously in one field) that the 2s-inactivity debounce above
+  // would otherwise miss. Cleared automatically when firstSaveDone flips back to false on task
+  // switch (see the claim effect above), so it never keeps saving into a task the user has left.
+  useEffect(() => {
+    if (!firstSaveDone) return;
+    const interval = setInterval(() => {
+      if (!isDirty.current) return;
+      save('draft');
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [firstSaveDone]);
+
   // Asks for another random assignment (same endpoint as ProjectDetail's "Start" button) and goes
   // there — falling back to the project page once none are left. Records the manifest we're
   // leaving so "Vorige taak" has somewhere to go back to.
