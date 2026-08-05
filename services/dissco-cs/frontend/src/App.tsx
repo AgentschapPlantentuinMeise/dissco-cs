@@ -24,7 +24,6 @@ import { Announcements } from './pages/site-management/Announcements';
 import { UserManagement } from './pages/site-management/UserManagement';
 import { PageManagement } from './pages/site-management/PageManagement';
 import { InstitutionManagement } from './pages/site-management/InstitutionManagement';
-import { StuckTasks } from './pages/site-management/StuckTasks';
 import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
 import { ForgotPassword } from './pages/auth/ForgotPassword';
@@ -60,7 +59,6 @@ export const App: React.FC = () => {
           <Route path="/manage/users" element={<AuthGate requireAdmin><UserManagement /></AuthGate>} />
           <Route path="/manage/pages" element={<AuthGate requireAdmin><PageManagement /></AuthGate>} />
           <Route path="/manage/institutions" element={<AuthGate requireAdmin><InstitutionManagement /></AuthGate>} />
-          <Route path="/manage/stuck-tasks" element={<AuthGate requireAdmin><StuckTasks /></AuthGate>} />
           <Route path="/find" element={<SearchResults />} />
           <Route path="/explore" element={<Projects />} />
           <Route path="/explore/:slug"element={<ProjectDetail />} />
