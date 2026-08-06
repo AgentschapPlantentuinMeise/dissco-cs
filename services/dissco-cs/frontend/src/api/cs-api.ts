@@ -143,6 +143,31 @@ export type StuckManifestCounter = {
   };
 };
 
+export type ProjectDebugTaskEntry = {
+  id: string;
+  status: number;
+  status_text?: string;
+  assignee?: string;
+  modified_at: number;
+};
+
+export type ProjectDebugManifest = {
+  manifestId: number;
+  label?: Record<string, string[]> | string;
+  countsAsTranscribed: boolean;
+  tasks: ProjectDebugTaskEntry[];
+};
+
+export type ProjectDebugResult = {
+  totalManifests: number;
+  transcribedPercentage: number;
+  manifests: ProjectDebugManifest[];
+};
+
+export const projectDebugApi = {
+  getTaskStatus: (projectId: string | number) => csFetch<ProjectDebugResult>(`/projects/${projectId}/task-debug`),
+};
+
 export const stuckTasksApi = {
   list: () => csFetch<{ tasks: CrowdsourcingTask[]; manifestCounters: StuckManifestCounter[] }>('/projects/stuck-tasks'),
 

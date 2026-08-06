@@ -44,13 +44,13 @@ export function projectProgressRoutes(): Hono {
     }
 
     const taskStatuses = taskStats.statuses || {};
-    const inProgress = taskStatuses['1'] || 0;
-    const submitted = taskStatuses['2'] || 0;
+    const inReview = taskStatuses['2'] || 0;
+    const completed = taskStatuses['3'] || 0;
 
     const transcribedPercentage =
       manifestCount === 0
         ? 0
-        : Math.round(((Math.max(inProgress, 0) + Math.max(submitted, 0)) / manifestCount) * 100);
+        : Math.round(((Math.max(inReview, 0) + Math.max(completed, 0)) / manifestCount) * 100);
 
     return c.json({
       transcribedPercentage,

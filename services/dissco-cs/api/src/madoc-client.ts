@@ -196,6 +196,57 @@ export async function getStuckMadocTasks(siteId: number): Promise<StuckTask[]> {
   return tasks;
 }
 
+export type ProjectDebugTask = {
+  id: string;
+  status: number;
+  status_text?: string;
+  subject: string;
+  subject_parent?: string;
+  modified_at: number;
+  assignee?: { id: string; name?: string };
+  metadata?: {
+    subject?: { id: number; type: string; label?: unknown; thumbnail?: string };
+  };
+};
+
+// Alle crowdsourcing-task subtaken van een project (zelfde root_task_id + type als de
+// /progress-berekening in project-progress.routes.ts) -- voor de admin-debugpagina die het
+// getranscribeerd-percentage per manifest verifieerbaar maakt.
+export async function getMadocProjectTasks(siteId: number, rootTaskId: string): Promise<ProjectDebugTask[]> {
+  const perPage = 100;
+  const tasks: ProjectDebugTask[] = [];
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const query = new URLSearchParams({
+      root_task_id: rootTaskId,
+      type: 'crowdsourcing-task',
+      all_tasks: 'true',
+      detail: 'true',
+      per_page: String(perPage),
+      page: String(page),
+    });
+    const response = await fetch(`${appConfig.madocGatewayUrl}/api/tasks?${query}`, {
+      headers: {
+        Authorization: `Bearer ${getServiceJwt()}`,
+        'x-madoc-site-id': String(siteId),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Madoc project-tasks request failed with status ${response.status}`);
+    }
+
+    const data = (await response.json()) as { tasks: ProjectDebugTask[]; pagination?: { totalPages?: number } };
+    tasks.push(...data.tasks);
+    totalPages = data.pagination?.totalPages ?? 1;
+    page += 1;
+  } while (page <= totalPages);
+
+  return tasks;
+}
+
 export type StuckManifestCounter = {
   id: string;
   name?: string;
