@@ -9,7 +9,7 @@ export type ProjectManual = {
   updated_at: Date;
 };
 
-export type ProjectManualSummary = ProjectManual & { linkedProjectSlugs: string[] };
+export type ProjectManualSummary = ProjectManual & { linkedProjectSlugs: string[]; attachmentLangs: SitePageLang[] };
 
 export type ProjectManualAttachmentMeta = {
   lang: SitePageLang;
@@ -53,9 +53,26 @@ export class ProjectManualsRepository {
       linksByManual.set(row.manual_id, list);
     }
 
+    const manualIds = manuals.rows.map(manual => manual.id);
+    const attachments =
+      manualIds.length > 0
+        ? await this.pool.query<{ manual_id: number; lang: SitePageLang }>(
+            `SELECT manual_id, lang FROM ${this.table('project_manual_attachments')} WHERE manual_id = ANY($1::bigint[])`,
+            [manualIds]
+          )
+        : { rows: [] };
+
+    const attachmentLangsByManual = new Map<number, SitePageLang[]>();
+    for (const row of attachments.rows) {
+      const list = attachmentLangsByManual.get(row.manual_id) ?? [];
+      list.push(row.lang);
+      attachmentLangsByManual.set(row.manual_id, list);
+    }
+
     return manuals.rows.map(manual => ({
       ...manual,
       linkedProjectSlugs: linksByManual.get(manual.id) ?? [],
+      attachmentLangs: attachmentLangsByManual.get(manual.id) ?? [],
     }));
   }
 

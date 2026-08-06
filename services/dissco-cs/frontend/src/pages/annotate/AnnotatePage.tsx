@@ -331,6 +331,7 @@ export function AnnotatePage() {
   // Fires the very first background save ~2s after the user stops editing/drawing — only once
   // per task; a later periodic save takes over after this succeeds.
   const scheduleFirstAutosave = () => {
+    if (!project?.config?.modelPageOptions?.enableAutoSave) return;
     if (firstSaveDone || firstSaveTimerRef.current) return;
     firstSaveTimerRef.current = setTimeout(async () => {
       firstSaveTimerRef.current = null;
@@ -345,6 +346,7 @@ export function AnnotatePage() {
   // would otherwise miss. Cleared automatically when firstSaveDone flips back to false on task
   // switch (see the claim effect above), so it never keeps saving into a task the user has left.
   useEffect(() => {
+    if (!project?.config?.modelPageOptions?.enableAutoSave) return;
     if (!firstSaveDone) return;
     const interval = setInterval(() => {
       if (!isDirty.current) return;
@@ -384,7 +386,9 @@ export function AnnotatePage() {
   // Same save as handleSaveAndAdvance('draft') but stays on the current task — no goToNext().
   const handleSaveDraft = async () => {
     await save('draft');
-    setConfirmation(t('annotate_saved_draft', 'Opgeslagen als concept'));
+    setConfirmation(
+      t('annotate_saved_draft_24h', 'Opgeslagen als concept. Deze taak blijft 24 uur op jouw naam staan en wordt daarna automatisch weer vrijgegeven.')
+    );
   };
 
   if (structureError || preparedError || modelError) {

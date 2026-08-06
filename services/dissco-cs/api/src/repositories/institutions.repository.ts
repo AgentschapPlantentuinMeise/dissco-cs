@@ -73,6 +73,28 @@ export class InstitutionsRepository {
     return result.rows[0] ?? null;
   }
 
+  async getActiveInstitutionForProjectSlug(siteId: number, projectSlug: string): Promise<Institution | null> {
+    const result = await this.pool.query<Institution>(
+      `
+      SELECT i.* FROM ${this.table('institutions')} i
+      JOIN ${this.table('project_institution_links')} l ON l.institution_id = i.id
+      WHERE l.site_id = $1 AND l.project_slug = $2 AND i.is_active = TRUE
+    `,
+      [siteId, projectSlug]
+    );
+
+    return result.rows[0] ?? null;
+  }
+
+  async listProjectSlugsForInstitution(siteId: number, institutionId: number): Promise<string[]> {
+    const result = await this.pool.query<{ project_slug: string }>(
+      `SELECT project_slug FROM ${this.table('project_institution_links')} WHERE site_id = $1 AND institution_id = $2`,
+      [siteId, institutionId]
+    );
+
+    return result.rows.map(row => row.project_slug);
+  }
+
   async createInstitution(siteId: number, input: InstitutionInput): Promise<Institution> {
     const baseName = input.name.nl || input.name.en || input.name.fr || input.name.de || 'instituut';
     const slug = await this.uniqueInstitutionSlug(siteId, baseName, null);
@@ -136,6 +158,48 @@ export class InstitutionsRepository {
     );
 
     return result.rows[0] ?? null;
+  }
+
+  async getInstitutionById(siteId: number, id: number): Promise<Institution | null> {
+    const result = await this.pool.query<Institution>(
+      `SELECT * FROM ${this.table('institutions')} WHERE id = $1 AND site_id = $2`,
+      [id, siteId]
+    );
+
+    return result.rows[0] ?? null;
+  }
+
+  async listProjectLinks(siteId: number): Promise<Record<string, number>> {
+    const result = await this.pool.query<{ project_slug: string; institution_id: number }>(
+      `SELECT project_slug, institution_id FROM ${this.table('project_institution_links')} WHERE site_id = $1`,
+      [siteId]
+    );
+
+    const links: Record<string, number> = {};
+    for (const row of result.rows) {
+      links[row.project_slug] = row.institution_id;
+    }
+
+    return links;
+  }
+
+  async setProjectLink(siteId: number, projectSlug: string, institutionId: number | null): Promise<void> {
+    if (institutionId === null) {
+      await this.pool.query(
+        `DELETE FROM ${this.table('project_institution_links')} WHERE site_id = $1 AND project_slug = $2`,
+        [siteId, projectSlug]
+      );
+      return;
+    }
+
+    await this.pool.query(
+      `
+      INSERT INTO ${this.table('project_institution_links')} (site_id, project_slug, institution_id)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (site_id, project_slug) DO UPDATE SET institution_id = EXCLUDED.institution_id
+    `,
+      [siteId, projectSlug, institutionId]
+    );
   }
 
   async deleteInstitution(siteId: number, id: number): Promise<boolean> {

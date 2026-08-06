@@ -1,7 +1,13 @@
 import { Hono } from 'hono';
 import { DisscoCSRepository } from '../db.js';
 import { requireSiteAdmin, resolveSiteId } from '../jwt.js';
-import { InstitutionBody, SetInstitutionsOrderBody, parseInstitutionBody } from '../validators.js';
+import {
+  InstitutionBody,
+  SetInstitutionLinkBody,
+  SetInstitutionsOrderBody,
+  parseInstitutionBody,
+  parseSetInstitutionLinkBody,
+} from '../validators.js';
 
 export function institutionsRoutes(repository: DisscoCSRepository): Hono {
   const app = new Hono();
@@ -23,6 +29,35 @@ export function institutionsRoutes(repository: DisscoCSRepository): Hono {
     }
 
     const institution = await repository.institutions.getActiveInstitutionBySlug(siteId, c.req.param('slug'));
+    if (!institution) {
+      return c.notFound();
+    }
+
+    return c.json(institution);
+  });
+
+  app.get('/active/:slug/projects', async c => {
+    const siteId = await resolveSiteId(c);
+    if (siteId === null) {
+      return c.text('Could not resolve site', 400);
+    }
+
+    const institution = await repository.institutions.getActiveInstitutionBySlug(siteId, c.req.param('slug'));
+    if (!institution) {
+      return c.notFound();
+    }
+
+    const projectSlugs = await repository.institutions.listProjectSlugsForInstitution(siteId, institution.id);
+    return c.json({ projectSlugs });
+  });
+
+  app.get('/for-project/:projectSlug', async c => {
+    const siteId = await resolveSiteId(c);
+    if (siteId === null) {
+      return c.text('Could not resolve site', 400);
+    }
+
+    const institution = await repository.institutions.getActiveInstitutionForProjectSlug(siteId, c.req.param('projectSlug'));
     if (!institution) {
       return c.notFound();
     }
@@ -67,6 +102,38 @@ export function institutionsRoutes(repository: DisscoCSRepository): Hono {
     }
 
     await repository.institutions.setInstitutionsOrder(identity.siteId, payload.order as number[]);
+    return c.body(null, 204);
+  });
+
+  app.get('/project-links', async c => {
+    const identity = requireSiteAdmin(c);
+    if (identity instanceof Response) {
+      return identity;
+    }
+
+    const links = await repository.institutions.listProjectLinks(identity.siteId);
+    return c.json({ links });
+  });
+
+  app.put('/project-links/:projectId', async c => {
+    const identity = requireSiteAdmin(c);
+    if (identity instanceof Response) {
+      return identity;
+    }
+
+    const payload = parseSetInstitutionLinkBody((await c.req.json().catch(() => null)) as SetInstitutionLinkBody | null);
+    if (!payload) {
+      return c.text('Invalid payload', 400);
+    }
+
+    if (payload.institutionId !== null) {
+      const institution = await repository.institutions.getInstitutionById(identity.siteId, payload.institutionId);
+      if (!institution) {
+        return c.text('Institution not found', 404);
+      }
+    }
+
+    await repository.institutions.setProjectLink(identity.siteId, c.req.param('projectId'), payload.institutionId);
     return c.body(null, 204);
   });
 

@@ -39,6 +39,7 @@ export type SetInstitutionsOrderBody = { order?: unknown };
 export type SetManualTitleBody = { lang?: unknown; title?: unknown };
 export type SetManualContentBody = { content?: unknown };
 export type SetManualLinkBody = { manualId?: unknown };
+export type SetInstitutionLinkBody = { institutionId?: unknown };
 
 export const MAX_LOGO_LENGTH = 3_000_000;
 export const MAX_MANUAL_TITLE_LENGTH = 200;
@@ -203,6 +204,26 @@ export function parseSetManualLinkBody(payload: SetManualLinkBody | null): { man
 
   if (typeof manualId === 'number' && Number.isInteger(manualId)) {
     return { manualId };
+  }
+
+  return null;
+}
+
+export function parseSetInstitutionLinkBody(payload: SetInstitutionLinkBody | null): { institutionId: number | null } | null {
+  if (!payload) {
+    return null;
+  }
+
+  if (payload.institutionId === null) {
+    return { institutionId: null };
+  }
+
+  // BIGSERIAL-kolommen komen via pg als string terug; institution.id kan zo als JSON-string
+  // meereizen -- numerieke strings hier ook aanvaarden (zie parseSetManualLinkBody).
+  const institutionId = typeof payload.institutionId === 'string' ? Number(payload.institutionId) : payload.institutionId;
+
+  if (typeof institutionId === 'number' && Number.isInteger(institutionId)) {
+    return { institutionId };
   }
 
   return null;

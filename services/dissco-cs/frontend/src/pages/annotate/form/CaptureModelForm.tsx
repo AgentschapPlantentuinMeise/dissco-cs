@@ -392,16 +392,16 @@ export function CaptureModelForm({
               Vul eerst de verplichte velden in: {missingRequired.join(', ')}
             </p>
           )}
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center flex-wrap">
             <button
-              className="px-4 py-2 bg-white border border-[var(--cs-primary)] text-[var(--cs-primary)] rounded text-[0.9rem] disabled:opacity-50"
+              className="flex-shrink-0 px-4 py-2 bg-white border border-[var(--cs-primary)] text-[var(--cs-primary)] rounded text-[0.9rem] disabled:opacity-50"
               onClick={onSaveDraft}
               disabled={saving}
             >
               {t('task_save_draft')}
             </button>
             <button
-              className="px-4 py-2 bg-[var(--cs-primary)] text-white rounded text-[0.9rem] disabled:opacity-50"
+              className="flex-shrink-0 px-4 py-2 bg-[var(--cs-primary)] text-white rounded text-[0.9rem] disabled:opacity-50"
               onClick={handleSubmit}
               disabled={saving}
             >

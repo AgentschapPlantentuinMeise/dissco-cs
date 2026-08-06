@@ -11,6 +11,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { MarkdownToolbar } from '../../components/MarkdownToolbar';
 import { ArrowLeftIcon } from '../../icons/ArrowLeftIcon';
 import { CheckIcon } from '../../icons/CheckIcon';
+import { ChevronIcon } from '../../icons/ChevronIcon';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import {
   projectManualsApi,
@@ -19,6 +20,8 @@ import {
   stuckTasksApi,
   manifestClaimApi,
   StuckManifestCounter,
+  institutionsApi,
+  Institution,
 } from '../../api/cs-api';
 import { useProjectList } from '../../hooks/use-project-list';
 import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
@@ -41,6 +44,16 @@ function manualTitleText(title: Partial<Record<SitePageLang, string>>, lang: str
   return title[lang as SitePageLang] || title.nl || title.en || title.fr || title.de || fallback;
 }
 
+function institutionName(institution: Institution, lang: string): string {
+  return institution.name[lang as SitePageLang] || institution.name.nl || institution.name.en || institution.name.fr || institution.name.de || `#${institution.id}`;
+}
+
+function manualHasContent(manual: ProjectManualSummary): boolean {
+  // Elke taal telt als ingevuld zodra ze tekst OF een bijlage heeft -- zelfde regel als in de
+  // handleiding-editor (ManualContentEditor), enkel volledig ingevuld (alle talen) telt als inhoud.
+  return LANGUAGES.every(lang => (manual.content[lang.code] ?? '').trim().length > 0 || manual.attachmentLangs.includes(lang.code));
+}
+
 const MAX_ATTACHMENT_BYTES = 8_000_000;
 
 // Shared editor for a manual's content (language tabs + markdown toolbar/textarea +
@@ -53,6 +66,7 @@ const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }) => {
   const [draftContent, setDraftContent] = useState<Partial<Record<SitePageLang, string>>>({});
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [uploading, setUploading] = useState(false);
+  const [attachmentSaved, setAttachmentSaved] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -72,13 +86,13 @@ const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }) => {
   }
 
   const attachment = manual.attachments[selectedLang];
-  // Zodra er ergens tekst staat, moeten alle talen tekst hebben (bestaand gedrag). Staat er
-  // nergens tekst, dan volstaat één bijlage (in eender welke taal) om te mogen opslaan --
-  // anders kan een PDF-only handleiding (zonder tekst) nooit bewaard worden.
-  const hasAnyText = LANGUAGES.some(lang => (draftContent[lang.code] ?? '').trim());
-  const hasAnyAttachment = LANGUAGES.some(lang => manual.attachments[lang.code]);
-  const missingLangs = hasAnyText ? LANGUAGES.filter(lang => !(draftContent[lang.code] ?? '').trim()) : [];
-  const canSave = hasAnyText ? missingLangs.length === 0 : hasAnyAttachment;
+  // Elke taal telt als ingevuld zodra ze tekst OF een bijlage heeft -- gemengd (tekst in de ene
+  // taal, bijlage in de andere) moet dus ook kunnen. Pas opslaan zodra geen enkele taal nog leeg is.
+  const langHasContent = (lang: (typeof LANGUAGES)[number]) =>
+    !!(draftContent[lang.code] ?? '').trim() || !!manual.attachments[lang.code];
+  const hasAnyContent = LANGUAGES.some(langHasContent);
+  const missingLangs = hasAnyContent ? LANGUAGES.filter(lang => !langHasContent(lang)) : [];
+  const canSave = hasAnyContent && missingLangs.length === 0;
 
   const save = async () => {
     if (!canSave) return;
@@ -103,10 +117,12 @@ const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }) => {
       return;
     }
     setUploading(true);
+    setAttachmentSaved(false);
     try {
       await projectManualsApi.uploadAttachment(manual.id, selectedLang, file);
       await refetch();
       queryCache.invalidateQueries('project-manual');
+      setAttachmentSaved(true);
     } finally {
       setUploading(false);
     }
@@ -116,6 +132,7 @@ const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }) => {
     await projectManualsApi.deleteAttachment(manual.id, selectedLang);
     await refetch();
     queryCache.invalidateQueries('project-manual');
+    setAttachmentSaved(false);
   };
 
   // Voegt {{attachment}} in op de cursorpositie -- ProjectManualModal bedt de bijlage-galerij
@@ -143,7 +160,10 @@ const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }) => {
         {LANGUAGES.map(lang => (
           <button
             key={lang.code}
-            onClick={() => setSelectedLang(lang.code)}
+            onClick={() => {
+              setSelectedLang(lang.code);
+              setAttachmentSaved(false);
+            }}
             className={`px-3 py-1 rounded-full text-sm font-medium border flex items-center gap-1.5 ${
               selectedLang === lang.code
                 ? 'bg-[var(--cs-primary)] text-white border-[var(--cs-primary)]'
@@ -188,7 +208,7 @@ const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }) => {
           {t('sm_manuals_missing_langs', { langs: missingLangs.map(lang => t(`lang_${lang.code}`)).join(', ') })}
         </p>
       )}
-      {!hasAnyText && !hasAnyAttachment && (
+      {!hasAnyContent && (
         <p className="text-xs text-red-600 mt-1">{t('sm_manuals_needs_content')}</p>
       )}
 
@@ -239,6 +259,11 @@ const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }) => {
           }}
         />
       </div>
+      {attachmentSaved && (
+        <p className="flex items-center gap-2 text-sm text-green-700 mt-2">
+          <CheckIcon aria-hidden="true" /> {t('sm_manuals_attachment_saved')}
+        </p>
+      )}
 
       <div className="flex items-center gap-3 mt-4">
         <SaveButton onClick={() => void save()} disabled={!canSave} loading={saveState === 'saving'} />
@@ -261,12 +286,17 @@ const ProjectsSubview: React.FC<{
   projects: any[];
   manuals: ProjectManualSummary[];
   refetchManuals: () => void;
-}> = ({ projects, manuals, refetchManuals }) => {
+  institutions: Institution[];
+  institutionLinks: Record<string, number>;
+  refetchInstitutionLinks: () => void;
+}> = ({ projects, manuals, refetchManuals, institutions, institutionLinks, refetchInstitutionLinks }) => {
   const { t, i18n } = useTranslation('dissco-cs');
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
-  const [choice, setChoice] = useState<'link' | 'create'>('link');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [pickedInstitutionId, setPickedInstitutionId] = useState<number | ''>('');
   const [pickedManualId, setPickedManualId] = useState<number | ''>('');
-  const [newTitle, setNewTitle] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   useEffect(() => {
     if (!selectedSlug && projects[0]) {
@@ -274,47 +304,57 @@ const ProjectsSubview: React.FC<{
     }
   }, [projects, selectedSlug]);
 
+  const filteredProjects = projects.filter(project =>
+    getLabelText(project.label, project.slug).toLowerCase().includes(searchQuery.trim().toLowerCase())
+  );
+
   const selectedProject = projects.find(p => p.slug === selectedSlug) ?? null;
   const linkedManual = selectedProject
     ? manuals.find(m => m.linkedProjectSlugs.includes(selectedProject.slug))
     : undefined;
 
-  const linkExisting = async () => {
-    if (!selectedProject || pickedManualId === '') return;
-    await projectManualsApi.setLink(selectedProject.slug, Number(pickedManualId));
-    setPickedManualId('');
-    refetchManuals();
-  };
+  // Herinitialiseert de velden bij elke wissel van project of na een geslaagde save (die
+  // institutionLinks/manuals doet verversen) -- bij een mislukte save blijft saveError dus staan
+  // omdat er dan niet ververst wordt.
+  useEffect(() => {
+    setPickedInstitutionId(selectedProject ? institutionLinks[selectedProject.slug] ?? '' : '');
+    setPickedManualId(linkedManual ? linkedManual.id : '');
+    setSaveError(false);
+  }, [selectedProject?.slug, institutionLinks, linkedManual?.id]);
 
-  const createAndLink = async () => {
-    if (!selectedProject || !newTitle.trim()) return;
-    const manual = await projectManualsApi.create(defaultLang(i18n.language), newTitle.trim());
-    await projectManualsApi.setLink(selectedProject.slug, manual.id);
-    setNewTitle('');
-    refetchManuals();
-  };
+  const canSave = pickedInstitutionId !== '' && pickedManualId !== '';
 
-  const unlink = async () => {
-    if (!selectedProject) return;
-    await projectManualsApi.setLink(selectedProject.slug, null);
-    refetchManuals();
-  };
+  const save = async () => {
+    if (!selectedProject || !canSave) return;
+    setSaving(true);
+    setSaveError(false);
+    try {
+      await institutionsApi.setProjectLink(selectedProject.slug, Number(pickedInstitutionId));
+      await projectManualsApi.setLink(selectedProject.slug, Number(pickedManualId));
 
-  const otherProjectLabels =
-    linkedManual && selectedProject && linkedManual.linkedProjectSlugs.length > 1
-      ? linkedManual.linkedProjectSlugs
-          .filter(slug => slug !== selectedProject.slug)
-          .map(slug => {
-            const project = projects.find(p => p.slug === slug);
-            return project ? getLabelText(project.label, slug) : slug;
-          })
-      : [];
+      refetchInstitutionLinks();
+      refetchManuals();
+    } catch {
+      setSaveError(true);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-5 items-start">
-      <ul className="list-none m-0 p-0 bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] divide-y divide-gray-100">
-        {projects.map(project => {
+      <div>
+        <input
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder={t('sm_projects_search_placeholder')}
+          className="w-full border border-gray-300 rounded-lg p-2 mb-3"
+        />
+        <ul className="list-none m-0 p-0 bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] divide-y divide-gray-100">
+          {filteredProjects.map(project => {
           const linked = manuals.find(m => m.linkedProjectSlugs.includes(project.slug));
+          const hasInstitution = institutionLinks[project.slug] !== undefined;
+          const hasBothLinks = !!linked && hasInstitution;
           return (
             <li key={project.slug}>
               <button
@@ -324,15 +364,15 @@ const ProjectsSubview: React.FC<{
                 }`}
               >
                 <span className="truncate min-w-0">{getLabelText(project.label, project.slug)}</span>
-                {linked ? (
+                {hasBothLinks ? (
                   <span
                     className={`text-[0.62rem] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full flex-shrink-0 ${
-                      linked.linkedProjectSlugs.length > 1
+                      linked && linked.linkedProjectSlugs.length > 1
                         ? 'bg-[#f1e9f0] text-[var(--cs-tertiary)]'
                         : 'bg-gray-100 text-gray-500'
                     }`}
                   >
-                    {linked.linkedProjectSlugs.length > 1
+                    {linked && linked.linkedProjectSlugs.length > 1
                       ? t('sm_manuals_chip_shared', { count: linked.linkedProjectSlugs.length })
                       : t('sm_manuals_chip_linked')}
                   </span>
@@ -346,97 +386,84 @@ const ProjectsSubview: React.FC<{
           );
         })}
       </ul>
+      </div>
 
       {selectedProject && (
         <div className="bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] p-6">
           <h3 className="text-xl font-semibold text-[var(--cs-primary)] mb-1">
             {getLabelText(selectedProject.label, selectedProject.slug)}
           </h3>
+          <p className="text-sm text-gray-500 mb-4">{t('sm_project_links_intro')}</p>
 
-          {!linkedManual ? (
-            <>
-              <p className="text-sm text-gray-500 mb-4">{t('sm_manuals_choose_intro')}</p>
-              <div className="flex gap-3 mb-5">
-                <button
-                  onClick={() => setChoice('link')}
-                  className={`flex-1 text-left border rounded-lg p-3.5 cursor-pointer bg-white ${
-                    choice === 'link' ? 'border-[var(--cs-primary)] bg-[#f4f9f9]' : 'border-gray-300'
-                  }`}
-                >
-                  <span className="block font-semibold text-sm mb-0.5">{t('sm_manuals_choice_link_title')}</span>
-                  <span className="text-xs text-gray-500">{t('sm_manuals_choice_link_desc')}</span>
-                </button>
-                <button
-                  onClick={() => setChoice('create')}
-                  className={`flex-1 text-left border rounded-lg p-3.5 cursor-pointer bg-white ${
-                    choice === 'create' ? 'border-[var(--cs-primary)] bg-[#f4f9f9]' : 'border-gray-300'
-                  }`}
-                >
-                  <span className="block font-semibold text-sm mb-0.5">{t('sm_manuals_choice_create_title')}</span>
-                  <span className="text-xs text-gray-500">{t('sm_manuals_choice_create_desc')}</span>
-                </button>
-              </div>
+          <div className="mb-5">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sm_project_institution_label')}</label>
+            <div className="relative">
+              <select
+                value={pickedInstitutionId}
+                onChange={e => setPickedInstitutionId(e.target.value ? Number(e.target.value) : '')}
+                className="w-full appearance-none border border-gray-300 rounded-lg p-2 pr-8"
+              >
+                {pickedInstitutionId === '' && (
+                  <option value="" disabled>
+                    {t('sm_project_institution_placeholder')}
+                  </option>
+                )}
+                {institutions.map(institution => (
+                  <option key={institution.id} value={institution.id}>
+                    {institutionName(institution, i18n.language)}
+                  </option>
+                ))}
+              </select>
+              <ChevronIcon
+                aria-hidden="true"
+                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+            </div>
+          </div>
 
-              {choice === 'link' ? (
-                manuals.length === 0 ? (
-                  <p className="text-sm text-gray-500">{t('sm_manuals_none_available')}</p>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <select
-                      value={pickedManualId}
-                      onChange={e => setPickedManualId(e.target.value ? Number(e.target.value) : '')}
-                      className="border border-gray-300 rounded-lg p-2 flex-1"
-                    >
-                      <option value="">{t('sm_manuals_pick_placeholder')}</option>
-                      {manuals.map(manual => (
-                        <option key={manual.id} value={manual.id}>
-                          {manualTitleText(manual.title, i18n.language, `#${manual.id}`)}
-                          {manual.linkedProjectSlugs.length > 0
+          <div className="mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sm_project_manual_label')}</label>
+            {manuals.length === 0 ? (
+              <p className="text-sm text-gray-500">{t('sm_manuals_none_available')}</p>
+            ) : (
+              <div className="relative">
+                <select
+                  value={pickedManualId}
+                  onChange={e => setPickedManualId(e.target.value ? Number(e.target.value) : '')}
+                  className="w-full appearance-none border border-gray-300 rounded-lg p-2 pr-8"
+                >
+                  {pickedManualId === '' && (
+                    <option value="" disabled>
+                      {t('sm_manuals_pick_placeholder')}
+                    </option>
+                  )}
+                  {manuals.map(manual => {
+                    const hasContent = manualHasContent(manual);
+                    return (
+                      <option key={manual.id} value={manual.id} disabled={!hasContent}>
+                        {manualTitleText(manual.title, i18n.language, `#${manual.id}`)}
+                        {!hasContent
+                          ? ` — ${t('sm_manuals_empty_note')}`
+                          : manual.linkedProjectSlugs.length > 0
                             ? ` — ${t('sm_manuals_used_by_count', { count: manual.linkedProjectSlugs.length })}`
                             : ''}
-                        </option>
-                      ))}
-                    </select>
-                    <SaveButton onClick={() => void linkExisting()} disabled={pickedManualId === ''} />
-                  </div>
-                )
-              ) : (
-                <div className="flex items-center gap-3">
-                  <input
-                    value={newTitle}
-                    onChange={e => setNewTitle(e.target.value)}
-                    placeholder={t('sm_manuals_new_title_placeholder')}
-                    className="border border-gray-300 rounded-lg p-2 flex-1"
-                  />
-                  <SaveButton onClick={() => void createAndLink()} disabled={!newTitle.trim()} />
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              {otherProjectLabels.length > 0 && (
-                <div className="flex gap-2.5 items-start bg-[#f6f0f5] border border-[#e7d7e5] text-[var(--cs-tertiary)] rounded-lg px-3.5 py-3 text-sm mb-4 leading-relaxed">
-                  <span>
-                    <b>
-                      {t('sm_manuals_shared_warning_title', {
-                        title: manualTitleText(linkedManual.title, i18n.language, ''),
-                      })}
-                    </b>{' '}
-                    {t('sm_manuals_shared_warning_body', { projects: otherProjectLabels.join(', ') })}
-                  </span>
-                </div>
-              )}
+                      </option>
+                    );
+                  })}
+                </select>
+                <ChevronIcon
+                  aria-hidden="true"
+                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+              </div>
+            )}
+            <p className="text-xs text-gray-500 mt-2">{t('sm_project_manual_edit_hint')}</p>
+          </div>
 
-              <ManualContentEditor manualId={linkedManual.id} />
-
-              <button
-                onClick={() => void unlink()}
-                className="mt-4 text-sm font-semibold text-gray-500 bg-transparent border-none cursor-pointer hover:text-[var(--cs-primary)] p-0"
-              >
-                {t('sm_manuals_unlink')}
-              </button>
-            </>
-          )}
+          <div className="flex items-center gap-3 mt-4">
+            <SaveButton onClick={() => void save()} disabled={!canSave} loading={saving} />
+            {saveError && <span className="text-sm text-red-700">{t('sm_manuals_save_error')}</span>}
+          </div>
         </div>
       )}
     </div>
@@ -477,6 +504,7 @@ const ManualsSubview: React.FC<{
 
   return (
     <div>
+      <h4 className="text-sm font-semibold text-gray-700 mb-2">{t('sm_manuals_new_heading')}</h4>
       <div className="flex items-center gap-3 mb-4">
         <input
           value={newTitle}
@@ -508,6 +536,9 @@ const ManualsSubview: React.FC<{
                   <b>{manualTitleText(manual.title, i18n.language, `#${manual.id}`)}</b>
                   {manual.linkedProjectSlugs.length === 0 && (
                     <div className="text-xs font-semibold text-amber-700 mt-0.5">{t('sm_manuals_orphan_note')}</div>
+                  )}
+                  {!manualHasContent(manual) && (
+                    <div className="text-xs font-semibold text-red-700 mt-0.5">{t('sm_manuals_empty_note')}</div>
                   )}
                 </td>
                 <td className="px-4 py-3 border-t border-gray-100 text-sm text-gray-500">
@@ -746,6 +777,14 @@ export const ProjectManagement: React.FC = () => {
   const { data: manualsResponse, refetch: refetchManuals } = useQuery('admin-project-manuals', () => projectManualsApi.list());
   const manuals = manualsResponse?.manuals ?? [];
 
+  const { data: institutionsResponse } = useQuery('admin-institutions', () => institutionsApi.listAdmin());
+  const institutions = institutionsResponse?.institutions ?? [];
+
+  const { data: institutionLinksResponse, refetch: refetchInstitutionLinks } = useQuery('admin-institution-project-links', () =>
+    institutionsApi.listProjectLinks()
+  );
+  const institutionLinks = institutionLinksResponse?.links ?? {};
+
   return (
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
@@ -783,7 +822,16 @@ export const ProjectManagement: React.FC = () => {
             </button>
           </div>
 
-          {tab === 'projects' && <ProjectsSubview projects={projects} manuals={manuals} refetchManuals={refetchManuals} />}
+          {tab === 'projects' && (
+            <ProjectsSubview
+              projects={projects}
+              manuals={manuals}
+              refetchManuals={refetchManuals}
+              institutions={institutions}
+              institutionLinks={institutionLinks}
+              refetchInstitutionLinks={refetchInstitutionLinks}
+            />
+          )}
           {tab === 'manuals' && <ManualsSubview projects={projects} manuals={manuals} refetchManuals={refetchManuals} />}
           {tab === 'stuck-tasks' && <StuckTasksSubview />}
         </div>

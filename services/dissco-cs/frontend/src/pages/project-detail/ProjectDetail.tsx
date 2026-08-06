@@ -6,7 +6,7 @@ import { useProject } from '../../hooks/use-project';
 import { useRouteContext } from '../../hooks/use-route-context';
 import { useUser } from '../../hooks/use-current-user';
 import { madocClient } from '../../api/madoc-client';
-import { projectProgressApi, ProjectProgress } from '../../api/cs-api';
+import { projectProgressApi, ProjectProgress, institutionsApi } from '../../api/cs-api';
 import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
 import { buildTaskLink } from '../../utility/build-task-link';
 import { HrefLink } from '../../utility/href-link';
@@ -84,6 +84,12 @@ export const ProjectDetail: React.FC = () => {
     { enabled: !!project, staleTime: 60000 }
   );
 
+  const { data: institution } = useQuery(
+    ['project-institution', project?.slug],
+    () => institutionsApi.getForProject(project!.slug),
+    { enabled: !!project }
+  );
+
   const navigateToFirstCanvas = async (manifestId: number) => {
     navigate(`/explore/${project!.slug}/manifests/${manifestId}/annotate`);
   };
@@ -156,6 +162,12 @@ export const ProjectDetail: React.FC = () => {
             </div>
 
             <div className="bg-white py-9 px-8 flex flex-col justify-center max-[700px]:py-6 max-[700px]:px-5">
+              {institution?.logo && (
+                <div
+                  className="h-16 max-w-[220px] bg-contain bg-left bg-no-repeat mb-4"
+                  style={{ backgroundImage: `url(${institution.logo})` }}
+                />
+              )}
               <LocaleString as="h1" className="text-[1.8rem] font-bold text-[var(--cs-primary)] mt-0 mb-[14px] leading-[1.25] max-[700px]:text-[1.4rem]">
                 {project.label}
               </LocaleString>

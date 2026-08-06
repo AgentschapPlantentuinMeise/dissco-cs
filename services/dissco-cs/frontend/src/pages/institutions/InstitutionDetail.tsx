@@ -10,20 +10,16 @@ import { PhoneIcon } from '../../icons/PhoneIcon';
 import { GlobeIcon } from '../../icons/GlobeIcon';
 import { institutionsApi, Institution } from '../../api/cs-api';
 import { StatBanner } from '../../components/StatBanner';
+import { useProjectList } from '../../hooks/use-project-list';
+import { ProjectCard } from '../../components/projectcard/ProjectCard';
 
-// Placeholder cijfers tot projecten en statistieken effectief aan een instituut gekoppeld kunnen worden.
+// Placeholder cijfers tot statistieken effectief aan een instituut gekoppeld kunnen worden.
 const mockOverview = {
   projectsActive: 3,
   projectsCompleted: 5,
   tasksTotal: 12480,
   tasksCompletedPct: 61,
 };
-
-const mockProjects = [
-  { id: 'mock-1', title: 'Herbarium digitaliseren', percentage: 72 },
-  { id: 'mock-2', title: 'Zaadbank etiketten transcriberen', percentage: 41 },
-  { id: 'mock-3', title: 'Veldnotities ontsluiten', percentage: 9 },
-];
 
 const mockLeaderboard = [
   { rank: 1, name: 'Vrijwilliger A', tasks: 812 },
@@ -49,6 +45,16 @@ export const InstitutionDetail: React.FC = () => {
     () => institutionsApi.getActive(slug!),
     { enabled: !!slug }
   );
+
+  const { data: projectSlugsResponse } = useQuery(
+    ['institution-projects', slug],
+    () => institutionsApi.getActiveProjectSlugs(slug!),
+    { enabled: !!slug }
+  );
+  const projectSlugs = projectSlugsResponse?.projectSlugs ?? [];
+
+  const { data: allProjectsResponse } = useProjectList();
+  const linkedProjects = (allProjectsResponse?.projects ?? []).filter((p: any) => projectSlugs.includes(p.slug));
 
   const [descExpanded, setDescExpanded] = React.useState(false);
 
@@ -145,31 +151,15 @@ export const InstitutionDetail: React.FC = () => {
               {/* Projects, with leaderboard alongside */}
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-14">
                 <div>
-                  <div className="mb-4">
-                    <MockBadge label={t('institution_mock_badge')} />
-                  </div>
-                  <div className="cs-projects-grid">
-                    {mockProjects.map(project => (
-                      <div key={project.id} className="flex flex-col bg-white rounded-lg overflow-hidden shadow-md h-full">
-                        <div
-                          className="h-[100px] w-full"
-                          style={{ background: 'linear-gradient(135deg, var(--cs-accent), var(--cs-primary))', opacity: 0.85 }}
-                        />
-                        <div className="p-4 flex flex-col flex-grow">
-                          <h3 className="text-[0.95rem] mt-0 mb-2.5 text-[var(--cs-primary)]">{project.title}</h3>
-                          <div className="mt-auto">
-                            <div className="flex justify-between text-xs mb-1">
-                              <span className="font-bold text-[var(--cs-primary)]">{project.percentage}%</span>
-                              <span className="text-gray-500">{t('pdp_transcribed')}</span>
-                            </div>
-                            <div className="h-[5px] bg-gray-200 rounded overflow-hidden">
-                              <div className="h-full bg-[var(--cs-primary)] rounded" style={{ width: `${project.percentage}%` }} />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  {linkedProjects.length === 0 ? (
+                    <p className="text-sm text-gray-500">{t('institution_projects_empty')}</p>
+                  ) : (
+                    <div className="cs-projects-grid">
+                      {linkedProjects.map((project: any) => (
+                        <ProjectCard key={project.id} projectSummaryData={project} />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div>

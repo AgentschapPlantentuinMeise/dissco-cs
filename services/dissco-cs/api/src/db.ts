@@ -206,6 +206,20 @@ export class DisscoCSRepository {
       `);
 
       await client.query(`
+        CREATE TABLE IF NOT EXISTS ${this.schemaRef}.project_institution_links (
+          site_id INTEGER NOT NULL,
+          project_slug TEXT NOT NULL,
+          institution_id BIGINT NOT NULL REFERENCES ${this.schemaRef}.institutions (id) ON DELETE CASCADE,
+          PRIMARY KEY (site_id, project_slug)
+        )
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS project_institution_links_institution_idx
+        ON ${this.schemaRef}.project_institution_links (institution_id)
+      `);
+
+      await client.query(`
         CREATE TABLE IF NOT EXISTS ${this.schemaRef}.project_manuals (
           id BIGSERIAL PRIMARY KEY,
           site_id INTEGER NOT NULL,

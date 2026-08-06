@@ -233,6 +233,12 @@ export const institutionsApi = {
 
   getActive: (slug: string) => csFetch<Institution>(`/institutions/active/${slug}?slug=${getSiteSlug()}`),
 
+  getForProject: (projectSlug: string) =>
+    csFetch<Institution>(`/institutions/for-project/${encodeURIComponent(projectSlug)}?slug=${getSiteSlug()}`),
+
+  getActiveProjectSlugs: (slug: string) =>
+    csFetch<{ projectSlugs: string[] }>(`/institutions/active/${slug}/projects?slug=${getSiteSlug()}`),
+
   listAdmin: () => csFetch<{ institutions: Institution[] }>('/institutions'),
 
   create: (data: InstitutionInput) =>
@@ -245,6 +251,14 @@ export const institutionsApi = {
 
   setOrder: (order: Institution['id'][]) =>
     csFetch<void>('/institutions/order', { method: 'PUT', body: JSON.stringify({ order }) }),
+
+  listProjectLinks: () => csFetch<{ links: Record<string, number> }>('/institutions/project-links'),
+
+  setProjectLink: (projectSlug: string, institutionId: number | null) =>
+    csFetch<void>(`/institutions/project-links/${encodeURIComponent(projectSlug)}`, {
+      method: 'PUT',
+      body: JSON.stringify({ institutionId }),
+    }),
 };
 
 export type ProjectManualAttachmentMeta = { filename: string; mimeType: string; size: number };
@@ -257,7 +271,7 @@ export type ProjectManual = {
   updated_at: string;
 };
 
-export type ProjectManualSummary = ProjectManual & { linkedProjectSlugs: string[] };
+export type ProjectManualSummary = ProjectManual & { linkedProjectSlugs: string[]; attachmentLangs: SitePageLang[] };
 
 export type ProjectManualForVolunteer = {
   id: number;
