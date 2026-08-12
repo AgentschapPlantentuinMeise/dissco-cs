@@ -28,6 +28,11 @@
   box-sizing: border-box;
 }
 
+/* Bredere variant voor schermen met meerdere kolommen naast elkaar (bv. Review lijst + detailpaneel) */
+.cs-container--wide {
+  max-width: 1400px;
+}
+
 /* Auto-fill project card grid */
 .cs-projects-grid {
   display: grid;

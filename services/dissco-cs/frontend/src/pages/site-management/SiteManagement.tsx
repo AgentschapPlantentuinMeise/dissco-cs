@@ -26,7 +26,7 @@ export const SiteManagement: React.FC = () => {
   return (
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container">
+        <div className="cs-container cs-container--wide">
           <header className="mb-8">
             <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('sm_title')}</h1>
             <p className="text-lg text-gray-600">{t('sm_intro')}</p>
@@ -41,7 +41,7 @@ export const SiteManagement: React.FC = () => {
                 </>
               );
               const tileClassName =
-                'block no-underline bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] p-6 transition-shadow duration-150 hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)]';
+                'block no-underline bg-white border border-gray-200 rounded-[10px] p-6 transition-all duration-150 hover:border-[var(--cs-primary)] hover:shadow-[0_4px_14px_rgba(26,91,102,0.14)] hover:-translate-y-px';
 
               return tile.external ? (
                 <a key={tile.href} href={tile.href} className={tileClassName}>
@@ -56,7 +56,7 @@ export const SiteManagement: React.FC = () => {
 
             <a
               href={`/s/${siteSlug}/admin`}
-              className="block no-underline bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] p-6 transition-shadow duration-150 hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
+              className="block no-underline bg-white border border-gray-200 rounded-[10px] p-6 transition-all duration-150 hover:border-[var(--cs-primary)] hover:shadow-[0_4px_14px_rgba(26,91,102,0.14)] hover:-translate-y-px"
             >
               <h2 className="text-xl font-semibold text-[var(--cs-primary)] mb-2">{t('sm_tile_madoc_title')}</h2>
               <p className="text-sm text-gray-600 m-0">{t('sm_tile_madoc_desc')}</p>

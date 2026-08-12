@@ -151,7 +151,7 @@ export const MessageBoard: React.FC = () => {
 
   return (
     <CsPage>
-      <div className="cs-container pt-10 pb-16">
+      <div className="cs-container cs-container--wide pt-10 pb-16">
         <header className="flex justify-between items-center mb-4">
           <h1 className="text-4xl text-[var(--cs-primary)] m-0">{t('nav_messageboard')}</h1>
           <button className={btnPrimary} onClick={() => setShowNewForm(v => !v)}>

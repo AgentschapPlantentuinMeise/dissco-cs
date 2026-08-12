@@ -139,7 +139,7 @@ export const Announcements: React.FC = () => {
   return (
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container">
+        <div className="cs-container cs-container--wide">
           <HrefLink href="/manage" className="inline-flex items-center gap-1 text-[var(--cs-primary)] no-underline font-medium hover:underline">
             <ArrowLeftIcon aria-hidden="true" /> {t('sm_back_to_hub')}
           </HrefLink>
@@ -160,168 +160,177 @@ export const Announcements: React.FC = () => {
             <p className="text-gray-600">{t('sm_announcements_empty')}</p>
           )}
 
-          {!isLoading && announcements.length > 0 && (
-            <ul className="list-none m-0 p-0 mb-8 bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] divide-y divide-gray-100">
-              {announcements.map(announcement => (
-                <li key={announcement.id} className="flex items-center justify-between gap-4 px-4 py-3">
-                  <div className="min-w-0">
-                    <p className="font-semibold m-0 truncate">{displayText(announcement.title, announcement.id, i18n.language)}</p>
-                    <p className="text-sm text-gray-500 m-0">
-                      {targetLabel(t, announcement)}
-                      {(announcement.start_date || announcement.end_date) && (
-                        <>
-                          {' · '}
-                          {announcement.start_date ? toDateInputValue(announcement.start_date) : t('sm_announcements_no_date')}
-                          {' – '}
-                          {announcement.end_date ? toDateInputValue(announcement.end_date) : t('sm_announcements_no_date')}
-                        </>
-                      )}
-                    </p>
-                  </div>
+          {!isLoading && (announcements.length > 0 || isFormOpen) && (
+            <div className="flex flex-col lg:flex-row items-start gap-5 mb-8">
+              <ul
+                className={`list-none m-0 p-0 bg-white border-t border-gray-200 divide-y divide-gray-100 min-w-0 w-full ${
+                  isFormOpen ? 'lg:flex-[1_1_55%]' : ''
+                }`}
+              >
+                {announcements.map(announcement => (
+                  <li
+                    key={announcement.id}
+                    className={`flex items-center justify-between gap-4 px-4 py-3 border-l-4 ${
+                      editingId === announcement.id ? 'bg-gray-50 border-l-[var(--cs-primary)]' : 'border-l-transparent'
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <p className="font-semibold m-0 truncate">{displayText(announcement.title, announcement.id, i18n.language)}</p>
+                      <p className="text-sm text-gray-500 m-0">
+                        {targetLabel(t, announcement)}
+                        {(announcement.start_date || announcement.end_date) && (
+                          <>
+                            {' · '}
+                            {announcement.start_date ? toDateInputValue(announcement.start_date) : t('sm_announcements_no_date')}
+                            {' – '}
+                            {announcement.end_date ? toDateInputValue(announcement.end_date) : t('sm_announcements_no_date')}
+                          </>
+                        )}
+                      </p>
+                    </div>
 
-                  <div className="flex items-center gap-3 shrink-0">
-                    <ActiveStatusToggle
-                      active={announcement.is_active}
-                      onChange={() => void toggleActive(announcement)}
-                      label={displayText(announcement.title, announcement.id, i18n.language)}
-                    />
-                    <button
-                      onClick={() => startEdit(announcement)}
-                      aria-label={t('sm_pages_edit')}
-                      title={t('sm_pages_edit')}
-                      className="bg-transparent border-none cursor-pointer text-gray-500 hover:text-[var(--cs-primary)] p-1"
-                    >
-                      <PencilIcon />
-                    </button>
-                    <DeleteIconButton onClick={() => setPendingDeleteId(announcement.id)} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {isFormOpen && (
-            <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 pb-4 pt-20 overflow-y-auto">
-              <div className="bg-white rounded-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.2)] p-6 max-w-xl w-full my-8">
-                <h2 className="text-xl font-semibold text-[var(--cs-primary)] mb-4">
-                  {editingId !== null ? t('sm_announcements_edit') : t('sm_announcements_new')}
-                </h2>
-
-                <div className="flex gap-2 mb-4">
-                  {LANGUAGES.map(lang => (
-                    <button
-                      key={lang.code}
-                      onClick={() => setSelectedLang(lang.code)}
-                      className={`px-3 py-1 rounded-full text-sm font-medium border ${
-                        selectedLang === lang.code
-                          ? 'bg-[var(--cs-primary)] text-white border-[var(--cs-primary)]'
-                          : 'bg-transparent text-gray-600 border-gray-300'
-                      }`}
-                    >
-                      {t(`lang_${lang.code}`)}
-                      {!(draft.title[lang.code] ?? '').trim() && <span className="text-red-500 ml-1">•</span>}
-                    </button>
-                  ))}
-                </div>
-
-                <label className="flex flex-col gap-1 mb-4">
-                  <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_title')} *</span>
-                  <input
-                    type="text"
-                    value={draft.title[selectedLang] ?? ''}
-                    onChange={e => setDraft(prev => ({ ...prev, title: { ...prev.title, [selectedLang]: e.target.value } }))}
-                    className="border border-gray-300 rounded-lg p-2"
-                  />
-                </label>
-
-                <label className="flex flex-col gap-1 mb-4">
-                  <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_description')} *</span>
-                  <MarkdownToolbar
-                    textareaRef={textareaRef}
-                    value={draft.description[selectedLang] ?? ''}
-                    onChange={next => setDraft(prev => ({ ...prev, description: { ...prev.description, [selectedLang]: next } }))}
-                  />
-                  <textarea
-                    ref={textareaRef}
-                    value={draft.description[selectedLang] ?? ''}
-                    onChange={e =>
-                      setDraft(prev => ({ ...prev, description: { ...prev.description, [selectedLang]: e.target.value } }))
-                    }
-                    className="border border-gray-300 rounded-b-lg p-2 min-h-[90px]"
-                  />
-                </label>
-
-                <div className="flex flex-col gap-2 mb-4">
-                  <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_target')}</span>
-                  {(['homepage', 'projects', 'project'] as AnnouncementTargetType[]).map(targetType => (
-                    <label key={targetType} className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        checked={draft.targetType === targetType}
-                        onChange={() =>
-                          setDraft(prev => ({
-                            ...prev,
-                            targetType,
-                            targetProjectSlug: targetType === 'project' ? prev.targetProjectSlug : null,
-                          }))
-                        }
+                    <div className="flex items-center gap-3 shrink-0">
+                      <ActiveStatusToggle
+                        active={announcement.is_active}
+                        onChange={() => void toggleActive(announcement)}
+                        label={displayText(announcement.title, announcement.id, i18n.language)}
                       />
-                      <span>{t(`sm_announcements_target_${targetType}`)}</span>
+                      <button
+                        onClick={() => startEdit(announcement)}
+                        aria-label={t('sm_pages_edit')}
+                        title={t('sm_pages_edit')}
+                        className="bg-transparent border-none cursor-pointer text-gray-500 hover:text-[var(--cs-primary)] p-1"
+                      >
+                        <PencilIcon />
+                      </button>
+                      <DeleteIconButton onClick={() => setPendingDeleteId(announcement.id)} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+
+              {isFormOpen && (
+                <div className="w-full lg:flex-[0_0_42%] lg:min-w-[380px] bg-white border border-gray-200 rounded-[10px] p-6">
+                  <h2 className="text-xl font-semibold text-[var(--cs-primary)] mb-4">
+                    {editingId !== null ? t('sm_announcements_edit') : t('sm_announcements_new')}
+                  </h2>
+
+                  <div className="flex gap-2 mb-4">
+                    {LANGUAGES.map(lang => (
+                      <button
+                        key={lang.code}
+                        onClick={() => setSelectedLang(lang.code)}
+                        className={`px-3 py-1 rounded-full text-sm font-medium border ${
+                          selectedLang === lang.code
+                            ? 'bg-[var(--cs-primary)] text-white border-[var(--cs-primary)]'
+                            : 'bg-transparent text-gray-600 border-gray-300'
+                        }`}
+                      >
+                        {t(`lang_${lang.code}`)}
+                        {!(draft.title[lang.code] ?? '').trim() && <span className="text-red-500 ml-1">•</span>}
+                      </button>
+                    ))}
+                  </div>
+
+                  <label className="flex flex-col gap-1 mb-4">
+                    <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_title')} *</span>
+                    <input
+                      type="text"
+                      value={draft.title[selectedLang] ?? ''}
+                      onChange={e => setDraft(prev => ({ ...prev, title: { ...prev.title, [selectedLang]: e.target.value } }))}
+                      className="border border-gray-300 rounded-lg p-2"
+                    />
+                  </label>
+
+                  <label className="flex flex-col gap-1 mb-4">
+                    <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_description')} *</span>
+                    <MarkdownToolbar
+                      textareaRef={textareaRef}
+                      value={draft.description[selectedLang] ?? ''}
+                      onChange={next => setDraft(prev => ({ ...prev, description: { ...prev.description, [selectedLang]: next } }))}
+                    />
+                    <textarea
+                      ref={textareaRef}
+                      value={draft.description[selectedLang] ?? ''}
+                      onChange={e =>
+                        setDraft(prev => ({ ...prev, description: { ...prev.description, [selectedLang]: e.target.value } }))
+                      }
+                      className="border border-gray-300 rounded-b-lg p-2 min-h-[90px]"
+                    />
+                  </label>
+
+                  <div className="flex flex-col gap-2 mb-4">
+                    <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_target')}</span>
+                    {(['homepage', 'projects', 'project'] as AnnouncementTargetType[]).map(targetType => (
+                      <label key={targetType} className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          checked={draft.targetType === targetType}
+                          onChange={() =>
+                            setDraft(prev => ({
+                              ...prev,
+                              targetType,
+                              targetProjectSlug: targetType === 'project' ? prev.targetProjectSlug : null,
+                            }))
+                          }
+                        />
+                        <span>{t(`sm_announcements_target_${targetType}`)}</span>
+                      </label>
+                    ))}
+
+                    {draft.targetType === 'project' && (
+                      <select
+                        value={draft.targetProjectSlug ?? ''}
+                        onChange={e => setDraft(prev => ({ ...prev, targetProjectSlug: e.target.value || null }))}
+                        className="border border-gray-300 rounded-lg p-2 ml-6"
+                      >
+                        <option value="">{t('sm_announcements_select_project')}</option>
+                        {projects.map((project: any) => (
+                          <option key={project.id} value={project.slug}>
+                            {getLabelText(project.label, project.slug)}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
+                  <div className="flex gap-4 mb-4">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_start')}</span>
+                      <input
+                        type="date"
+                        value={toDateInputValue(draft.startDate)}
+                        onChange={e => setDraft(prev => ({ ...prev, startDate: e.target.value || null }))}
+                        className="border border-gray-300 rounded-lg p-2"
+                      />
                     </label>
-                  ))}
+                    <label className="flex flex-col gap-1">
+                      <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_end')}</span>
+                      <input
+                        type="date"
+                        value={toDateInputValue(draft.endDate)}
+                        onChange={e => setDraft(prev => ({ ...prev, endDate: e.target.value || null }))}
+                        className="border border-gray-300 rounded-lg p-2"
+                      />
+                    </label>
+                  </div>
 
-                  {draft.targetType === 'project' && (
-                    <select
-                      value={draft.targetProjectSlug ?? ''}
-                      onChange={e => setDraft(prev => ({ ...prev, targetProjectSlug: e.target.value || null }))}
-                      className="border border-gray-300 rounded-lg p-2 ml-6"
-                    >
-                      <option value="">{t('sm_announcements_select_project')}</option>
-                      {projects.map((project: any) => (
-                        <option key={project.id} value={project.slug}>
-                          {getLabelText(project.label, project.slug)}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-
-                <div className="flex gap-4 mb-4">
-                  <label className="flex flex-col gap-1">
-                    <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_start')}</span>
-                    <input
-                      type="date"
-                      value={toDateInputValue(draft.startDate)}
-                      onChange={e => setDraft(prev => ({ ...prev, startDate: e.target.value || null }))}
-                      className="border border-gray-300 rounded-lg p-2"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_end')}</span>
-                    <input
-                      type="date"
-                      value={toDateInputValue(draft.endDate)}
-                      onChange={e => setDraft(prev => ({ ...prev, endDate: e.target.value || null }))}
-                      className="border border-gray-300 rounded-lg p-2"
-                    />
-                  </label>
-                </div>
-
-                <ActiveToggleField
-                  checked={draft.isActive}
-                  onChange={() => setDraft(prev => ({ ...prev, isActive: !prev.isActive }))}
-                />
-
-                <div className="flex items-center gap-3">
-                  <SaveButton
-                    onClick={() => void save()}
-                    disabled={!canSave}
-                    title={!canSave ? t('common_fill_required_fields') : undefined}
+                  <ActiveToggleField
+                    checked={draft.isActive}
+                    onChange={() => setDraft(prev => ({ ...prev, isActive: !prev.isActive }))}
                   />
-                  <CancelButton onClick={cancelForm} />
-                  {!canSave && <span className="text-sm text-gray-500">{t('common_fill_required_fields')}</span>}
+
+                  <div className="flex items-center gap-3">
+                    <SaveButton
+                      onClick={() => void save()}
+                      disabled={!canSave}
+                      title={!canSave ? t('common_fill_required_fields') : undefined}
+                    />
+                    <CancelButton onClick={cancelForm} />
+                    {!canSave && <span className="text-sm text-gray-500">{t('common_fill_required_fields')}</span>}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 

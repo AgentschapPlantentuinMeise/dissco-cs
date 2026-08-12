@@ -351,7 +351,7 @@ const ProjectsSubview: React.FC<{
           placeholder={t('sm_projects_search_placeholder')}
           className="w-full border border-gray-300 rounded-lg p-2 mb-3"
         />
-        <ul className="list-none m-0 p-0 bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] divide-y divide-gray-100">
+        <ul className="list-none m-0 p-0 bg-white border-t border-gray-200 divide-y divide-gray-100">
           {filteredProjects.map(project => {
           const linked = manuals.find(m => m.linkedProjectSlugs.includes(project.slug));
           const hasInstitution = institutionLinks[project.slug] !== undefined;
@@ -390,7 +390,7 @@ const ProjectsSubview: React.FC<{
       </div>
 
       {selectedProject && (
-        <div className="bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] p-6">
+        <div className="bg-white border border-gray-200 rounded-[10px] p-6">
           <h3 className="text-xl font-semibold text-[var(--cs-primary)] mb-1">
             {getLabelText(selectedProject.label, selectedProject.slug)}
           </h3>
@@ -519,7 +519,7 @@ const ManualsSubview: React.FC<{
       {manuals.length === 0 ? (
         <p className="text-sm text-gray-500">{t('sm_manuals_none_available')}</p>
       ) : (
-      <div className="bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] overflow-hidden">
+      <div className="bg-white border-t border-gray-200">
       <table className="w-full border-collapse">
         <thead>
           <tr className="text-left text-[0.7rem] uppercase tracking-wide text-gray-400">
@@ -654,7 +654,7 @@ const StuckTasksSubview: React.FC = () => {
       )}
 
       {tasks.length > 0 && (
-        <div className="bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] overflow-hidden mb-8">
+        <div className="bg-white border-t border-gray-200 mb-8">
           <table className="w-full border-collapse">
             <thead>
               <tr className="text-left text-[0.7rem] uppercase tracking-wide text-gray-400">
@@ -707,7 +707,7 @@ const StuckTasksSubview: React.FC = () => {
         <>
           <h2 className="text-xl text-[var(--cs-primary)] mb-2">{t('sm_stuck_tasks_counters_title')}</h2>
           <p className="text-sm text-gray-600 mb-4">{t('sm_stuck_tasks_counters_intro')}</p>
-          <div className="bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] overflow-hidden">
+          <div className="bg-white border-t border-gray-200">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="text-left text-[0.7rem] uppercase tracking-wide text-gray-400">
@@ -836,7 +836,7 @@ const TaskDebugSubview: React.FC<{ projects: any[] }> = ({ projects }) => {
             <div><span className="font-semibold">Computed percentage:</span> {data.transcribedPercentage}%</div>
           </div>
 
-          <div className="bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] overflow-hidden">
+          <div className="bg-white border-t border-gray-200">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="text-left text-[0.7rem] uppercase tracking-wide text-gray-400">
@@ -907,7 +907,7 @@ export const ProjectManagement: React.FC = () => {
   return (
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container">
+        <div className="cs-container cs-container--wide">
           <HrefLink href="/manage" className="inline-flex items-center gap-1 text-[var(--cs-primary)] no-underline font-medium hover:underline">
             <ArrowLeftIcon aria-hidden="true" /> {t('sm_back_to_hub')}
           </HrefLink>

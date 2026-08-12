@@ -15,7 +15,7 @@ export const Projects: React.FC = () => {
   return (
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container">
+        <div className="cs-container cs-container--wide">
 
           <header className="mb-4">
             <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('projects_title')}</h1>

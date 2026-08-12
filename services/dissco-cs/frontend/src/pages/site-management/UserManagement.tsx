@@ -10,12 +10,12 @@ export const UserManagement: React.FC = () => {
   const siteSlug = getSiteSlug();
 
   const tileClassName =
-    'block no-underline bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] p-6 transition-shadow duration-150 hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)]';
+    'block no-underline bg-white border border-gray-200 rounded-[10px] p-6 transition-all duration-150 hover:border-[var(--cs-primary)] hover:shadow-[0_4px_14px_rgba(26,91,102,0.14)] hover:-translate-y-px';
 
   return (
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container">
+        <div className="cs-container cs-container--wide">
           <HrefLink
             href="/manage"
             className="inline-flex items-center gap-1 text-[var(--cs-primary)] no-underline font-medium hover:underline"

@@ -29,7 +29,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ projectSummaryData }) 
   return (
     <Link
       to={projectLink}
-      className="flex flex-col bg-white rounded-lg overflow-hidden shadow-md transition-[transform,box-shadow] duration-200 cursor-pointer h-full no-underline text-inherit hover:-translate-y-1 hover:shadow-lg"
+      className="flex flex-col bg-white rounded-lg overflow-hidden transition-transform duration-200 cursor-pointer h-full no-underline text-inherit hover:-translate-y-1"
     >
       <div
         className="h-[140px] w-full bg-cover bg-center bg-gray-200"

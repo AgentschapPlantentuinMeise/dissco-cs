@@ -161,7 +161,7 @@ export const Dashboard: React.FC = () => {
   return (
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container">
+        <div className="cs-container cs-container--wide">
           <h1 className="text-4xl text-[var(--cs-primary)] mt-0 mb-5">{t('dashboard_welcome', { name: user.name })}</h1>
           <p className="text-base leading-relaxed text-gray-700 m-0 mb-6">{t('dashboard_subtitle')}</p>
 

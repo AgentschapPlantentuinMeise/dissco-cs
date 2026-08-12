@@ -106,7 +106,7 @@ export const PageManagement: React.FC = () => {
   return (
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container">
+        <div className="cs-container cs-container--wide">
           <HrefLink href="/manage" className="inline-flex items-center gap-1 text-[var(--cs-primary)] no-underline font-medium hover:underline">
             <ArrowLeftIcon aria-hidden="true" /> {t('sm_back_to_hub')}
           </HrefLink>
@@ -114,7 +114,7 @@ export const PageManagement: React.FC = () => {
           <h1 className="text-3xl text-[var(--cs-primary)] mt-4 mb-6">{t('sm_tile_pages_title')}</h1>
 
           <div className={`grid grid-cols-1 gap-6 ${selectedKey ? 'md:grid-cols-[380px_1fr]' : ''}`}>
-            <ul className="list-none m-0 p-0 bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] divide-y divide-gray-100">
+            <ul className="list-none m-0 p-0 bg-white border-t border-gray-200 divide-y divide-gray-100">
               {pages.map((page, index) => {
                 const key = page.page_key;
                 return (
@@ -176,7 +176,7 @@ export const PageManagement: React.FC = () => {
             </ul>
 
             {selectedKey && (
-              <div className="bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] p-6">
+              <div className="bg-white border border-gray-200 rounded-[10px] p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold text-[var(--cs-primary)]">
                     {t(pageLabelKey(selectedKey))}

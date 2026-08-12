@@ -110,7 +110,7 @@ export const ProjectDetail: React.FC = () => {
     return (
       <CsPage>
         <div className="cs-main-wrapper pt-10 pb-16">
-          <div className="cs-container py-16 text-center text-gray-500">
+          <div className="cs-container cs-container--wide py-16 text-center text-gray-500">
             <p>{t('pdp_loading')}</p>
           </div>
         </div>
@@ -129,9 +129,9 @@ export const ProjectDetail: React.FC = () => {
   return (
     <CsPage>
       <div className="cs-main-wrapper">
-        <div className="cs-container pt-20 pb-12">
+        <div className="cs-container cs-container--wide pt-20 pb-12">
 
-          <div className="grid [grid-template-columns:45%_55%] min-h-[340px] rounded-[10px] overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.1)] mt-10 mb-10 max-[700px]:grid-cols-1 max-[700px]:min-h-0">
+          <div className="grid [grid-template-columns:45%_55%] min-h-[340px] rounded-[10px] overflow-hidden mt-10 mb-10 max-[700px]:grid-cols-1 max-[700px]:min-h-0">
 
             <div
               className="relative bg-[#c8dfe2] bg-cover bg-center bg-no-repeat min-h-[280px] max-[700px]:min-h-[200px]"
@@ -209,7 +209,7 @@ export const ProjectDetail: React.FC = () => {
                   <button
                     key={manifest.id}
                     onClick={() => navigateToFirstCanvas(manifest.id)}
-                    className="flex flex-col bg-white rounded overflow-hidden shadow-[0_2px_6px_rgba(0,0,0,0.07)] no-underline text-inherit transition-[transform,box-shadow] duration-200 border-none p-0 cursor-pointer text-left w-full hover:-translate-y-[3px] hover:shadow-[0_6px_14px_rgba(0,0,0,0.12)]"
+                    className="flex flex-col bg-white rounded overflow-hidden no-underline text-inherit transition-transform duration-200 border-none p-0 cursor-pointer text-left w-full hover:-translate-y-[3px]"
                   >
                     <div
                       className="h-[100px] bg-[#dde8ea] bg-cover bg-center bg-no-repeat"
@@ -227,7 +227,7 @@ export const ProjectDetail: React.FC = () => {
           {ownSavedTasks.length > 0 && (
             <section className="mb-4">
               <h2 className="text-[1.2rem] font-semibold text-[var(--cs-primary)] mt-0 mb-5">{t('pdp_saved_tasks_title')}</h2>
-              <div className="bg-white rounded-[10px] shadow-[0_2px_6px_rgba(0,0,0,0.07)] overflow-hidden">
+              <div className="bg-white rounded-[10px] overflow-hidden">
                 {ownSavedTasks.map(task => {
                   const href = buildTaskLink(task);
                   const prefix = user!.name + ': ';
