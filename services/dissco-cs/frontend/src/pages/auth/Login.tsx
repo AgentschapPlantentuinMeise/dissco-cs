@@ -74,9 +74,9 @@ export const Login: React.FC = () => {
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container max-w-md">
-          <header className="mb-6">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('login_title')}</h1>
-            <p className="text-base text-gray-600">
+          <header className="mb-8">
+            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('login_title')}</h1>
+            <p className="text-lg text-gray-600">
               {t('login_no_account')}{' '}
               <HrefLink href="/register" className="text-[var(--cs-primary)]">
                 {t('login_register_link')}

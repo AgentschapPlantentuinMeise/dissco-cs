@@ -126,12 +126,12 @@ export const Register: React.FC = () => {
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container max-w-md">
-          <header className="mb-6">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('register_title')}</h1>
+          <header className="mb-8">
+            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('register_title')}</h1>
             {invitation && !('expired' in invitation) ? (
-              <p className="text-base text-gray-600">{t('register_invitation_intro')}</p>
+              <p className="text-lg text-gray-600">{t('register_invitation_intro')}</p>
             ) : (
-              <p className="text-base text-gray-600">
+              <p className="text-lg text-gray-600">
                 {t('register_have_account')}{' '}
                 <HrefLink href="/login" className="text-[var(--cs-primary)]">
                   {t('register_login_link')}

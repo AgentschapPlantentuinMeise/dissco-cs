@@ -36,14 +36,15 @@ export const Contact: React.FC = () => {
   return (
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container max-w-2xl">
+        <div className="cs-container cs-container--wide">
 
-          <header className="mb-4">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('nav_contact')}</h1>
+          <header className="mb-8">
+            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('nav_contact')}</h1>
           </header>
 
         
 
+          <div className="max-w-2xl">
           <section className="mb-8">
             {dbContent ? <CsMarkdown content={dbContent} /> : <p className="text-base text-gray-600">{t('common_no_content')}</p>}
           </section>
@@ -113,6 +114,7 @@ export const Contact: React.FC = () => {
               {status === 'error' && <p className="text-red-700">{t('contact_form_error')}</p>}
             </form>
           )}
+          </div>
 
         </div>
       </div>

@@ -15,7 +15,7 @@ export function ManagementPlaceholder({ title }: { title: string }) {
             <ArrowLeftIcon aria-hidden="true" /> {t('sm_back_to_hub')}
           </HrefLink>
 
-          <h1 className="text-3xl text-[var(--cs-primary)] mt-4 mb-4">{title}</h1>
+          <h1 className="text-4xl text-[var(--cs-primary)] mt-4 mb-8">{title}</h1>
           <p className="text-base text-gray-600">{t('sm_placeholder_text')}</p>
         </div>
       </div>

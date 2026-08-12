@@ -144,8 +144,8 @@ export const Announcements: React.FC = () => {
             <ArrowLeftIcon aria-hidden="true" /> {t('sm_back_to_hub')}
           </HrefLink>
 
-          <div className="flex items-center justify-between mt-4 mb-6">
-            <h1 className="text-3xl text-[var(--cs-primary)] m-0">{t('sm_tile_announcements_title')}</h1>
+          <div className="flex items-center justify-between mt-4 mb-8">
+            <h1 className="text-4xl text-[var(--cs-primary)] m-0">{t('sm_tile_announcements_title')}</h1>
             <button
               onClick={startCreate}
               className="px-4 py-2 rounded-full text-sm font-semibold border-none bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)]"

@@ -70,7 +70,7 @@ export const InstitutionDetail: React.FC = () => {
   return (
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container">
+        <div className="cs-container cs-container--wide">
           <HrefLink href="/institutions" className="inline-flex items-center gap-1 text-[var(--cs-primary)] no-underline font-medium hover:underline">
             <ArrowLeftIcon aria-hidden="true" /> {t('institution_back_to_list')}
           </HrefLink>

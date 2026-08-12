@@ -914,7 +914,7 @@ export const ProjectManagement: React.FC = () => {
             <ArrowLeftIcon aria-hidden="true" /> {t('sm_back_to_hub')}
           </HrefLink>
 
-          <h1 className="text-3xl text-[var(--cs-primary)] mt-4 mb-2">{t('sm_tile_projects_title')}</h1>
+          <h1 className="text-4xl text-[var(--cs-primary)] mt-4 mb-8">{t('sm_tile_projects_title')}</h1>
 
           <div className="flex gap-5 border-b border-gray-200 mb-6">
             <button

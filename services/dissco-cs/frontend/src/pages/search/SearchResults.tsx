@@ -19,12 +19,12 @@ export const SearchResults: React.FC = () => {
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container cs-container--wide">
 
-          <header className="mb-4">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">
+          <header className="mb-8">
+            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">
               {t('search_results_title', { query })}
             </h1>
             {isActive && !isLoading && (
-              <p className="text-lg leading-relaxed text-gray-600 mb-6">
+              <p className="text-lg text-gray-600">
                 {t('search_results_count', { count: totalResults })}
               </p>
             )}

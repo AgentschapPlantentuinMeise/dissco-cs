@@ -17,12 +17,10 @@ export const Projects: React.FC = () => {
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container cs-container--wide">
 
-          <header className="mb-4">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('projects_title')}</h1>
-            <p className="text-lg leading-relaxed text-gray-600 mb-6">{t('projects_intro')}</p>
+          <header className="mb-8">
+            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('projects_title')}</h1>
+            <p className="text-lg text-gray-600">{t('projects_intro')}</p>
           </header>
-
-          <hr className="mb-8" />
 
           <AnnouncementBanner target="projects" />
 

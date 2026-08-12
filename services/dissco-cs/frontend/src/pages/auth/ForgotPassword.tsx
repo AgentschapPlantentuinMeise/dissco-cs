@@ -25,9 +25,9 @@ export const ForgotPassword: React.FC = () => {
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container max-w-md">
-          <header className="mb-6">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('forgot_password_title')}</h1>
-            {status !== 'sent' && <p className="text-base text-gray-600">{t('forgot_password_intro')}</p>}
+          <header className="mb-8">
+            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('forgot_password_title')}</h1>
+            {status !== 'sent' && <p className="text-lg text-gray-600">{t('forgot_password_intro')}</p>}
           </header>
 
           {status === 'sent' ? (

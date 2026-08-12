@@ -83,9 +83,9 @@ export const SetPassword: React.FC = () => {
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container max-w-md">
-          <header className="mb-6">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('set_password_title')}</h1>
-            <p className="text-base text-gray-600">{t('set_password_intro')}</p>
+          <header className="mb-8">
+            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('set_password_title')}</h1>
+            <p className="text-lg text-gray-600">{t('set_password_intro')}</p>
           </header>
 
           <form onSubmit={submit} className="flex flex-col gap-4">
