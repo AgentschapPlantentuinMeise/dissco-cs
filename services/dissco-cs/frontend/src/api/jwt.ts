@@ -19,6 +19,16 @@ export function clearJwt(): void {
 // a 401 to avoid flashing a raw "request failed: 401" error first.
 export function redirectToExpiredLogin<T>(): Promise<T> {
   const slug = getSiteSlug();
+
+  // getCurrentUser() doesn't check the JWT's exp claim, so a server-side-expired cookie
+  // still looks "logged in" client-side. That means gated calls made from the login page
+  // itself (e.g. Navbar's unread-count fetch) can also 401. Without this guard, each one
+  // would re-encode the already-redirected-to URL into a new `redirect` param, nesting
+  // deeper forever instead of just staying put.
+  if (window.location.pathname === `/s/${slug}/login`) {
+    return new Promise<T>(() => {});
+  }
+
   const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
   window.location.href = `/s/${slug}/login?redirect=${redirect}&expired=1`;
   return new Promise<T>(() => {});
