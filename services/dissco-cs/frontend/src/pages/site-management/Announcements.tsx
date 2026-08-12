@@ -167,6 +167,14 @@ export const Announcements: React.FC = () => {
                   isFormOpen ? 'lg:flex-[1_1_55%]' : ''
                 }`}
               >
+                {isFormOpen && editingId === null && (
+                  <li className="flex items-center gap-3 px-4 py-3 border-l-4 border-l-[var(--cs-primary)] bg-gray-50">
+                    <div className="min-w-0">
+                      <p className="font-semibold m-0 italic text-gray-500 truncate">{t('sm_announcements_draft_name')}</p>
+                      <p className="text-xs text-gray-400 m-0">{t('sm_announcements_draft_hint')}</p>
+                    </div>
+                  </li>
+                )}
                 {announcements.map(announcement => (
                   <li
                     key={announcement.id}
@@ -336,6 +344,7 @@ export const Announcements: React.FC = () => {
 
           {pendingDeleteId !== null && (
             <ConfirmDialog
+              title={t('sm_announcements_confirm_delete_title')}
               message={t('sm_announcements_confirm_delete')}
               confirmLabel={t('common_delete')}
               cancelLabel={t('common_cancel')}

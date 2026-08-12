@@ -278,6 +278,7 @@ export const MessageBoard: React.FC = () => {
 
         {pendingDeleteTopicId !== null && (
           <ConfirmDialog
+            title={t('forum_confirm_delete_title')}
             message={t('forum_confirm_delete')}
             confirmLabel={t('common_delete')}
             cancelLabel={t('common_cancel')}

@@ -283,6 +283,7 @@ export const Dashboard: React.FC = () => {
 
           {releaseTarget && (
             <ConfirmDialog
+              title={t('my_tasks_release_confirm_title')}
               message={t('my_tasks_release_confirm')}
               confirmLabel={t('common_delete')}
               cancelLabel={t('common_cancel')}

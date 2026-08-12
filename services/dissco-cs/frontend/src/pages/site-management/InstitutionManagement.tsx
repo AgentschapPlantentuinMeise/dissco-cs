@@ -158,6 +158,15 @@ export const InstitutionManagement: React.FC = () => {
                   isFormOpen ? 'lg:flex-[1_1_55%]' : ''
                 }`}
               >
+                {isFormOpen && editingId === null && (
+                  <li className="flex items-center gap-3 px-4 py-3 border-l-4 border-l-[var(--cs-primary)] bg-gray-50">
+                    <div className="h-10 w-10 flex-shrink-0 border border-dashed border-gray-300 rounded" />
+                    <div className="min-w-0">
+                      <p className="font-semibold m-0 italic text-gray-500 truncate">{t('sm_institutions_draft_name')}</p>
+                      <p className="text-xs text-gray-400 m-0">{t('sm_institutions_draft_hint')}</p>
+                    </div>
+                  </li>
+                )}
                 {institutions.map(institution => (
                   <li
                     key={institution.id}
@@ -311,6 +320,7 @@ export const InstitutionManagement: React.FC = () => {
 
           {pendingDeleteId !== null && (
             <ConfirmDialog
+              title={t('sm_institutions_confirm_delete_title')}
               message={t('sm_institutions_confirm_delete')}
               confirmLabel={t('common_delete')}
               cancelLabel={t('common_cancel')}

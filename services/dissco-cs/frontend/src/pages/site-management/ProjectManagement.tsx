@@ -581,6 +581,7 @@ const ManualsSubview: React.FC<{
 
       {pendingDeleteId !== null && (
         <ConfirmDialog
+          title={t('sm_manuals_delete_confirm_title')}
           message={t('sm_manuals_delete_confirm')}
           confirmLabel={t('common_delete')}
           cancelLabel={t('common_cancel')}
@@ -755,6 +756,7 @@ const StuckTasksSubview: React.FC = () => {
 
       {confirmTask && (
         <ConfirmDialog
+          title={t('sm_stuck_tasks_release_confirm_title')}
           message={t('sm_stuck_tasks_release_confirm', {
             date: confirmTask.modified_at ? new Date(confirmTask.modified_at).toLocaleString(i18n.language) : '—',
           })}
