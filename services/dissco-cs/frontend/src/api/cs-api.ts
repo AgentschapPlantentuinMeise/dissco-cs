@@ -19,7 +19,8 @@ async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (!response.ok) {
-    throw new Error(`DiSSCo CS API request failed: ${response.status}`);
+    const body = await response.text().catch(() => '');
+    throw new Error(`DiSSCo CS API request failed: ${response.status}${body ? ` - ${body}` : ''}`);
   }
 
   if (response.status === 204) {
@@ -175,6 +176,28 @@ export const stuckTasksApi = {
 
   resyncManifest: (containerId: string) =>
     csFetch<{ resynced: boolean }>(`/projects/stuck-tasks/manifests/${containerId}/resync`, { method: 'POST' }),
+};
+
+export type ReviewTaskRow = {
+  id: string;
+  project: { id?: number; slug?: string; label?: Record<string, string[]> | string };
+  subject: { id?: number; label?: Record<string, string[]> | string };
+  subject_raw?: string;
+  subject_parent_raw?: string;
+  status: number;
+  status_text?: string;
+  submitter?: string;
+  reviewer?: string;
+  reviewerId?: number;
+  originalTaskId?: string;
+  revisionId?: string;
+  modified_at: number;
+};
+
+export const reviewApi = {
+  myTasks: () => csFetch<{ tasks: ReviewTaskRow[] }>('/review/my-tasks'),
+
+  isReviewer: () => csFetch<{ isReviewer: boolean }>('/review/is-reviewer'),
 };
 
 export const contactApi = {

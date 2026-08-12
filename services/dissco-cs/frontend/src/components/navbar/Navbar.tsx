@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import useDropdownMenu from 'react-accessible-dropdown-menu-hook';
 import { stringify } from 'query-string';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useQuery } from 'react-query';
 import Cookies from 'js-cookie';
 import { HrefLink } from '../../utility/href-link';
 import { useUser } from '../../hooks/use-current-user';
@@ -11,7 +12,7 @@ import { SearchIcon } from '../../icons/SearchIcon';
 import { CloseIcon } from '../../icons/CloseIcon';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { getSiteSlug } from '../../api/slug';
-import { forumApi } from '../../api/cs-api';
+import { forumApi, reviewApi } from '../../api/cs-api';
 import { useSitePages } from '../../contexts/SitePagesContext';
 import { SITE_PAGE_NAV } from '../../site-pages-nav-config';
 
@@ -39,9 +40,14 @@ export const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const { pages } = useSitePages();
   const showAdmin = !!user && user.scope.includes('site.admin');
-  // Let op: reviewer-rol (site_role/role) is niet beschikbaar in het JWT, enkel scope.
-  // De site.admin-scope alleen volstaat al om de review-link te tonen (zelfde als showAdmin).
-  const showReview = showAdmin;
+  // Reviewer-rol zit niet in het JWT (enkel scope), dus navraag via een lichte backend-call;
+  // admins hoeven deze niet te doen, want die zien de link toch al.
+  const { data: reviewerCheck } = useQuery('nav-is-reviewer', () => reviewApi.isReviewer(), {
+    enabled: !!user && !showAdmin,
+    staleTime: 5 * 60 * 1000,
+    onError: err => console.error('[nav] is-reviewer check failed', err),
+  });
+  const showReview = showAdmin || !!reviewerCheck?.isReviewer;
   const dropdownCount = 3 + (showReview ? 1 : 0) + (showAdmin ? 1 : 0);
 
   const { buttonProps, itemProps, isOpen, setIsOpen } = useDropdownMenu(dropdownCount);
@@ -248,7 +254,7 @@ export const Navbar: React.FC = () => {
                   <li><HrefLink href="/my-dashboard" className={dropdownItemClass} {...itemProps[0]}>{t('nav_dashboard')}</HrefLink></li>
                   <li><a href={`/s/${siteSlug}/account`} className={dropdownItemClass} {...itemProps[1]}>{t('nav_profile_settings')}</a></li>
                   {showReview && (
-                    <li><a href={`/s/${siteSlug}/reviews`} className={dropdownItemClass} {...itemProps[idxReview]}>{t('nav_review')}</a></li>
+                    <li><HrefLink href="/review" className={dropdownItemClass} {...itemProps[idxReview]}>{t('nav_review')}</HrefLink></li>
                   )}
                   {showAdmin && (
                     <li><HrefLink href="/manage" className={dropdownItemClass} {...itemProps[idxSiteAdmin]}>{t('nav_site_admin')}</HrefLink></li>

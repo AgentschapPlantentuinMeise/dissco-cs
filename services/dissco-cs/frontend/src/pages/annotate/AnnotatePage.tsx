@@ -21,13 +21,7 @@ import { createEmptyDocument, createBlankDocument, setFieldValue, setFieldSelect
 import { AnnotationDocument } from '../../capture-model/types/document';
 import { CaptureModel, StructureNode } from '../../capture-model/types/capture-model';
 import { BoxSelectorState } from '../../capture-model/types/selector-types';
-
-function getImageServiceId(canvas: any): string | undefined {
-  const annotation = canvas?.items?.[0]?.items?.[0];
-  const body = Array.isArray(annotation?.body) ? annotation.body[0] : annotation?.body;
-  const service = Array.isArray(body?.service) ? body.service[0] : body?.service;
-  return service?.id || service?.['@id'];
-}
+import { getImageServiceId } from '../../utility/get-image-service-id';
 
 // crypto.randomUUID() only exists in secure contexts (https/localhost); this dev
 // deployment is served over plain http, so fall back to crypto.getRandomValues,

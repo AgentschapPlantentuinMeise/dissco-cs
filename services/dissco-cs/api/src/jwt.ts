@@ -132,6 +132,19 @@ export function requireSiteAdmin(context: Context): MadocUserIdentity | Response
 }
 
 /**
+ * Returns the requesting user's identity if they are authenticated (any role),
+ * or an unauthorized Response to return directly from the route handler.
+ */
+export function requireUser(context: Context): MadocUserIdentity | Response {
+  const identity = requestMadocUserIdentity(context);
+  if (!identity) {
+    return context.text('Unauthorized', 401);
+  }
+
+  return identity;
+}
+
+/**
  * Resolves the site id for requests that may come from logged-out visitors (no JWT).
  * Logged-in users resolve instantly from their JWT; anonymous visitors are resolved
  * via the `slug` query param against Madoc's public site-by-slug lookup.

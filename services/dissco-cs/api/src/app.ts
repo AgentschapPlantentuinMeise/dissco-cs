@@ -12,6 +12,7 @@ import { manifestClaimRoutes } from './routes/manifest-claim.routes.js';
 import { projectDebugRoutes } from './routes/project-debug.routes.js';
 import { projectManualsRoutes } from './routes/project-manuals.routes.js';
 import { projectProgressRoutes } from './routes/project-progress.routes.js';
+import { reviewRoutes } from './routes/review.routes.js';
 import { sitePagesRoutes } from './routes/site-pages.routes.js';
 import { stuckTasksRoutes } from './routes/stuck-tasks.routes.js';
 
@@ -28,6 +29,7 @@ export function createDisscoCSApp(repository: DisscoCSRepository): Hono {
   app.route('/api/dissco-cs/projects', manifestClaimRoutes());
   app.route('/api/dissco-cs/projects', stuckTasksRoutes());
   app.route('/api/dissco-cs/projects', projectDebugRoutes());
+  app.route('/api/dissco-cs/review', reviewRoutes());
   app.route('/api/dissco-cs', projectManualsRoutes(repository));
 
   // Frontend static serving — only active in Docker where frontend-dist is bundled in.

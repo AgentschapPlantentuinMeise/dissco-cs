@@ -151,6 +151,12 @@ export const madocClient = {
       method: 'PUT',
       body: { ...(req as any), revision: { ...(req as any).revision, status: status ?? (req as any).revision.status } },
     }),
+  getCaptureModelRevision: (id: string) => request<any>(`/api/madoc/crowdsourcing/revision/${id}`),
+  // Bewust niet updateTask() (die gaat naar de generieke /api/tasks/:id van de losse
+  // tasks-api) -- deze madoc-ts-eigen route bevat extra domeinlogica bij het accepteren van
+  // een inzending (o.a. blokkade bij gemarkeerde tabel-cellen).
+  updateRevisionTask: (taskId: string, task: Record<string, unknown>) =>
+    request<any>(`/api/madoc/crowdsourcing/task/${taskId}`, { method: 'PATCH', body: { task } }),
   getTasks: <T = any>(page?: number, query: Record<string, unknown> = {}) =>
     request<{ tasks: T[]; pagination: any }>(
       `/api/tasks?${queryString.stringify({ page: page || 1, ...query }, { arrayFormat: 'comma' })}`

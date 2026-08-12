@@ -82,7 +82,8 @@ export async function getMadocTasksBySubjectAndType(
 export async function getMadocTaskDetail(siteId: number, taskId: string): Promise<{
   id: string;
   status: number;
-  state?: { maxContributors?: number };
+  assignee?: { id: string; name?: string };
+  state?: { maxContributors?: number; revisionId?: string };
   // The container task's own `metadata` is always empty — only its subtasks (the individual
   // claims) carry the resolved project/manifest metadata, which is why getStuckManifestCounters
   // borrows it from here instead.
@@ -239,6 +240,104 @@ export async function getMadocProjectTasks(siteId: number, rootTaskId: string): 
     }
 
     const data = (await response.json()) as { tasks: ProjectDebugTask[]; pagination?: { totalPages?: number } };
+    tasks.push(...data.tasks);
+    totalPages = data.pagination?.totalPages ?? 1;
+    page += 1;
+  } while (page <= totalPages);
+
+  return tasks;
+}
+
+// Site-rol van één gebruiker (bv. 'reviewer', 'trusted-user', 'admin') -- voor de
+// nav-zichtbaarheidscheck, los van de per-project manuallyAssignedReviewer-toewijzing.
+export async function getMadocSiteUserRole(siteId: number, userId: number): Promise<string | null> {
+  const response = await fetch(`${appConfig.madocGatewayUrl}/api/madoc/manage-site/users/${userId}`, {
+    headers: {
+      Authorization: `Bearer ${getServiceJwt()}`,
+      'x-madoc-site-id': String(siteId),
+      'x-madoc-user-id': String(userId),
+    },
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`Madoc site-user request failed with status ${response.status}: ${body}`);
+  }
+
+  const data = (await response.json()) as { user?: { site_role?: string } };
+  return data.user?.site_role ?? null;
+}
+
+export type ReviewTask = {
+  id: string;
+  status: number;
+  status_text?: string;
+  subject: string;
+  subject_parent?: string;
+  parameters?: unknown[];
+  modified_at: number;
+  root_task?: string;
+  assignee?: { id: string; name?: string };
+  metadata?: {
+    project?: { id: number; slug: string; label?: unknown };
+    subject?: { id: number; type: string; label?: unknown; thumbnail?: string };
+  };
+};
+
+export type MadocProjectSummary = { id: number; slug: string; label?: unknown };
+
+// task.metadata.project blijkt niet gevuld te zijn voor crowdsourcing-review-taken (in
+// tegenstelling tot crowdsourcing-task), dus het project wordt via root_task_id opgezocht --
+// dezelfde filter die list-projects.ts server-side al ondersteunt.
+export async function getMadocProjectByRootTaskId(siteId: number, rootTaskId: string): Promise<MadocProjectSummary | null> {
+  const query = new URLSearchParams({ root_task_id: rootTaskId });
+  const response = await fetch(`${appConfig.madocGatewayUrl}/api/madoc/projects?${query}`, {
+    headers: {
+      Authorization: `Bearer ${getServiceJwt()}`,
+      'x-madoc-site-id': String(siteId),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Madoc project-by-root-task request failed with status ${response.status}`);
+  }
+
+  const data = (await response.json()) as { projects: MadocProjectSummary[] };
+  return data.projects[0] ?? null;
+}
+
+// Alle review-taken van de site die nog openstaan (-1 afgewezen, 3 geaccepteerd en 4/5
+// afgehandeld tellen niet mee -- 0 niet gestart, 1 te behandelen ("todo"), 2 in review wel,
+// zie Madoc's eigen REVIEW_STATUS_MAP in review-listing-page.tsx), site-breed i.p.v. per
+// project: het reviewer-overzicht toont gewoon alles wat ter review staat, met de toegewezen
+// reviewer als kolom.
+export async function getMadocReviewTasks(siteId: number): Promise<ReviewTask[]> {
+  const perPage = 100;
+  const tasks: ReviewTask[] = [];
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const query = new URLSearchParams({
+      type: 'crowdsourcing-review',
+      all_tasks: 'true',
+      status: '0,1,2',
+      detail: 'true',
+      per_page: String(perPage),
+      page: String(page),
+    });
+    const response = await fetch(`${appConfig.madocGatewayUrl}/api/tasks?${query}`, {
+      headers: {
+        Authorization: `Bearer ${getServiceJwt()}`,
+        'x-madoc-site-id': String(siteId),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Madoc review-tasks request failed with status ${response.status}`);
+    }
+
+    const data = (await response.json()) as { tasks: ReviewTask[]; pagination?: { totalPages?: number } };
     tasks.push(...data.tasks);
     totalPages = data.pagination?.totalPages ?? 1;
     page += 1;

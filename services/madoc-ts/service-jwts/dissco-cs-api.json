@@ -1,5 +1,5 @@
 {
-  "scope": ["site.view", "tasks.admin"],
+  "scope": ["site.view", "tasks.admin", "site.admin"],
   "service": {
     "id": "dissco-cs-api",
     "name": "DiSSCo CS API"
