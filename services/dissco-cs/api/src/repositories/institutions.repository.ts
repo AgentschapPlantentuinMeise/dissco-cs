@@ -202,6 +202,18 @@ export class InstitutionsRepository {
     );
   }
 
+  // Ruimt links op naar projecten die in Madoc verwijderd zijn -- dissco-cs heeft geen weet van
+  // een Madoc-projectverwijdering, dus dit vergelijkt tegen de actuele projectenlijst die de
+  // aanroeper meegeeft (project-links.routes.ts).
+  async pruneOrphanedProjectLinks(siteId: number, liveSlugs: string[]): Promise<number> {
+    const result = await this.pool.query(
+      `DELETE FROM ${this.table('project_institution_links')} WHERE site_id = $1 AND project_slug <> ALL($2::text[])`,
+      [siteId, liveSlugs]
+    );
+
+    return result.rowCount ?? 0;
+  }
+
   async deleteInstitution(siteId: number, id: number): Promise<boolean> {
     const result = await this.pool.query(
       `DELETE FROM ${this.table('institutions')} WHERE id = $1 AND site_id = $2`,

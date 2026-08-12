@@ -167,6 +167,16 @@ export class ProjectManualsRepository {
     );
   }
 
+  // Ruimt links op naar projecten die in Madoc verwijderd zijn -- zie InstitutionsRepository.pruneOrphanedProjectLinks.
+  async pruneOrphanedProjectLinks(siteId: number, liveSlugs: string[]): Promise<number> {
+    const result = await this.pool.query(
+      `DELETE FROM ${this.table('project_manual_links')} WHERE site_id = $1 AND project_slug <> ALL($2::text[])`,
+      [siteId, liveSlugs]
+    );
+
+    return result.rowCount ?? 0;
+  }
+
   async listAttachmentMeta(manualId: number): Promise<ProjectManualAttachmentMeta[]> {
     const result = await this.pool.query<ProjectManualAttachmentMeta>(
       `

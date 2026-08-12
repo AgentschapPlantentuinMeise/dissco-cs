@@ -5,9 +5,11 @@ import { SitePageLang } from '../repositories/site-pages.repository.js';
 import {
   isSitePageLang,
   MAX_MANUAL_ATTACHMENT_LENGTH,
+  parsePruneProjectLinksBody,
   parseSetManualContentBody,
   parseSetManualLinkBody,
   parseSetManualTitleBody,
+  PruneProjectLinksBody,
   SetManualContentBody,
   SetManualLinkBody,
   SetManualTitleBody,
@@ -86,6 +88,24 @@ export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
 
     await repository.projectManuals.setProjectLink(identity.siteId, c.req.param('projectId'), payload.manualId);
     return c.body(null, 204);
+  });
+
+  // Ruimt links op naar projecten die niet meer in de meegegeven live-Madoc-lijst voorkomen --
+  // zie institutions.routes.ts /project-links/prune voor dezelfde achtergrond-aanroep vanuit de
+  // projectbeheer-pagina.
+  app.put('/projects/manual-links/prune', async c => {
+    const identity = requireSiteAdmin(c);
+    if (identity instanceof Response) {
+      return identity;
+    }
+
+    const payload = parsePruneProjectLinksBody((await c.req.json().catch(() => null)) as PruneProjectLinksBody | null);
+    if (!payload) {
+      return c.text('Invalid payload', 400);
+    }
+
+    const removed = await repository.projectManuals.pruneOrphanedProjectLinks(identity.siteId, payload.liveSlugs);
+    return c.json({ removed });
   });
 
   // ---- admin: manual library ----

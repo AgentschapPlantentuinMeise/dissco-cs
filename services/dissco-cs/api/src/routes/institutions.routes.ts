@@ -3,9 +3,11 @@ import { DisscoCSRepository } from '../db.js';
 import { requireSiteAdmin, resolveSiteId } from '../jwt.js';
 import {
   InstitutionBody,
+  PruneProjectLinksBody,
   SetInstitutionLinkBody,
   SetInstitutionsOrderBody,
   parseInstitutionBody,
+  parsePruneProjectLinksBody,
   parseSetInstitutionLinkBody,
 } from '../validators.js';
 
@@ -135,6 +137,24 @@ export function institutionsRoutes(repository: DisscoCSRepository): Hono {
 
     await repository.institutions.setProjectLink(identity.siteId, c.req.param('projectId'), payload.institutionId);
     return c.body(null, 204);
+  });
+
+  // Ruimt links op naar projecten die niet meer in de meegegeven live-Madoc-lijst voorkomen
+  // (bv. omdat het project in Madoc verwijderd is) -- wordt door de frontend op de achtergrond
+  // aangeroepen zodra de projectbeheer-pagina de actuele projectenlijst heeft opgehaald.
+  app.put('/project-links/prune', async c => {
+    const identity = requireSiteAdmin(c);
+    if (identity instanceof Response) {
+      return identity;
+    }
+
+    const payload = parsePruneProjectLinksBody((await c.req.json().catch(() => null)) as PruneProjectLinksBody | null);
+    if (!payload) {
+      return c.text('Invalid payload', 400);
+    }
+
+    const removed = await repository.institutions.pruneOrphanedProjectLinks(identity.siteId, payload.liveSlugs);
+    return c.json({ removed });
   });
 
   app.put('/:id', async c => {

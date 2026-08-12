@@ -307,6 +307,12 @@ export const institutionsApi = {
       method: 'PUT',
       body: JSON.stringify({ institutionId }),
     }),
+
+  pruneProjectLinks: (liveSlugs: string[]) =>
+    csFetch<{ removed: number }>('/institutions/project-links/prune', {
+      method: 'PUT',
+      body: JSON.stringify({ liveSlugs }),
+    }),
 };
 
 export type ProjectManualAttachmentMeta = { filename: string; mimeType: string; size: number };
@@ -382,4 +388,10 @@ export const projectManualsApi = {
 
   deleteAttachment: (manualId: number, lang: SitePageLang) =>
     csFetch<void>(`/manuals/${manualId}/${lang}/attachment`, { method: 'DELETE' }),
+
+  pruneProjectLinks: (liveSlugs: string[]) =>
+    csFetch<{ removed: number }>('/projects/manual-links/prune', {
+      method: 'PUT',
+      body: JSON.stringify({ liveSlugs }),
+    }),
 };

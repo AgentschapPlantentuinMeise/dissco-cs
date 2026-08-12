@@ -40,6 +40,7 @@ export type SetManualTitleBody = { lang?: unknown; title?: unknown };
 export type SetManualContentBody = { content?: unknown };
 export type SetManualLinkBody = { manualId?: unknown };
 export type SetInstitutionLinkBody = { institutionId?: unknown };
+export type PruneProjectLinksBody = { liveSlugs?: unknown };
 
 export const MAX_LOGO_LENGTH = 3_000_000;
 export const MAX_MANUAL_TITLE_LENGTH = 200;
@@ -227,6 +228,20 @@ export function parseSetInstitutionLinkBody(payload: SetInstitutionLinkBody | nu
   }
 
   return null;
+}
+
+// Lege array wordt geweigerd (null) -- zonder deze guard zou een lege lijst (bv. door een
+// tijdelijk falende Madoc-call) via pruneOrphanedProjectLinks() alle links van de site wissen.
+export function parsePruneProjectLinksBody(payload: PruneProjectLinksBody | null): { liveSlugs: string[] } | null {
+  if (!payload || !Array.isArray(payload.liveSlugs) || payload.liveSlugs.length === 0) {
+    return null;
+  }
+
+  if (!payload.liveSlugs.every(isNonEmptyString)) {
+    return null;
+  }
+
+  return { liveSlugs: payload.liveSlugs as string[] };
 }
 
 export function parseAnnouncementBody(

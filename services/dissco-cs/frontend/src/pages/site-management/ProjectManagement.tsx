@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, queryCache } from 'react-query';
+import { madocClient } from '../../api/madoc-client';
 import { HrefLink } from '../../utility/href-link';
 import { buildTaskLink } from '../../utility/build-task-link';
 import { localeText } from '../../utility/locale-text';
@@ -895,16 +896,64 @@ export const ProjectManagement: React.FC = () => {
   const { data: projectsResponse } = useProjectList();
   const projects = (projectsResponse?.projects ?? []).filter((p: any) => p.status === 1);
 
-  const { data: manualsResponse, refetch: refetchManuals } = useQuery('admin-project-manuals', () => projectManualsApi.list());
+  const {
+    data: manualsResponse,
+    refetch: refetchManuals,
+    status: manualsStatus,
+  } = useQuery('admin-project-manuals', () => projectManualsApi.list());
   const manuals = manualsResponse?.manuals ?? [];
 
   const { data: institutionsResponse } = useQuery('admin-institutions', () => institutionsApi.listAdmin());
   const institutions = institutionsResponse?.institutions ?? [];
 
-  const { data: institutionLinksResponse, refetch: refetchInstitutionLinks } = useQuery('admin-institution-project-links', () =>
-    institutionsApi.listProjectLinks()
-  );
+  const {
+    data: institutionLinksResponse,
+    refetch: refetchInstitutionLinks,
+    status: institutionLinksStatus,
+  } = useQuery('admin-institution-project-links', () => institutionsApi.listProjectLinks());
   const institutionLinks = institutionLinksResponse?.links ?? {};
+
+  // Achtergrondvergelijking: Madoc weet niets van dissco-cs, dus als een project in Madoc
+  // verwijderd wordt, blijven de gekoppelde instituut/handleiding-links hier achter. Bij het
+  // laden van deze pagina wordt daarom de volledige (ongefilterde, alle pagina's/statussen)
+  // Madoc-projectenlijst opgehaald en gebruikt om links naar niet meer bestaande projecten
+  // stilzwijgend te verwijderen -- non-blocking en best-effort, breekt de pagina niet bij falen.
+  // Wacht bewust tot beide queries hun EERSTE fetch al hebben afgerond ('success') voordat de
+  // prune-refetch gestart wordt: refetch() op een query die nog in-flight is voor dezelfde key
+  // levert in react-query v2 gewoon de (verouderde, van-vóór-de-prune) al lopende request terug
+  // i.p.v. een nieuwe -- waardoor de UI pas bij een volledige page refresh klopte.
+  const pruneRanRef = useRef(false);
+  useEffect(() => {
+    if (pruneRanRef.current) return;
+    if (manualsStatus !== 'success' || institutionLinksStatus !== 'success') return;
+    pruneRanRef.current = true;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const allProjects = await madocClient.getAllSiteProjects();
+        const liveSlugs = allProjects.map((p: any) => p.slug).filter((slug: unknown): slug is string => !!slug);
+        if (cancelled || liveSlugs.length === 0) return;
+
+        const [institutionResult, manualResult] = await Promise.all([
+          institutionsApi.pruneProjectLinks(liveSlugs),
+          projectManualsApi.pruneProjectLinks(liveSlugs),
+        ]);
+
+        if (cancelled) return;
+        if (institutionResult.removed > 0) refetchInstitutionLinks();
+        if (manualResult.removed > 0) refetchManuals();
+      } catch (err) {
+        console.error('[ProjectManagement] opruimen van verweesde projectlinks mislukt', err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manualsStatus, institutionLinksStatus]);
 
   return (
     <CsPage>
