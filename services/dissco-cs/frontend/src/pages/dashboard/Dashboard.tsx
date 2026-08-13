@@ -8,13 +8,12 @@ import { madocClient } from '../../api/madoc-client';
 import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
 import { parseUrn } from '../../utility/parse-urn';
 import { HrefLink } from '../../utility/href-link';
-import { buildTaskLink } from '../../utility/build-task-link';
 import { localeText } from '../../utility/locale-text';
 import { CsPage } from '../../components/CsPage';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { DeleteIconButton } from '../../components/DeleteIconButton';
 import { StatBanner } from '../../components/StatBanner';
+import { TaskTable, tabBtnClass } from '../../components/TaskTable';
 import { forumApi, ForumTopicWithReplyCount } from '../../api/cs-api';
 
 
@@ -47,6 +46,7 @@ const formatDate = (iso: string) =>
 export const Dashboard: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useUser();
+  const [activeTab, setActiveTab] = useState<'saved' | 'done'>('saved');
   const [releaseTarget, setReleaseTarget] = useState<CrowdsourcingTask | null>(null);
 
   const [releaseTask] = useMutation(
@@ -135,7 +135,8 @@ export const Dashboard: React.FC = () => {
     id: task.id, name: task.name, subject: task.subject,
     project: task.metadata?.project ? { id: task.metadata.project.id, slug: task.metadata.project.slug } : undefined,
   })));
-  const doneCount = visibleTasks.filter(task => s(task) === 2 || s(task) === 3 || s(task) === 5).length;
+  const doneTasks = visibleTasks.filter(task => s(task) === 2 || s(task) === 3 || s(task) === 5);
+  const doneCount = doneTasks.length;
   const userDoneCount = uniqueTasks.filter(task => s(task) === 2 || s(task) === 3 || s(task) === 5).length;
   const contributedTasks = visibleTasks;
   const projectIds = contributedTasks.filter(task => task.metadata?.project).map(task => String(task.metadata!.project!.id));
@@ -167,70 +168,55 @@ export const Dashboard: React.FC = () => {
 
           <hr className="mb-8" />
 
-          <StatBanner
-            className="mb-12"
-            stats={[
-              { value: contributedTasks.length, label: t('my_tasks_total') },
-              { value: doneCount, label: t('my_tasks_completed') },
-              { value: projectCount, label: t('my_tasks_projects') },
-            ]}
-            trailingDivider
-            trailing={percentage !== null ? (
-              <p className="text-[0.86rem] text-[#d7ece9] leading-[1.5] max-w-[26ch] m-0">{t('my_tasks_percentage', { pct: percentage })}</p>
-            ) : undefined}
-          />
-
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-14">
             <div>
-              <div className="flex items-baseline justify-between mb-4">
-                <h2 className="text-[1.05rem] font-semibold text-[var(--cs-primary)] m-0">{t('nav_saved_tasks')}</h2>
-                {savedTasks.length > 0 && (
+              <StatBanner
+                className="mb-8"
+                stats={[
+                  { value: contributedTasks.length, label: t('my_tasks_total') },
+                  { value: doneCount, label: t('my_tasks_completed') },
+                  { value: projectCount, label: t('my_tasks_projects') },
+                ]}
+                trailingDivider
+                trailing={percentage !== null ? (
+                  <p className="text-[0.86rem] text-[#d7ece9] leading-[1.5] max-w-[26ch] m-0">{t('my_tasks_percentage', { pct: percentage })}</p>
+                ) : undefined}
+              />
+
+              <div className="flex items-baseline justify-between mb-4 border-b-2 border-gray-200">
+                <div className="flex">
+                  <button className={tabBtnClass(activeTab === 'saved')} onClick={() => setActiveTab('saved')}>
+                    {t('my_tasks_tab_saved')}
+                  </button>
+                  <button className={tabBtnClass(activeTab === 'done')} onClick={() => setActiveTab('done')}>
+                    {t('my_tasks_tab_done')}
+                  </button>
+                </div>
+                {activeTab === 'saved' && savedTasks.length > 0 && (
                   <div className="text-xs text-gray-400">{t('dashboard_saved_tasks_subtitle', { count: savedTasks.length })}</div>
                 )}
               </div>
 
               {isLoading ? (
                 <div className="text-center py-16 text-gray-500">{t('my_tasks_loading')}</div>
-              ) : savedTasks.length === 0 ? (
-                <div className="px-1 py-10 text-center text-gray-500">{t('my_tasks_empty')}</div>
+              ) : activeTab === 'saved' ? (
+                savedTasks.length === 0 ? (
+                  <div className="px-1 py-10 text-center text-gray-500">{t('my_tasks_empty')}</div>
+                ) : (
+                  <TaskTable tasks={savedTasks} userName={user.name} language={i18n.language} t={t} onRelease={setReleaseTarget} />
+                )
               ) : (
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr>
-                      <th className="text-left text-[0.68rem] font-bold text-gray-500 uppercase tracking-wider pb-2 border-b border-gray-200">{t('my_tasks_col_task')}</th>
-                      <th className="text-left text-[0.68rem] font-bold text-gray-500 uppercase tracking-wider pb-2 border-b border-gray-200">{t('my_tasks_col_project')}</th>
-                      <th className="border-b border-gray-200" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {savedTasks.map(task => {
-                      const href = buildTaskLink(task);
-                      const project = task.metadata?.project;
-                      const projectName = project ? (localeText(project.label, i18n.language) || project.slug) : undefined;
-                      const prefix = user.name + ': ';
-                      const displayName = task.name?.startsWith(prefix) ? task.name.slice(prefix.length) : task.name;
-                      return (
-                        <tr key={task.id}>
-                          <td className="py-3 text-sm border-b border-gray-100">
-                            <HrefLink href={href} className="text-[var(--cs-primary)] no-underline font-medium hover:underline">
-                              {displayName}
-                            </HrefLink>
-                          </td>
-                          <td className="py-3 text-sm text-gray-500 border-b border-gray-100">{projectName ?? '—'}</td>
-                          <td className="py-3 text-right border-b border-gray-100">
-                            <DeleteIconButton onClick={() => setReleaseTarget(task)} />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                doneTasks.length === 0 ? (
+                  <div className="px-1 py-10 text-center text-gray-500">{t('my_tasks_empty_done')}</div>
+                ) : (
+                  <TaskTable tasks={doneTasks} userName={user.name} language={i18n.language} t={t} expandable />
+                )
               )}
             </div>
 
             <div className="flex flex-col gap-7">
               {chartSegments.length > 0 && (
-                <div>
+                <div className="pb-7 border-b border-gray-100">
                   <h2 className="text-[1.05rem] font-semibold text-[var(--cs-primary)] m-0 mb-4">{t('my_tasks_projects')}</h2>
                   <div className="flex items-center gap-3.5">
                     <DonutChart segments={chartSegments} />
@@ -250,7 +236,7 @@ export const Dashboard: React.FC = () => {
                 </div>
               )}
 
-              <div className={chartSegments.length > 0 ? 'border-t border-gray-100 pt-6' : ''}>
+              <div>
                 <h2 className="text-[1.05rem] font-semibold text-[var(--cs-primary)] m-0 mb-4">{t('dashboard_widget_title')}</h2>
                 {!unansweredTopics || unansweredTopics.length === 0 ? (
                   <p className="text-sm text-gray-500 m-0">{t('dashboard_widget_empty')}</p>

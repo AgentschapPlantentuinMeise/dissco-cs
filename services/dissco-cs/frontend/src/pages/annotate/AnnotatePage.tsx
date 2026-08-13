@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { madocClient, ApiError } from '../../api/madoc-client';
 import { manifestClaimApi } from '../../api/cs-api';
-import { getSiteSlug } from '../../api/slug';
 import { useProject } from '../../hooks/use-project';
 import { useRouteContext } from '../../hooks/use-route-context';
 import { useDisscoCSNavigation } from '../../hooks/use-dissco-cs-navigation';
@@ -41,7 +40,6 @@ export function AnnotatePage() {
   const { data: project } = useProject();
   const { requestNextUrl, isLoadingNext } = useDisscoCSNavigation();
   const navigate = useNavigate();
-  const slug = getSiteSlug();
 
   // Tasks are handed out randomly, not in a fixed sequence, so "previous" can only mean "the
   // manifest I was on before" — tracked here as a simple visited stack, not derived from any list.
@@ -430,7 +428,6 @@ export function AnnotatePage() {
 
   const isSubmittedTask = !!prepared && (prepared.claim?.status as number) >= 2;
 
-  const manifestUrl = `${window.location.origin}/s/${slug}/madoc/api/manifests/${manifestId}/export/source`;
   const currentCanvas = canvases[canvasIndex];
   
 
@@ -506,7 +503,6 @@ export function AnnotatePage() {
           </div>
         )}
         <AnnotateLayout
-          manifestUrl={manifestUrl}
           osdViewer={
             <OpenSeadragonViewer
               imageServiceId={getImageServiceId(canvasData?.canvas)}

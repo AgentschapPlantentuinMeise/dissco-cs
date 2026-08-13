@@ -163,4 +163,8 @@ export const madocClient = {
     ),
   updateTask: (id: string, task: Record<string, unknown>) =>
     request<any>(`/api/tasks/${id}`, { method: 'PATCH', body: task }),
+  getTaskById: (id: string) =>
+    request<{ id: string; status: number; state?: { revisionId?: string } }>(
+      `/api/tasks/${id}?${queryString.stringify({ all: 'true', detail: 'true' })}`
+    ),
 };

@@ -7,13 +7,11 @@ import { getSiteSlug } from '../../api/slug';
 import { madocClient } from '../../api/madoc-client';
 import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
 import { parseUrn } from '../../utility/parse-urn';
-import { HrefLink } from '../../utility/href-link';
-import { buildTaskLink } from '../../utility/build-task-link';
 import { localeText } from '../../utility/locale-text';
 import { CsPage } from '../../components/CsPage';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { DeleteIconButton } from '../../components/DeleteIconButton';
+import { TaskTable, tabBtnClass } from '../../components/TaskTable';
 
 
 
@@ -38,85 +36,6 @@ function DonutChart({ segments }: { segments: ChartSegment[] }) {
     </div>
   );
 }
-
-const BADGE_CLASSES: Record<string, string> = {
-  done:     'bg-[#d1e7dd] text-[#0a5940]',
-  review:   'bg-[#cfe2ff] text-[#0a4a8f]',
-  rejected: 'bg-[#f8d7da] text-[#842029]',
-  draft:    'bg-[#fff3cd] text-[#856404]',
-};
-const badgeBase = 'inline-block px-[10px] py-[3px] rounded-[12px] text-[0.75rem] font-semibold whitespace-nowrap';
-
-function getStatusBadge(status: number): { label: string; variant: string } {
-  if (status === 3 || status === 2 || status === 5) return { label: 'my_tasks_status_done', variant: 'done' };
-  if (status === -1) return { label: 'my_tasks_status_rejected', variant: 'rejected' };
-  return { label: 'my_tasks_status_draft', variant: 'draft' };
-}
-
-const thClass = 'bg-gray-50 px-4 py-3 text-left text-[0.8rem] font-semibold text-gray-500 uppercase tracking-[0.04em] border-b border-gray-200 max-[600px]:hidden';
-const tdClass = 'px-4 py-[14px] text-[0.9rem] text-[#343a40] align-middle max-[600px]:block max-[600px]:px-0 max-[600px]:py-[2px]';
-
-interface TaskTableProps {
-  tasks: CrowdsourcingTask[];
-  userName: string;
-  language: string;
-  t: (key: string) => string;
-  linkable?: boolean;
-  onRelease?: (task: CrowdsourcingTask) => void;
-}
-
-function TaskTable({ tasks, userName, language, t, linkable = true, onRelease }: TaskTableProps) {
-  return (
-    <div className="bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] overflow-hidden">
-      <table className="w-full border-collapse">
-        <thead>
-          <tr>
-            <th className={thClass}>{t('my_tasks_col_task')}</th>
-            <th className={thClass}>{t('my_tasks_col_project')}</th>
-            <th className={thClass}>{t('my_tasks_col_status')}</th>
-            {onRelease && <th className={thClass} />}
-          </tr>
-        </thead>
-        <tbody>
-          {tasks.map(task => {
-            const href = buildTaskLink(task);
-            const project = task.metadata?.project;
-            const projectName = project ? (localeText(project.label, language) || project.slug) : undefined;
-            const badge = getStatusBadge(task.status);
-            const prefix = userName + ': ';
-            const displayName = task.name?.startsWith(prefix) ? task.name.slice(prefix.length) : task.name;
-            return (
-              <tr key={task.id} className="border-b border-[#f0f0f0] last:border-b-0 transition-colors duration-[0.15s] hover:bg-gray-50 max-[600px]:block max-[600px]:px-4 max-[600px]:py-3 max-[600px]:border-b max-[600px]:border-gray-200">
-                <td className={tdClass}>
-                  {linkable ? (
-                    <HrefLink href={href} className="text-[var(--cs-primary)] no-underline font-medium hover:underline">
-                      {displayName}
-                    </HrefLink>
-                  ) : (
-                    <span className="font-medium">{displayName}</span>
-                  )}
-                </td>
-                <td className={`${tdClass} text-gray-500 max-[600px]:text-[0.8rem]`}>{projectName ?? '—'}</td>
-                <td className={tdClass}>
-                  <span className={`${badgeBase} ${BADGE_CLASSES[badge.variant]}`}>{t(badge.label)}</span>
-                </td>
-                {onRelease && (
-                  <td className={tdClass}>
-                    <DeleteIconButton onClick={() => onRelease(task)} />
-                  </td>
-                )}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-const tabBtnClass = (isActive: boolean) =>
-  `bg-transparent border-0 border-b-2 border-solid mb-[-2px] px-5 py-[10px] text-[0.9rem] cursor-pointer transition-[color,border-color] duration-[0.15s] hover:text-[var(--cs-primary)] ` +
-  (isActive ? 'font-semibold text-[var(--cs-primary)] border-b-[var(--cs-primary)]' : 'font-medium text-gray-500 border-b-transparent');
 
 export const UserDashboard: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
@@ -280,7 +199,7 @@ export const UserDashboard: React.FC = () => {
               doneTasks.length === 0 ? (
                 <div className="px-6 py-12 text-center text-gray-500">{t('my_tasks_empty_done')}</div>
               ) : (
-                <TaskTable tasks={doneTasks} userName={user.name} language={i18n.language} t={t} linkable={false} />
+                <TaskTable tasks={doneTasks} userName={user.name} language={i18n.language} t={t} expandable />
               )
             )}
           </div>

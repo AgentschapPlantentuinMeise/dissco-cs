@@ -8,7 +8,9 @@ import { DocumentPath } from '../annotate/form/document';
 export interface ReviewFieldFormProps {
   model: CaptureModel;
   document: AnnotationDocument;
-  onChange: (path: DocumentPath, value: unknown) => void;
+  onChange?: (path: DocumentPath, value: unknown) => void;
+  /** Toont de velden als niet-bewerkbare tekst i.p.v. invulbare tekstvakken. */
+  readOnly?: boolean;
 }
 
 function isEntityList(entry: Array<BaseField> | Array<AnnotationDocument>): entry is Array<AnnotationDocument> {
@@ -43,7 +45,7 @@ function textToFieldValue(text: string, original: unknown): unknown {
   }
 }
 
-function FieldRow({ field, path, onChange }: { field: BaseField; path: DocumentPath; onChange: ReviewFieldFormProps['onChange'] }) {
+function FieldRow({ field, path, onChange, readOnly }: { field: BaseField; path: DocumentPath; onChange: ReviewFieldFormProps['onChange']; readOnly?: boolean }) {
   const { t } = useTranslation('dissco-cs');
   return (
     <div className="mb-3">
@@ -52,8 +54,9 @@ function FieldRow({ field, path, onChange }: { field: BaseField; path: DocumentP
         type="text"
         value={fieldToText(field.value)}
         placeholder={t('review_detail_field_empty')}
-        onChange={e => onChange(path, textToFieldValue(e.target.value, field.value))}
-        className="w-full px-[10px] py-2 rounded-md border border-gray-300 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[var(--cs-accent)] focus:border-[var(--cs-accent)]"
+        readOnly={readOnly}
+        onChange={e => onChange?.(path, textToFieldValue(e.target.value, field.value))}
+        className={`w-full px-[10px] py-2 rounded-md border border-gray-300 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[var(--cs-accent)] focus:border-[var(--cs-accent)] ${readOnly ? 'bg-gray-50 text-gray-600 cursor-default' : ''}`}
       />
     </div>
   );
@@ -85,7 +88,7 @@ function chunkForGrid(blocks: Block[]): Block[] {
   return result;
 }
 
-function collectBlocks(fields: ModelFields, doc: AnnotationDocument, pathPrefix: DocumentPath, onChange: ReviewFieldFormProps['onChange']): Block[] {
+function collectBlocks(fields: ModelFields, doc: AnnotationDocument, pathPrefix: DocumentPath, onChange: ReviewFieldFormProps['onChange'], readOnly?: boolean): Block[] {
   const blocks: Block[] = [];
   const ungrouped: React.ReactNode[] = [];
 
@@ -102,7 +105,7 @@ function collectBlocks(fields: ModelFields, doc: AnnotationDocument, pathPrefix:
         key: term,
         label: entities[0]?.label ?? term,
         fields: entities.map((entity, idx) => (
-          <div key={entity.id ?? idx}>{collectBlocks(nestedFields, entity, [...pathPrefix, term, idx], onChange).map(b => b.fields)}</div>
+          <div key={entity.id ?? idx}>{collectBlocks(nestedFields, entity, [...pathPrefix, term, idx], onChange, readOnly).map(b => b.fields)}</div>
         )),
       });
       return;
@@ -110,7 +113,7 @@ function collectBlocks(fields: ModelFields, doc: AnnotationDocument, pathPrefix:
 
     const fieldList = !isEntityList(list) ? list : [];
     fieldList.forEach((field, idx) => {
-      ungrouped.push(<FieldRow key={field.id ?? `${term}-${idx}`} field={field} path={[...pathPrefix, term, idx]} onChange={onChange} />);
+      ungrouped.push(<FieldRow key={field.id ?? `${term}-${idx}`} field={field} path={[...pathPrefix, term, idx]} onChange={onChange} readOnly={readOnly} />);
     });
   });
 
@@ -126,13 +129,13 @@ function collectBlocks(fields: ModelFields, doc: AnnotationDocument, pathPrefix:
 // zodat een reviewer ingediende data snel kan nalezen en corrigeren zonder per-type widgets.
 // Secties staan altijd naast elkaar in 3 vaste kolommen (valt terug naar 1 kolom op smalle
 // schermen); bij >3 secties valt de rest gewoon naar een nieuwe rij van 3.
-export function ReviewFieldForm({ model, document, onChange }: ReviewFieldFormProps) {
+export function ReviewFieldForm({ model, document, onChange, readOnly }: ReviewFieldFormProps) {
   const resolved = resolveDisplayStructure(model.structure);
   if (resolved.type !== 'model') {
     return null;
   }
 
-  const blocks = collectBlocks(resolved.fields, document, [], onChange);
+  const blocks = collectBlocks(resolved.fields, document, [], onChange, readOnly);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
