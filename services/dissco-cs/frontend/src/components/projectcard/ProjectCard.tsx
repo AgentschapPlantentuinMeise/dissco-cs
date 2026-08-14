@@ -1,8 +1,7 @@
 ﻿import React from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
-import { projectProgressApi, ProjectProgress } from '../../api/cs-api';
+import { useProjectProgress } from '../../hooks/use-project-progress';
 import { LocaleString } from '../LocaleString';
 import { disscoCSConfig } from '../../dissco-cs-config';
 
@@ -12,11 +11,7 @@ interface ProjectCardProps {
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({ projectSummaryData }) => {
   const { t } = useTranslation('dissco-cs');
-  const { data: progress, isLoading } = useQuery<ProjectProgress>(
-    ['project-progress', projectSummaryData.id],
-    () => projectProgressApi.get(projectSummaryData.id),
-    { staleTime: 60000 }
-  );
+  const { data: progress, isLoading } = useProjectProgress(projectSummaryData.id);
 
   const percentage = progress?.transcribedPercentage || 0;
 

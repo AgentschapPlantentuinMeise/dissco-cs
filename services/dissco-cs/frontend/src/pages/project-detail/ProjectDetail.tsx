@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { useProject } from '../../hooks/use-project';
+import { useProjectProgress } from '../../hooks/use-project-progress';
 import { useRouteContext } from '../../hooks/use-route-context';
 import { useUser } from '../../hooks/use-current-user';
 import { madocClient } from '../../api/madoc-client';
-import { projectProgressApi, ProjectProgress, institutionsApi } from '../../api/cs-api';
+import { institutionsApi } from '../../api/cs-api';
 import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
 import { buildTaskLink } from '../../utility/build-task-link';
 import { HrefLink } from '../../utility/href-link';
@@ -78,11 +79,7 @@ export const ProjectDetail: React.FC = () => {
     id: task.id, name: task.name, subject: task.subject,
   })));
 
-  const { data: progress } = useQuery<ProjectProgress>(
-    ['project-progress', project?.id],
-    () => projectProgressApi.get(project!.id),
-    { enabled: !!project, staleTime: 60000 }
-  );
+  const { data: progress } = useProjectProgress(project?.id);
 
   const { data: institution } = useQuery(
     ['project-institution', project?.slug],
