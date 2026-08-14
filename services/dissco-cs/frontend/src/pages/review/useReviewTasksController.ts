@@ -240,7 +240,10 @@ export function useReviewTasksController() {
     try {
       await madocClient.updateRevisionTask(row.originalTaskId, { status: -1, status_text: 'Rejected' });
       await refetch();
-      setOpenRowId(current => (current === row.id ? null : current));
+      setOpenRowId(current => {
+        const idx = visibleRows.findIndex(r => r.id === current);
+        return idx >= 0 && idx + 1 < visibleRows.length ? visibleRows[idx + 1].id : null;
+      });
     } catch (err) {
       const message = err instanceof ApiError ? err.message : t('review_bulk_error_generic');
       setReleaseError(message);
