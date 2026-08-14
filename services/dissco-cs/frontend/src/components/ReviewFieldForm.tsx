@@ -1,9 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { CaptureModel, ModelFields, NestedModelFields, StructureNode } from '../../capture-model/types/capture-model';
-import { AnnotationDocument } from '../../capture-model/types/document';
-import { BaseField } from '../../capture-model/types/field-types';
-import { DocumentPath } from '../annotate/form/document';
+import { CaptureModel, ModelFields, NestedModelFields, StructureNode } from '../capture-model/types/capture-model';
+import { AnnotationDocument } from '../capture-model/types/document';
+import { BaseField } from '../capture-model/types/field-types';
+import { DocumentPath } from '../pages/annotate/form/document';
 
 export interface ReviewFieldFormProps {
   model: CaptureModel;

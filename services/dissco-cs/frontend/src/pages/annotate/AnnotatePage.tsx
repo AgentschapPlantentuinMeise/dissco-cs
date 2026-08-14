@@ -16,7 +16,7 @@ import { BookIcon } from '../../icons/BookIcon';
 import { AnnotateLayout } from './AnnotateLayout';
 import { OpenSeadragonViewer } from './viewer/OpenSeadragonViewer';
 import { CaptureModelForm } from './form/CaptureModelForm';
-import { createEmptyDocument, createBlankDocument, setFieldValue, setFieldSelector, collectSelectorStates, pathsEqual, DocumentPath } from './form/document';
+import { cloneModelDocument, createBlankDocument, setFieldValue, setFieldSelector, collectSelectorStates, pathsEqual, DocumentPath } from './form/document';
 import { AnnotationDocument } from '../../capture-model/types/document';
 import { CaptureModel, StructureNode } from '../../capture-model/types/capture-model';
 import { BoxSelectorState } from '../../capture-model/types/selector-types';
@@ -140,7 +140,7 @@ export function AnnotatePage() {
     // still carry values from a previous, possibly abandoned, contribution by anyone.
     const existingStatus = prepared.claim?.status as number | undefined;
     const isResuming = existingStatus !== undefined && existingStatus >= 1;
-    setAnnotationDocument(isResuming ? createEmptyDocument(model) : createBlankDocument(model));
+    setAnnotationDocument(isResuming ? cloneModelDocument(model) : createBlankDocument(model));
   }, [model, prepared]);
 
   const hasSaved = useRef(false);

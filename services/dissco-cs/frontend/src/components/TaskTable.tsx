@@ -6,7 +6,7 @@ import { localeText } from '../utility/locale-text';
 import { DeleteIconButton } from './DeleteIconButton';
 import { TaskRevisionView } from './TaskRevisionView';
 import { EyeIcon } from '../icons/EyeIcon';
-import { ImagePreviewPopup } from '../pages/review/ImagePreviewPopup';
+import { ImagePreviewPopup } from './ImagePreviewPopup';
 
 const BADGE_CLASSES: Record<string, string> = {
   done:     'bg-[#d1e7dd] text-[#0a5940]',

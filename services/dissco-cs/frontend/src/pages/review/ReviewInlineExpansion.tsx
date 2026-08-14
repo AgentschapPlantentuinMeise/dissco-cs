@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReviewTaskRow } from '../../api/cs-api';
-import { ReviewFieldForm } from './ReviewFieldForm';
+import { ReviewFieldForm } from '../../components/ReviewFieldForm';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useReviewRevisionDocument } from './useReviewRevisionDocument';
 import { AnnotationDocument } from '../../capture-model/types/document';
 import { localeText } from '../../utility/locale-text';
@@ -12,6 +13,9 @@ interface ReviewInlineExpansionProps {
   onDocumentChange: (rowId: string, document: AnnotationDocument) => void;
   onAccept: () => void;
   accepting: boolean;
+  onRelease: () => void;
+  releasing: boolean;
+  releaseError: string | null;
   onClose: () => void;
   error: string | null;
 }
@@ -37,8 +41,9 @@ function ExpansionChrome({ title, subtitle, onClose, children }: { title: string
 // Inline-uitklap-variant: verschijnt als een extra rij direct onder de aangeklikte tabelrij (zie
 // ReviewTable's renderRowExpansion) i.p.v. een zijpaneel. Velden staan in een grid die zelf
 // herschikt naar het aantal secties -- zie ReviewFieldForm.
-export function ReviewInlineExpansion({ row, editedDocument, onDocumentChange, onAccept, accepting, onClose, error }: ReviewInlineExpansionProps) {
+export function ReviewInlineExpansion({ row, editedDocument, onDocumentChange, onAccept, accepting, onRelease, releasing, releaseError, onClose, error }: ReviewInlineExpansionProps) {
   const { t, i18n } = useTranslation('dissco-cs');
+  const [confirmingRelease, setConfirmingRelease] = useState(false);
   const title = localeText(row.subject.label, i18n.language) || row.id;
   const subtitle = row.submitter
     ? `${t('review_detail_submitted_by', { name: row.submitter })}${row.modified_at ? ` — ${new Date(row.modified_at).toLocaleString(i18n.language)}` : ''}`
@@ -74,15 +79,35 @@ export function ReviewInlineExpansion({ row, editedDocument, onDocumentChange, o
     <ExpansionChrome title={title} subtitle={subtitle} onClose={onClose}>
       <ReviewFieldForm model={modelQuery.data} document={currentDocument} onChange={handleChange} />
       <div className="mt-5 pt-4 border-t border-gray-200 flex items-center gap-3">
-        {error && <span className="text-[0.78rem] text-red-600">{error}</span>}
+        {(error || releaseError) && <span className="text-[0.78rem] text-red-600">{error ?? releaseError}</span>}
+        <button
+          onClick={() => setConfirmingRelease(true)}
+          disabled={releasing}
+          className="ml-auto px-5 py-[9px] rounded-full text-sm font-bold border border-gray-300 bg-white text-gray-700 cursor-pointer hover:bg-gray-50 disabled:opacity-50"
+        >
+          {t('review_detail_release_button')}
+        </button>
         <button
           onClick={onAccept}
           disabled={accepting}
-          className="ml-auto px-5 py-[9px] rounded-full text-sm font-bold border-none bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
+          className="px-5 py-[9px] rounded-full text-sm font-bold border-none bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
         >
           {t('review_detail_accept_button')}
         </button>
       </div>
+      {confirmingRelease && (
+        <ConfirmDialog
+          title={t('review_detail_release_confirm_title')}
+          message={t('review_detail_release_confirm')}
+          confirmLabel={t('review_detail_release_button')}
+          cancelLabel={t('common_cancel')}
+          onConfirm={() => {
+            setConfirmingRelease(false);
+            onRelease();
+          }}
+          onCancel={() => setConfirmingRelease(false)}
+        />
+      )}
     </ExpansionChrome>
   );
 }

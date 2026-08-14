@@ -1,7 +1,7 @@
 import { useQuery } from 'react-query';
 import { madocClient } from '../../api/madoc-client';
 import { ReviewTaskRow } from '../../api/cs-api';
-import { createEmptyDocument, setFieldValue, DocumentPath } from '../annotate/form/document';
+import { cloneModelDocument, setFieldValue, DocumentPath } from '../annotate/form/document';
 import { AnnotationDocument } from '../../capture-model/types/document';
 import { CaptureModel } from '../../capture-model/types/capture-model';
 
@@ -25,7 +25,7 @@ export function useReviewRevisionDocument(
   );
 
   const currentDocument: AnnotationDocument | undefined = modelQuery.data
-    ? editedDocument ?? createEmptyDocument(modelQuery.data)
+    ? editedDocument ?? cloneModelDocument(modelQuery.data)
     : undefined;
 
   const handleChange = (path: DocumentPath, value: unknown) => {

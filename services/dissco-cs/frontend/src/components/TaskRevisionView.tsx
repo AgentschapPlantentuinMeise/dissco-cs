@@ -2,9 +2,9 @@ import React from 'react';
 import { useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { madocClient } from '../api/madoc-client';
-import { createEmptyDocument } from '../pages/annotate/form/document';
+import { cloneModelDocument } from '../pages/annotate/form/document';
 import { CaptureModel } from '../capture-model/types/capture-model';
-import { ReviewFieldForm } from '../pages/review/ReviewFieldForm';
+import { ReviewFieldForm } from './ReviewFieldForm';
 
 interface TaskRevisionViewProps {
   taskId: string;
@@ -45,7 +45,7 @@ export function TaskRevisionView({ taskId }: TaskRevisionViewProps) {
 
   return (
     <div className="px-1 py-3">
-      <ReviewFieldForm model={model} document={createEmptyDocument(model)} readOnly />
+      <ReviewFieldForm model={model} document={cloneModelDocument(model)} readOnly />
     </div>
   );
 }

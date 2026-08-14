@@ -1,11 +1,11 @@
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { madocClient } from '../../api/madoc-client';
-import { parseUrn } from '../../utility/parse-urn';
-import { getImageServiceId } from '../../utility/get-image-service-id';
-import { OpenSeadragonViewer } from '../annotate/viewer/OpenSeadragonViewer';
-import { CloseIcon } from '../../icons/CloseIcon';
+import { madocClient } from '../api/madoc-client';
+import { parseUrn } from '../utility/parse-urn';
+import { getImageServiceId } from '../utility/get-image-service-id';
+import { OpenSeadragonViewer } from '../pages/annotate/viewer/OpenSeadragonViewer';
+import { CloseIcon } from '../icons/CloseIcon';
 
 export interface ImagePreviewPopupProps {
   /** Raw subject urn of the task -- canvas of manifest, bv. urn:madoc:canvas:123 of urn:madoc:manifest:456. */

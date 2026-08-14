@@ -11,7 +11,7 @@ function isField(entry: BaseField | AnnotationDocument): entry is BaseField {
 }
 
 /** Starting point for a new revision: a deep clone of the model's own document, so editing it never mutates the model. */
-export function createEmptyDocument(model: CaptureModel): AnnotationDocument {
+export function cloneModelDocument(model: CaptureModel): AnnotationDocument {
   return JSON.parse(JSON.stringify(model.document));
 }
 

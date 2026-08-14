@@ -3,7 +3,7 @@ import { CsPage } from '../../components/CsPage';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { ChevronIcon } from '../../icons/ChevronIcon';
 import { localeText } from '../../utility/locale-text';
-import { ImagePreviewPopup } from './ImagePreviewPopup';
+import { ImagePreviewPopup } from '../../components/ImagePreviewPopup';
 import { ReviewCountSummary } from './ReviewCountSummary';
 import { ReviewInlineExpansion } from './ReviewInlineExpansion';
 import { ReviewSearchInput } from './ReviewSearchInput';
@@ -115,6 +115,9 @@ export const ReviewTasks: React.FC = () => {
                     onDocumentChange={c.handleDocumentChange}
                     onAccept={() => void c.handleSingleAccept(row)}
                     accepting={c.singleAccepting === row.id}
+                    onRelease={() => void c.handleRelease(row)}
+                    releasing={c.releasing === row.id}
+                    releaseError={c.releaseError}
                     onClose={() => c.setOpenRowId(null)}
                     error={c.singleAcceptError}
                   />

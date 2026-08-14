@@ -15,7 +15,7 @@ export type BulkResult = { id: string; label: string; success: boolean; error?: 
 export function useReviewTasksController() {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useUser();
-  const { data, status: queryStatus, refetch } = useQuery('review-my-tasks', () => reviewApi.myTasks());
+  const { data, status: queryStatus, refetch } = useQuery('review-my-tasks', () => reviewApi.myTasks(), { staleTime: 0 });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'' | '0' | '1' | '2'>('');
@@ -35,6 +35,8 @@ export function useReviewTasksController() {
   const [editedDocuments, setEditedDocuments] = useState<Record<string, AnnotationDocument>>({});
   const [singleAccepting, setSingleAccepting] = useState<string | null>(null);
   const [singleAcceptError, setSingleAcceptError] = useState<string | null>(null);
+  const [releasing, setReleasing] = useState<string | null>(null);
+  const [releaseError, setReleaseError] = useState<string | null>(null);
 
   // Enkel taken waarvan de ingelogde gebruiker zelf de toegewezen reviewer is -- de backend
   // levert nog steeds alle site-brede review-taken aan (zie review.routes.ts), maar deze
@@ -227,6 +229,26 @@ export function useReviewTasksController() {
     }
   };
 
+  // Zet de originele taak op status -1 ("afgewezen"). Dit verwijdert geen data, maar zorgt ervoor
+  // dat de resource nergens meer als "al gecontribueerd" meetelt (resourceTaskCountsAsContribution
+  // in madoc-ts sluit status -1 expliciet uit) -- de opdracht komt dus vrij voor eender welke
+  // gebruiker om opnieuw te claimen, met een leeg formulier (zie AnnotatePage.tsx).
+  const handleRelease = async (row: ReviewTaskRow) => {
+    if (!row.originalTaskId) return;
+    setReleaseError(null);
+    setReleasing(row.id);
+    try {
+      await madocClient.updateRevisionTask(row.originalTaskId, { status: -1, status_text: 'Rejected' });
+      await refetch();
+      setOpenRowId(current => (current === row.id ? null : current));
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : t('review_bulk_error_generic');
+      setReleaseError(message);
+    } finally {
+      setReleasing(null);
+    }
+  };
+
   // Pijltje omhoog/omlaag doorloopt visibleRows -- enkel als de focus niet in een formulierveld
   // staat, zodat normale tekst-cursornavigatie tijdens het corrigeren niet gekaapt wordt.
   useEffect(() => {
@@ -286,6 +308,9 @@ export function useReviewTasksController() {
     singleAccepting,
     singleAcceptError,
     handleSingleAccept,
+    releasing,
+    releaseError,
+    handleRelease,
     confirmingAccept,
     setConfirmingAccept,
     bulkRunning,
