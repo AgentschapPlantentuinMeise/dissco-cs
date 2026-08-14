@@ -38,10 +38,15 @@ export function useReviewTasksController() {
   const [releasing, setReleasing] = useState<string | null>(null);
   const [releaseError, setReleaseError] = useState<string | null>(null);
 
+  // Taken die net vrijgegeven zijn maar nog niet uit de server-lijst verdwenen -- madoc-ts zet de
+  // gekoppelde reviewtaak pas asynchroon (via zijn eigen achtergrond-jobqueue) op status -1, dus
+  // een refetch meteen na het vrijgeven toont de rij nog gewoon. Lokaal verbergen i.p.v. wachten.
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+
   // Enkel taken waarvan de ingelogde gebruiker zelf de toegewezen reviewer is -- de backend
   // levert nog steeds alle site-brede review-taken aan (zie review.routes.ts), maar deze
   // pagina's tonen voortaan enkel de eigen wachtrij.
-  const rows = (data?.tasks ?? []).filter(row => !!user && row.reviewerId === user.id);
+  const rows = (data?.tasks ?? []).filter(row => !!user && row.reviewerId === user.id && !dismissedIds.has(row.id));
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -239,11 +244,12 @@ export function useReviewTasksController() {
     setReleasing(row.id);
     try {
       await madocClient.updateRevisionTask(row.originalTaskId, { status: -1, status_text: 'Rejected' });
-      await refetch();
+      setDismissedIds(prev => new Set(prev).add(row.id));
       setOpenRowId(current => {
         const idx = visibleRows.findIndex(r => r.id === current);
         return idx >= 0 && idx + 1 < visibleRows.length ? visibleRows[idx + 1].id : null;
       });
+      void refetch();
     } catch (err) {
       const message = err instanceof ApiError ? err.message : t('review_bulk_error_generic');
       setReleaseError(message);
