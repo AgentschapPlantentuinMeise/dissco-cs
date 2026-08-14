@@ -30,6 +30,15 @@ const emptyDraft: InstitutionInput = {
   isActive: true,
 };
 
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isValidPhone(value: string): boolean {
+  const digitCount = (value.match(/\d/g) ?? []).length;
+  return /^[0-9+\-\s().\/]+$/.test(value) && digitCount >= 6;
+}
+
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -50,6 +59,7 @@ export const InstitutionManagement: React.FC = () => {
   const [logoFileName, setLogoFileName] = useState<string | null>(null);
   const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
   const [pendingDeleteId, setPendingDeleteId] = useState<Institution['id'] | null>(null);
+  const [saveError, setSaveError] = useState(false);
 
   const refresh = () => refetch();
 
@@ -58,6 +68,7 @@ export const InstitutionManagement: React.FC = () => {
     setDraft(emptyDraft);
     setLogoFileName(null);
     setSelectedLang(defaultLang(i18n.language));
+    setSaveError(false);
     setIsFormOpen(true);
   };
 
@@ -74,6 +85,7 @@ export const InstitutionManagement: React.FC = () => {
     });
     setLogoFileName(null);
     setSelectedLang(defaultLang(i18n.language));
+    setSaveError(false);
     setIsFormOpen(true);
   };
 
@@ -82,21 +94,37 @@ export const InstitutionManagement: React.FC = () => {
     setEditingId(null);
     setDraft(emptyDraft);
     setLogoFileName(null);
+    setSaveError(false);
   };
 
   const allNamesFilled = LANGUAGES.every(lang => (draft.name[lang.code] ?? '').trim().length > 0);
   const allDescriptionsFilled = LANGUAGES.every(lang => (draft.description[lang.code] ?? '').trim().length > 0);
-  const canSave = allNamesFilled && allDescriptionsFilled &&!!draft.email?.trim() && !!draft.phone?.trim() && !!draft.website?.trim() && !!draft.logo?.trim();
+  const emailValid = !draft.email?.trim() || isValidEmail(draft.email.trim());
+  const phoneValid = !draft.phone?.trim() || isValidPhone(draft.phone.trim());
+  const canSave =
+    allNamesFilled &&
+    allDescriptionsFilled &&
+    !!draft.email?.trim() &&
+    emailValid &&
+    !!draft.phone?.trim() &&
+    phoneValid &&
+    !!draft.website?.trim() &&
+    !!draft.logo?.trim();
 
   const save = async () => {
     if (!canSave) return;
-    if (editingId !== null) {
-      await institutionsApi.update(editingId, draft);
-    } else {
-      await institutionsApi.create(draft);
+    setSaveError(false);
+    try {
+      if (editingId !== null) {
+        await institutionsApi.update(editingId, draft);
+      } else {
+        await institutionsApi.create(draft);
+      }
+      cancelForm();
+      refresh();
+    } catch {
+      setSaveError(true);
     }
-    cancelForm();
-    refresh();
   };
 
   const confirmDelete = async () => {
@@ -253,8 +281,9 @@ export const InstitutionManagement: React.FC = () => {
                         type="email"
                         value={draft.email ?? ''}
                         onChange={e => setDraft(prev => ({ ...prev, email: e.target.value || null }))}
-                        className="border border-gray-300 rounded-lg p-2"
+                        className={`border rounded-lg p-2 ${emailValid ? 'border-gray-300' : 'border-red-500'}`}
                       />
+                      {!emailValid && <span className="text-xs text-red-600">{t('sm_institutions_invalid_email')}</span>}
                     </label>
 
                     <label className="flex flex-col gap-1">
@@ -263,8 +292,9 @@ export const InstitutionManagement: React.FC = () => {
                         type="text"
                         value={draft.phone ?? ''}
                         onChange={e => setDraft(prev => ({ ...prev, phone: e.target.value || null }))}
-                        className="border border-gray-300 rounded-lg p-2"
+                        className={`border rounded-lg p-2 ${phoneValid ? 'border-gray-300' : 'border-red-500'}`}
                       />
+                      {!phoneValid && <span className="text-xs text-red-600">{t('sm_institutions_invalid_phone')}</span>}
                     </label>
                   </div>
 
@@ -313,6 +343,7 @@ export const InstitutionManagement: React.FC = () => {
                       <span className="text-sm text-gray-500">{t('common_fill_required_fields')}</span>
                     )}
                   </div>
+                  {saveError && <p className="text-sm text-red-700 mt-3">{t('sm_institutions_save_error')}</p>}
                 </div>
               )}
             </div>
