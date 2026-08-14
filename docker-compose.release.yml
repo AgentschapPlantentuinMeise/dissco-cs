@@ -32,6 +32,7 @@ services:
     volumes:
       - ./var/files:/home/node/app/files
       - ./var/jwt:/home/node/app/service-jwt-responses
+      - madoc-openssl-certs:/home/node/app/openssl-certs
     environment:
       - DATABASE_HOST=shared-postgres
       - DATABASE_NAME=${POSTGRES_DB}
@@ -220,3 +221,9 @@ services:
   okra:
     image: digirati/okra:latest
     platform: linux/amd64
+
+volumes:
+  # Door Docker zelf beheerd (i.p.v. een hostmap) zodat de rechten van de node-gebruiker
+  # (UID 1000) uit de image altijd correct zijn, ongeacht welke gebruiker/UID op de VM
+  # draait -- geen manuele chown meer nodig bij een nieuwe/hergebruikte hostmap.
+  madoc-openssl-certs:

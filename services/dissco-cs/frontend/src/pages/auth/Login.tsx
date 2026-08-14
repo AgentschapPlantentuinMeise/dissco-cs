@@ -135,7 +135,7 @@ export const Login: React.FC = () => {
           intro={
             <>
               {t('login_terms_modal_intro')}{' '}
-              <HrefLink href="/contact" className="text-[var(--cs-primary)]">
+              <HrefLink href="/contact" className="text-[var(--cs-primary)]" onClick={cancelTerms}>
                 {t('login_terms_modal_contact_link')}
               </HrefLink>
             </>

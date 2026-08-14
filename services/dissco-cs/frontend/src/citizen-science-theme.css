@@ -40,6 +40,11 @@
   gap: 30px;
 }
 
+/* Same grid, lower minimum — for use where this grid shares its row with a sidebar (e.g. instituutpagina) */
+.cs-projects-grid--compact {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
 /* Fixed navbar */
 .cs-navbar {
   position: fixed;

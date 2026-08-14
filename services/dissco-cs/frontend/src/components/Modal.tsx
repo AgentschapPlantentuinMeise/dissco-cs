@@ -10,6 +10,10 @@ type ModalProps = {
   size?: 'sm' | 'md' | 'lg';
   footer?: React.ReactNode;
   children: React.ReactNode;
+  // Extends the backdrop over the fixed site navbar (z-200) instead of leaving it clickable
+  // below top-[70px]. Needed for gates like TermsModal, where the navbar must not offer an
+  // escape route around onClose. Other modals keep the default (navbar stays usable).
+  coverNavbar?: boolean;
 };
 
 const SIZE_CLASS: Record<NonNullable<ModalProps['size']>, string> = {
@@ -21,7 +25,16 @@ const SIZE_CLASS: Record<NonNullable<ModalProps['size']>, string> = {
 // Generic modal shell (overlay + card) — modeled after WelcomeModal.tsx's original
 // overlay/transition pattern but made reusable across content types. Shared by
 // ProjectManualModal, ConfirmDialog, TermsModal and WelcomeModal.
-export const Modal: React.FC<ModalProps> = ({ open, onClose, title, eyebrow, size = 'md', footer, children }) => {
+export const Modal: React.FC<ModalProps> = ({
+  open,
+  onClose,
+  title,
+  eyebrow,
+  size = 'md',
+  footer,
+  children,
+  coverNavbar,
+}) => {
   const { t } = useTranslation('dissco-cs');
   const [entered, setEntered] = useState(false);
 
@@ -42,7 +55,11 @@ export const Modal: React.FC<ModalProps> = ({ open, onClose, title, eyebrow, siz
     <div
       // top-[70px]: houdt het centreer-gebied onder de vaste site-navbar (70px, z-200) i.p.v.
       // eroverheen -- anders kan een hoge kaart tegen/achter de navbar aan komen te zitten.
-      className="fixed inset-x-0 bottom-0 top-[70px] z-50 flex items-center justify-center bg-black/50 p-4"
+      // coverNavbar tilt de backdrop over de navbar heen (inset-0, z boven 200) voor gates
+      // die niet via de navbar omzeild mogen kunnen worden -- zie ModalProps.coverNavbar.
+      className={`fixed flex items-center justify-center bg-black/50 p-4 ${
+        coverNavbar ? 'inset-0 z-[210]' : 'inset-x-0 bottom-0 top-[70px] z-50'
+      }`}
       onClick={onClose}
     >
       <div

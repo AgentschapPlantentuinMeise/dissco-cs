@@ -8,9 +8,15 @@ export function getJwt(): string | undefined {
 // Client-side equivalent of Madoc's /logout route: erases the (non-httpOnly) JWT cookie
 // so getJwt()/getCurrentUser() see the user as logged out again. Used when a user cancels
 // out of the post-login terms gate instead of accepting the new terms.
+//
+// Deliberately not using cookies.erase() here: browser-cookies encodeURIComponent's the
+// cookie *name* when writing (via its internal set()), turning our "madoc/{slug}" name into
+// "madoc%2F{slug}" -- a different cookie than the one the server actually set. Its get() does
+// NOT encode the name, so reads still work; only erase()/set() are affected. Setting the
+// expiry directly avoids that asymmetry.
 export function clearJwt(): void {
   const slug = getSiteSlug();
-  cookies.erase(`madoc/${slug}`, { path: `/s/${slug}` });
+  document.cookie = `madoc/${slug}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/s/${slug}`;
 }
 
 // Sends the user back to login when a gated API call 401s (typically an expired session

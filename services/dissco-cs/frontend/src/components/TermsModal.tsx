@@ -32,6 +32,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({
       onClose={onCancel}
       title={title}
       size="lg"
+      coverNavbar
       footer={
         <div className="flex items-center gap-3">
           <button

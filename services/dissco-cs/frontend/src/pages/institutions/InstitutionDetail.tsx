@@ -83,9 +83,10 @@ export const InstitutionDetail: React.FC = () => {
 
           {institution && (
             <>
-              {/* Hero: title/description with contact info aligned alongside */}
-              <div className="flex flex-col md:flex-row gap-14 items-start mt-6 mb-14">
-                <div className="min-w-0" style={{ flex: '0 1 720px' }}>
+              {/* Unified grid: hero row, stat banner + leaderboard (level with each other), then projects */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-x-14 mt-6">
+                {/* Hero: title/description */}
+                <div className="min-w-0 max-w-[720px] lg:col-start-1 lg:row-start-1">
                   <h1 className="text-4xl text-[var(--cs-primary)] mt-0 mb-5">{text(institution.name)}</h1>
                   {description && (
                     <>
@@ -105,8 +106,9 @@ export const InstitutionDetail: React.FC = () => {
                   )}
                 </div>
 
+                {/* Hero: contact sidebar */}
                 {hasSidebar && (
-                  <div className="w-full md:w-[280px] flex-shrink-0 flex flex-col gap-4 pt-6 md:pt-0 md:pl-10 border-t md:border-t-0 md:border-l border-gray-100">
+                  <div className="w-full flex-shrink-0 flex flex-col gap-4 pt-6 lg:pt-0 lg:pl-10 border-t lg:border-t-0 lg:border-l border-gray-100 lg:col-start-2 lg:row-start-1">
                     {institution.logo && (
                       <div
                         className="h-20 w-full bg-contain bg-left bg-no-repeat"
@@ -130,39 +132,25 @@ export const InstitutionDetail: React.FC = () => {
                     )}
                   </div>
                 )}
-              </div>
 
-              {/* Stats hero banner — same signature as the volunteer dashboard */}
-              <StatBanner
-                className="mb-12"
-                stats={[
-                  {
-                    value: `${mockOverview.tasksCompletedPct}%`,
-                    label: t('pdp_transcribed'),
-                    note: `${formatNumber(mockOverview.tasksTotal)} ${t('institution_progress_tasks')}`,
-                  },
-                  { value: mockOverview.projectsActive, label: t('institution_projects_active') },
-                  { value: mockOverview.projectsCompleted, label: t('institution_projects_completed') },
-                  { value: formatNumber(mockVolunteers), label: t('institution_stats_volunteers') },
-                ]}
-                trailing={<MockBadge label={t('institution_mock_badge')} />}
-              />
+                {/* Stats banner — confined to the text column's width, same signature as the volunteer dashboard */}
+                <StatBanner
+                  className="mt-14 lg:col-start-1 lg:row-start-2"
+                  stats={[
+                    {
+                      value: `${mockOverview.tasksCompletedPct}%`,
+                      label: t('pdp_transcribed'),
+                      note: `${formatNumber(mockOverview.tasksTotal)} ${t('institution_progress_tasks')}`,
+                    },
+                    { value: mockOverview.projectsActive, label: t('institution_projects_active') },
+                    { value: mockOverview.projectsCompleted, label: t('institution_projects_completed') },
+                    { value: formatNumber(mockVolunteers), label: t('institution_stats_volunteers') },
+                  ]}
+                  trailing={<MockBadge label={t('institution_mock_badge')} />}
+                />
 
-              {/* Projects, with leaderboard alongside */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-14">
-                <div>
-                  {linkedProjects.length === 0 ? (
-                    <p className="text-sm text-gray-500">{t('institution_projects_empty')}</p>
-                  ) : (
-                    <div className="cs-projects-grid">
-                      {linkedProjects.map((project: any) => (
-                        <ProjectCard key={project.id} projectSummaryData={project} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div>
+                {/* Leaderboard — starts level with the banner, runs down alongside the projects */}
+                <div className="order-5 lg:order-none mt-14 lg:col-start-2 lg:row-start-2 lg:row-span-2">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="text-xs font-bold uppercase tracking-wider text-gray-500">{t('institution_leaderboard_title')}</div>
                     <MockBadge label={t('institution_mock_badge')} />
@@ -176,6 +164,19 @@ export const InstitutionDetail: React.FC = () => {
                       </li>
                     ))}
                   </ol>
+                </div>
+
+                {/* Projects */}
+                <div className="order-4 lg:order-none mt-8 lg:col-start-1 lg:row-start-3">
+                  {linkedProjects.length === 0 ? (
+                    <p className="text-sm text-gray-500">{t('institution_projects_empty')}</p>
+                  ) : (
+                    <div className="cs-projects-grid cs-projects-grid--compact">
+                      {linkedProjects.map((project: any) => (
+                        <ProjectCard key={project.id} projectSummaryData={project} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </>
