@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { reviewApi, ReviewTaskRow } from '../../api/cs-api';
+import { FeedbackTaskRef, reviewApi, reviewFeedbackApi, ReviewTaskRow } from '../../api/cs-api';
 import { madocClient, ApiError } from '../../api/madoc-client';
 import { localeText } from '../../utility/locale-text';
 import { useUser } from '../../hooks/use-current-user';
@@ -10,6 +10,32 @@ import { AnnotationDocument } from '../../capture-model/types/document';
 export type SortKey = 'project' | 'subject' | 'status' | 'submitter' | 'reviewer' | 'modified_at';
 export type SortDir = 'asc' | 'desc';
 export type BulkResult = { id: string; label: string; success: boolean; error?: string };
+
+// Interne variant van FeedbackTaskRef die de indiener nog meedraagt -- nodig om, vóór er één
+// ontvanger gekozen is, te kunnen bepalen of een selectie/batch wel van één indiener is.
+type BatchTaskRef = FeedbackTaskRef & { submitterId?: number; submitterName?: string };
+export type FeedbackComposeTarget = { submitterId: number; submitterName: string; tasks: FeedbackTaskRef[] };
+
+function taskRefFromRow(row: ReviewTaskRow): BatchTaskRef {
+  return {
+    originalTaskId: row.originalTaskId ?? row.id,
+    subjectLabel: row.subject.label ?? row.id,
+    projectSlug: row.project.slug ?? null,
+    submitterId: row.submitterId,
+    submitterName: row.submitter,
+  };
+}
+
+// Geeft de gedeelde indiener terug als élke taak in de lijst dezelfde submitterId heeft, anders
+// null -- gebruikt om zowel de bulk-selectie als de "laatste batch" na een accept te bewaken.
+function singleSubmitter(tasks: BatchTaskRef[]): { id: number; name: string } | null {
+  if (tasks.length === 0) return null;
+  const ids = new Set(tasks.map(task => task.submitterId).filter((id): id is number => id !== undefined));
+  if (ids.size !== 1) return null;
+  const id = Array.from(ids)[0];
+  const match = tasks.find(task => task.submitterId === id && task.submitterName);
+  return match?.submitterName ? { id, name: match.submitterName } : null;
+}
 
 // Alle data, filter/sort-, selectie- en accept-logica voor de review-pagina zit hier.
 export function useReviewTasksController() {
@@ -33,10 +59,16 @@ export function useReviewTasksController() {
   // wordt.
   const [openRowId, setOpenRowId] = useState<string | null>(null);
   const [editedDocuments, setEditedDocuments] = useState<Record<string, AnnotationDocument>>({});
-  const [singleAccepting, setSingleAccepting] = useState<string | null>(null);
-  const [singleAcceptError, setSingleAcceptError] = useState<string | null>(null);
   const [releasing, setReleasing] = useState<string | null>(null);
   const [releaseError, setReleaseError] = useState<string | null>(null);
+
+  // Compose-doel voor de feedback-modal (vóór een accept, vanaf rij-icoon/actiebalk/selectie), en
+  // de single-slot "laatste verwerkte batch" die na een accept overleeft zolang er niet opnieuw
+  // geaccepteerd wordt -- zie ReviewTasks.tsx voor de sticky balk die dit toont.
+  const [feedbackTarget, setFeedbackTarget] = useState<FeedbackComposeTarget | null>(null);
+  const [lastBatchTasks, setLastBatchTasks] = useState<BatchTaskRef[] | null>(null);
+  const [sendingFeedback, setSendingFeedback] = useState(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
   // Taken die net vrijgegeven zijn maar nog niet uit de server-lijst verdwenen -- madoc-ts zet de
   // gekoppelde reviewtaak pas asynchroon (via zijn eigen achtergrond-jobqueue) op status -1, dus
@@ -113,6 +145,16 @@ export function useReviewTasksController() {
   const selectableVisibleRows = visibleRows.filter(isOwnTask);
   const allVisibleSelected = selectableVisibleRows.length > 0 && selectableVisibleRows.every(row => selectedIds.has(row.id));
 
+  // Selectie kan over meerdere indieners lopen (checkboxes filteren daar niet op) -- feedback
+  // versturen mag enkel als de hele selectie van dezelfde indiener is; bulk-accepteren zelf blijft
+  // hier los van staan.
+  const selectedRowsForFeedback = rows.filter(row => selectedIds.has(row.id));
+  const bulkFeedbackSubmitter = singleSubmitter(selectedRowsForFeedback.map(taskRefFromRow));
+  const canSendBulkFeedback = selectedIds.size > 0 && bulkFeedbackSubmitter !== null;
+
+  const lastBatchSubmitter = lastBatchTasks ? singleSubmitter(lastBatchTasks) : null;
+  const canSendLastBatchFeedback = !!lastBatchTasks && lastBatchSubmitter !== null;
+
   const toggleSelectAllVisible = () => {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -125,13 +167,24 @@ export function useReviewTasksController() {
     });
   };
 
+  // Aanvinken van de opengeklapte rij betekent "akkoord, deze mag geaccepteerd worden" -- sluit
+  // de rij en open meteen de eerstvolgende zichtbare rij zodat de reviewer rij per rij kan
+  // doorwerken. Ontvinken, of aanvinken van een niet-opengeklapte rij (bv. "select all"), laat
+  // openRowId ongemoeid.
   const toggleSelectRow = (id: string) => {
+    const isChecking = !selectedIds.has(id);
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
+
+    if (isChecking && openRowId === id) {
+      const idx = visibleRows.findIndex(row => row.id === id);
+      const nextRow = idx >= 0 && idx + 1 < visibleRows.length ? visibleRows[idx + 1] : null;
+      setOpenRowId(nextRow ? nextRow.id : null);
+    }
   };
 
   const filterBySubmitter = (name: string) => setSearchQuery(name);
@@ -168,6 +221,7 @@ export function useReviewTasksController() {
     setBulkProgress({ current: 0, total: ids.length });
 
     const results: BulkResult[] = [];
+    const acceptedTasks: BatchTaskRef[] = [];
     for (const id of ids) {
       const row = rows.find(r => r.id === id);
       const label = row ? localeText(row.subject.label, i18n.language) || row.id : id;
@@ -181,10 +235,15 @@ export function useReviewTasksController() {
       try {
         await acceptOneRow(row, editedDocuments[id]);
         results.push({ id, label, success: true });
+        acceptedTasks.push(taskRefFromRow(row));
       } catch (err) {
         const message = err instanceof ApiError ? err.message : t('review_bulk_error_generic');
         results.push({ id, label, success: false, error: message });
       }
+    }
+
+    if (acceptedTasks.length > 0) {
+      setLastBatchTasks(acceptedTasks);
     }
 
     setBulkRunning(false);
@@ -204,34 +263,6 @@ export function useReviewTasksController() {
 
   const handleDocumentChange = (rowId: string, document: AnnotationDocument) => {
     setEditedDocuments(prev => ({ ...prev, [rowId]: document }));
-  };
-
-  const handleSingleAccept = async (row: ReviewTaskRow) => {
-    setSingleAcceptError(null);
-    setSingleAccepting(row.id);
-    try {
-      await acceptOneRow(row, editedDocuments[row.id]);
-      setEditedDocuments(prev => {
-        const next = { ...prev };
-        delete next[row.id];
-        return next;
-      });
-      setSelectedIds(prev => {
-        const next = new Set(prev);
-        next.delete(row.id);
-        return next;
-      });
-      await refetch();
-      setOpenRowId(current => {
-        const idx = visibleRows.findIndex(r => r.id === current);
-        return idx >= 0 && idx + 1 < visibleRows.length ? visibleRows[idx + 1].id : null;
-      });
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : t('review_bulk_error_generic');
-      setSingleAcceptError(message);
-    } finally {
-      setSingleAccepting(null);
-    }
   };
 
   // Zet de originele taak op status -1 ("afgewezen"). Dit verwijdert geen data, maar zorgt ervoor
@@ -258,6 +289,53 @@ export function useReviewTasksController() {
     }
   };
 
+  const openFeedbackForSelection = () => {
+    if (!bulkFeedbackSubmitter) return;
+    setFeedbackError(null);
+    setFeedbackTarget({
+      submitterId: bulkFeedbackSubmitter.id,
+      submitterName: bulkFeedbackSubmitter.name,
+      tasks: selectedRowsForFeedback.map(taskRefFromRow),
+    });
+  };
+
+  const openFeedbackForLastBatch = () => {
+    if (!lastBatchTasks || !lastBatchSubmitter) return;
+    setFeedbackError(null);
+    setFeedbackTarget({
+      submitterId: lastBatchSubmitter.id,
+      submitterName: lastBatchSubmitter.name,
+      tasks: lastBatchTasks,
+    });
+  };
+
+  const closeFeedbackTarget = () => {
+    setFeedbackTarget(null);
+    setFeedbackError(null);
+  };
+
+  const dismissLastBatch = () => setLastBatchTasks(null);
+
+  const sendFeedback = async (body: string) => {
+    if (!feedbackTarget) return;
+    setSendingFeedback(true);
+    setFeedbackError(null);
+    try {
+      await reviewFeedbackApi.createThread({
+        recipientUserId: feedbackTarget.submitterId,
+        recipientName: feedbackTarget.submitterName,
+        body,
+        tasks: feedbackTarget.tasks,
+      });
+      setFeedbackTarget(null);
+      window.dispatchEvent(new Event('review_feedback_updated'));
+    } catch (err) {
+      setFeedbackError(err instanceof Error ? err.message : t('review_bulk_error_generic'));
+    } finally {
+      setSendingFeedback(false);
+    }
+  };
+
   // Pijltje omhoog/omlaag doorloopt visibleRows -- enkel als de focus niet in een formulierveld
   // staat, zodat normale tekst-cursornavigatie tijdens het corrigeren niet gekaapt wordt.
   useEffect(() => {
@@ -279,9 +357,7 @@ export function useReviewTasksController() {
             : event.key === 'ArrowDown'
             ? Math.min(idx + 1, visibleRows.length - 1)
             : Math.max(idx - 1, 0);
-        const nextRow = visibleRows[nextIdx];
-        document.querySelector(`tr[data-row-id="${nextRow.id}"]`)?.scrollIntoView({ block: 'nearest' });
-        return nextRow.id;
+        return visibleRows[nextIdx].id;
       });
     };
 
@@ -314,9 +390,6 @@ export function useReviewTasksController() {
     setOpenRowId,
     editedDocuments,
     handleDocumentChange,
-    singleAccepting,
-    singleAcceptError,
-    handleSingleAccept,
     releasing,
     releaseError,
     handleRelease,
@@ -329,5 +402,17 @@ export function useReviewTasksController() {
     successCount,
     failedResults,
     runBulkAccept,
+    canSendBulkFeedback,
+    lastBatchTasks,
+    canSendLastBatchFeedback,
+    lastBatchSubmitter,
+    dismissLastBatch,
+    feedbackTarget,
+    sendingFeedback,
+    feedbackError,
+    openFeedbackForSelection,
+    openFeedbackForLastBatch,
+    closeFeedbackTarget,
+    sendFeedback,
   };
 }

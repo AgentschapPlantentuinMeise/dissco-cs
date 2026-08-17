@@ -40,6 +40,44 @@ export async function getMadocCollectionStructure(
   return response.json();
 }
 
+// De structure-endpoint (hierboven) geeft geen thumbnails mee -- die query selecteert alleen
+// het 'label'-metadataveld. Voor thumbnails moet de collectie zelf (met snippets) opgehaald
+// worden, gepagineerd (24 per pagina) net als madoc-ts' eigen collection-browsing UI.
+export async function getMadocCollectionManifestThumbnails(
+  siteId: number,
+  collectionId: number
+): Promise<Map<number, string | undefined>> {
+  const thumbnails = new Map<number, string | undefined>();
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const query = new URLSearchParams({ type: 'manifest', page: String(page) });
+    const response = await fetch(`${appConfig.madocGatewayUrl}/api/madoc/iiif/collections/${collectionId}?${query}`, {
+      headers: {
+        Authorization: `Bearer ${getServiceJwt()}`,
+        'x-madoc-site-id': String(siteId),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Madoc collection request failed with status ${response.status}`);
+    }
+
+    const data = (await response.json()) as {
+      collection: { items: Array<{ id: number; thumbnail?: string }> };
+      pagination?: { totalPages?: number };
+    };
+    for (const item of data.collection.items) {
+      thumbnails.set(item.id, item.thumbnail);
+    }
+    totalPages = data.pagination?.totalPages ?? 1;
+    page += 1;
+  } while (page <= totalPages);
+
+  return thumbnails;
+}
+
 export async function getMadocTaskStats(
   siteId: number,
   taskId: string

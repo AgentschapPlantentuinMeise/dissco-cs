@@ -12,7 +12,7 @@ import { SearchIcon } from '../../icons/SearchIcon';
 import { CloseIcon } from '../../icons/CloseIcon';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { getSiteSlug } from '../../api/slug';
-import { forumApi, reviewApi } from '../../api/cs-api';
+import { forumApi, reviewApi, reviewFeedbackApi } from '../../api/cs-api';
 import { useSitePages } from '../../contexts/SitePagesContext';
 import { SITE_PAGE_NAV } from '../../site-pages-nav-config';
 
@@ -31,6 +31,7 @@ export const Navbar: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
   const [menuOpen, setMenuOpen] = useState(false);
   const [newMsgCount, setNewMsgCount] = useState(0);
+  const [feedbackUnreadCount, setFeedbackUnreadCount] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -83,6 +84,21 @@ export const Navbar: React.FC = () => {
     refreshUnreadCount();
     window.addEventListener('mb_updated', refreshUnreadCount);
     return () => window.removeEventListener('mb_updated', refreshUnreadCount);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const refreshFeedbackUnreadCount = () => {
+      reviewFeedbackApi.listThreads().then(res => {
+        const count = res.threads.reduce((sum, thread) => sum + thread.unread_count, 0);
+        setFeedbackUnreadCount(count);
+      }).catch(() => {});
+    };
+
+    refreshFeedbackUnreadCount();
+    window.addEventListener('review_feedback_updated', refreshFeedbackUnreadCount);
+    return () => window.removeEventListener('review_feedback_updated', refreshFeedbackUnreadCount);
   }, [user?.id]);
 
   useEffect(() => {
@@ -251,7 +267,19 @@ export const Navbar: React.FC = () => {
                   className={`${isOpen ? 'block' : 'hidden'} absolute top-[calc(100%+10px)] right-0 bg-white rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.12)] min-w-[200px] z-[100] list-none p-[6px_0] m-0 max-[768px]:static max-[768px]:shadow-none max-[768px]:rounded-none max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:min-w-0`}
                   role="menu"
                 >
-                  <li><HrefLink href="/my-dashboard" className={dropdownItemClass} {...itemProps[0]}>{t('nav_dashboard')}</HrefLink></li>
+                  <li>
+                    <HrefLink href="/my-dashboard" className={dropdownItemClass} {...itemProps[0]}>
+                      {t('nav_dashboard')}
+                      {feedbackUnreadCount > 0 && (
+                        <span
+                          className="inline-block text-white rounded-[10px] px-[6px] py-[1px] text-[0.7rem] font-bold ml-[5px] align-middle leading-[1.4]"
+                          style={{ background: 'var(--cs-tertiary)' }}
+                        >
+                          {feedbackUnreadCount}
+                        </span>
+                      )}
+                    </HrefLink>
+                  </li>
                   <li><a href={`/s/${siteSlug}/account`} className={dropdownItemClass} {...itemProps[1]}>{t('nav_profile_settings')}</a></li>
                   {showReview && (
                     <li><HrefLink href="/review" className={dropdownItemClass} {...itemProps[idxReview]}>{t('nav_review')}</HrefLink></li>

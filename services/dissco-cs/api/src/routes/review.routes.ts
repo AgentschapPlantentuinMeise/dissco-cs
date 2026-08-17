@@ -19,6 +19,7 @@ export type ReviewTaskRow = {
   status: number;
   status_text?: string;
   submitter?: string;
+  submitterId?: number;
   reviewer?: string;
   reviewerId?: number;
   originalTaskId?: string;
@@ -33,7 +34,7 @@ function parseUserId(urn: string | undefined): number | undefined {
 
 // Zelfde voorwaarde als de frontend's is-reviewer-check: site-admins mogen altijd, anderen
 // enkel als hun site-rol effectief 'reviewer' is.
-async function isReviewerOrAdmin(identity: MadocUserIdentity): Promise<boolean> {
+export async function isReviewerOrAdmin(identity: MadocUserIdentity): Promise<boolean> {
   if (identity.scope.includes('site.admin')) return true;
   const role = await getMadocSiteUserRole(identity.siteId, identity.userId);
   return role === 'reviewer';
@@ -78,12 +79,14 @@ export function reviewRoutes(): Hono {
     const rows: ReviewTaskRow[] = [];
     for (const task of tasks) {
       let submitter: string | undefined;
+      let submitterId: number | undefined;
       let revisionId: string | undefined;
       const originalTaskId = typeof task.parameters?.[0] === 'string' ? (task.parameters[0] as string) : undefined;
       if (originalTaskId) {
         try {
           const originalTask = await getMadocTaskDetail(identity.siteId, originalTaskId);
           submitter = originalTask.assignee?.name;
+          submitterId = parseUserId(originalTask.assignee?.id);
           revisionId = originalTask.state?.revisionId;
           if (!revisionId) {
             console.warn('[review] geen state.revisionId op originele taak', {
@@ -128,6 +131,7 @@ export function reviewRoutes(): Hono {
         status: task.status,
         status_text: task.status_text,
         submitter,
+        submitterId,
         reviewer: task.assignee?.name,
         reviewerId: parseUserId(task.assignee?.id),
         originalTaskId,

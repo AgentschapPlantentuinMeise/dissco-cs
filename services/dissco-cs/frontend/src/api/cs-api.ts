@@ -114,6 +114,8 @@ export const sitePagesApi = {
 export type ProjectProgress = {
   transcribedPercentage: number;
   totalTasks: number;
+  allTasksTaken: boolean;
+  availableManifests: Array<{ id: number; label: unknown; thumbnail?: string }>;
 };
 
 export const projectProgressApi = {
@@ -187,6 +189,7 @@ export type ReviewTaskRow = {
   status: number;
   status_text?: string;
   submitter?: string;
+  submitterId?: number;
   reviewer?: string;
   reviewerId?: number;
   originalTaskId?: string;
@@ -198,6 +201,58 @@ export const reviewApi = {
   myTasks: () => csFetch<{ tasks: ReviewTaskRow[] }>('/review/my-tasks'),
 
   isReviewer: () => csFetch<{ isReviewer: boolean }>('/review/is-reviewer'),
+};
+
+export type FeedbackTaskRef = {
+  originalTaskId: string;
+  subjectLabel: Record<string, string[]> | string;
+  projectSlug: string | null;
+};
+
+export type FeedbackThreadRole = 'recipient' | 'reviewer';
+
+export type FeedbackThread = {
+  id: string;
+  site_id: number;
+  reviewer_user_id: number;
+  reviewer_name: string;
+  recipient_user_id: number;
+  recipient_name: string;
+  tasks: FeedbackTaskRef[];
+  created_at: string;
+  last_activity: string;
+};
+
+export type FeedbackThreadWithMeta = FeedbackThread & {
+  role: FeedbackThreadRole;
+  message_count: number;
+  unread_count: number;
+};
+
+export type FeedbackMessage = {
+  id: string;
+  thread_id: string;
+  author_user_id: number;
+  author_name: string;
+  body: string;
+  read_at: string | null;
+  created_at: string;
+};
+
+export const reviewFeedbackApi = {
+  listThreads: () => csFetch<{ threads: FeedbackThreadWithMeta[] }>('/review-feedback/threads'),
+
+  createThread: (data: { recipientUserId: number; recipientName: string; body: string; tasks: FeedbackTaskRef[] }) =>
+    csFetch<FeedbackThread>('/review-feedback/threads', { method: 'POST', body: JSON.stringify(data) }),
+
+  getThread: (threadId: string) =>
+    csFetch<{ thread: FeedbackThread; messages: FeedbackMessage[] }>(`/review-feedback/threads/${threadId}`),
+
+  createReply: (threadId: string, body: string) =>
+    csFetch<FeedbackMessage>(`/review-feedback/threads/${threadId}/replies`, {
+      method: 'POST',
+      body: JSON.stringify({ body }),
+    }),
 };
 
 export const contactApi = {

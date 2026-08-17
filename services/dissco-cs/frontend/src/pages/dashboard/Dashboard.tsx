@@ -14,7 +14,7 @@ import { disscoCSConfig } from '../../dissco-cs-config';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { StatBanner } from '../../components/StatBanner';
 import { TaskTable, tabBtnClass } from '../../components/TaskTable';
-import { forumApi, ForumTopicWithReplyCount } from '../../api/cs-api';
+import { forumApi, ForumTopicWithReplyCount, reviewFeedbackApi, FeedbackTaskRef, FeedbackThreadWithMeta } from '../../api/cs-api';
 
 
 
@@ -43,11 +43,141 @@ function DonutChart({ segments }: { segments: ChartSegment[] }) {
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString('nl-BE', { dateStyle: 'short', timeStyle: 'short' });
 
+function FeedbackTaskChips({ tasks, language }: { tasks: FeedbackTaskRef[]; language: string }) {
+  const { t } = useTranslation('dissco-cs');
+  const [expanded, setExpanded] = useState(false);
+  if (tasks.length === 0) return null;
+
+  return (
+    <div className="mt-2">
+      <button
+        onClick={e => {
+          e.stopPropagation();
+          setExpanded(v => !v);
+        }}
+        className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--cs-primary)] bg-gray-100 rounded-full px-2.5 py-1 border-none cursor-pointer"
+      >
+        {t('dashboard_feedback_task_count', { count: tasks.length })}
+      </button>
+      {expanded && (
+        <ul className="list-none m-0 mt-2 pl-0 flex flex-col gap-1">
+          {tasks.map(task => (
+            <li key={task.originalTaskId} className="text-xs text-gray-600">
+              {localeText(task.subjectLabel, language) || task.originalTaskId}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function FeedbackThreadDetail({ threadId }: { threadId: string }) {
+  const { t, i18n } = useTranslation('dissco-cs');
+  const [replyBody, setReplyBody] = useState('');
+
+  const { data, status } = useQuery(['feedback-thread', threadId], () => reviewFeedbackApi.getThread(threadId), {
+    onSuccess: () => {
+      queryCache.invalidateQueries('feedback-threads');
+      window.dispatchEvent(new Event('review_feedback_updated'));
+    },
+  });
+
+  const [postReply, { status: replyStatus }] = useMutation(
+    (body: string) => reviewFeedbackApi.createReply(threadId, body),
+    {
+      onSuccess: () => {
+        setReplyBody('');
+        queryCache.invalidateQueries(['feedback-thread', threadId]);
+        queryCache.invalidateQueries('feedback-threads');
+        window.dispatchEvent(new Event('review_feedback_updated'));
+      },
+    }
+  );
+
+  if (status === 'loading') {
+    return <p className="text-sm text-gray-500 mt-3">{t('review_detail_loading')}</p>;
+  }
+  if (status === 'error' || !data) {
+    return <p className="text-sm text-red-600 mt-3">{t('review_detail_error')}</p>;
+  }
+
+  return (
+    <div className="mt-3 pl-3 border-l-2 border-gray-100" onClick={e => e.stopPropagation()}>
+      <ul className="list-none m-0 p-0 flex flex-col gap-3 mb-3">
+        {data.messages.map(message => (
+          <li key={message.id} className="text-sm">
+            <div className="flex items-baseline gap-2">
+              <strong className="text-gray-800">{message.author_name}</strong>
+              <span className="text-xs text-gray-400">{new Date(message.created_at).toLocaleString(i18n.language)}</span>
+            </div>
+            <p className="text-gray-700 m-0 mt-0.5 whitespace-pre-wrap">{message.body}</p>
+          </li>
+        ))}
+      </ul>
+      <div className="flex items-start gap-2">
+        <textarea
+          value={replyBody}
+          onChange={e => setReplyBody(e.target.value)}
+          rows={2}
+          placeholder={t('dashboard_feedback_reply_placeholder')}
+          className="flex-1 border border-gray-300 rounded-lg p-2 text-sm resize-none focus:outline-none focus:border-[var(--cs-primary)]"
+        />
+        <button
+          onClick={() => replyBody.trim() && postReply(replyBody.trim())}
+          disabled={!replyBody.trim() || replyStatus === 'loading'}
+          className="px-4 py-2 rounded-full text-sm font-semibold border-none bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
+        >
+          {t('dashboard_feedback_reply_send')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function FeedbackThreadRow({
+  thread,
+  isOpen,
+  onToggle,
+  language,
+}: {
+  thread: FeedbackThreadWithMeta;
+  isOpen: boolean;
+  onToggle: () => void;
+  language: string;
+}) {
+  const { t } = useTranslation('dissco-cs');
+  const otherName = thread.role === 'recipient' ? thread.reviewer_name : thread.recipient_name;
+  const directionLabel =
+    thread.role === 'recipient'
+      ? t('dashboard_feedback_from', { name: otherName })
+      : t('dashboard_feedback_to', { name: otherName });
+
+  return (
+    <li className="border-b border-gray-200 last:border-b-0 py-3">
+      <button onClick={onToggle} className="w-full text-left bg-transparent border-none cursor-pointer p-0">
+        <div className="flex items-center justify-between gap-3">
+          <span className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+            {thread.unread_count > 0 && (
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: 'var(--cs-tertiary)' }} />
+            )}
+            {directionLabel}
+          </span>
+          <span className="text-xs text-gray-400 flex-shrink-0">{new Date(thread.last_activity).toLocaleString(language)}</span>
+        </div>
+        <FeedbackTaskChips tasks={thread.tasks} language={language} />
+      </button>
+      {isOpen && <FeedbackThreadDetail threadId={thread.id} />}
+    </li>
+  );
+}
+
 export const Dashboard: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useUser();
-  const [activeTab, setActiveTab] = useState<'saved' | 'done'>('saved');
+  const [activeTab, setActiveTab] = useState<'saved' | 'done' | 'feedback'>('saved');
   const [releaseTarget, setReleaseTarget] = useState<CrowdsourcingTask | null>(null);
+  const [openThreadId, setOpenThreadId] = useState<string | null>(null);
 
   const [releaseTask] = useMutation(
     (task: CrowdsourcingTask) => madocClient.updateTask(task.id, { status: -1, status_text: 'abandoned' }),
@@ -103,6 +233,13 @@ export const Dashboard: React.FC = () => {
     },
     { enabled: !!user }
   );
+
+  const { data: feedbackThreadsData, status: feedbackThreadsStatus } = useQuery(
+    'feedback-threads',
+    () => reviewFeedbackApi.listThreads(),
+    { enabled: !!user }
+  );
+  const feedbackThreads = feedbackThreadsData?.threads ?? [];
 
   if (!user) {
     window.location.href = `/s/${getSiteSlug()}/login`;
@@ -191,13 +328,42 @@ export const Dashboard: React.FC = () => {
                   <button className={tabBtnClass(activeTab === 'done')} onClick={() => setActiveTab('done')}>
                     {t('my_tasks_tab_done')}
                   </button>
+                  <button className={tabBtnClass(activeTab === 'feedback')} onClick={() => setActiveTab('feedback')}>
+                    {t('dashboard_feedback_tab')}
+                    {feedbackThreads.some(thread => thread.unread_count > 0) && (
+                      <span
+                        className="inline-block text-white rounded-[10px] px-[6px] py-[1px] text-[0.7rem] font-bold ml-[5px] align-middle leading-[1.4]"
+                        style={{ background: 'var(--cs-tertiary)' }}
+                      >
+                        {feedbackThreads.reduce((sum, thread) => sum + thread.unread_count, 0)}
+                      </span>
+                    )}
+                  </button>
                 </div>
                 {activeTab === 'saved' && savedTasks.length > 0 && (
                   <div className="text-xs text-gray-400">{t('dashboard_saved_tasks_subtitle', { count: savedTasks.length })}</div>
                 )}
               </div>
 
-              {isLoading ? (
+              {activeTab === 'feedback' ? (
+                feedbackThreadsStatus === 'loading' ? (
+                  <div className="text-center py-16 text-gray-500">{t('my_tasks_loading')}</div>
+                ) : feedbackThreads.length === 0 ? (
+                  <div className="px-1 py-10 text-center text-gray-500">{t('dashboard_feedback_empty')}</div>
+                ) : (
+                  <ul className="list-none m-0 p-0">
+                    {feedbackThreads.map(thread => (
+                      <FeedbackThreadRow
+                        key={thread.id}
+                        thread={thread}
+                        isOpen={openThreadId === thread.id}
+                        onToggle={() => setOpenThreadId(id => (id === thread.id ? null : thread.id))}
+                        language={i18n.language}
+                      />
+                    ))}
+                  </ul>
+                )
+              ) : isLoading ? (
                 <div className="text-center py-16 text-gray-500">{t('my_tasks_loading')}</div>
               ) : activeTab === 'saved' ? (
                 savedTasks.length === 0 ? (

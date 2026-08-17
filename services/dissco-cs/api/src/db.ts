@@ -5,6 +5,7 @@ import { AnnouncementsRepository } from './repositories/announcements.repository
 import { ForumRepository } from './repositories/forum.repository.js';
 import { InstitutionsRepository } from './repositories/institutions.repository.js';
 import { ProjectManualsRepository } from './repositories/project-manuals.repository.js';
+import { ReviewFeedbackRepository } from './repositories/review-feedback.repository.js';
 import { SitePagesRepository } from './repositories/site-pages.repository.js';
 
 export type { Announcement, AnnouncementTargetType } from './repositories/announcements.repository.js';
@@ -16,6 +17,13 @@ export type {
   ProjectManualAttachmentMeta,
   ProjectManualSummary,
 } from './repositories/project-manuals.repository.js';
+export type {
+  FeedbackMessage,
+  FeedbackTaskRef,
+  FeedbackThread,
+  FeedbackThreadRole,
+  FeedbackThreadWithMeta,
+} from './repositories/review-feedback.repository.js';
 export type { SitePage, SitePageContentKey, SitePageKey, SitePageLang } from './repositories/site-pages.repository.js';
 export { SITE_PAGE_CONTENT_KEYS, SITE_PAGE_KEYS, SITE_PAGE_LANGS } from './repositories/site-pages.repository.js';
 
@@ -25,6 +33,7 @@ export class DisscoCSRepository {
   readonly announcements: AnnouncementsRepository;
   readonly institutions: InstitutionsRepository;
   readonly projectManuals: ProjectManualsRepository;
+  readonly reviewFeedback: ReviewFeedbackRepository;
 
   private readonly pool: Pool;
   private readonly schemaRef: string;
@@ -52,6 +61,7 @@ export class DisscoCSRepository {
     this.projectManuals = new ProjectManualsRepository(this.pool, this.schemaRef);
     this.announcements = new AnnouncementsRepository(this.pool, this.schemaRef);
     this.institutions = new InstitutionsRepository(this.pool, this.schemaRef);
+    this.reviewFeedback = new ReviewFeedbackRepository(this.pool, this.schemaRef);
   }
 
   async close(): Promise<void> {
@@ -260,6 +270,47 @@ export class DisscoCSRepository {
           updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
           UNIQUE (manual_id, lang)
         )
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS ${this.schemaRef}.review_feedback_threads (
+          id BIGSERIAL PRIMARY KEY,
+          site_id INTEGER NOT NULL,
+          reviewer_user_id INTEGER NOT NULL,
+          reviewer_name TEXT NOT NULL,
+          recipient_user_id INTEGER NOT NULL,
+          recipient_name TEXT NOT NULL,
+          tasks JSONB NOT NULL DEFAULT '[]'::jsonb,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          last_activity TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS review_feedback_threads_recipient_idx
+        ON ${this.schemaRef}.review_feedback_threads (site_id, recipient_user_id, last_activity DESC)
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS review_feedback_threads_reviewer_idx
+        ON ${this.schemaRef}.review_feedback_threads (site_id, reviewer_user_id, last_activity DESC)
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS ${this.schemaRef}.review_feedback_messages (
+          id BIGSERIAL PRIMARY KEY,
+          thread_id BIGINT NOT NULL REFERENCES ${this.schemaRef}.review_feedback_threads (id) ON DELETE CASCADE,
+          author_user_id INTEGER NOT NULL,
+          author_name TEXT NOT NULL,
+          body TEXT NOT NULL,
+          read_at TIMESTAMPTZ,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
+
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS review_feedback_messages_thread_idx
+        ON ${this.schemaRef}.review_feedback_messages (thread_id, created_at ASC)
       `);
 
       await client.query('COMMIT');

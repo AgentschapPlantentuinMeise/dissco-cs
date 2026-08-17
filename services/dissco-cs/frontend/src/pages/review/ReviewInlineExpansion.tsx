@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReviewTaskRow } from '../../api/cs-api';
 import { ReviewFieldForm } from '../../components/ReviewFieldForm';
@@ -6,21 +6,31 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useReviewRevisionDocument } from './useReviewRevisionDocument';
 import { AnnotationDocument } from '../../capture-model/types/document';
 import { localeText } from '../../utility/locale-text';
+import { TrashIcon } from '../../icons/TrashIcon';
 
 interface ReviewInlineExpansionProps {
   row: ReviewTaskRow;
   editedDocument: AnnotationDocument | undefined;
   onDocumentChange: (rowId: string, document: AnnotationDocument) => void;
-  onAccept: () => void;
-  accepting: boolean;
   onRelease: () => void;
   releasing: boolean;
   releaseError: string | null;
   onClose: () => void;
-  error: string | null;
 }
 
-function ExpansionChrome({ title, subtitle, onClose, children }: { title: string; subtitle: string; onClose: () => void; children: React.ReactNode }) {
+function ExpansionChrome({
+  title,
+  subtitle,
+  onClose,
+  headerAction,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  onClose: () => void;
+  headerAction?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   const { t } = useTranslation('dissco-cs');
   return (
     <div className="bg-gray-50 border-t border-gray-200 px-6 lg:px-8 py-5">
@@ -29,9 +39,12 @@ function ExpansionChrome({ title, subtitle, onClose, children }: { title: string
           <div className="text-[0.92rem] font-bold text-gray-800">{title}</div>
           <div className="text-[0.74rem] text-gray-500 mt-0.5">{subtitle}</div>
         </div>
-        <button onClick={onClose} className="bg-transparent border-none text-gray-500 hover:text-[var(--cs-primary)] cursor-pointer text-[0.8rem] font-semibold">
-          {t('review_detail_close')}
-        </button>
+        <div className="flex items-center gap-3">
+          {headerAction}
+          <button onClick={onClose} className="bg-transparent border-none text-gray-500 hover:text-[var(--cs-primary)] cursor-pointer text-[0.8rem] font-semibold">
+            {t('review_detail_close')}
+          </button>
+        </div>
       </div>
       {children}
     </div>
@@ -41,7 +54,7 @@ function ExpansionChrome({ title, subtitle, onClose, children }: { title: string
 // Inline-uitklap-variant: verschijnt als een extra rij direct onder de aangeklikte tabelrij (zie
 // ReviewTable's renderRowExpansion) i.p.v. een zijpaneel. Velden staan in een grid die zelf
 // herschikt naar het aantal secties -- zie ReviewFieldForm.
-export function ReviewInlineExpansion({ row, editedDocument, onDocumentChange, onAccept, accepting, onRelease, releasing, releaseError, onClose, error }: ReviewInlineExpansionProps) {
+export function ReviewInlineExpansion({ row, editedDocument, onDocumentChange, onRelease, releasing, releaseError, onClose }: ReviewInlineExpansionProps) {
   const { t, i18n } = useTranslation('dissco-cs');
   const [confirmingRelease, setConfirmingRelease] = useState(false);
   const title = localeText(row.subject.label, i18n.language) || row.id;
@@ -50,6 +63,14 @@ export function ReviewInlineExpansion({ row, editedDocument, onDocumentChange, o
     : '';
 
   const { revisionQuery, modelQuery, currentDocument, handleChange } = useReviewRevisionDocument(row, editedDocument, onDocumentChange);
+
+  // Pas centreren zodra het volledige formulier gemonteerd is -- vóór dat moment toont de rij nog
+  // enkel een korte "laden..."-placeholder, en scrollIntoView daarop geeft de verkeerde positie
+  // zodra het formulier daarna groeit.
+  useEffect(() => {
+    if (revisionQuery.status !== 'success' || modelQuery.status !== 'success') return;
+    document.querySelector(`tr[data-expansion-row-id="${row.id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [row.id, revisionQuery.status, modelQuery.status]);
 
   if (!row.revisionId || !row.originalTaskId) {
     return (
@@ -76,25 +97,24 @@ export function ReviewInlineExpansion({ row, editedDocument, onDocumentChange, o
   }
 
   return (
-    <ExpansionChrome title={title} subtitle={subtitle} onClose={onClose}>
-      <ReviewFieldForm model={modelQuery.data} document={currentDocument} onChange={handleChange} />
-      <div className="mt-5 pt-4 border-t border-gray-200 flex items-center gap-3">
-        {(error || releaseError) && <span className="text-[0.78rem] text-red-600">{error ?? releaseError}</span>}
+    <ExpansionChrome
+      title={title}
+      subtitle={subtitle}
+      onClose={onClose}
+      headerAction={
         <button
           onClick={() => setConfirmingRelease(true)}
           disabled={releasing}
-          className="ml-auto px-5 py-[9px] rounded-full text-sm font-bold border border-gray-300 bg-white text-gray-700 cursor-pointer hover:bg-gray-50 disabled:opacity-50"
+          aria-label={t('review_detail_release_button')}
+          title={t('review_detail_release_button')}
+          className="bg-transparent border-none text-gray-600 hover:text-[var(--cs-primary)] transition-colors duration-200 cursor-pointer p-1 disabled:opacity-50"
         >
-          {t('review_detail_release_button')}
+          <TrashIcon />
         </button>
-        <button
-          onClick={onAccept}
-          disabled={accepting}
-          className="px-5 py-[9px] rounded-full text-sm font-bold border-none bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
-        >
-          {t('review_detail_accept_button')}
-        </button>
-      </div>
+      }
+    >
+      <ReviewFieldForm model={modelQuery.data} document={currentDocument} onChange={handleChange} />
+      {releaseError && <p className="mt-3 text-[0.78rem] text-red-600">{releaseError}</p>}
       {confirmingRelease && (
         <ConfirmDialog
           title={t('review_detail_release_confirm_title')}

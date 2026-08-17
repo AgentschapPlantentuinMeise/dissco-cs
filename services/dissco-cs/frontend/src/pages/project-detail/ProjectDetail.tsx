@@ -46,17 +46,6 @@ export const ProjectDetail: React.FC = () => {
   };
 
 
-  const { data: notStartedCollection } = useQuery(
-    ['collection', project?.collection_id],
-    () =>
-      madocClient.getSiteCollection(project!.collection_id, {
-        type: 'manifest',
-        project_id: project!.slug,
-        hide_status: '1,2,3',
-      }),
-    { enabled: !!project }
-  );
-
   // "Kies zelf waar je aan wilt starten" verbergt manifesten met status 1/2/3 zodat twee
   // gebruikers hetzelfde manifest niet tegelijk kunnen claimen (zie docs/MANIFEST-CLAIMS.md) —
   // maar dat verbergt ook de eigen opgeslagen taken (status 1) van de ingelogde gebruiker voor
@@ -119,9 +108,8 @@ export const ProjectDetail: React.FC = () => {
   const totalTasks = progress?.totalTasks || 0;
 
   const imageUrl = project.placeholderImage || null;
-  const manifests = notStartedCollection?.collection?.items ?? [];
-  const totalManifests = notStartedCollection?.collection?.itemCount ?? 0;
-  const allTasksTaken = notStartedCollection !== undefined && manifests.length === 0 && totalManifests > 0;
+  const manifests = progress?.availableManifests ?? [];
+  const allTasksTaken = progress?.allTasksTaken ?? false;
 
   return (
     <CsPage>

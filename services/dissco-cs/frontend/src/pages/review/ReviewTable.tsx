@@ -141,7 +141,7 @@ export function ReviewTable({
                 </td>
               </tr>
               {renderRowExpansion && isOpen && (
-                <tr>
+                <tr data-expansion-row-id={row.id}>
                   <td colSpan={8} className="p-0">
                     {renderRowExpansion(row)}
                   </td>
