@@ -35,3 +35,4 @@ docs/deploy-dev-server.md
 # kopieën zijn overbodig en raken meteen verouderd.
 services/dissco-cs/api/dist
 services/dissco-cs/frontend/dist
+TODO.md
