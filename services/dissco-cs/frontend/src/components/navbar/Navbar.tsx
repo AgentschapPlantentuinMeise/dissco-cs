@@ -260,7 +260,25 @@ export const Navbar: React.FC = () => {
                   className="bg-transparent border-none cursor-pointer text-gray-600 font-medium text-base flex items-center gap-1 p-0 hover:text-[var(--cs-primary)] transition-colors duration-200 max-[768px]:py-[10px] max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:w-full"
                   {...buttonProps}
                 >
-                  <PersonIcon style={{ fontSize: '1.2em', fill: 'currentColor', flexShrink: 0 }} />
+                  <span className="relative inline-flex">
+                    <PersonIcon style={{ fontSize: '1.2em', fill: 'currentColor', flexShrink: 0 }} />
+                    {feedbackUnreadCount > 0 && (
+                      <span
+                        className="absolute -top-0.5 -right-0.5 flex w-[9px] h-[9px]"
+                        role="status"
+                        aria-label={t('nav_feedback_notification')}
+                      >
+                        <span
+                          className="motion-safe:animate-ping absolute inline-flex w-full h-full rounded-full opacity-75"
+                          style={{ background: 'var(--cs-tertiary)' }}
+                        />
+                        <span
+                          className="relative inline-flex w-[9px] h-[9px] rounded-full border border-white"
+                          style={{ background: 'var(--cs-tertiary)' }}
+                        />
+                      </span>
+                    )}
+                  </span>
                   {user.name} ▾
                 </button>
                 <ul

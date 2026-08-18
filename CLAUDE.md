@@ -78,14 +78,35 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## 5. TypeScript Practice
+
+- Do prefer explicit interfaces/types for domain entities
+- Do use discriminated unions for complex states
+- Do use `type` for unions and simple aliases
+- Do use `interface` for object shapes and classes
+- Do avoid `any` type (use `unknown` if type is truly unknown)
+- Don't use implicit types or `any`
+
+## 6. React & Hooks Best Practices
+
+- Do keep hook signatures focused on a single domain
+- Do use `React.memo()` for expensive components
+- Do use `useMemo()` and `useCallback()` for expensive calculations
+- Do expose imperative handlers via callbacks rather than mutating shared state
+- Do memoize expensive computations to align with performance expectations
+- Do prefer composition over prop drilling
+- Don't mutate state directly
+- Don't store derived values in state (calculate on render instead)
+
 Ignore TS-fouten nodemodules is not installed in this project
 
 Keep in mind that the structure en code we provide is in a open source context 
 
 ## Rules for my fork: Surgical Changes
-- **Touch only what you must:** Wijzig alleen de specifieke bestanden die direct nodig zijn voor jouw aftakking. Laat upstream code intact.
-- **Geen upstream refactoring:** Ruim geen oude code, comments of 'dead code' op in originele upstream bestanden.
-- **Isoleren van features:** Probeer nieuwe features in een aparte map (bijv. `/my-fork-additions`) te bouwen in plaats van bestaande bestanden te overschrijven.
+- **Scope:** "Upstream" in deze sectie betekent uitsluitend `services/madoc-ts` (Digirati's Madoc-code). Deze surgical/no-refactor-regels gelden NIET voor `services/dissco-cs` — dat is onze eigen, custom service. Daar geldt gewoon: doe wat de user vraagt, geen extra terughoudendheid.
+- **Touch only what you must:** Wijzig alleen de specifieke bestanden die direct nodig zijn voor jouw aftakking. Laat upstream (`services/madoc-ts`) code intact.
+- **Geen upstream refactoring:** Ruim geen oude code, comments of 'dead code' op in originele upstream (`services/madoc-ts`) bestanden.
+- **Isoleren van features:** Probeer nieuwe Madoc-features in een aparte map te bouwen in plaats van bestaande `services/madoc-ts`-bestanden te overschrijven — `services/dissco-cs` is al die aparte map.
 
 
 # Claude Code Richtlijnen

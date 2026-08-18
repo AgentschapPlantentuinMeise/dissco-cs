@@ -136,6 +136,7 @@
   "dashboard_feedback_reply_send": "Envoyer",
   "dashboard_feedback_from": "De {{name}}",
   "dashboard_feedback_to": "À {{name}}",
+  "nav_feedback_notification": "Vous avez un nouveau retour",
   "nav_my_tasks": "Mes tâches",
   "nav_dashboard": "Tableau de bord",
   "nav_saved_tasks": "Tâches sauvegardées",

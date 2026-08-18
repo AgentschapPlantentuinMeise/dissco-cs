@@ -137,6 +137,7 @@
   "dashboard_feedback_reply_send": "Send",
   "dashboard_feedback_from": "From {{name}}",
   "dashboard_feedback_to": "To {{name}}",
+  "nav_feedback_notification": "You have new feedback",
   "nav_my_tasks": "My tasks",
   "nav_dashboard": "Dashboard",
   "nav_saved_tasks": "Saved tasks",

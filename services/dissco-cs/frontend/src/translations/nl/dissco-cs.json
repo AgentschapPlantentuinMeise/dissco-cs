@@ -136,6 +136,7 @@
   "dashboard_feedback_reply_send": "Versturen",
   "dashboard_feedback_from": "Van {{name}}",
   "dashboard_feedback_to": "Naar {{name}}",
+  "nav_feedback_notification": "Je hebt nieuwe feedback",
   "nav_my_tasks": "Mijn taken",
   "nav_dashboard": "Dashboard",
   "nav_saved_tasks": "Opgeslagen taken",
