@@ -211,7 +211,7 @@ export const ReviewTasks: React.FC = () => {
       {c.feedbackTarget && (
         <ReviewFeedbackModal
           target={c.feedbackTarget}
-          onSend={body => void c.sendFeedback(body)}
+          onSend={(subject, body) => void c.sendFeedback(subject, body)}
           onClose={c.closeFeedbackTarget}
           sending={c.sendingFeedback}
           error={c.feedbackError}

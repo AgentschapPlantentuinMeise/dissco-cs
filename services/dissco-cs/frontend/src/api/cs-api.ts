@@ -203,12 +203,6 @@ export const reviewApi = {
   isReviewer: () => csFetch<{ isReviewer: boolean }>('/review/is-reviewer'),
 };
 
-export type FeedbackTaskRef = {
-  originalTaskId: string;
-  subjectLabel: Record<string, string[]> | string;
-  projectSlug: string | null;
-};
-
 export type FeedbackThreadRole = 'recipient' | 'reviewer';
 
 export type FeedbackThread = {
@@ -218,7 +212,7 @@ export type FeedbackThread = {
   reviewer_name: string;
   recipient_user_id: number;
   recipient_name: string;
-  tasks: FeedbackTaskRef[];
+  subject: string;
   created_at: string;
   last_activity: string;
 };
@@ -242,7 +236,7 @@ export type FeedbackMessage = {
 export const reviewFeedbackApi = {
   listThreads: () => csFetch<{ threads: FeedbackThreadWithMeta[] }>('/review-feedback/threads'),
 
-  createThread: (data: { recipientUserId: number; recipientName: string; body: string; tasks: FeedbackTaskRef[] }) =>
+  createThread: (data: { recipientUserId: number; recipientName: string; subject: string; body: string }) =>
     csFetch<FeedbackThread>('/review-feedback/threads', { method: 'POST', body: JSON.stringify(data) }),
 
   getThread: (threadId: string) =>
@@ -253,6 +247,9 @@ export const reviewFeedbackApi = {
       method: 'POST',
       body: JSON.stringify({ body }),
     }),
+
+  deleteThread: (threadId: string) =>
+    csFetch<void>(`/review-feedback/threads/${threadId}`, { method: 'DELETE' }),
 };
 
 export const contactApi = {

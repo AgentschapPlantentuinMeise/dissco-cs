@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { FeedbackTaskRef, reviewApi, reviewFeedbackApi, ReviewTaskRow } from '../../api/cs-api';
+import { reviewApi, reviewFeedbackApi, ReviewTaskRow } from '../../api/cs-api';
 import { madocClient, ApiError } from '../../api/madoc-client';
 import { localeText } from '../../utility/locale-text';
 import { useUser } from '../../hooks/use-current-user';
@@ -11,16 +11,14 @@ export type SortKey = 'project' | 'subject' | 'status' | 'submitter' | 'reviewer
 export type SortDir = 'asc' | 'desc';
 export type BulkResult = { id: string; label: string; success: boolean; error?: string };
 
-// Interne variant van FeedbackTaskRef die de indiener nog meedraagt -- nodig om, vóór er één
-// ontvanger gekozen is, te kunnen bepalen of een selectie/batch wel van één indiener is.
-type BatchTaskRef = FeedbackTaskRef & { submitterId?: number; submitterName?: string };
-export type FeedbackComposeTarget = { submitterId: number; submitterName: string; tasks: FeedbackTaskRef[] };
+// Draagt enkel nog de indiener mee -- de taken zelf worden niet meer gekoppeld aan de
+// feedback-thread (zie sendFeedback), enkel gebruikt om vóór het kiezen van een ontvanger te
+// bepalen of een selectie/batch wel van één indiener is.
+type BatchSubmitterRef = { submitterId?: number; submitterName?: string };
+export type FeedbackComposeTarget = { submitterId: number; submitterName: string };
 
-function taskRefFromRow(row: ReviewTaskRow): BatchTaskRef {
+function submitterRefFromRow(row: ReviewTaskRow): BatchSubmitterRef {
   return {
-    originalTaskId: row.originalTaskId ?? row.id,
-    subjectLabel: row.subject.label ?? row.id,
-    projectSlug: row.project.slug ?? null,
     submitterId: row.submitterId,
     submitterName: row.submitter,
   };
@@ -28,12 +26,12 @@ function taskRefFromRow(row: ReviewTaskRow): BatchTaskRef {
 
 // Geeft de gedeelde indiener terug als élke taak in de lijst dezelfde submitterId heeft, anders
 // null -- gebruikt om zowel de bulk-selectie als de "laatste batch" na een accept te bewaken.
-function singleSubmitter(tasks: BatchTaskRef[]): { id: number; name: string } | null {
-  if (tasks.length === 0) return null;
-  const ids = new Set(tasks.map(task => task.submitterId).filter((id): id is number => id !== undefined));
+function singleSubmitter(refs: BatchSubmitterRef[]): { id: number; name: string } | null {
+  if (refs.length === 0) return null;
+  const ids = new Set(refs.map(ref => ref.submitterId).filter((id): id is number => id !== undefined));
   if (ids.size !== 1) return null;
   const id = Array.from(ids)[0];
-  const match = tasks.find(task => task.submitterId === id && task.submitterName);
+  const match = refs.find(ref => ref.submitterId === id && ref.submitterName);
   return match?.submitterName ? { id, name: match.submitterName } : null;
 }
 
@@ -66,7 +64,7 @@ export function useReviewTasksController() {
   // de single-slot "laatste verwerkte batch" die na een accept overleeft zolang er niet opnieuw
   // geaccepteerd wordt -- zie ReviewTasks.tsx voor de sticky balk die dit toont.
   const [feedbackTarget, setFeedbackTarget] = useState<FeedbackComposeTarget | null>(null);
-  const [lastBatchTasks, setLastBatchTasks] = useState<BatchTaskRef[] | null>(null);
+  const [lastBatchTasks, setLastBatchTasks] = useState<BatchSubmitterRef[] | null>(null);
   const [sendingFeedback, setSendingFeedback] = useState(false);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
@@ -149,7 +147,7 @@ export function useReviewTasksController() {
   // versturen mag enkel als de hele selectie van dezelfde indiener is; bulk-accepteren zelf blijft
   // hier los van staan.
   const selectedRowsForFeedback = rows.filter(row => selectedIds.has(row.id));
-  const bulkFeedbackSubmitter = singleSubmitter(selectedRowsForFeedback.map(taskRefFromRow));
+  const bulkFeedbackSubmitter = singleSubmitter(selectedRowsForFeedback.map(submitterRefFromRow));
   const canSendBulkFeedback = selectedIds.size > 0 && bulkFeedbackSubmitter !== null;
 
   const lastBatchSubmitter = lastBatchTasks ? singleSubmitter(lastBatchTasks) : null;
@@ -221,7 +219,7 @@ export function useReviewTasksController() {
     setBulkProgress({ current: 0, total: ids.length });
 
     const results: BulkResult[] = [];
-    const acceptedTasks: BatchTaskRef[] = [];
+    const acceptedTasks: BatchSubmitterRef[] = [];
     for (const id of ids) {
       const row = rows.find(r => r.id === id);
       const label = row ? localeText(row.subject.label, i18n.language) || row.id : id;
@@ -235,7 +233,7 @@ export function useReviewTasksController() {
       try {
         await acceptOneRow(row, editedDocuments[id]);
         results.push({ id, label, success: true });
-        acceptedTasks.push(taskRefFromRow(row));
+        acceptedTasks.push(submitterRefFromRow(row));
       } catch (err) {
         const message = err instanceof ApiError ? err.message : t('review_bulk_error_generic');
         results.push({ id, label, success: false, error: message });
@@ -295,7 +293,6 @@ export function useReviewTasksController() {
     setFeedbackTarget({
       submitterId: bulkFeedbackSubmitter.id,
       submitterName: bulkFeedbackSubmitter.name,
-      tasks: selectedRowsForFeedback.map(taskRefFromRow),
     });
   };
 
@@ -305,7 +302,6 @@ export function useReviewTasksController() {
     setFeedbackTarget({
       submitterId: lastBatchSubmitter.id,
       submitterName: lastBatchSubmitter.name,
-      tasks: lastBatchTasks,
     });
   };
 
@@ -316,7 +312,7 @@ export function useReviewTasksController() {
 
   const dismissLastBatch = () => setLastBatchTasks(null);
 
-  const sendFeedback = async (body: string) => {
+  const sendFeedback = async (subject: string, body: string) => {
     if (!feedbackTarget) return;
     setSendingFeedback(true);
     setFeedbackError(null);
@@ -324,8 +320,8 @@ export function useReviewTasksController() {
       await reviewFeedbackApi.createThread({
         recipientUserId: feedbackTarget.submitterId,
         recipientName: feedbackTarget.submitterName,
+        subject,
         body,
-        tasks: feedbackTarget.tasks,
       });
       setFeedbackTarget(null);
       window.dispatchEvent(new Event('review_feedback_updated'));

@@ -1,11 +1,5 @@
 import { Pool } from 'pg';
 
-export type FeedbackTaskRef = {
-  originalTaskId: string;
-  subjectLabel: unknown;
-  projectSlug: string | null;
-};
-
 export type FeedbackThreadRole = 'recipient' | 'reviewer';
 
 export type FeedbackThread = {
@@ -15,9 +9,11 @@ export type FeedbackThread = {
   reviewer_name: string;
   recipient_user_id: number;
   recipient_name: string;
-  tasks: FeedbackTaskRef[];
+  subject: string;
   created_at: Date;
   last_activity: Date;
+  reviewer_hidden_at: Date | null;
+  recipient_hidden_at: Date | null;
 };
 
 export type FeedbackThreadWithMeta = FeedbackThread & {
@@ -55,7 +51,10 @@ export class ReviewFeedbackRepository {
         COUNT(m.id) FILTER (WHERE m.author_user_id != $2 AND m.read_at IS NULL)::int AS unread_count
       FROM ${this.table('review_feedback_threads')} t
       LEFT JOIN ${this.table('review_feedback_messages')} m ON m.thread_id = t.id
-      WHERE t.site_id = $1 AND (t.recipient_user_id = $2 OR t.reviewer_user_id = $2)
+      WHERE t.site_id = $1 AND (
+        (t.recipient_user_id = $2 AND t.recipient_hidden_at IS NULL)
+        OR (t.reviewer_user_id = $2 AND t.reviewer_hidden_at IS NULL)
+      )
       GROUP BY t.id
       ORDER BY t.last_activity DESC
     `,
@@ -71,8 +70,8 @@ export class ReviewFeedbackRepository {
     reviewerName: string;
     recipientUserId: number;
     recipientName: string;
+    subject: string;
     body: string;
-    tasks: FeedbackTaskRef[];
   }): Promise<FeedbackThread> {
     const client = await this.pool.connect();
 
@@ -82,7 +81,7 @@ export class ReviewFeedbackRepository {
       const thread = await client.query<FeedbackThread>(
         `
         INSERT INTO ${this.table('review_feedback_threads')} (
-          site_id, reviewer_user_id, reviewer_name, recipient_user_id, recipient_name, tasks
+          site_id, reviewer_user_id, reviewer_name, recipient_user_id, recipient_name, subject
         ) VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
       `,
@@ -92,7 +91,7 @@ export class ReviewFeedbackRepository {
           input.reviewerName,
           input.recipientUserId,
           input.recipientName,
-          JSON.stringify(input.tasks),
+          input.subject,
         ]
       );
 
@@ -180,13 +179,74 @@ export class ReviewFeedbackRepository {
         [input.threadId, input.authorUserId, input.authorName, input.body]
       );
 
+      // Een nieuwe reply haalt de thread terug in de lijst van de andere deelnemer als die 'm
+      // eerder verborgen had (zie deleteThreadForUser) -- enkel de kolom van de niet-auteur wordt
+      // gereset, de eigen kolom van de auteur (die zou sowieso al leeg moeten zijn) blijft ongemoeid.
       await client.query(
-        `UPDATE ${this.table('review_feedback_threads')} SET last_activity = NOW() WHERE id = $1`,
-        [input.threadId]
+        `
+        UPDATE ${this.table('review_feedback_threads')}
+        SET last_activity = NOW(),
+          reviewer_hidden_at = CASE WHEN reviewer_user_id != $2 THEN NULL ELSE reviewer_hidden_at END,
+          recipient_hidden_at = CASE WHEN recipient_user_id != $2 THEN NULL ELSE recipient_hidden_at END
+        WHERE id = $1
+      `,
+        [input.threadId, input.authorUserId]
       );
 
       await client.query('COMMIT');
       return message.rows[0];
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  // "Verwijderen" is per deelnemer: de eerste keer verbergt enkel je eigen kant (de ander blijft
+  // de thread gewoon zien en kan nog antwoorden). Had de andere deelnemer 'm al verborgen, dan
+  // willen nu beide partijen 'm weg -- dan pas een echte DELETE (cascadeert naar de berichten).
+  // SELECT ... FOR UPDATE voorkomt dat twee gelijktijdige deletes elkaars hidden-kolom missen.
+  async deleteThreadForUser(siteId: number, threadId: number, userId: number): Promise<'hidden' | 'deleted' | null> {
+    const client = await this.pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      const result = await client.query<{
+        reviewer_user_id: number;
+        recipient_user_id: number;
+        reviewer_hidden_at: Date | null;
+        recipient_hidden_at: Date | null;
+      }>(
+        `
+        SELECT reviewer_user_id, recipient_user_id, reviewer_hidden_at, recipient_hidden_at
+        FROM ${this.table('review_feedback_threads')}
+        WHERE id = $1 AND site_id = $2 AND (recipient_user_id = $3 OR reviewer_user_id = $3)
+        FOR UPDATE
+      `,
+        [threadId, siteId, userId]
+      );
+
+      const thread = result.rows[0];
+      if (!thread) {
+        await client.query('ROLLBACK');
+        return null;
+      }
+
+      const isReviewer = thread.reviewer_user_id === userId;
+      const otherAlreadyHidden = isReviewer ? thread.recipient_hidden_at !== null : thread.reviewer_hidden_at !== null;
+
+      if (otherAlreadyHidden) {
+        await client.query(`DELETE FROM ${this.table('review_feedback_threads')} WHERE id = $1`, [threadId]);
+        await client.query('COMMIT');
+        return 'deleted';
+      }
+
+      const column = isReviewer ? 'reviewer_hidden_at' : 'recipient_hidden_at';
+      await client.query(`UPDATE ${this.table('review_feedback_threads')} SET ${column} = NOW() WHERE id = $1`, [threadId]);
+      await client.query('COMMIT');
+      return 'hidden';
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;

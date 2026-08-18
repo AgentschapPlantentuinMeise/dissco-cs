@@ -35,7 +35,7 @@ export function reviewFeedbackRoutes(repository: DisscoCSRepository): Hono {
     const payload = (await c.req.json().catch(() => null)) as CreateFeedbackThreadBody | null;
     const parsed = parseCreateFeedbackThreadBody(payload);
     if (!parsed) {
-      return c.text('recipientUserId, recipientName, body and a non-empty tasks array are required', 400);
+      return c.text('recipientUserId, recipientName, subject and body are required', 400);
     }
 
     const thread = await repository.reviewFeedback.createThread({
@@ -44,8 +44,8 @@ export function reviewFeedbackRoutes(repository: DisscoCSRepository): Hono {
       reviewerName: identity.name,
       recipientUserId: parsed.recipientUserId,
       recipientName: parsed.recipientName,
+      subject: parsed.subject,
       body: parsed.body,
-      tasks: parsed.tasks,
     });
 
     return c.json(thread, 201);
@@ -101,6 +101,25 @@ export function reviewFeedbackRoutes(repository: DisscoCSRepository): Hono {
 
     await repository.reviewFeedback.markThreadSeen(identity.userId, threadId);
     return c.json(reply, 201);
+  });
+
+  app.delete('/threads/:id', async c => {
+    const identity = requestMadocUserIdentity(c);
+    if (!identity) {
+      return c.text('Unauthorized', 401);
+    }
+
+    const threadId = Number(c.req.param('id'));
+    if (!Number.isInteger(threadId)) {
+      return c.notFound();
+    }
+
+    const result = await repository.reviewFeedback.deleteThreadForUser(identity.siteId, threadId, identity.userId);
+    if (!result) {
+      return c.notFound();
+    }
+
+    return c.body(null, 204);
   });
 
   return app;

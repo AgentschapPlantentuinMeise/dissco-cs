@@ -12,9 +12,10 @@ import { localeText } from '../../utility/locale-text';
 import { CsPage } from '../../components/CsPage';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { TrashIcon } from '../../icons/TrashIcon';
 import { StatBanner } from '../../components/StatBanner';
 import { TaskTable, tabBtnClass } from '../../components/TaskTable';
-import { forumApi, ForumTopicWithReplyCount, reviewFeedbackApi, FeedbackTaskRef, FeedbackThreadWithMeta } from '../../api/cs-api';
+import { forumApi, ForumTopicWithReplyCount, reviewFeedbackApi, FeedbackThreadWithMeta } from '../../api/cs-api';
 
 
 
@@ -42,35 +43,6 @@ function DonutChart({ segments }: { segments: ChartSegment[] }) {
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString('nl-BE', { dateStyle: 'short', timeStyle: 'short' });
-
-function FeedbackTaskChips({ tasks, language }: { tasks: FeedbackTaskRef[]; language: string }) {
-  const { t } = useTranslation('dissco-cs');
-  const [expanded, setExpanded] = useState(false);
-  if (tasks.length === 0) return null;
-
-  return (
-    <div className="mt-2">
-      <button
-        onClick={e => {
-          e.stopPropagation();
-          setExpanded(v => !v);
-        }}
-        className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--cs-primary)] bg-gray-100 rounded-full px-2.5 py-1 border-none cursor-pointer"
-      >
-        {t('dashboard_feedback_task_count', { count: tasks.length })}
-      </button>
-      {expanded && (
-        <ul className="list-none m-0 mt-2 pl-0 flex flex-col gap-1">
-          {tasks.map(task => (
-            <li key={task.originalTaskId} className="text-xs text-gray-600">
-              {localeText(task.subjectLabel, language) || task.originalTaskId}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
 
 function FeedbackThreadDetail({ threadId }: { threadId: string }) {
   const { t, i18n } = useTranslation('dissco-cs');
@@ -147,27 +119,59 @@ function FeedbackThreadRow({
   language: string;
 }) {
   const { t } = useTranslation('dissco-cs');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
   const otherName = thread.role === 'recipient' ? thread.reviewer_name : thread.recipient_name;
   const directionLabel =
     thread.role === 'recipient'
       ? t('dashboard_feedback_from', { name: otherName })
       : t('dashboard_feedback_to', { name: otherName });
 
+  const [deleteThread] = useMutation(() => reviewFeedbackApi.deleteThread(thread.id), {
+    onSuccess: () => {
+      queryCache.invalidateQueries('feedback-threads');
+      window.dispatchEvent(new Event('review_feedback_updated'));
+    },
+  });
+
   return (
     <li className="border-b border-gray-200 last:border-b-0 py-3">
-      <button onClick={onToggle} className="w-full text-left bg-transparent border-none cursor-pointer p-0">
-        <div className="flex items-center justify-between gap-3">
-          <span className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-            {thread.unread_count > 0 && (
-              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: 'var(--cs-tertiary)' }} />
-            )}
-            {directionLabel}
-          </span>
-          <span className="text-xs text-gray-400 flex-shrink-0">{new Date(thread.last_activity).toLocaleString(language)}</span>
-        </div>
-        <FeedbackTaskChips tasks={thread.tasks} language={language} />
-      </button>
+      <div className="flex items-start gap-2">
+        <button onClick={onToggle} className="flex-1 min-w-0 text-left bg-transparent border-none cursor-pointer p-0">
+          <div className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+              {thread.unread_count > 0 && (
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: 'var(--cs-tertiary)' }} />
+              )}
+              {thread.subject}
+            </span>
+            <span className="text-xs text-gray-400 flex-shrink-0">{new Date(thread.last_activity).toLocaleString(language)}</span>
+          </div>
+          <div className="text-xs text-gray-500 mt-0.5">{directionLabel}</div>
+        </button>
+        <button
+          onClick={() => setConfirmingDelete(true)}
+          aria-label={t('dashboard_feedback_delete_label')}
+          title={t('dashboard_feedback_delete_label')}
+          className="flex-shrink-0 bg-transparent border-none text-gray-600 cursor-pointer hover:text-[var(--cs-primary)] transition-colors duration-200 p-1"
+        >
+          <TrashIcon />
+        </button>
+      </div>
       {isOpen && <FeedbackThreadDetail threadId={thread.id} />}
+      {confirmingDelete && (
+        <ConfirmDialog
+          title={t('dashboard_feedback_delete_confirm_title')}
+          message={t('dashboard_feedback_delete_confirm')}
+          confirmLabel={t('common_delete')}
+          cancelLabel={t('common_cancel')}
+          onConfirm={() => {
+            setConfirmingDelete(false);
+            void deleteThread();
+          }}
+          onCancel={() => setConfirmingDelete(false)}
+        />
+      )}
     </li>
   );
 }

@@ -19,7 +19,6 @@ export type {
 } from './repositories/project-manuals.repository.js';
 export type {
   FeedbackMessage,
-  FeedbackTaskRef,
   FeedbackThread,
   FeedbackThreadRole,
   FeedbackThreadWithMeta,
@@ -280,9 +279,11 @@ export class DisscoCSRepository {
           reviewer_name TEXT NOT NULL,
           recipient_user_id INTEGER NOT NULL,
           recipient_name TEXT NOT NULL,
-          tasks JSONB NOT NULL DEFAULT '[]'::jsonb,
+          subject TEXT NOT NULL,
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          last_activity TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          last_activity TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          reviewer_hidden_at TIMESTAMPTZ,
+          recipient_hidden_at TIMESTAMPTZ
         )
       `);
 

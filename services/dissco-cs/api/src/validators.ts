@@ -1,6 +1,5 @@
 import { ANNOUNCEMENT_TARGET_TYPES, AnnouncementTargetType } from './repositories/announcements.repository.js';
 import { InstitutionInput } from './repositories/institutions.repository.js';
-import { FeedbackTaskRef } from './repositories/review-feedback.repository.js';
 import {
   SITE_PAGE_CONTENT_KEYS,
   SITE_PAGE_KEYS,
@@ -15,8 +14,8 @@ export type CreateReplyBody = { body?: unknown };
 export type CreateFeedbackThreadBody = {
   recipientUserId?: unknown;
   recipientName?: unknown;
+  subject?: unknown;
   body?: unknown;
-  tasks?: unknown;
 };
 export type CreateFeedbackReplyBody = { body?: unknown };
 export type SetPageActiveBody = { isActive?: unknown };
@@ -297,31 +296,16 @@ export function parseAnnouncementBody(
   };
 }
 
-function isFeedbackTaskRefArray(value: unknown): value is FeedbackTaskRef[] {
-  if (!Array.isArray(value) || value.length === 0) {
-    return false;
-  }
-
-  return value.every(
-    item =>
-      typeof item === 'object' &&
-      item !== null &&
-      isNonEmptyString((item as { originalTaskId?: unknown }).originalTaskId) &&
-      (item as { subjectLabel?: unknown }).subjectLabel !== undefined &&
-      isOptionalString((item as { projectSlug?: unknown }).projectSlug)
-  );
-}
-
 export function parseCreateFeedbackThreadBody(
   payload: CreateFeedbackThreadBody | null
-): { recipientUserId: number; recipientName: string; body: string; tasks: FeedbackTaskRef[] } | null {
+): { recipientUserId: number; recipientName: string; subject: string; body: string } | null {
   if (
     !payload ||
     typeof payload.recipientUserId !== 'number' ||
     !Number.isInteger(payload.recipientUserId) ||
     !isNonEmptyString(payload.recipientName) ||
-    !isNonEmptyString(payload.body) ||
-    !isFeedbackTaskRefArray(payload.tasks)
+    !isNonEmptyString(payload.subject) ||
+    !isNonEmptyString(payload.body)
   ) {
     return null;
   }
@@ -329,7 +313,7 @@ export function parseCreateFeedbackThreadBody(
   return {
     recipientUserId: payload.recipientUserId,
     recipientName: payload.recipientName,
+    subject: payload.subject,
     body: payload.body,
-    tasks: payload.tasks as FeedbackTaskRef[],
   };
 }
