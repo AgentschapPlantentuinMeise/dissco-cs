@@ -13,6 +13,7 @@ import { About } from './pages/about/About';
 import { Help } from './pages/help/Help';
 import { Institutions } from './pages/institutions/Institutions';
 import { InstitutionDetail } from './pages/institutions/InstitutionDetail';
+import { HonourBoard } from './pages/honour-board/HonourBoard';
 import { SearchResults } from './pages/search/SearchResults';
 import { Contact } from './pages/contact/Contact';
 import { UserDashboard } from './pages/user-dashboard/UserDashboard';
@@ -50,6 +51,7 @@ export const App: React.FC = () => {
           <Route path="/help" element={<PageGate pageKey="help"><Help /></PageGate>} />
           <Route path="/institutions" element={<PageGate pageKey="institutions"><Institutions /></PageGate>} />
           <Route path="/institutions/:slug" element={<PageGate pageKey="institutions"><InstitutionDetail /></PageGate>} />
+          <Route path="/honour-board" element={<HonourBoard />} />
           <Route path="/messageboard" element={<PageGate pageKey="forum"><AuthGate><MessageBoard /></AuthGate></PageGate>} />
           <Route path="/contact" element={<PageGate pageKey="contact"><Contact /></PageGate>} />
           <Route path="/my-tasks" element={<AuthGate><UserDashboard /></AuthGate>} />

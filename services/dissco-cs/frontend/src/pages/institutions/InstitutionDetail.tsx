@@ -10,6 +10,7 @@ import { PhoneIcon } from '../../icons/PhoneIcon';
 import { GlobeIcon } from '../../icons/GlobeIcon';
 import { institutionsApi, Institution } from '../../api/cs-api';
 import { StatBanner } from '../../components/StatBanner';
+import { MockBadge } from '../../components/MockBadge';
 import { useProjectList } from '../../hooks/use-project-list';
 import { ProjectCard } from '../../components/projectcard/ProjectCard';
 
@@ -30,12 +31,6 @@ const mockLeaderboard = [
 ];
 
 const mockVolunteers = 84;
-
-const MockBadge: React.FC<{ label: string }> = ({ label }) => (
-  <span className="inline-block text-[0.65rem] font-semibold uppercase tracking-wide text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
-    {label}
-  </span>
-);
 
 export const InstitutionDetail: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');

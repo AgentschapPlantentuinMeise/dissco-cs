@@ -6,12 +6,20 @@ import { ProjectCard } from '../../components/projectcard/ProjectCard';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
 import { WelcomeModal } from '../../components/WelcomeModal';
 import { ArrowDownIcon } from '../../icons/ArrowDownIcon';
+import { StatBanner } from '../../components/StatBanner';
+import { MockBadge } from '../../components/MockBadge';
+import { HonourBoardSpotlight } from '../../components/honour-board/HonourBoardSpotlight';
 import { disscoCSConfig } from '../../dissco-cs-config';
+
+// Voorbeelddata tot de site-brede statistieken een echte databron hebben (zie docs/STATS-WIDGET.md).
+const EXAMPLE_VOLUNTEERS = 412;
+const EXAMPLE_TASKS_LABEL = '18.640 / 26.900';
 
 export const Homepage: React.FC = () => {
   const [isClient, setIsClient] = useState(false);
   const { data: projectsResponse, status } = useProjectList();
-  const { t } = useTranslation('dissco-cs');
+  const { t, i18n } = useTranslation('dissco-cs');
+  const formatNumber = (n: number) => n.toLocaleString(i18n.language);
 
   useEffect(() => {
     setIsClient(true);
@@ -31,11 +39,14 @@ export const Homepage: React.FC = () => {
       <WelcomeModal />
       <div className="cs-main-wrapper">
 
-        <header
-          className="bg-[var(--cs-primary)] bg-[length:auto_100%] bg-[right_center] bg-no-repeat py-10 text-left text-white relative mt-0"
-          style={{ backgroundImage: `var(--hero-bg, url(${disscoCSConfig.heroBgUrl}))` } as React.CSSProperties}
-        >
-          <div className="cs-container">
+        <header className="bg-[var(--cs-primary)] text-left text-white relative mt-0">
+          <div
+            className="cs-container cs-container--wide relative bg-[length:auto_160%] bg-no-repeat py-8"
+            style={{
+              backgroundImage: `var(--hero-bg, url(${disscoCSConfig.heroBgUrl}))`,
+              backgroundPosition: 'right 0px top -28px',
+            } as React.CSSProperties}
+          >
             <h1 className="text-[32px] font-light leading-tight mb-3 text-white mt-0" dangerouslySetInnerHTML={{ __html: t('hero_title') }} />
             <p className="text-[20px] text-white/90 max-w-[650px] mb-5 leading-[1.5]" dangerouslySetInnerHTML={{ __html: t('hero_lead') }} />
             <div className="flex gap-4 items-center">
@@ -46,32 +57,44 @@ export const Homepage: React.FC = () => {
                 {t('btn_read_more')}
               </button>
             </div>
+            <span className="absolute bottom-0 right-0 opacity-50 text-xs italic text-white">
+              {t('hero_bg_credit', disscoCSConfig.heroBgCredit)}
+            </span>
           </div>
-          <span className="absolute bottom-4 right-4 opacity-50 text-xs italic text-white">
-            {t('hero_bg_credit', disscoCSConfig.heroBgCredit)}
-          </span>
         </header>
 
-        <div className="cs-container">
+        <div className="cs-container cs-container--wide">
           <AnnouncementBanner target="homepage" />
         </div>
 
-        <main className="pt-6 pb-10">
-           <div className="cs-container">
-            {isLoadingList && <p className="text-center py-5">{t('loading_projects')}</p>}
-            {isClient && !isLoadingList && projects.length === 0 && (
-              <p className="text-center py-5">{t('no_projects')}</p>
-            )}
-            <div className="cs-projects-grid">
-              {latestFiveProjects.map((project: any) => (
-                <ProjectCard key={project.id} projectSummaryData={project} />
-              ))}
+        <main className="pt-10 pb-10">
+          <div className="cs-container cs-container--wide grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-x-8">
+            <div className="lg:col-start-1 lg:row-start-1 lg:self-start flex flex-col">
+              <StatBanner
+                stats={[
+                  { value: formatNumber(EXAMPLE_VOLUNTEERS), label: t('institution_stats_volunteers') },
+                  { value: EXAMPLE_TASKS_LABEL, label: t('honour_board_stat_tasks_label') },
+                ]}
+                trailing={<MockBadge label={t('institution_mock_badge')} />}
+              />
+              <div className="mt-8">
+                {isLoadingList && <p className="text-center py-5">{t('loading_projects')}</p>}
+                {isClient && !isLoadingList && projects.length === 0 && (
+                  <p className="text-center py-5">{t('no_projects')}</p>
+                )}
+                <div className="cs-projects-grid cs-projects-grid--compact">
+                  {latestFiveProjects.map((project: any) => (
+                    <ProjectCard key={project.id} projectSummaryData={project} />
+                  ))}
+                </div>
+              </div>
             </div>
+            <HonourBoardSpotlight className="mt-8 lg:mt-6 lg:col-start-2 lg:row-start-1 lg:self-start" />
           </div>
         </main>
 
         <footer className="text-center py-8 text-gray-500 text-sm border-t border-gray-200 bg-white mt-16">
-          <div className="cs-container">
+          <div className="cs-container cs-container--wide">
             <p>{t('footer_text')}</p>
           </div>
         </footer>
