@@ -1,14 +1,10 @@
 import { Hono } from 'hono';
 
 import { MadocUserIdentity, requireUser } from '../jwt.js';
-import {
-  getMadocProjectByRootTaskId,
-  getMadocReviewTasks,
-  getMadocSiteUserRole,
-  getMadocTaskDetail,
-  MadocProjectSummary,
-  ReviewTask,
-} from '../madoc-client.js';
+import { getMadocProjectByRootTaskId, MadocProjectSummary } from '../madoc-client/projects.js';
+import { getMadocTaskDetail } from '../madoc-client/tasks.js';
+import { getMadocReviewTasks, ReviewTask } from '../madoc-client/reviews.js';
+import { getMadocSiteUserRole } from '../madoc-client/users.js';
 
 export type ReviewTaskRow = {
   id: string;

@@ -1,7 +1,9 @@
 import { Hono } from 'hono';
 
 import { requireSiteAdmin } from '../jwt.js';
-import { getMadocCollectionStructure, getMadocProject, getMadocProjectTasks, ProjectDebugTask } from '../madoc-client.js';
+import { getMadocProject } from '../madoc-client/projects.js';
+import { getMadocCollectionStructure } from '../madoc-client/collections.js';
+import { getMadocProjectTasks, ProjectDebugTask } from '../madoc-client/tasks.js';
 
 type MadocProjectSummary = { id: number; collection_id: number; task_id: string };
 type CollectionStructureItem = { id: number; label?: unknown };

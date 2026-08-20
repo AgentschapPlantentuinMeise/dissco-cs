@@ -1,13 +1,9 @@
 import { Hono } from 'hono';
 
 import { resolveSiteId } from '../jwt.js';
-import {
-  getMadocCollectionManifestThumbnails,
-  getMadocCollectionStructure,
-  getMadocProject,
-  getMadocProjectTasks,
-  getMadocTaskStats,
-} from '../madoc-client.js';
+import { getMadocProject } from '../madoc-client/projects.js';
+import { getMadocCollectionManifestThumbnails, getMadocProjectManifestsAndTaskStats } from '../madoc-client/collections.js';
+import { getMadocProjectTasks } from '../madoc-client/tasks.js';
 
 type MadocProjectSummary = {
   id: number;
@@ -44,20 +40,16 @@ export function projectProgressRoutes(): Hono {
     let manifestItems: Array<{ id: number; label: unknown; thumbnail?: string }>;
     let canvasTasks: Awaited<ReturnType<typeof getMadocProjectTasks>>;
     try {
-      const [structure, stats, tasks, thumbnails] = await Promise.all([
-        getMadocCollectionStructure(siteId, project.collection_id),
-        getMadocTaskStats(siteId, project.task_id),
+      const [{ manifestItems: rawManifestItems, taskStats: stats }, tasks, thumbnails] = await Promise.all([
+        getMadocProjectManifestsAndTaskStats(siteId, project.collection_id, project.task_id),
         getMadocProjectTasks(siteId, project.task_id),
         getMadocCollectionManifestThumbnails(siteId, project.collection_id),
       ]);
-      // De structure-endpoint filtert niet op type -- geeft ook geneste sub-collecties terug,
-      // die hier niet aanklikbaar zijn (navigateToFirstCanvas verwacht een manifest-ID).
-      manifestItems = (structure.items as Array<{ id: number; label: unknown; type?: string }>)
-        .filter(item => item.type?.toLowerCase() === 'manifest')
-        .map(item => ({
-          ...item,
-          thumbnail: thumbnails.get(item.id),
-        }));
+      // navigateToFirstCanvas expects a manifest id, hence the manifest filter in the shared helper.
+      manifestItems = rawManifestItems.map(item => ({
+        ...item,
+        thumbnail: thumbnails.get(item.id),
+      }));
       manifestCount = manifestItems.length;
       taskStats = stats;
       canvasTasks = tasks;

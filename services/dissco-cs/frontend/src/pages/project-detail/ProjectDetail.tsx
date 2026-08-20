@@ -82,6 +82,13 @@ export const ProjectDetail: React.FC = () => {
 
   const [startRandom, { isLoading: isStarting }] = useMutation(async () => {
     if (!project) return;
+    if (!user) {
+      // Same clean login redirect as AuthGate (no expired=1) - this is a plain "you need to
+      // log in to start", not a session that actually expired.
+      const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+      navigate(`/login?redirect=${redirect}`);
+      return;
+    }
     try {
       const result = await madocClient.randomlyAssignedManifest(project.slug, {});
       if (result?.manifest) {

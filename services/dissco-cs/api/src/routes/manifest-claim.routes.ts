@@ -1,7 +1,9 @@
 import { Hono } from 'hono';
 
 import { resolveSiteId, requestMadocUserIdentity } from '../jwt.js';
-import { getMadocProject, getMadocTasksBySubjectAndType, resyncManifestTaskCounter } from '../madoc-client.js';
+import { getMadocProject } from '../madoc-client/projects.js';
+import { getMadocTasksBySubjectAndType } from '../madoc-client/tasks.js';
+import { resyncManifestTaskCounter } from '../madoc-client/stuck-tasks.js';
 
 type MadocProjectSummary = { id: number; task_id: string };
 

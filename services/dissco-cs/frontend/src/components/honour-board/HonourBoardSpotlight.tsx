@@ -12,7 +12,7 @@ interface SpotlightEntry {
   count: number;
 }
 
-// Voorbeelddata — er bestaat nog geen backend die dit aanlevert, zie docs/STATS-WIDGET.md.
+// Example data — no backend provides this yet, see docs/STATS-WIDGET.md.
 const DEFAULT_SPOTLIGHT: SpotlightEntry[] = [
   { period: 'today', name: 'Dirk P.', count: 9 },
   { period: 'week', name: 'Ann V.', count: 140 },
@@ -34,12 +34,7 @@ const PERIOD_LINE_KEY: Record<SpotlightPeriod, string> = {
   legend: 'honour_board_line_legend',
 };
 
-/**
- * "Uitgelicht"-kolom: bovenaan één uitgelichte persoon (wisselt per uur, geen
- * client-side animatie), daaronder de volledige lijst met alle 4 periodes als
- * gedempte referentie — zelfde grammatica als het scorebord op de
- * instituutdetailpagina. Cijfers zijn voorbeelddata, zie docs/STATS-WIDGET.md.
- */
+// "Featured" column: one hourly-rotating featured person on top, full 4-period list below.
 export const HonourBoardSpotlight: React.FC<{
   spotlight?: SpotlightEntry[];
   className?: string;

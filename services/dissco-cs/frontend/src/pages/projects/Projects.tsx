@@ -5,15 +5,12 @@ import { CsPage } from '../../components/CsPage';
 import { ProjectCard } from '../../components/projectcard/ProjectCard';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
 import { StatBanner } from '../../components/StatBanner';
-import { MockBadge } from '../../components/MockBadge';
 import { HonourBoardSpotlight } from '../../components/honour-board/HonourBoardSpotlight';
-
-// Voorbeelddata tot de site-brede statistieken een echte databron hebben (zie docs/STATS-WIDGET.md).
-const EXAMPLE_VOLUNTEERS = 412;
-const EXAMPLE_TASKS_LABEL = '18.640 / 26.900';
+import { useSiteStats } from '../../hooks/use-site-stats';
 
 export const Projects: React.FC = () => {
   const { data: projectsResponse, status } = useProjectList();
+  const { data: siteStats } = useSiteStats();
   const { t, i18n } = useTranslation('dissco-cs');
   const allProjects = projectsResponse?.projects || [];
   const projects = allProjects.filter((p: any) => p.status === 1);
@@ -37,10 +34,12 @@ export const Projects: React.FC = () => {
           <div className="mt-8 lg:mt-0 lg:col-start-1 lg:row-start-3 lg:self-start flex flex-col">
             <StatBanner
               stats={[
-                { value: formatNumber(EXAMPLE_VOLUNTEERS), label: t('institution_stats_volunteers') },
-                { value: EXAMPLE_TASKS_LABEL, label: t('honour_board_stat_tasks_label') },
+                { value: siteStats ? formatNumber(siteStats.volunteers) : '—', label: t('institution_stats_volunteers') },
+                {
+                  value: siteStats ? `${formatNumber(siteStats.tasksCompleted)} / ${formatNumber(siteStats.tasksTotal)}` : '—',
+                  label: t('honour_board_stat_tasks_label'),
+                },
               ]}
-              trailing={<MockBadge label={t('institution_mock_badge')} />}
             />
 
             <div className="mt-8">

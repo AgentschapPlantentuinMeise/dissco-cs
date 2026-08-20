@@ -15,6 +15,7 @@ import { projectProgressRoutes } from './routes/project-progress.routes.js';
 import { reviewFeedbackRoutes } from './routes/review-feedback.routes.js';
 import { reviewRoutes } from './routes/review.routes.js';
 import { sitePagesRoutes } from './routes/site-pages.routes.js';
+import { statsRoutes } from './routes/stats.routes.js';
 import { stuckTasksRoutes } from './routes/stuck-tasks.routes.js';
 
 export function createDisscoCSApp(repository: DisscoCSRepository): Hono {
@@ -26,6 +27,7 @@ export function createDisscoCSApp(repository: DisscoCSRepository): Hono {
   app.route('/api/dissco-cs/contact', contactRoutes(repository));
   app.route('/api/dissco-cs/announcements', announcementsRoutes(repository));
   app.route('/api/dissco-cs/institutions', institutionsRoutes(repository));
+  app.route('/api/dissco-cs/stats', statsRoutes());
   app.route('/api/dissco-cs/projects', projectProgressRoutes());
   app.route('/api/dissco-cs/projects', manifestClaimRoutes());
   app.route('/api/dissco-cs/projects', stuckTasksRoutes());

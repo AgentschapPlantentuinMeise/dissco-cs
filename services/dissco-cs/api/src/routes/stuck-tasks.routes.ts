@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 
 import { requireSiteAdmin } from '../jwt.js';
-import { getStuckMadocTasks, getStuckManifestCounters, resyncManifestTaskCounter, updateMadocTask } from '../madoc-client.js';
+import { getStuckMadocTasks, getStuckManifestCounters, resyncManifestTaskCounter } from '../madoc-client/stuck-tasks.js';
+import { updateMadocTask } from '../madoc-client/tasks.js';
 
 // Site-brede lijst van vastzittende crowdsourcing-taken (status 0/1, nooit afgemaakt of
 // losgelaten) — enige plek waar een sitebeheerder dit kan zien en oplossen, i.p.v. dat elke

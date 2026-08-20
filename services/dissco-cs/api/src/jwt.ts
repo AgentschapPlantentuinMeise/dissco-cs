@@ -1,6 +1,6 @@
 import type { Context } from 'hono';
 
-import { getSiteIdBySlug } from './madoc-client.js';
+import { getSiteIdBySlug } from './madoc-client/site.js';
 
 function toBase64(input: string): string {
   const normalized = input.replace(/-/g, '+').replace(/_/g, '/');

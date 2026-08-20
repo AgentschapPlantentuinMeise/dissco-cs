@@ -73,6 +73,14 @@ export function getCurrentUser(): CurrentUser | undefined {
       return undefined;
     }
 
+    // exp is in seconds since epoch. Without this check, a server-side-expired cookie still
+    // looks "logged in" client-side, so pages fire gated background calls (Navbar's unread
+    // counts, ProjectDetail's own-tasks query) that 401 and force an "expired" login redirect
+    // on plain navigation instead of only when the user actually needs to be authenticated.
+    if (typeof payload.exp === 'number' && Date.now() >= payload.exp * 1000) {
+      return undefined;
+    }
+
     return {
       id: Number(userMatch[1]),
       name: payload.name,

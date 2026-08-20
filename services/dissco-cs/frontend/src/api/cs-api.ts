@@ -302,6 +302,16 @@ export const announcementsApi = {
   remove: (id: Announcement['id']) => csFetch<void>(`/announcements/${id}`, { method: 'DELETE' }),
 };
 
+export type SiteStats = {
+  volunteers: number;
+  tasksCompleted: number;
+  tasksTotal: number;
+};
+
+export const statsApi = {
+  get: () => csFetch<SiteStats>(`/stats?slug=${getSiteSlug()}`),
+};
+
 export type Institution = {
   id: number;
   site_id: number;
