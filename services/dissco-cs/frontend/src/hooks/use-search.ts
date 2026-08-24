@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from 'react-query';
-import { madocClient } from '../api/madoc-client';
+import { getAllSiteProjects } from '../api/madoc-client/projects';
 import { institutionsApi, Institution } from '../api/cs-api';
 
 const MIN_QUERY_LENGTH = 2;
@@ -19,7 +19,7 @@ function matchesInternationalString(value: unknown, needle: string): boolean {
 }
 
 export function useSearch(query: string) {
-  const projectsQuery = useQuery(['all-site-projects'], () => madocClient.getAllSiteProjects(), {
+  const projectsQuery = useQuery(['all-site-projects'], () => getAllSiteProjects(), {
     staleTime: 5 * 60 * 1000,
   });
   const institutionsQuery = useQuery(

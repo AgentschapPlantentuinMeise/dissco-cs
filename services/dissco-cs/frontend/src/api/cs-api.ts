@@ -310,6 +310,24 @@ export type SiteStats = {
 
 export const statsApi = {
   get: () => csFetch<SiteStats>(`/stats?slug=${getSiteSlug()}`),
+  // Pure cache read, never triggers a recompute -- for periodic polling.
+  getCurrent: () => csFetch<SiteStats>(`/stats/current?slug=${getSiteSlug()}`),
+};
+
+export type HonourBoardEntry = { userUrn: string; name: string; count: number; rank: number };
+export type HonourBoardPeriod = { top: HonourBoardEntry[]; you: HonourBoardEntry | null };
+
+export type HonourBoardLeaderboard = {
+  today: HonourBoardPeriod;
+  week: HonourBoardPeriod;
+  month: HonourBoardPeriod;
+  legend: HonourBoardPeriod;
+};
+
+export const honourBoardApi = {
+  get: () => csFetch<HonourBoardLeaderboard>(`/honour-board?slug=${getSiteSlug()}`),
+  // Pure cache read, never triggers a recompute -- for periodic polling.
+  getCurrent: () => csFetch<HonourBoardLeaderboard>(`/honour-board/current?slug=${getSiteSlug()}`),
 };
 
 export type Institution = {

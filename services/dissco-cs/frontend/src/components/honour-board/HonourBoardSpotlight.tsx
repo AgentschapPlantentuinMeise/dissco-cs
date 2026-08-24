@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MockBadge } from '../MockBadge';
 import { MedalIcon } from '../../icons/MedalIcon';
+import { useHonourBoard } from '../../hooks/use-honour-board';
 
 type SpotlightPeriod = 'today' | 'week' | 'month' | 'legend';
 
@@ -12,13 +12,7 @@ interface SpotlightEntry {
   count: number;
 }
 
-// Example data — no backend provides this yet, see docs/STATS-WIDGET.md.
-const DEFAULT_SPOTLIGHT: SpotlightEntry[] = [
-  { period: 'today', name: 'Dirk P.', count: 9 },
-  { period: 'week', name: 'Ann V.', count: 140 },
-  { period: 'month', name: 'Ben D.', count: 640 },
-  { period: 'legend', name: 'Rony W.', count: 152057 },
-];
+const PERIODS: SpotlightPeriod[] = ['today', 'week', 'month', 'legend'];
 
 const PERIOD_LABEL_KEY: Record<SpotlightPeriod, string> = {
   today: 'honour_board_period_today',
@@ -35,14 +29,35 @@ const PERIOD_LINE_KEY: Record<SpotlightPeriod, string> = {
 };
 
 // "Featured" column: one hourly-rotating featured person on top, full 4-period list below.
-export const HonourBoardSpotlight: React.FC<{
-  spotlight?: SpotlightEntry[];
-  className?: string;
-}> = ({ spotlight = DEFAULT_SPOTLIGHT, className = '' }) => {
+export const HonourBoardSpotlight: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { t, i18n } = useTranslation('dissco-cs');
+  const { data: leaderboard, status } = useHonourBoard();
   const formatNumber = (n: number) => n.toLocaleString(i18n.language);
 
-  const featured = spotlight[new Date().getHours() % spotlight.length] ?? spotlight[0];
+  if (status === 'loading') {
+    return null;
+  }
+
+  const spotlight: SpotlightEntry[] = leaderboard
+    ? PERIODS.reduce<SpotlightEntry[]>((acc, period) => {
+        const entry = leaderboard[period].top[0];
+        if (entry) acc.push({ period, name: entry.name, count: entry.count });
+        return acc;
+      }, [])
+    : [];
+
+  if (spotlight.length === 0) {
+    return (
+      <div className={className}>
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <div className="text-xs font-bold uppercase tracking-wider text-gray-500">{t('honour_board_spotlight_title')}</div>
+        </div>
+        <p className="text-sm text-gray-400 text-center">{t('honour_board_spotlight_empty')}</p>
+      </div>
+    );
+  }
+
+  const featured = spotlight[new Date().getHours() % spotlight.length];
 
   return (
     <div className={className}>
@@ -76,9 +91,6 @@ export const HonourBoardSpotlight: React.FC<{
       <Link to="/honour-board" className="inline-block text-sm font-bold text-[var(--cs-primary)] no-underline hover:underline mt-4">
         {t('honour_board_spotlight_link')} →
       </Link>
-      <div className="mt-2.5">
-        <MockBadge label={t('institution_mock_badge')} />
-      </div>
     </div>
   );
 };

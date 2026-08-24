@@ -1,10 +1,10 @@
 import { useQuery } from 'react-query';
-import { madocClient } from '../api/madoc-client';
+import { getSiteProject } from '../api/madoc-client/projects';
 import { useRouteContext } from './use-route-context';
 
 export function useProject() {
   const { projectId } = useRouteContext();
-  return useQuery(['project', projectId], () => madocClient.getSiteProject(projectId!), {
+  return useQuery(['project', projectId], () => getSiteProject(projectId!), {
     enabled: !!projectId,
   });
 }

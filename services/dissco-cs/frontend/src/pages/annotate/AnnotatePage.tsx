@@ -2,7 +2,16 @@
 import { useMutation, useQuery, queryCache } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
-import { madocClient, ApiError } from '../../api/madoc-client';
+import { ApiError } from '../../api/madoc-client/request';
+import { getManifestStructure, getSiteCanvas } from '../../api/madoc-client/collections';
+import {
+  prepareClaim,
+  getCaptureModel,
+  revokeResourceClaim,
+  createResourceClaim,
+  createCaptureModelRevision,
+} from '../../api/madoc-client/crowdsourcing';
+import { updateTask } from '../../api/madoc-client/tasks';
 import { manifestClaimApi } from '../../api/cs-api';
 import { useProject } from '../../hooks/use-project';
 import { useRouteContext } from '../../hooks/use-route-context';
@@ -54,7 +63,7 @@ export function AnnotatePage() {
 
   const { data: structure, isError: structureError, error: structureErrorObj } = useQuery(
     ['manifest-structure', manifestId],
-    () => madocClient.getManifestStructure(manifestId!),
+    () => getManifestStructure(manifestId!),
     { enabled: !!manifestId, retry: false }
   );
   const canvases = structure?.items ?? [];
@@ -62,13 +71,13 @@ export function AnnotatePage() {
 
   const { data: canvasData } = useQuery(
     ['canvas', canvases[canvasIndex]?.id],
-    () => madocClient.getSiteCanvas(canvases[canvasIndex].id),
+    () => getSiteCanvas(canvases[canvasIndex].id),
     { enabled: !!canvases[canvasIndex] }
   );
 
   const { data: prepared, isError: preparedError, error: preparedErrorObj } = useQuery(
     ['prepare-claim', project?.id, manifestId],
-    () => madocClient.prepareClaim(project!.id, { manifestId }),
+    () => prepareClaim(project!.id, { manifestId }),
     { enabled: !!project?.id && !!manifestId, retry: false }
   );
   useEffect(() => {
@@ -85,7 +94,7 @@ export function AnnotatePage() {
 
   const { data: model, isError: modelError, error: modelErrorObj } = useQuery<CaptureModel>(
     ['capture-model', prepared?.model?.id],
-    () => madocClient.getCaptureModel(prepared!.model!.id),
+    () => getCaptureModel(prepared!.model!.id),
     { enabled: !!prepared?.model, retry: false }
   );
 
@@ -181,7 +190,7 @@ export function AnnotatePage() {
     try {
       // Deletes the claim task outright (upstream madoc-ts route), instead of leaving an
       // 'abandoned' row behind — see AnnotatePage/manifest-claims discussion.
-      await madocClient.revokeResourceClaim(project.id, { manifestId });
+      await revokeResourceClaim(project.id, { manifestId });
       // ProjectDetail.tsx's manifest list is cached under ['collection', collectionId] — invalidate by
       // prefix so the "Choose where to start" grid re-fetches and shows the manifest as available again.
       queryCache.invalidateQueries('collection');
@@ -237,7 +246,7 @@ export function AnnotatePage() {
     // 'm hierboven kunnen hergebruiken.
     revisionIdRef.current = generateUUID();
     console.log('[CS] claiming manifest', { projectId: project.id, manifestId, revisionId: revisionIdRef.current });
-    const promise = madocClient.createResourceClaim(project.id, { manifestId, status: 0, revisionId: revisionIdRef.current });
+    const promise = createResourceClaim(project.id, { manifestId, status: 0, revisionId: revisionIdRef.current });
     claimPromiseRef.current = promise;
     promise
       .then(result => {
@@ -274,7 +283,7 @@ export function AnnotatePage() {
     hasSaved.current = true;
     if (project?.id && manifestId) {
       try {
-        await madocClient.revokeResourceClaim(project.id, { manifestId });
+        await revokeResourceClaim(project.id, { manifestId });
         queryCache.invalidateQueries('collection');
         queryCache.invalidateQueries('my-tasks');
         await manifestClaimApi.resync(project.id, manifestId).catch(err => console.error('[CS] resync failed', err));
@@ -291,7 +300,7 @@ export function AnnotatePage() {
     // is still in flight can never race releaseClaim into sending an abandon for a task that's
     // actually being saved.
     hasSaved.current = true;
-    await madocClient.createCaptureModelRevision(
+    await createCaptureModelRevision(
       {
         captureModelId: model.id,
         document: annotationDocument,
@@ -309,7 +318,7 @@ export function AnnotatePage() {
     // it here too, same as releaseClaim does for abandoned claims.
     const claimId = await getClaimId();
     if (claimId) {
-      await madocClient.updateTask(claimId, {
+      await updateTask(claimId, {
         status: status === 'draft' ? 1 : 2,
         status_text: status === 'draft' ? 'in progress' : 'submitted',
       });

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CsPage } from '../../components/CsPage';
 import { HrefLink } from '../../utility/href-link';
-import { madocClient } from '../../api/madoc-client';
+import { forgotPassword } from '../../api/madoc-client/auth';
 
 export const ForgotPassword: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
@@ -14,7 +14,7 @@ export const ForgotPassword: React.FC = () => {
     e.preventDefault();
     setStatus('sending');
     try {
-      await madocClient.forgotPassword({ email });
+      await forgotPassword({ email });
     } finally {
       // Always show the same message, even on failure - never leak whether the email exists.
       setStatus('sent');

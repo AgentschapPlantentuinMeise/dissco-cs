@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { reviewApi, reviewFeedbackApi, ReviewTaskRow } from '../../api/cs-api';
-import { madocClient, ApiError } from '../../api/madoc-client';
+import { ApiError } from '../../api/madoc-client/request';
+import { getCaptureModelRevision, updateCaptureModelRevision, updateRevisionTask } from '../../api/madoc-client/crowdsourcing';
 import { localeText } from '../../utility/locale-text';
 import { useUser } from '../../hooks/use-current-user';
 import { AnnotationDocument } from '../../capture-model/types/document';
@@ -194,8 +195,8 @@ export function useReviewTasksController() {
     if (!row.revisionId || !row.originalTaskId) {
       throw new Error(t('review_bulk_error_no_revision'));
     }
-    const revisionRequest = await madocClient.getCaptureModelRevision(row.revisionId);
-    await madocClient.updateCaptureModelRevision(
+    const revisionRequest = await getCaptureModelRevision(row.revisionId);
+    await updateCaptureModelRevision(
       {
         ...revisionRequest,
         document: editedDocument ?? revisionRequest.document,
@@ -204,7 +205,7 @@ export function useReviewTasksController() {
       },
       'accepted'
     );
-    await madocClient.updateRevisionTask(row.originalTaskId, {
+    await updateRevisionTask(row.originalTaskId, {
       status: 3,
       status_text: 'Approved',
       state: { changesRequested: '' },
@@ -272,7 +273,7 @@ export function useReviewTasksController() {
     setReleaseError(null);
     setReleasing(row.id);
     try {
-      await madocClient.updateRevisionTask(row.originalTaskId, { status: -1, status_text: 'Rejected' });
+      await updateRevisionTask(row.originalTaskId, { status: -1, status_text: 'Rejected' });
       setDismissedIds(prev => new Set(prev).add(row.id));
       setOpenRowId(current => {
         const idx = visibleRows.findIndex(r => r.id === current);

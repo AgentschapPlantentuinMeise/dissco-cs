@@ -58,8 +58,8 @@ export async function getMadocCollectionManifestThumbnails(
   return thumbnails;
 }
 
-// Shared by project-progress.routes.ts (per-project bar) and getMadocSiteTaskTotals in
-// site-stats.ts (site-wide total), so the manifest filter and task-status counts can't drift apart.
+// Used by project-progress.routes.ts for the per-project progress bar (the site-wide total on
+// the homepage is computed directly from the database instead, see site-task-totals.repository.ts).
 export async function getMadocProjectManifestsAndTaskStats(
   siteId: number,
   collectionId: number,

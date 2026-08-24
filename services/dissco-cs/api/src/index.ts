@@ -2,11 +2,17 @@ import { serve } from '@hono/node-server';
 
 import { appConfig } from './config.js';
 import { DisscoCSRepository } from './db.js';
+import { HonourBoardRepository } from './repositories/honour-board.repository.js';
+import { MadocUsersRepository } from './repositories/madoc-users.repository.js';
+import { SiteTaskTotalsRepository } from './repositories/site-task-totals.repository.js';
 import { createDisscoCSApp } from './app.js';
 
 export async function bootstrap(): Promise<void> {
   const repository = new DisscoCSRepository();
-  const app = createDisscoCSApp(repository);
+  const honourBoardRepository = new HonourBoardRepository();
+  const madocUsersRepository = new MadocUsersRepository();
+  const siteTaskTotalsRepository = new SiteTaskTotalsRepository();
+  const app = createDisscoCSApp(repository, honourBoardRepository, madocUsersRepository, siteTaskTotalsRepository);
 
   try {
     await repository.waitUntilReady(appConfig.startupRetryCount, appConfig.startupRetryMs);
@@ -28,6 +34,9 @@ export async function bootstrap(): Promise<void> {
 
     const shutdown = async () => {
       await repository.close();
+      await honourBoardRepository.close();
+      await madocUsersRepository.close();
+      await siteTaskTotalsRepository.close();
       process.exit(0);
     };
 
@@ -36,6 +45,9 @@ export async function bootstrap(): Promise<void> {
   } catch (error) {
     console.error('DiSSCo CS API failed to start', error);
     await repository.close();
+    await honourBoardRepository.close();
+    await madocUsersRepository.close();
+    await siteTaskTotalsRepository.close();
     process.exit(1);
   }
 }

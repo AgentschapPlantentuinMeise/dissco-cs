@@ -1,6 +1,8 @@
 import { useQuery } from 'react-query';
-import { madocClient } from '../api/madoc-client';
+import { getSiteProjects } from '../api/madoc-client/projects';
 
-export function useProjectList(page = 1) {
-  return useQuery(['site-projects', page], () => madocClient.getSiteProjects({ page }), { staleTime: 0 });
+export function useProjectList(page = 1, options: { published?: boolean } = {}) {
+  return useQuery(['site-projects', page, options.published], () => getSiteProjects({ page, ...options }), {
+    staleTime: 0,
+  });
 }

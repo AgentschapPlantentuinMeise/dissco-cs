@@ -1,7 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, queryCache } from 'react-query';
-import { madocClient } from '../../api/madoc-client';
+import {
+  getAllSiteProjects,
+  createProject,
+  exportProject,
+  getProjectStructure,
+  updateProjectStatus,
+} from '../../api/madoc-client/projects';
+import { getAllAdminCollections, updateCollectionStructure } from '../../api/madoc-client/collections';
 import { HrefLink } from '../../utility/href-link';
 import { buildTaskLink } from '../../utility/build-task-link';
 import { localeText } from '../../utility/locale-text';
@@ -25,13 +32,24 @@ import {
   Institution,
   projectDebugApi,
 } from '../../api/cs-api';
-import { useProjectList } from '../../hooks/use-project-list';
 import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
 
 const LANGUAGES = disscoCSConfig.supportedLanguages;
 
 function defaultLang(currentLanguage: string): SitePageLang {
   return (LANGUAGES.find(lang => lang.code === currentLanguage)?.code ?? LANGUAGES[0].code) as SitePageLang;
+}
+
+function slugify(value: string): string {
+  return (
+    value
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'project'
+  );
 }
 
 // Madoc project labels are InternationalString ({ lang: string[] }); manual titles are
@@ -649,7 +667,7 @@ const StuckTasksSubview: React.FC = () => {
     <div>
       <p className="text-sm text-gray-600 mb-6">{t('sm_stuck_tasks_intro')}</p>
 
-      {queryStatus === 'loading' && <p className="text-sm text-gray-500">{t('sm_manuals_loading')}</p>}
+      {queryStatus === 'loading' && <p className="text-sm text-gray-500">{t('sm_stuck_tasks_loading')}</p>}
 
       {queryStatus === 'success' && tasks.length === 0 && manifestCounters.length === 0 && (
         <p className="text-sm text-gray-500">{t('sm_stuck_tasks_empty')}</p>
@@ -889,12 +907,227 @@ const TaskDebugSubview: React.FC<{ projects: any[] }> = ({ projects }) => {
   );
 };
 
+// Creates `count` real Madoc projects sequentially, via the exact same route the "New project" /
+// "Duplicate" admin UI uses (createProject) -- so each one gets a proper collection, capture
+// model and root task, unlike hand-rolled SQL seeding. Sequential (not Promise.all): each
+// createProject call already does several steps server-side, and firing many at once is what
+// caused a prior outage when load-testing with raw SQL-seeded projects instead.
+const BulkCreateSubview: React.FC<{ projects: any[] }> = ({ projects }) => {
+  const { t, i18n } = useTranslation('dissco-cs');
+  const [count, setCount] = useState(5);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [sourceSlug, setSourceSlug] = useState('');
+  const [manifestCollectionIds, setManifestCollectionIds] = useState<string[]>([]);
+  const { data: collections = [] } = useQuery('admin-collections', getAllAdminCollections);
+  const [running, setRunning] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0, failed: 0 });
+  const [errors, setErrors] = useState<{ index: number; message: string }[]>([]);
+  const stopRef = useRef(false);
+
+  const canSubmit = !running && count > 0 && count <= 500 && title.trim().length > 0 && description.trim().length > 0;
+
+  const run = async () => {
+    setRunning(true);
+    setFinished(false);
+    setErrors([]);
+    stopRef.current = false;
+
+    const lang = defaultLang(i18n.language);
+    const slugBase = slugify(title);
+    const runSuffix = Date.now().toString(36);
+
+    const sourceProject = sourceSlug ? projects.find(p => p.slug === sourceSlug) : null;
+    const remoteTemplate = sourceProject ? await exportProject(sourceProject.id) : null;
+
+    let done = 0;
+    let failed = 0;
+    const collectedErrors: { index: number; message: string }[] = [];
+
+    for (let i = 1; i <= count; i++) {
+      if (stopRef.current) break;
+      try {
+        const newProject = await createProject({
+          label: { [lang]: [`${title.trim()} ${i}`] },
+          summary: { [lang]: [description.trim()] },
+          slug: `${slugBase}-${runSuffix}-${i}`,
+          ...(remoteTemplate ? { template: 'remote' as const, remote_template: remoteTemplate } : {}),
+          ...(sourceProject ? { duplicate_project_id: sourceProject.id } : {}),
+        });
+
+        if (manifestCollectionIds.length > 0) {
+          const structure = await getProjectStructure(newProject.id);
+          await updateCollectionStructure(structure.collectionId, manifestCollectionIds.map(Number));
+        }
+
+        await updateProjectStatus(newProject.id, 1);
+      } catch (err) {
+        failed += 1;
+        collectedErrors.push({ index: i, message: err instanceof Error ? err.message : String(err) });
+      }
+      done += 1;
+      setProgress({ done, total: count, failed });
+    }
+
+    setErrors(collectedErrors);
+    setRunning(false);
+    setFinished(true);
+    queryCache.invalidateQueries('site-projects');
+  };
+
+  return (
+    <div className="max-w-xl">
+      <p className="text-sm text-gray-600 mb-6">{t('sm_bulk_intro')}</p>
+
+      <div className="grid grid-cols-2 gap-5 mb-5">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sm_bulk_count_label')}</label>
+          <input
+            type="number"
+            min={1}
+            max={500}
+            value={count}
+            onChange={e => setCount(Math.max(1, Math.min(500, Number(e.target.value) || 1)))}
+            disabled={running}
+            className="w-full border border-gray-300 rounded-lg p-2"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sm_bulk_source_label')}</label>
+          <div className="relative">
+            <select
+              value={sourceSlug}
+              onChange={e => setSourceSlug(e.target.value)}
+              disabled={running}
+              className="w-full appearance-none border border-gray-300 rounded-lg p-2 pr-8"
+            >
+              <option value="">{t('sm_bulk_source_none')}</option>
+              {projects.map(project => (
+                <option key={project.slug} value={project.slug}>
+                  {getLabelText(project.label, project.slug)}
+                </option>
+              ))}
+            </select>
+            <ChevronIcon
+              aria-hidden="true"
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-5">
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sm_bulk_manifest_label')}</label>
+        <select
+          multiple
+          value={manifestCollectionIds}
+          onChange={e => setManifestCollectionIds(Array.from(e.target.selectedOptions, option => option.value))}
+          disabled={running}
+          size={Math.min(6, Math.max(3, collections.length))}
+          className="w-full border border-gray-300 rounded-lg p-2"
+        >
+          {collections.map(collection => (
+            <option key={collection.id} value={collection.id}>
+              {getLabelText(collection.label, collection.slug)}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-gray-500 mt-1.5">{t('sm_bulk_manifest_hint')}</p>
+      </div>
+
+      <div className="mb-5">
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sm_bulk_title_label')}</label>
+        <input
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          disabled={running}
+          placeholder={t('sm_bulk_title_placeholder')}
+          className="w-full border border-gray-300 rounded-lg p-2"
+        />
+        <p className="text-xs text-gray-500 mt-1.5">{t('sm_bulk_title_hint')}</p>
+      </div>
+
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sm_bulk_description_label')}</label>
+        <textarea
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+          disabled={running}
+          placeholder={t('sm_bulk_description_placeholder')}
+          className="w-full min-h-[90px] border border-gray-300 rounded-lg p-2"
+        />
+      </div>
+
+      <div className="flex items-center gap-3">
+        {!running ? (
+          <button
+            onClick={() => void run()}
+            disabled={!canSubmit}
+            className={`text-sm font-semibold px-4 py-2 rounded-full border-none ${
+              canSubmit
+                ? 'bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)]'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {t('sm_bulk_submit')}
+          </button>
+        ) : (
+          <button
+            onClick={() => {
+              stopRef.current = true;
+            }}
+            className="text-sm font-semibold text-red-700 border border-red-200 bg-red-50 rounded-lg px-4 py-2 cursor-pointer hover:bg-red-100"
+          >
+            {t('sm_bulk_stop')}
+          </button>
+        )}
+        {progress.total > 0 && (running || finished) && (
+          <span className="text-sm text-gray-600">
+            {t('sm_bulk_progress', { done: progress.done, total: progress.total, failed: progress.failed })}
+          </span>
+        )}
+      </div>
+
+      {progress.total > 0 && (running || finished) && (
+        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mt-3 max-w-sm">
+          <div
+            className="h-full bg-[var(--cs-primary)] transition-[width] duration-300 ease-in-out"
+            style={{ width: `${(progress.done / progress.total) * 100}%` }}
+          />
+        </div>
+      )}
+
+      {finished && (
+        <p className="text-sm text-green-700 mt-3">
+          {t('sm_bulk_done', { created: progress.done - progress.failed, failed: progress.failed })}
+        </p>
+      )}
+
+      {errors.length > 0 && (
+        <ul className="text-xs text-red-700 mt-2 list-disc pl-5 space-y-0.5 max-h-40 overflow-y-auto">
+          {errors.slice(0, 20).map(err => (
+            <li key={err.index}>
+              {t('sm_bulk_error_prefix', { index: err.index })} {err.message}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
+
 export const ProjectManagement: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
-  const [tab, setTab] = useState<'projects' | 'manuals' | 'stuck-tasks' | 'task-debug'>('projects');
+  const [tab, setTab] = useState<'projects' | 'manuals' | 'stuck-tasks' | 'task-debug' | 'bulk-create'>('projects');
 
-  const { data: projectsResponse } = useProjectList();
-  const projects = (projectsResponse?.projects ?? []).filter((p: any) => p.status === 1);
+  // All projects, every status, every page -- unlike the public Homepage/Projects pages (which
+  // deliberately only show published/active ones), project management needs to see drafts and
+  // paused projects too, e.g. to link them to an institution before they go live.
+  const { data: allProjects, status: allProjectsStatus } = useQuery('admin-all-site-projects', () =>
+    getAllSiteProjects()
+  );
+  const projects = allProjects ?? [];
 
   const {
     data: manualsResponse,
@@ -925,15 +1158,14 @@ export const ProjectManagement: React.FC = () => {
   const pruneRanRef = useRef(false);
   useEffect(() => {
     if (pruneRanRef.current) return;
-    if (manualsStatus !== 'success' || institutionLinksStatus !== 'success') return;
+    if (allProjectsStatus !== 'success' || manualsStatus !== 'success' || institutionLinksStatus !== 'success') return;
     pruneRanRef.current = true;
 
     let cancelled = false;
 
     (async () => {
       try {
-        const allProjects = await madocClient.getAllSiteProjects();
-        const liveSlugs = allProjects.map((p: any) => p.slug).filter((slug: unknown): slug is string => !!slug);
+        const liveSlugs = projects.map((p: any) => p.slug).filter((slug: unknown): slug is string => !!slug);
         if (cancelled || liveSlugs.length === 0) return;
 
         const [institutionResult, manualResult] = await Promise.all([
@@ -953,7 +1185,7 @@ export const ProjectManagement: React.FC = () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [manualsStatus, institutionLinksStatus]);
+  }, [allProjectsStatus, manualsStatus, institutionLinksStatus]);
 
   return (
     <CsPage>
@@ -998,6 +1230,14 @@ export const ProjectManagement: React.FC = () => {
             >
               Task status (debug)
             </button>
+            <button
+              onClick={() => setTab('bulk-create')}
+              className={`text-sm font-semibold pb-2.5 border-b-2 bg-transparent cursor-pointer ${
+                tab === 'bulk-create' ? 'text-[var(--cs-primary)] border-[var(--cs-primary)]' : 'text-gray-500 border-transparent'
+              }`}
+            >
+              {t('sm_manuals_tab_bulk')}
+            </button>
           </div>
 
           {tab === 'projects' && (
@@ -1013,6 +1253,7 @@ export const ProjectManagement: React.FC = () => {
           {tab === 'manuals' && <ManualsSubview projects={projects} manuals={manuals} refetchManuals={refetchManuals} />}
           {tab === 'stuck-tasks' && <StuckTasksSubview />}
           {tab === 'task-debug' && <TaskDebugSubview projects={projects} />}
+          {tab === 'bulk-create' && <BulkCreateSubview projects={projects} />}
         </div>
       </div>
     </CsPage>

@@ -4,7 +4,7 @@ import { useQuery, useMutation, queryCache } from 'react-query';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useUser } from '../../hooks/use-current-user';
 import { getSiteSlug } from '../../api/slug';
-import { madocClient } from '../../api/madoc-client';
+import { getTasks, updateTask } from '../../api/madoc-client/tasks';
 import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
 import { parseUrn } from '../../utility/parse-urn';
 import { HrefLink } from '../../utility/href-link';
@@ -184,7 +184,7 @@ export const Dashboard: React.FC = () => {
   const [openThreadId, setOpenThreadId] = useState<string | null>(null);
 
   const [releaseTask] = useMutation(
-    (task: CrowdsourcingTask) => madocClient.updateTask(task.id, { status: -1, status_text: 'abandoned' }),
+    (task: CrowdsourcingTask) => updateTask(task.id, { status: -1, status_text: 'abandoned' }),
     {
       onSuccess: () => {
         queryCache.invalidateQueries('dashboard-tasks');
@@ -204,10 +204,10 @@ export const Dashboard: React.FC = () => {
         sort_by: 'newest',
         detail: true,
       };
-      const first = await madocClient.getTasks<CrowdsourcingTask>(1, query);
+      const first = await getTasks<CrowdsourcingTask>(1, query);
       const totalPages = first.pagination?.totalPages ?? 1;
       const rest = await Promise.all(
-        Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => madocClient.getTasks<CrowdsourcingTask>(i + 2, query))
+        Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => getTasks<CrowdsourcingTask>(i + 2, query))
       );
       return { ...first, tasks: [...first.tasks, ...rest.flatMap(r => r.tasks)] };
     },
@@ -218,8 +218,8 @@ export const Dashboard: React.FC = () => {
     ['site-tasks-total'],
     async () => {
       const [review, done] = await Promise.all([
-        madocClient.getTasks(0, { type: 'crowdsourcing-task', all_tasks: true, per_page: 1, status: 2 }),
-        madocClient.getTasks(0, { type: 'crowdsourcing-task', all_tasks: true, per_page: 1, status: 3 }),
+        getTasks(0, { type: 'crowdsourcing-task', all_tasks: true, per_page: 1, status: 2 }),
+        getTasks(0, { type: 'crowdsourcing-task', all_tasks: true, per_page: 1, status: 3 }),
       ]);
       return (review.pagination?.totalResults ?? 0) + (done.pagination?.totalResults ?? 0);
     },

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/CsPage';
-import { madocClient } from '../../api/madoc-client';
+import { setPassword as submitSetPassword, checkReset } from '../../api/madoc-client/auth';
 import { getSiteSlug } from '../../api/slug';
 import { EyeIcon } from '../../icons/EyeIcon';
 import { EyeOffIcon } from '../../icons/EyeOffIcon';
@@ -39,8 +39,7 @@ export const SetPassword: React.FC = () => {
     if (!c1 || !c2) {
       return;
     }
-    madocClient
-      .checkReset({ c1, c2 })
+    checkReset({ c1, c2 })
       .then(res => setLinkValid(res.valid))
       .catch(() => setLinkValid(false));
   }, [c1, c2]);
@@ -57,7 +56,7 @@ export const SetPassword: React.FC = () => {
 
     setStatus('sending');
     try {
-      await madocClient.setPassword({ c1, c2, password });
+      await submitSetPassword({ c1, c2, password });
       const siteRoot = `/s/${getSiteSlug()}/`;
       window.location.href = isActivation ? `${siteRoot}?welcome=1` : siteRoot;
     } catch (err) {

@@ -13,7 +13,7 @@ import { useSiteStats } from '../../hooks/use-site-stats';
 
 export const Homepage: React.FC = () => {
   const [isClient, setIsClient] = useState(false);
-  const { data: projectsResponse, status } = useProjectList();
+  const { data: projectsResponse, status } = useProjectList(1, { published: true });
   const { data: siteStats } = useSiteStats();
   const { t, i18n } = useTranslation('dissco-cs');
   const formatNumber = (n: number) => n.toLocaleString(i18n.language);
@@ -29,7 +29,7 @@ export const Homepage: React.FC = () => {
   const projects = projectsResponse?.projects || [];
   const isLoadingList = status === 'loading';
 
-  const latestFiveProjects = projects.filter((p: any) => p.status === 1).slice(-5).reverse();
+  const latestProjects = projects.filter((p: any) => p.status === 1).slice(0, 6);
 
   return (
     <CsPage>
@@ -78,11 +78,11 @@ export const Homepage: React.FC = () => {
               />
               <div className="mt-8">
                 {isLoadingList && <p className="text-center py-5">{t('loading_projects')}</p>}
-                {isClient && !isLoadingList && projects.length === 0 && (
+                {isClient && !isLoadingList && latestProjects.length === 0 && (
                   <p className="text-center py-5">{t('no_projects')}</p>
                 )}
                 <div className="cs-projects-grid cs-projects-grid--compact">
-                  {latestFiveProjects.map((project: any) => (
+                  {latestProjects.map((project: any) => (
                     <ProjectCard key={project.id} projectSummaryData={project} />
                   ))}
                 </div>

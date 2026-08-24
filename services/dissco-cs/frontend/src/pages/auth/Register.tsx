@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/CsPage';
 import { TermsModal } from '../../components/TermsModal';
 import { HrefLink } from '../../utility/href-link';
-import { madocClient, InvitationResponse, SiteTerms } from '../../api/madoc-client';
+import { register, getInvitation, getTerms, InvitationResponse, SiteTerms } from '../../api/madoc-client/auth';
 import { useUser } from '../../hooks/use-current-user';
 import { getSiteSlug } from '../../api/slug';
 
@@ -31,15 +31,13 @@ export const Register: React.FC = () => {
     if (!code) {
       return;
     }
-    madocClient
-      .getInvitation(code)
+    getInvitation(code)
       .then(setInvitation)
       .catch(() => setInvitation({ expired: true }));
   }, [code]);
 
   useEffect(() => {
-    madocClient
-      .getTerms()
+    getTerms()
       .then(res => setTerms(res.latest))
       .catch(() => setTerms(null));
   }, []);
@@ -85,7 +83,7 @@ export const Register: React.FC = () => {
 
     setStatus('sending');
     try {
-      const result = await madocClient.register({ name, email, capToken, code, termsAccepted: accepted });
+      const result = await register({ name, email, capToken, code, termsAccepted: accepted });
       setEmailSent(result.emailSent);
       setStatus('success');
     } catch (err) {

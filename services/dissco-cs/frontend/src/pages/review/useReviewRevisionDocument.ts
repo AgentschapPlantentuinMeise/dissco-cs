@@ -1,5 +1,5 @@
 import { useQuery } from 'react-query';
-import { madocClient } from '../../api/madoc-client';
+import { getCaptureModelRevision, getCaptureModel } from '../../api/madoc-client/crowdsourcing';
 import { ReviewTaskRow } from '../../api/cs-api';
 import { cloneModelDocument, setFieldValue, DocumentPath } from '../annotate/form/document';
 import { AnnotationDocument } from '../../capture-model/types/document';
@@ -15,12 +15,12 @@ export function useReviewRevisionDocument(
 ) {
   const revisionQuery = useQuery(
     ['review-revision', row.revisionId],
-    () => madocClient.getCaptureModelRevision(row.revisionId as string),
+    () => getCaptureModelRevision(row.revisionId as string),
     { enabled: !!row.revisionId }
   );
   const modelQuery = useQuery<CaptureModel>(
     ['capture-model', revisionQuery.data?.captureModelId],
-    () => madocClient.getCaptureModel(revisionQuery.data.captureModelId),
+    () => getCaptureModel(revisionQuery.data.captureModelId),
     { enabled: !!revisionQuery.data?.captureModelId }
   );
 

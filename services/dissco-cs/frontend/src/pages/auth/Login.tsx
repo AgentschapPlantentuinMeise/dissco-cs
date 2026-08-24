@@ -4,7 +4,8 @@ import { useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/CsPage';
 import { TermsModal } from '../../components/TermsModal';
 import { HrefLink } from '../../utility/href-link';
-import { madocClient, SiteTerms } from '../../api/madoc-client';
+import { login, getTerms, SiteTerms } from '../../api/madoc-client/auth';
+import { acceptTerms } from '../../api/madoc-client/crowdsourcing';
 import { clearJwt } from '../../api/jwt';
 
 export const Login: React.FC = () => {
@@ -28,7 +29,7 @@ export const Login: React.FC = () => {
     e.preventDefault();
     setStatus('sending');
     try {
-      const loginResult = await madocClient.login({ email, password });
+      const loginResult = await login({ email, password });
 
       if (!loginResult.terms) {
         // Fail closed: if we can't determine terms status, don't let the user through -
@@ -37,7 +38,7 @@ export const Login: React.FC = () => {
       }
 
       if (loginResult.terms.hasTerms && !loginResult.terms.hasAccepted) {
-        const { latest } = await madocClient.getTerms();
+        const { latest } = await getTerms();
         if (latest) {
           setPendingTerms(latest);
           setStatus('idle');
@@ -55,7 +56,7 @@ export const Login: React.FC = () => {
   const acceptTermsAndContinue = async () => {
     setStatus('sending');
     try {
-      await madocClient.acceptTerms();
+      await acceptTerms();
       redirectAfterLogin();
     } catch (err) {
       setStatus('error');

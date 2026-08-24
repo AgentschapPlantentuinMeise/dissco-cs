@@ -1,7 +1,7 @@
 import React from 'react';
 import { CsMarkdown } from './CsMarkdown';
 import { Modal } from './Modal';
-import { SiteTerms } from '../api/madoc-client';
+import { SiteTerms } from '../api/madoc-client/auth';
 
 type TermsModalProps = {
   title: string;

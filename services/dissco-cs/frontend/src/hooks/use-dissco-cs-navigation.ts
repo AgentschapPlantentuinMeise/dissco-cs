@@ -1,5 +1,5 @@
 import { useMutation } from 'react-query';
-import { madocClient } from '../api/madoc-client';
+import { randomlyAssignedManifest } from '../api/madoc-client/crowdsourcing';
 import { useProject } from './use-project';
 import { disscoCSConfig } from '../dissco-cs-config';
 
@@ -13,7 +13,7 @@ export function useDisscoCSNavigation() {
 
   const [requestNextUrl, { isLoading: isLoadingNext }] = useMutation(async (): Promise<string | null> => {
     if (!project) return null;
-    const result = await madocClient.randomlyAssignedManifest(project.slug, {});
+    const result = await randomlyAssignedManifest(project.slug, {});
     return result?.manifest ? `/explore/${project.slug}/manifests/${result.manifest}/annotate` : null;
   });
 

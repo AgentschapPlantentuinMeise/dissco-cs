@@ -4,9 +4,12 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
 
 import { DisscoCSRepository } from './db.js';
+import { HonourBoardRepository } from './repositories/honour-board.repository.js';
+import { MadocUsersRepository } from './repositories/madoc-users.repository.js';
 import { announcementsRoutes } from './routes/announcements.routes.js';
 import { contactRoutes } from './routes/contact.routes.js';
 import { forumRoutes } from './routes/forum.routes.js';
+import { honourBoardRoutes } from './routes/honour-board.routes.js';
 import { institutionsRoutes } from './routes/institutions.routes.js';
 import { manifestClaimRoutes } from './routes/manifest-claim.routes.js';
 import { projectDebugRoutes } from './routes/project-debug.routes.js';
@@ -17,8 +20,14 @@ import { reviewRoutes } from './routes/review.routes.js';
 import { sitePagesRoutes } from './routes/site-pages.routes.js';
 import { statsRoutes } from './routes/stats.routes.js';
 import { stuckTasksRoutes } from './routes/stuck-tasks.routes.js';
+import { SiteTaskTotalsRepository } from './repositories/site-task-totals.repository.js';
 
-export function createDisscoCSApp(repository: DisscoCSRepository): Hono {
+export function createDisscoCSApp(
+  repository: DisscoCSRepository,
+  honourBoardRepository: HonourBoardRepository,
+  madocUsersRepository: MadocUsersRepository,
+  siteTaskTotalsRepository: SiteTaskTotalsRepository
+): Hono {
   const app = new Hono();
 
   app.get('/api/dissco-cs/health', c => c.text('ok'));
@@ -27,7 +36,8 @@ export function createDisscoCSApp(repository: DisscoCSRepository): Hono {
   app.route('/api/dissco-cs/contact', contactRoutes(repository));
   app.route('/api/dissco-cs/announcements', announcementsRoutes(repository));
   app.route('/api/dissco-cs/institutions', institutionsRoutes(repository));
-  app.route('/api/dissco-cs/stats', statsRoutes());
+  app.route('/api/dissco-cs/stats', statsRoutes(madocUsersRepository, siteTaskTotalsRepository));
+  app.route('/api/dissco-cs/honour-board', honourBoardRoutes(honourBoardRepository));
   app.route('/api/dissco-cs/projects', projectProgressRoutes());
   app.route('/api/dissco-cs/projects', manifestClaimRoutes());
   app.route('/api/dissco-cs/projects', stuckTasksRoutes());

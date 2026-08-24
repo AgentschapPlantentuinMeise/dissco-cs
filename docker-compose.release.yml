@@ -160,6 +160,16 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - MADOC_GATEWAY_URL=http://gateway:8080
       - MADOC_SERVICE_JWT_PATH=/app/service-jwt-responses/dissco-cs-api.json
+      # Read-only reuse of the tasks-api service's own DB credentials, for the honour-board
+      # leaderboard (queries tasks_api.tasks directly, see honour-board.repository.ts).
+      - POSTGRES_TASKS_API_USER=${POSTGRES_TASKS_API_USER}
+      - POSTGRES_TASKS_API_PASSWORD=${POSTGRES_TASKS_API_PASSWORD}
+      - POSTGRES_TASKS_API_SCHEMA=${POSTGRES_TASKS_API_SCHEMA}
+      # Read-only reuse of madoc-ts's own DB credentials, for the volunteer count
+      # (queries madoc_ts."user"/site_permission directly, see madoc-users.repository.ts).
+      - POSTGRES_MADOC_TS_USER=${POSTGRES_MADOC_TS_USER}
+      - POSTGRES_MADOC_TS_PASSWORD=${POSTGRES_MADOC_TS_PASSWORD}
+      - POSTGRES_MADOC_TS_SCHEMA=${POSTGRES_MADOC_TS_SCHEMA}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
       - SMTP_SECURITY=${SMTP_SECURITY}

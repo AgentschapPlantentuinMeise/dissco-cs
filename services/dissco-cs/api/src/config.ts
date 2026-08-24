@@ -46,6 +46,16 @@ export const appConfig = {
   startupRetryCount: requiredNumber('STARTUP_RETRY_COUNT', 120),
   madocGatewayUrl: process.env.MADOC_GATEWAY_URL ?? 'http://gateway:8080',
   madocServiceJwtPath: process.env.MADOC_SERVICE_JWT_PATH ?? '/app/service-jwt-responses/dissco-cs-api.json',
+  // Read-only reuse of tasks-api's own DB user, for the honour-board leaderboard query
+  // (see repositories/honour-board.repository.ts).
+  tasksApiPostgresUser: required('POSTGRES_TASKS_API_USER'),
+  tasksApiPostgresPassword: required('POSTGRES_TASKS_API_PASSWORD'),
+  tasksApiPostgresSchema: validateSchemaName(required('POSTGRES_TASKS_API_SCHEMA', 'tasks_api')),
+  // Read-only reuse of madoc-ts's own DB user, for the volunteer-count query
+  // (see repositories/madoc-users.repository.ts).
+  madocTsPostgresUser: required('POSTGRES_MADOC_TS_USER'),
+  madocTsPostgresPassword: required('POSTGRES_MADOC_TS_PASSWORD'),
+  madocTsPostgresSchema: validateSchemaName(required('POSTGRES_MADOC_TS_SCHEMA', 'madoc_ts')),
   smtpHost: process.env.SMTP_HOST,
   smtpPort: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined,
   smtpSecurity: process.env.SMTP_SECURITY,

@@ -4,7 +4,7 @@ import { useQuery, useMutation, queryCache } from 'react-query';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useUser } from '../../hooks/use-current-user';
 import { getSiteSlug } from '../../api/slug';
-import { madocClient } from '../../api/madoc-client';
+import { getTasks, updateTask } from '../../api/madoc-client/tasks';
 import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
 import { parseUrn } from '../../utility/parse-urn';
 import { localeText } from '../../utility/locale-text';
@@ -46,7 +46,7 @@ export const UserDashboard: React.FC = () => {
   // Zelfde abandon-patroon als AnnotatePage.tsx's releaseClaim: status -1 zodat de bestaande
   // filters (status !== -1) de taak meteen als losgelaten behandelen, geen nieuwe status nodig.
   const [releaseTask] = useMutation(
-    (task: CrowdsourcingTask) => madocClient.updateTask(task.id, { status: -1, status_text: 'abandoned' }),
+    (task: CrowdsourcingTask) => updateTask(task.id, { status: -1, status_text: 'abandoned' }),
     {
       onSuccess: () => {
         queryCache.invalidateQueries('my-tasks');
@@ -69,10 +69,10 @@ export const UserDashboard: React.FC = () => {
       // tasks-api appears to cap its effective page size below our requested per_page (e.g. 58
       // results still came back as totalPages: 2) — fetch every page so nothing past page 1 is
       // silently dropped, instead of trusting per_page to mean "give me everything in one page".
-      const first = await madocClient.getTasks<CrowdsourcingTask>(1, query);
+      const first = await getTasks<CrowdsourcingTask>(1, query);
       const totalPages = first.pagination?.totalPages ?? 1;
       const rest = await Promise.all(
-        Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => madocClient.getTasks<CrowdsourcingTask>(i + 2, query))
+        Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => getTasks<CrowdsourcingTask>(i + 2, query))
       );
       return { ...first, tasks: [...first.tasks, ...rest.flatMap(r => r.tasks)] };
     },
@@ -86,8 +86,8 @@ export const UserDashboard: React.FC = () => {
     ['site-tasks-total'],
     async () => {
       const [review, done] = await Promise.all([
-        madocClient.getTasks(0, { type: 'crowdsourcing-task', all_tasks: true, per_page: 1, status: 2 }),
-        madocClient.getTasks(0, { type: 'crowdsourcing-task', all_tasks: true, per_page: 1, status: 3 }),
+        getTasks(0, { type: 'crowdsourcing-task', all_tasks: true, per_page: 1, status: 2 }),
+        getTasks(0, { type: 'crowdsourcing-task', all_tasks: true, per_page: 1, status: 3 }),
       ]);
       return (review.pagination?.totalResults ?? 0) + (done.pagination?.totalResults ?? 0);
     },

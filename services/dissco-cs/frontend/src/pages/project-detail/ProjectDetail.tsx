@@ -6,7 +6,8 @@ import { useProject } from '../../hooks/use-project';
 import { useProjectProgress } from '../../hooks/use-project-progress';
 import { useRouteContext } from '../../hooks/use-route-context';
 import { useUser } from '../../hooks/use-current-user';
-import { madocClient } from '../../api/madoc-client';
+import { getTasks } from '../../api/madoc-client/tasks';
+import { randomlyAssignedManifest } from '../../api/madoc-client/crowdsourcing';
 import { institutionsApi } from '../../api/cs-api';
 import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
 import { buildTaskLink } from '../../utility/build-task-link';
@@ -53,7 +54,7 @@ export const ProjectDetail: React.FC = () => {
   const { data: ownTasksData } = useQuery(
     ['project-own-saved-tasks', project?.id, user?.id],
     () =>
-      madocClient.getTasks<CrowdsourcingTask>(1, {
+      getTasks<CrowdsourcingTask>(1, {
         type: 'crowdsourcing-task',
         all_tasks: true,
         assignee: `urn:madoc:user:${user!.id}`,
@@ -90,7 +91,7 @@ export const ProjectDetail: React.FC = () => {
       return;
     }
     try {
-      const result = await madocClient.randomlyAssignedManifest(project.slug, {});
+      const result = await randomlyAssignedManifest(project.slug, {});
       if (result?.manifest) {
         await navigateToFirstCanvas(result.manifest);
       }

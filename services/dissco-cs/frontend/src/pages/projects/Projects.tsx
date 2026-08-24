@@ -1,6 +1,7 @@
 ﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useProjectList } from '../../hooks/use-project-list';
+import { useQuery } from 'react-query';
+import { getAllSiteProjects } from '../../api/madoc-client/projects';
 import { CsPage } from '../../components/CsPage';
 import { ProjectCard } from '../../components/projectcard/ProjectCard';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
@@ -9,11 +10,15 @@ import { HonourBoardSpotlight } from '../../components/honour-board/HonourBoardS
 import { useSiteStats } from '../../hooks/use-site-stats';
 
 export const Projects: React.FC = () => {
-  const { data: projectsResponse, status } = useProjectList();
+  // All pages, published-only, so every active project shows regardless of how many draft/paused
+  // projects exist (and regardless of whether the viewer is a site-admin, who would otherwise see
+  // every status unfiltered -- see useProjectList's `published` option).
+  const { data: allProjects, status } = useQuery(['all-site-projects', { published: true }], () =>
+    getAllSiteProjects({ published: true })
+  );
   const { data: siteStats } = useSiteStats();
   const { t, i18n } = useTranslation('dissco-cs');
-  const allProjects = projectsResponse?.projects || [];
-  const projects = allProjects.filter((p: any) => p.status === 1);
+  const projects = (allProjects ?? []).filter((p: any) => p.status === 1);
   const isLoadingList = status === 'loading';
   const formatNumber = (n: number) => n.toLocaleString(i18n.language);
 
