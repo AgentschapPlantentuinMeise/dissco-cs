@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, queryCache } from 'react-query';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -7,11 +7,16 @@ import { getSiteSlug } from '../../api/slug';
 import { getTasks, updateTask } from '../../api/madoc-client/tasks';
 import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
 import { parseUrn } from '../../utility/parse-urn';
+import { HrefLink } from '../../utility/href-link';
 import { localeText } from '../../utility/locale-text';
 import { CsPage } from '../../components/CsPage';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { TrashIcon } from '../../icons/TrashIcon';
+import { StatBanner } from '../../components/StatBanner';
 import { TaskTable, tabBtnClass } from '../../components/TaskTable';
+import { forumApi, ForumTopicWithReplyCount, reviewFeedbackApi, FeedbackThreadWithMeta } from '../../api/cs-api';
+import { useSiteStats } from '../../hooks/use-site-stats';
 
 
 
@@ -24,7 +29,7 @@ function DonutChart({ segments }: { segments: ChartSegment[] }) {
   if (total === 0) return null;
   const data = segments.filter(s => s.value > 0);
   return (
-    <div className="w-[120px] h-[120px] max-[768px]:w-[80px] max-[768px]:h-[80px]">
+    <div className="w-[62px] h-[62px] flex-shrink-0">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie data={data} dataKey="value" nameKey="name" outerRadius="100%" paddingAngle={2} startAngle={90} endAngle={-270}>
@@ -37,26 +42,160 @@ function DonutChart({ segments }: { segments: ChartSegment[] }) {
   );
 }
 
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleString('nl-BE', { dateStyle: 'short', timeStyle: 'short' });
+
+function FeedbackThreadDetail({ threadId }: { threadId: string }) {
+  const { t, i18n } = useTranslation('dissco-cs');
+  const [replyBody, setReplyBody] = useState('');
+
+  const { data, status } = useQuery(['feedback-thread', threadId], () => reviewFeedbackApi.getThread(threadId), {
+    onSuccess: () => {
+      queryCache.invalidateQueries('feedback-threads');
+      window.dispatchEvent(new Event('review_feedback_updated'));
+    },
+  });
+
+  const [postReply, { status: replyStatus }] = useMutation(
+    (body: string) => reviewFeedbackApi.createReply(threadId, body),
+    {
+      onSuccess: () => {
+        setReplyBody('');
+        queryCache.invalidateQueries(['feedback-thread', threadId]);
+        queryCache.invalidateQueries('feedback-threads');
+        window.dispatchEvent(new Event('review_feedback_updated'));
+      },
+    }
+  );
+
+  if (status === 'loading') {
+    return <p className="text-sm text-gray-500 mt-3">{t('review_detail_loading')}</p>;
+  }
+  if (status === 'error' || !data) {
+    return <p className="text-sm text-red-600 mt-3">{t('review_detail_error')}</p>;
+  }
+
+  return (
+    <div className="mt-3 pl-3 border-l-2 border-gray-100" onClick={e => e.stopPropagation()}>
+      <ul className="list-none m-0 p-0 flex flex-col gap-3 mb-3">
+        {data.messages.map(message => (
+          <li key={message.id} className="text-sm">
+            <div className="flex items-baseline gap-2">
+              <strong className="text-gray-800">{message.author_name}</strong>
+              <span className="text-xs text-gray-400">{new Date(message.created_at).toLocaleString(i18n.language)}</span>
+            </div>
+            <p className="text-gray-700 m-0 mt-0.5 whitespace-pre-wrap">{message.body}</p>
+          </li>
+        ))}
+      </ul>
+      <div className="flex items-start gap-2">
+        <textarea
+          value={replyBody}
+          onChange={e => setReplyBody(e.target.value)}
+          rows={2}
+          placeholder={t('dashboard_feedback_reply_placeholder')}
+          className="flex-1 border border-gray-300 rounded-lg p-2 text-sm resize-none focus:outline-none focus:border-[var(--cs-primary)]"
+        />
+        <button
+          onClick={() => replyBody.trim() && postReply(replyBody.trim())}
+          disabled={!replyBody.trim() || replyStatus === 'loading'}
+          className="px-4 py-2 rounded-full text-sm font-semibold border-none bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
+        >
+          {t('dashboard_feedback_reply_send')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function FeedbackThreadRow({
+  thread,
+  isOpen,
+  onToggle,
+  language,
+}: {
+  thread: FeedbackThreadWithMeta;
+  isOpen: boolean;
+  onToggle: () => void;
+  language: string;
+}) {
+  const { t } = useTranslation('dissco-cs');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  const otherName = thread.role === 'recipient' ? thread.reviewer_name : thread.recipient_name;
+  const directionLabel =
+    thread.role === 'recipient'
+      ? t('dashboard_feedback_from', { name: otherName })
+      : t('dashboard_feedback_to', { name: otherName });
+
+  const [deleteThread] = useMutation(() => reviewFeedbackApi.deleteThread(thread.id), {
+    onSuccess: () => {
+      queryCache.invalidateQueries('feedback-threads');
+      window.dispatchEvent(new Event('review_feedback_updated'));
+    },
+  });
+
+  return (
+    <li className="border-b border-gray-200 last:border-b-0 py-3">
+      <div className="flex items-start gap-2">
+        <button onClick={onToggle} className="flex-1 min-w-0 text-left bg-transparent border-none cursor-pointer p-0">
+          <div className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+              {thread.unread_count > 0 && (
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: 'var(--cs-tertiary)' }} />
+              )}
+              {thread.subject}
+            </span>
+            <span className="text-xs text-gray-400 flex-shrink-0">{new Date(thread.last_activity).toLocaleString(language)}</span>
+          </div>
+          <div className="text-xs text-gray-500 mt-0.5">{directionLabel}</div>
+        </button>
+        <button
+          onClick={() => setConfirmingDelete(true)}
+          aria-label={t('dashboard_feedback_delete_label')}
+          title={t('dashboard_feedback_delete_label')}
+          className="flex-shrink-0 bg-transparent border-none text-gray-600 cursor-pointer hover:text-[var(--cs-primary)] transition-colors duration-200 p-1"
+        >
+          <TrashIcon />
+        </button>
+      </div>
+      {isOpen && <FeedbackThreadDetail threadId={thread.id} />}
+      {confirmingDelete && (
+        <ConfirmDialog
+          title={t('dashboard_feedback_delete_confirm_title')}
+          message={t('dashboard_feedback_delete_confirm')}
+          confirmLabel={t('common_delete')}
+          cancelLabel={t('common_cancel')}
+          onConfirm={() => {
+            setConfirmingDelete(false);
+            void deleteThread();
+          }}
+          onCancel={() => setConfirmingDelete(false)}
+        />
+      )}
+    </li>
+  );
+}
+
 export const UserDashboard: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useUser();
-  const [activeTab, setActiveTab] = useState<'saved' | 'done'>('saved');
+  const [activeTab, setActiveTab] = useState<'saved' | 'done' | 'feedback'>('saved');
   const [releaseTarget, setReleaseTarget] = useState<CrowdsourcingTask | null>(null);
+  const [openThreadId, setOpenThreadId] = useState<string | null>(null);
 
-  // Zelfde abandon-patroon als AnnotatePage.tsx's releaseClaim: status -1 zodat de bestaande
-  // filters (status !== -1) de taak meteen als losgelaten behandelen, geen nieuwe status nodig.
   const [releaseTask] = useMutation(
     (task: CrowdsourcingTask) => updateTask(task.id, { status: -1, status_text: 'abandoned' }),
     {
       onSuccess: () => {
-        queryCache.invalidateQueries('my-tasks');
+        queryCache.invalidateQueries('dashboard-tasks');
         queryCache.invalidateQueries('collection');
       },
     }
   );
 
   const { data: tasksData, status: tasksStatus } = useQuery(
-    ['my-tasks', { userId: user?.id }],
+    ['dashboard-tasks', { userId: user?.id }],
     async () => {
       const query = {
         type: 'crowdsourcing-task',
@@ -66,9 +205,6 @@ export const UserDashboard: React.FC = () => {
         sort_by: 'newest',
         detail: true,
       };
-      // tasks-api appears to cap its effective page size below our requested per_page (e.g. 58
-      // results still came back as totalPages: 2) — fetch every page so nothing past page 1 is
-      // silently dropped, instead of trusting per_page to mean "give me everything in one page".
       const first = await getTasks<CrowdsourcingTask>(1, query);
       const totalPages = first.pagination?.totalPages ?? 1;
       const rest = await Promise.all(
@@ -79,20 +215,29 @@ export const UserDashboard: React.FC = () => {
     { enabled: !!user }
   );
 
-  // Site-wide count of "completed" tasks — a task in review (status 2) counts as completed here
-  // too, same as the per-user done bucket below, so a single query for status 3 alone would
-  // undercount and keep this percentage at 0 while submissions are still awaiting review.
-  const { data: siteTotalData } = useQuery(
-    ['site-tasks-total'],
+  // getTasks({ all_tasks: true }) called straight from the browser only ever returns the calling
+  // user's own tasks for a non-admin contributor (see docs/MANIFEST-CLAIMS.md) — so the site-wide
+  // total has to come from the backend-computed stats instead, same as the homepage banner.
+  const { data: siteStats } = useSiteStats();
+
+  const { data: unansweredTopics } = useQuery(
+    ['dashboard-unanswered-topics'],
     async () => {
-      const [review, done] = await Promise.all([
-        getTasks(0, { type: 'crowdsourcing-task', all_tasks: true, per_page: 1, status: 2 }),
-        getTasks(0, { type: 'crowdsourcing-task', all_tasks: true, per_page: 1, status: 3 }),
-      ]);
-      return (review.pagination?.totalResults ?? 0) + (done.pagination?.totalResults ?? 0);
+      const res = await forumApi.listTopics();
+      return res.topics
+        .filter(topic => topic.reply_count === 0)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 3);
     },
     { enabled: !!user }
   );
+
+  const { data: feedbackThreadsData, status: feedbackThreadsStatus } = useQuery(
+    'feedback-threads',
+    () => reviewFeedbackApi.listThreads(),
+    { enabled: !!user }
+  );
+  const feedbackThreads = feedbackThreadsData?.threads ?? [];
 
   if (!user) {
     window.location.href = `/s/${getSiteSlug()}/login`;
@@ -101,59 +246,39 @@ export const UserDashboard: React.FC = () => {
 
   const tasks: CrowdsourcingTask[] = tasksData?.tasks ?? [];
 
-  console.log('[UserDashboard] raw tasks count:', tasks.length);
-  console.log('[UserDashboard] task statuses:', tasks.map(t => ({ id: t.id, name: t.name, status: t.status, root_task: t.root_task })));
-  console.log('[UserDashboard] siteTotalData (status 2+3 combined):', siteTotalData);
-
   const seen = new Set<string>();
-  const uniqueTasks = tasks.filter(t => {
-    const id = t.id ?? '';
+  const uniqueTasks = tasks.filter(task => {
+    const id = task.id ?? '';
     if (seen.has(id)) return false;
     seen.add(id);
     return true;
   });
-  const s = (t: CrowdsourcingTask) => t.status as number;
-  // status 0 = enkel automatisch geclaimd bij het openen van een manifest/canvas, nog geen inhoud opgeslagen
-  // status -1 = rejected/abandoned, daar werken we niet mee
-  const realTasks = uniqueTasks.filter(t => t.status !== 0 && t.status !== -1);
-  // Herhaaldelijk claimen/verlaten/opnieuw opslaan van hetzelfde specimen (binnen hetzelfde project)
-  // laat meerdere taak-rijen na voor dezelfde bijdrage — toon enkel de meest recent gewijzigde per
-  // (subject, project), zodat oudere afgesloten pogingen niet als losse "open" taken meetellen.
+  const s = (task: CrowdsourcingTask) => task.status as number;
+  const realTasks = uniqueTasks.filter(task => task.status !== 0 && task.status !== -1);
   const latestPerSubject = new Map<string, CrowdsourcingTask>();
-  for (const t of realTasks) {
-    const key = `${t.subject ?? t.id}|${t.root_task ?? ''}`;
+  for (const task of realTasks) {
+    const key = `${task.subject ?? task.id}|${task.root_task ?? ''}`;
     const existing = latestPerSubject.get(key);
-    if (!existing || (t.modified_at ?? '') > (existing.modified_at ?? '')) {
-      latestPerSubject.set(key, t);
+    if (!existing || (task.modified_at ?? '') > (existing.modified_at ?? '')) {
+      latestPerSubject.set(key, task);
     }
   }
   const visibleTasks = Array.from(latestPerSubject.values());
-  console.log('[UserDashboard] excluded status 0 tasks (auto-claim, geen inhoud):', uniqueTasks.filter(t => t.status === 0).map(t => ({
-    id: t.id, name: t.name, root_task: t.root_task,
-  })));
-  console.log('[UserDashboard] excluded status -1 tasks (rejected/abandoned):', uniqueTasks.filter(t => t.status === -1).map(t => ({
-    id: t.id, name: t.name, root_task: t.root_task,
-  })));
-  console.log('[UserDashboard] oudere duplicaten per specimen+project verborgen (niet de meest recente):',
-    realTasks.filter(t => !visibleTasks.includes(t)).map(t => ({ id: t.id, name: t.name, subject: t.subject, modified_at: t.modified_at })));
-  console.log('[UserDashboard] visibleTasks (gededupliceerd, status 1/2/3/5):', visibleTasks.length, visibleTasks.map(t => ({
-    id: t.id, name: t.name, status: t.status, root_task: t.root_task, subject: t.subject, subject_parent: t.subject_parent,
-  })));
 
-  const savedTasks = visibleTasks.filter(t => s(t) === 1);
-  const doneTasks = visibleTasks.filter(t => s(t) === 2 || s(t) === 3 || s(t) === 5);
+  const savedTasks = visibleTasks.filter(task => s(task) === 1);
+  console.log('[Dashboard] savedTasks (status === 1):', savedTasks.length, savedTasks.map(task => ({
+    id: task.id, name: task.name, subject: task.subject,
+    project: task.metadata?.project ? { id: task.metadata.project.id, slug: task.metadata.project.slug } : undefined,
+  })));
+  const doneTasks = visibleTasks.filter(task => s(task) === 2 || s(task) === 3 || s(task) === 5);
   const doneCount = doneTasks.length;
-  const userDoneCount = uniqueTasks.filter(t => s(t) === 2 || s(t) === 3 || s(t) === 5).length;
+  // Matches the backend's own definition of "completed" (status 2/3 only, see
+  // site-task-totals.repository.ts) so this lines up with siteStats.tasksCompleted below.
+  const userDoneCount = uniqueTasks.filter(task => s(task) === 2 || s(task) === 3).length;
   const contributedTasks = visibleTasks;
-  // Grouped by the server-resolved project id (task.metadata.project), not root_task directly —
-  // works even for older tasks where root_task itself was never set (see metadata.project comment
-  // on the type), as long as Madoc could trace the task's parent_task chain to a project.
-  const projectIds = contributedTasks.filter(t => t.metadata?.project).map(t => String(t.metadata!.project!.id));
+  const projectIds = contributedTasks.filter(task => task.metadata?.project).map(task => String(task.metadata!.project!.id));
   const projectCount = new Set(projectIds).size;
-  console.log('[UserDashboard] savedTasks (status === 1):', savedTasks.length, savedTasks.map(t => ({ id: t.id, name: t.name, project: t.metadata?.project })));
-  console.log('[UserDashboard] doneTasks (status 2/3/5):', doneTasks.length, doneTasks.map(t => ({ id: t.id, name: t.name, status: t.status, project: t.metadata?.project })));
-  console.log('[UserDashboard] projectCount (distinct metadata.project.id):', projectCount, projectIds);
-  const siteTotal = siteTotalData ?? 0;
+  const siteTotal = siteStats?.tasksCompleted ?? 0;
   const percentage = siteTotal > 0 ? ((userDoneCount / siteTotal) * 100).toFixed(2) : null;
   const isLoading = tasksStatus === 'loading';
 
@@ -173,96 +298,155 @@ export const UserDashboard: React.FC = () => {
 
   return (
     <CsPage>
-      <div className="max-w-[1100px] mx-auto px-6 pt-12 pb-20 max-[600px]:px-4 max-[600px]:pt-8 max-[600px]:pb-16">
-        <h1 className="text-[1.8rem] font-bold text-[var(--cs-primary)] m-0 mb-8">{t('my_tasks_title')}</h1>
+      <div className="cs-main-wrapper pt-10 pb-16">
+        <div className="cs-container cs-container--wide">
+          <h1 className="text-4xl text-[var(--cs-primary)] mt-0 mb-5">{t('dashboard_welcome', { name: user.name })}</h1>
+          <p className="text-base leading-relaxed text-gray-700 m-0 mb-6">{t('dashboard_subtitle')}</p>
 
-        <div className="flex gap-6 items-start max-[768px]:flex-col">
-          <div className="flex-[3] min-w-0">
-            <div className="flex border-b-2 border-gray-200 mb-3">
-              <button className={tabBtnClass(activeTab === 'saved')} onClick={() => setActiveTab('saved')}>
-                {t('my_tasks_tab_saved')}
-              </button>
-              <button className={tabBtnClass(activeTab === 'done')} onClick={() => setActiveTab('done')}>
-                {t('my_tasks_tab_done')}
-              </button>
-            </div>
+          <hr className="mb-8" />
 
-            {isLoading ? (
-              <div className="text-center py-16 text-gray-500">{t('my_tasks_loading')}</div>
-            ) : activeTab === 'saved' ? (
-              savedTasks.length === 0 ? (
-                <div className="px-6 py-12 text-center text-gray-500">{t('my_tasks_empty')}</div>
-              ) : (
-                <TaskTable tasks={savedTasks} userName={user.name} language={i18n.language} t={t} onRelease={setReleaseTarget} />
-              )
-            ) : (
-              doneTasks.length === 0 ? (
-                <div className="px-6 py-12 text-center text-gray-500">{t('my_tasks_empty_done')}</div>
-              ) : (
-                <TaskTable tasks={doneTasks} userName={user.name} language={i18n.language} t={t} expandable />
-              )
-            )}
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-14">
+            <div>
+              <StatBanner
+                className="mb-8"
+                stats={[
+                  { value: contributedTasks.length, label: t('my_tasks_total') },
+                  { value: doneCount, label: t('my_tasks_completed') },
+                  { value: projectCount, label: t('my_tasks_projects') },
+                ]}
+                trailingDivider
+                trailing={percentage !== null ? (
+                  <p className="text-[0.86rem] text-[#d7ece9] leading-[1.5] m-0">{t('my_tasks_percentage', { pct: percentage })}</p>
+                ) : undefined}
+              />
 
-          <div className="flex-1 min-w-[220px] max-[768px]:min-w-0 max-[768px]:w-full">
-            <div className="bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] p-6 flex flex-col gap-5 mb-4 max-[768px]:flex-row max-[768px]:flex-wrap max-[768px]:gap-6 max-[768px]:p-5">
-              <h2 className="text-[0.78rem] font-bold text-gray-500 uppercase tracking-[0.04em] m-0 max-[768px]:w-full">{t('my_tasks_contribution_title')}</h2>
-              <div className="flex flex-col items-center gap-3 max-[768px]:flex-row max-[768px]:items-center">
-                <DonutChart segments={chartSegments} />
-                <div className="flex flex-col gap-[6px] text-[0.82rem] text-gray-600 w-full">
-                  {chartSegments.filter(s => s.value > 0).map(s => {
-                    const total = chartSegments.reduce((sum, seg) => sum + seg.value, 0);
-                    const pct = total > 0 ? Math.round((s.value / total) * 100) : 0;
-                    return (
-                      <div key={s.name} className="flex items-center gap-[6px]">
-                        <span className="w-[10px] h-[10px] rounded-full flex-shrink-0" style={{ background: s.color }} />
-                        <span>{s.name} ({pct}%)</span>
-                      </div>
-                    );
-                  })}
+              <div className="flex items-baseline justify-between mb-4 border-b-2 border-gray-200">
+                <div className="flex">
+                  <button className={tabBtnClass(activeTab === 'saved')} onClick={() => setActiveTab('saved')}>
+                    {t('my_tasks_tab_saved')}
+                  </button>
+                  <button className={tabBtnClass(activeTab === 'done')} onClick={() => setActiveTab('done')}>
+                    {t('my_tasks_tab_done')}
+                  </button>
+                  <button className={tabBtnClass(activeTab === 'feedback')} onClick={() => setActiveTab('feedback')}>
+                    {t('dashboard_feedback_tab')}
+                    {feedbackThreads.some(thread => thread.unread_count > 0) && (
+                      <span
+                        className="inline-block text-white rounded-[10px] px-[6px] py-[1px] text-[0.7rem] font-bold ml-[5px] align-middle leading-[1.4]"
+                        style={{ background: 'var(--cs-tertiary)' }}
+                      >
+                        {feedbackThreads.reduce((sum, thread) => sum + thread.unread_count, 0)}
+                      </span>
+                    )}
+                  </button>
                 </div>
-              </div>
-
-              <div className="flex flex-wrap gap-4 justify-around">
-                <div className="flex flex-col items-center min-w-[60px]">
-                  <span className="text-[1.8rem] font-bold text-[var(--cs-primary)] leading-none mb-1">{contributedTasks.length}</span>
-                  <span className="text-[0.78rem] text-gray-500 text-center">{t('my_tasks_total')}</span>
-                </div>
-                <div className="flex flex-col items-center min-w-[60px]">
-                  <span className="text-[1.8rem] font-bold text-[var(--cs-primary)] leading-none mb-1">{doneCount}</span>
-                  <span className="text-[0.78rem] text-gray-500 text-center">{t('my_tasks_completed')}</span>
-                </div>
-                <div className="flex flex-col items-center min-w-[60px]">
-                  <span className="text-[1.8rem] font-bold text-[var(--cs-primary)] leading-none mb-1">{projectCount}</span>
-                  <span className="text-[0.78rem] text-gray-500 text-center">{t('my_tasks_projects')}</span>
-                </div>
-              </div>
-            </div>
-
-            {projectCount > 0 && (
-              <div className="text-[0.88rem] text-gray-500 px-1">
-                {t('my_tasks_participated', { count: projectCount })}
-                {percentage !== null && (
-                  <span>{t('my_tasks_percentage', { pct: percentage })}</span>
+                {activeTab === 'saved' && savedTasks.length > 0 && (
+                  <div className="text-xs text-gray-400">{t('dashboard_saved_tasks_subtitle', { count: savedTasks.length })}</div>
                 )}
               </div>
-            )}
-          </div>
-        </div>
 
-        {releaseTarget && (
-          <ConfirmDialog
-            title={t('my_tasks_release_confirm_title')}
-            message={t('my_tasks_release_confirm')}
-            confirmLabel={t('common_delete')}
-            cancelLabel={t('common_cancel')}
-            onConfirm={() => {
-              void releaseTask(releaseTarget);
-              setReleaseTarget(null);
-            }}
-            onCancel={() => setReleaseTarget(null)}
-          />
-        )}
+              {activeTab === 'feedback' ? (
+                feedbackThreadsStatus === 'loading' ? (
+                  <div className="text-center py-16 text-gray-500">{t('my_tasks_loading')}</div>
+                ) : feedbackThreads.length === 0 ? (
+                  <div className="px-1 py-10 text-center text-gray-500">{t('dashboard_feedback_empty')}</div>
+                ) : (
+                  <ul className="list-none m-0 p-0">
+                    {feedbackThreads.map(thread => (
+                      <FeedbackThreadRow
+                        key={thread.id}
+                        thread={thread}
+                        isOpen={openThreadId === thread.id}
+                        onToggle={() => setOpenThreadId(id => (id === thread.id ? null : thread.id))}
+                        language={i18n.language}
+                      />
+                    ))}
+                  </ul>
+                )
+              ) : isLoading ? (
+                <div className="text-center py-16 text-gray-500">{t('my_tasks_loading')}</div>
+              ) : activeTab === 'saved' ? (
+                savedTasks.length === 0 ? (
+                  <div className="px-1 py-10 text-center text-gray-500">{t('my_tasks_empty')}</div>
+                ) : (
+                  <TaskTable tasks={savedTasks} userName={user.name} language={i18n.language} t={t} onRelease={setReleaseTarget} returnPath="/my-dashboard" />
+                )
+              ) : (
+                doneTasks.length === 0 ? (
+                  <div className="px-1 py-10 text-center text-gray-500">{t('my_tasks_empty_done')}</div>
+                ) : (
+                  <TaskTable tasks={doneTasks} userName={user.name} language={i18n.language} t={t} expandable />
+                )
+              )}
+            </div>
+
+            <div className="flex flex-col gap-7">
+              {chartSegments.length > 0 && (
+                <div className="pb-7 border-b border-gray-100">
+                  <h2 className="text-[1.05rem] font-semibold text-[var(--cs-primary)] m-0 mb-4">{t('my_tasks_projects')}</h2>
+                  <div className="flex items-center gap-3.5">
+                    <DonutChart segments={chartSegments} />
+                    <div className="flex flex-col gap-[5px] text-xs text-gray-600">
+                      {chartSegments.filter(s => s.value > 0).map(s => {
+                        const total = chartSegments.reduce((sum, seg) => sum + seg.value, 0);
+                        const pct = total > 0 ? Math.round((s.value / total) * 100) : 0;
+                        return (
+                          <div key={s.name} className="flex items-center gap-[6px]">
+                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                            <span>{s.name} ({pct}%)</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <h2 className="text-[1.05rem] font-semibold text-[var(--cs-primary)] m-0 mb-4">{t('dashboard_widget_title')}</h2>
+                {!unansweredTopics || unansweredTopics.length === 0 ? (
+                  <p className="text-sm text-gray-500 m-0">{t('dashboard_widget_empty')}</p>
+                ) : (
+                  <ul className="list-none m-0 p-0 flex flex-col">
+                    {unansweredTopics.map((topic: ForumTopicWithReplyCount) => (
+                      <li key={topic.id} className="border-b border-gray-200 last:border-b-0">
+                        <HrefLink
+                          href={`/messageboard?topic=${topic.id}`}
+                          className="flex flex-col gap-0.5 py-3 no-underline text-inherit hover:text-[var(--cs-primary)]"
+                        >
+                          <span className="text-sm font-semibold text-gray-800">{topic.title}</span>
+                          <span className="text-xs text-gray-500">
+                            {topic.author_name} · {formatDate(topic.created_at)} · {t('dashboard_widget_no_reply')}
+                          </span>
+                        </HrefLink>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <HrefLink
+                  href="/messageboard"
+                  className="inline-block text-sm text-[var(--cs-primary)] font-semibold no-underline hover:underline mt-3"
+                >
+                  {t('dashboard_widget_view_all')} <span aria-hidden="true">→</span>
+                </HrefLink>
+              </div>
+            </div>
+          </div>
+
+          {releaseTarget && (
+            <ConfirmDialog
+              title={t('my_tasks_release_confirm_title')}
+              message={t('my_tasks_release_confirm')}
+              confirmLabel={t('common_delete')}
+              cancelLabel={t('common_cancel')}
+              onConfirm={() => {
+                void releaseTask(releaseTarget);
+                setReleaseTarget(null);
+              }}
+              onCancel={() => setReleaseTarget(null)}
+            />
+          )}
+        </div>
       </div>
     </CsPage>
   );

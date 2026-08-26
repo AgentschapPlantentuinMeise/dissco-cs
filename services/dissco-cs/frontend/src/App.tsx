@@ -17,7 +17,6 @@ import { HonourBoard } from './pages/honour-board/HonourBoard';
 import { SearchResults } from './pages/search/SearchResults';
 import { Contact } from './pages/contact/Contact';
 import { UserDashboard } from './pages/user-dashboard/UserDashboard';
-import { Dashboard } from './pages/dashboard/Dashboard';
 import { ReviewTasks } from './pages/review/ReviewTasks';
 import { MessageBoard } from './pages/message-board/MessageBoard';
 import { SiteManagement } from './pages/site-management/SiteManagement';
@@ -54,8 +53,7 @@ export const App: React.FC = () => {
           <Route path="/honour-board" element={<HonourBoard />} />
           <Route path="/messageboard" element={<PageGate pageKey="forum"><AuthGate><MessageBoard /></AuthGate></PageGate>} />
           <Route path="/contact" element={<PageGate pageKey="contact"><Contact /></PageGate>} />
-          <Route path="/my-tasks" element={<AuthGate><UserDashboard /></AuthGate>} />
-          <Route path="/my-dashboard" element={<AuthGate><Dashboard /></AuthGate>} />
+          <Route path="/my-dashboard" element={<AuthGate><UserDashboard /></AuthGate>} />
           <Route path="/review" element={<AuthGate requireReviewer><ReviewTasks /></AuthGate>} />
           <Route path="/manage" element={<AuthGate requireAdmin><SiteManagement /></AuthGate>} />
           <Route path="/manage/projects" element={<AuthGate requireAdmin><ProjectManagement /></AuthGate>} />

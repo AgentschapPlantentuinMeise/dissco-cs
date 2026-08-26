@@ -38,9 +38,11 @@ interface TaskTableProps {
   /** Taaknaam klapt in plaats van te navigeren een rij open met de ingediende data (alleen-lezen). */
   expandable?: boolean;
   onRelease?: (task: CrowdsourcingTask) => void;
+  /** Na opslaan/indienen op AnnotatePage terug naar dit pad i.p.v. door te gaan naar de volgende taak. */
+  returnPath?: string;
 }
 
-export function TaskTable({ tasks, userName, language, t, linkable = true, expandable = false, onRelease }: TaskTableProps) {
+export function TaskTable({ tasks, userName, language, t, linkable = true, expandable = false, onRelease, returnPath }: TaskTableProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [previewTask, setPreviewTask] = useState<CrowdsourcingTask | null>(null);
   const columnCount = 3 + (onRelease ? 1 : 0) + (expandable ? 1 : 0);
@@ -78,7 +80,11 @@ export function TaskTable({ tasks, userName, language, t, linkable = true, expan
                         {displayName}
                       </button>
                     ) : linkable ? (
-                      <HrefLink href={href} className="text-[var(--cs-primary)] no-underline font-medium hover:underline">
+                      <HrefLink
+                        href={href}
+                        state={returnPath ? { returnTo: returnPath } : undefined}
+                        className="text-[var(--cs-primary)] no-underline font-medium hover:underline"
+                      >
                         {displayName}
                       </HrefLink>
                     ) : (

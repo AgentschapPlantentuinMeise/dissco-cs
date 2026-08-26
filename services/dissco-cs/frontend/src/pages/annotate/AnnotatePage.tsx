@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, queryCache } from 'react-query';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../../api/madoc-client/request';
 import { getManifestStructure, getSiteCanvas } from '../../api/madoc-client/collections';
 import {
@@ -49,6 +49,8 @@ export function AnnotatePage() {
   const { data: project } = useProject();
   const { requestNextUrl, isLoadingNext } = useDisscoCSNavigation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = (location.state as { returnTo?: string } | null)?.returnTo;
 
   // Tasks are handed out randomly, not in a fixed sequence, so "previous" can only mean "the
   // manifest I was on before" — tracked here as a simple visited stack, not derived from any list.
@@ -381,7 +383,11 @@ export function AnnotatePage() {
     await save(status);
     setConfirmation(status === 'draft' ? t('annotate_saved_draft', 'Opgeslagen als concept') : t('annotate_submitted', 'Ingediend'));
     await new Promise(resolve => setTimeout(resolve, 1200));
-    await goToNext();
+    if (returnTo) {
+      await handleLeave(returnTo);
+    } else {
+      await goToNext();
+    }
   };
 
   // Same save as handleSaveAndAdvance('draft') but stays on the current task — no goToNext().
