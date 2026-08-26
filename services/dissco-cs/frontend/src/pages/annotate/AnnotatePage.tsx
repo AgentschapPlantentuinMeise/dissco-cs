@@ -12,7 +12,7 @@ import {
   createCaptureModelRevision,
 } from '../../api/madoc-client/crowdsourcing';
 import { updateTask } from '../../api/madoc-client/tasks';
-import { manifestClaimApi } from '../../api/cs-api';
+import { manifestClaimApi, forumApi } from '../../api/cs-api';
 import { useProject } from '../../hooks/use-project';
 import { useRouteContext } from '../../hooks/use-route-context';
 import { useDisscoCSNavigation } from '../../hooks/use-dissco-cs-navigation';
@@ -21,7 +21,10 @@ import { CsPage } from '../../components/CsPage';
 import { LocaleString } from '../../components/LocaleString';
 import { ProjectManualModal } from '../../components/ProjectManualModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { Modal } from '../../components/Modal';
+import { MessageForm, MessageFormData } from '../../components/messageform/MessageForm';
 import { BookIcon } from '../../icons/BookIcon';
+import { MailIcon } from '../../icons/MailIcon';
 import { AnnotateLayout } from './AnnotateLayout';
 import { OpenSeadragonViewer } from './viewer/OpenSeadragonViewer';
 import { CaptureModelForm } from './form/CaptureModelForm';
@@ -56,6 +59,7 @@ export function AnnotatePage() {
   // manifest I was on before" — tracked here as a simple visited stack, not derived from any list.
   const [visited, setVisited] = useState<number[]>([]);
   const [manualOpen, setManualOpen] = useState(false);
+  const [forumOpen, setForumOpen] = useState(false);
 
   const [navBottom, setNavBottom] = useState(70);
   useEffect(() => {
@@ -390,6 +394,16 @@ export function AnnotatePage() {
     }
   };
 
+  // Posts the forum topic, then hands off to the same save-as-draft-and-advance flow used
+  // elsewhere (handleSaveAndAdvance) — the task lands in "Saved tasks" and the user proceeds to
+  // returnTo (if they came from their saved-tasks list) or the next task, exactly like a normal
+  // draft save.
+  const handlePostForumMessage = async (data: MessageFormData) => {
+    await forumApi.createTopic(data);
+    setForumOpen(false);
+    await handleSaveAndAdvance('draft');
+  };
+
   // Same save as handleSaveAndAdvance('draft') but stays on the current task — no goToNext().
   const handleSaveDraft = async () => {
     await save('draft');
@@ -490,6 +504,14 @@ export function AnnotatePage() {
             >
               <BookIcon aria-hidden="true" className="translate-y-px" /> {t('annotate_manual_button', 'Handleiding')}
             </button>
+            {!isSubmittedTask && (
+              <button
+                className="text-[0.85rem] text-[var(--cs-primary)] border border-[var(--cs-primary)] rounded px-2 py-1 inline-flex items-center gap-1.5 leading-none cursor-pointer bg-white"
+                onClick={() => setForumOpen(true)}
+              >
+                <MailIcon aria-hidden="true" className="translate-y-px" /> {t('annotate_forum_button', 'Forumbericht')}
+              </button>
+            )}
             <button
               className="text-[0.85rem] text-[var(--cs-primary)] border border-[var(--cs-primary)] rounded px-2 py-1 inline-flex items-center leading-none disabled:opacity-40 disabled:cursor-not-allowed"
               disabled={visited.length === 0}
@@ -553,6 +575,14 @@ export function AnnotatePage() {
       </div>
 
       <ProjectManualModal projectSlug={project.slug} open={manualOpen} onClose={() => setManualOpen(false)} />
+
+      <Modal open={forumOpen} onClose={() => setForumOpen(false)} eyebrow={t('nav_messageboard')} size="lg">
+        <MessageForm
+          initialTaskUrl={window.location.href}
+          onSubmit={data => void handlePostForumMessage(data)}
+          onCancel={() => setForumOpen(false)}
+        />
+      </Modal>
 
       {releaseConfirmOpen && (
         <ConfirmDialog
