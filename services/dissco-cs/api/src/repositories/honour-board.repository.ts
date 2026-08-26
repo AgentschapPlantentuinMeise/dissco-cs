@@ -33,6 +33,17 @@ export type HonourBoardLeaderboard = {
 type PeriodKey = 'today' | 'week' | 'month' | 'legend';
 type PeriodRankingCacheEntry = { ranking: RankedHonourBoardEntry[]; refreshing: boolean };
 
+// A ranking is either scoped to an entire site (context contains the site urn) or to one
+// institution's projects (root_task in that institution's set of project task ids) -- same
+// underlying tasks-api table, different WHERE clause and cache key.
+type LeaderboardScope =
+  | { kind: 'site'; siteId: number }
+  | { kind: 'institution'; siteId: number; institutionId: number; taskIds: string[] };
+
+function scopeCacheKey(scope: LeaderboardScope): string {
+  return scope.kind === 'site' ? `site:${scope.siteId}` : `institution:${scope.siteId}:${scope.institutionId}`;
+}
+
 // Reads tasks-api's own `tasks` table directly (read-only, reusing its DB user) rather than the
 // Madoc gateway API -- there's no per-assignee aggregation endpoint, and this table is already
 // indexed for exactly this query (type, status, a GIN index on `context` for the site-scoping
@@ -42,9 +53,9 @@ export class HonourBoardRepository {
   private readonly pool: Pool;
   private readonly schemaRef: string;
 
-  // Cached per site+period (not per requesting user) -- the ranking is the same for everyone on
-  // a site, only "you" differs, and that's derived in-memory from the cached ranking below rather
-  // than queried separately.
+  // Cached per scope+period (not per requesting user) -- the ranking is the same for everyone
+  // looking at that site or institution, only "you" differs, and that's derived in-memory from
+  // the cached ranking below rather than queried separately.
   private readonly cache = new Map<string, PeriodRankingCacheEntry>();
 
   constructor() {
@@ -66,8 +77,14 @@ export class HonourBoardRepository {
     await this.pool.end();
   }
 
-  private async fetchPeriodRanking(siteId: number, since: Date | null): Promise<RankedHonourBoardEntry[]> {
-    const params: unknown[] = [JSON.stringify([`urn:madoc:site:${siteId}`])];
+  private async fetchPeriodRanking(scope: LeaderboardScope, since: Date | null): Promise<RankedHonourBoardEntry[]> {
+    if (scope.kind === 'institution' && scope.taskIds.length === 0) {
+      return [];
+    }
+
+    const params: unknown[] = [scope.kind === 'site' ? JSON.stringify([`urn:madoc:site:${scope.siteId}`]) : scope.taskIds];
+    const scopeClause = scope.kind === 'site' ? `context @> $1::jsonb` : `root_task = ANY($1::uuid[])`;
+
     let sinceClause = '';
     if (since) {
       params.push(since.toISOString());
@@ -88,7 +105,7 @@ export class HonourBoardRepository {
             AND status IN (2, 3)
             AND assignee_is_service IS NOT TRUE
             AND assignee_id IS NOT NULL
-            AND context @> $1::jsonb
+            AND ${scopeClause}
             ${sinceClause}
           GROUP BY assignee_id, assignee_name
         )
@@ -107,18 +124,18 @@ export class HonourBoardRepository {
     }));
   }
 
-  // Stale-while-revalidate, shared across every requester for a site+period: the first request
+  // Stale-while-revalidate, shared across every requester for a scope+period: the first request
   // pays for a live query; every request after that gets the cached ranking back immediately
   // while a background refresh (fire-and-forget) checks for changes, so the next request sees
   // up-to-date numbers without ever blocking on the query itself.
-  private async getPeriodRanking(siteId: number, period: PeriodKey, since: Date | null): Promise<RankedHonourBoardEntry[]> {
-    const cacheKey = `${siteId}:${period}`;
+  private async getPeriodRanking(scope: LeaderboardScope, period: PeriodKey, since: Date | null): Promise<RankedHonourBoardEntry[]> {
+    const cacheKey = `${scopeCacheKey(scope)}:${period}`;
     const cached = this.cache.get(cacheKey);
 
     if (cached) {
       if (!cached.refreshing) {
         cached.refreshing = true;
-        this.fetchPeriodRanking(siteId, since)
+        this.fetchPeriodRanking(scope, since)
           .then(ranking => this.cache.set(cacheKey, { ranking, refreshing: false }))
           .catch(err => {
             console.error('[honour-board] background refresh failed', period, err);
@@ -128,7 +145,7 @@ export class HonourBoardRepository {
       return cached.ranking;
     }
 
-    const ranking = await this.fetchPeriodRanking(siteId, since);
+    const ranking = await this.fetchPeriodRanking(scope, since);
     this.cache.set(cacheKey, { ranking, refreshing: false });
     return ranking;
   }
@@ -141,13 +158,13 @@ export class HonourBoardRepository {
 
   // Pure cache read, no side effects: never triggers a recompute, unlike getLeaderboard. For the
   // frontend's frequent "did it change yet?" poll, which must never itself cause work. Returns
-  // null only if nothing has ever been cached yet for this site (all 4 periods must be present).
-  peekLeaderboard(siteId: number, userUrn: string | null): HonourBoardLeaderboard | null {
+  // null only if nothing has ever been cached yet for this scope (all 4 periods must be present).
+  private peek(scope: LeaderboardScope, userUrn: string | null): HonourBoardLeaderboard | null {
     const periods: PeriodKey[] = ['today', 'week', 'month', 'legend'];
     const rankings: Partial<Record<PeriodKey, RankedHonourBoardEntry[]>> = {};
 
     for (const period of periods) {
-      const cached = this.cache.get(`${siteId}:${period}`);
+      const cached = this.cache.get(`${scopeCacheKey(scope)}:${period}`);
       if (!cached) {
         return null;
       }
@@ -162,14 +179,14 @@ export class HonourBoardRepository {
     };
   }
 
-  async getLeaderboard(siteId: number, userUrn: string | null): Promise<HonourBoardLeaderboard> {
+  private async getLeaderboardForScope(scope: LeaderboardScope, userUrn: string | null): Promise<HonourBoardLeaderboard> {
     const now = new Date();
 
     const [today, week, month, legend] = await Promise.all([
-      this.getPeriodRanking(siteId, 'today', startOfDay(now)),
-      this.getPeriodRanking(siteId, 'week', startOfWeek(now)),
-      this.getPeriodRanking(siteId, 'month', startOfMonth(now)),
-      this.getPeriodRanking(siteId, 'legend', null),
+      this.getPeriodRanking(scope, 'today', startOfDay(now)),
+      this.getPeriodRanking(scope, 'week', startOfWeek(now)),
+      this.getPeriodRanking(scope, 'month', startOfMonth(now)),
+      this.getPeriodRanking(scope, 'legend', null),
     ]);
 
     return {
@@ -178,5 +195,26 @@ export class HonourBoardRepository {
       month: this.toPeriod(month, userUrn),
       legend: this.toPeriod(legend, userUrn),
     };
+  }
+
+  peekLeaderboard(siteId: number, userUrn: string | null): HonourBoardLeaderboard | null {
+    return this.peek({ kind: 'site', siteId }, userUrn);
+  }
+
+  async getLeaderboard(siteId: number, userUrn: string | null): Promise<HonourBoardLeaderboard> {
+    return this.getLeaderboardForScope({ kind: 'site', siteId }, userUrn);
+  }
+
+  peekInstitutionLeaderboard(siteId: number, institutionId: number, userUrn: string | null): HonourBoardLeaderboard | null {
+    return this.peek({ kind: 'institution', siteId, institutionId, taskIds: [] }, userUrn);
+  }
+
+  async getInstitutionLeaderboard(
+    siteId: number,
+    institutionId: number,
+    taskIds: string[],
+    userUrn: string | null
+  ): Promise<HonourBoardLeaderboard> {
+    return this.getLeaderboardForScope({ kind: 'institution', siteId, institutionId, taskIds }, userUrn);
   }
 }

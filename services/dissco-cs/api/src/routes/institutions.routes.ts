@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { DisscoCSRepository } from '../db.js';
-import { requireSiteAdmin, resolveSiteId } from '../jwt.js';
+import { requireSiteAdmin, requestMadocUserIdentity, resolveSiteId } from '../jwt.js';
+import { HonourBoardRepository } from '../repositories/honour-board.repository.js';
+import { InstitutionStatsRepository } from '../repositories/institution-stats.repository.js';
 import {
   InstitutionBody,
   PruneProjectLinksBody,
@@ -11,7 +13,11 @@ import {
   parseSetInstitutionLinkBody,
 } from '../validators.js';
 
-export function institutionsRoutes(repository: DisscoCSRepository): Hono {
+export function institutionsRoutes(
+  repository: DisscoCSRepository,
+  institutionStatsRepository: InstitutionStatsRepository,
+  honourBoardRepository: HonourBoardRepository
+): Hono {
   const app = new Hono();
 
   app.get('/active', async c => {
@@ -51,6 +57,97 @@ export function institutionsRoutes(repository: DisscoCSRepository): Hono {
 
     const projectSlugs = await repository.institutions.listProjectSlugsForInstitution(siteId, institution.id);
     return c.json({ projectSlugs });
+  });
+
+  app.get('/active/:slug/stats', async c => {
+    const siteId = await resolveSiteId(c);
+    if (siteId === null) {
+      return c.text('Could not resolve site', 400);
+    }
+
+    const institution = await repository.institutions.getActiveInstitutionBySlug(siteId, c.req.param('slug'));
+    if (!institution) {
+      return c.notFound();
+    }
+
+    const projectSlugs = await repository.institutions.listProjectSlugsForInstitution(siteId, institution.id);
+    const overview = await institutionStatsRepository.getOverview(siteId, institution.id, projectSlugs);
+    return c.json(overview);
+  });
+
+  // Pure cache read for the frontend's periodic poll -- never triggers a recompute itself,
+  // unlike '/stats'. Falls back to the triggering path only if nothing has ever been cached yet.
+  app.get('/active/:slug/stats/current', async c => {
+    const siteId = await resolveSiteId(c);
+    if (siteId === null) {
+      return c.text('Could not resolve site', 400);
+    }
+
+    const institution = await repository.institutions.getActiveInstitutionBySlug(siteId, c.req.param('slug'));
+    if (!institution) {
+      return c.notFound();
+    }
+
+    const cached = institutionStatsRepository.peekOverview(siteId, institution.id);
+    if (cached) {
+      return c.json(cached);
+    }
+
+    const projectSlugs = await repository.institutions.listProjectSlugsForInstitution(siteId, institution.id);
+    const overview = await institutionStatsRepository.getOverview(siteId, institution.id, projectSlugs);
+    return c.json(overview);
+  });
+
+  app.get('/active/:slug/honour-board', async c => {
+    const siteId = await resolveSiteId(c);
+    if (siteId === null) {
+      return c.text('Could not resolve site', 400);
+    }
+
+    const institution = await repository.institutions.getActiveInstitutionBySlug(siteId, c.req.param('slug'));
+    if (!institution) {
+      return c.notFound();
+    }
+
+    const identity = requestMadocUserIdentity(c);
+    const userUrn = identity ? `urn:madoc:user:${identity.userId}` : null;
+
+    const projectSlugs = await repository.institutions.listProjectSlugsForInstitution(siteId, institution.id);
+    const projects = await institutionStatsRepository.resolveProjects(siteId, projectSlugs);
+    const taskIds = projects.map(p => p.task_id);
+
+    const leaderboard = await honourBoardRepository.getInstitutionLeaderboard(siteId, institution.id, taskIds, userUrn);
+    return c.json(leaderboard);
+  });
+
+  // Pure cache read for the frontend's periodic poll -- never triggers a recompute itself,
+  // unlike '/honour-board'. Falls back to the triggering path only if nothing has ever been
+  // cached yet.
+  app.get('/active/:slug/honour-board/current', async c => {
+    const siteId = await resolveSiteId(c);
+    if (siteId === null) {
+      return c.text('Could not resolve site', 400);
+    }
+
+    const institution = await repository.institutions.getActiveInstitutionBySlug(siteId, c.req.param('slug'));
+    if (!institution) {
+      return c.notFound();
+    }
+
+    const identity = requestMadocUserIdentity(c);
+    const userUrn = identity ? `urn:madoc:user:${identity.userId}` : null;
+
+    const cached = honourBoardRepository.peekInstitutionLeaderboard(siteId, institution.id, userUrn);
+    if (cached) {
+      return c.json(cached);
+    }
+
+    const projectSlugs = await repository.institutions.listProjectSlugsForInstitution(siteId, institution.id);
+    const projects = await institutionStatsRepository.resolveProjects(siteId, projectSlugs);
+    const taskIds = projects.map(p => p.task_id);
+
+    const leaderboard = await honourBoardRepository.getInstitutionLeaderboard(siteId, institution.id, taskIds, userUrn);
+    return c.json(leaderboard);
   });
 
   app.get('/for-project/:projectSlug', async c => {

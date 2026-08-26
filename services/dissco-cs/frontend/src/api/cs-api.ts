@@ -314,6 +314,14 @@ export const statsApi = {
   getCurrent: () => csFetch<SiteStats>(`/stats/current?slug=${getSiteSlug()}`),
 };
 
+export type InstitutionOverview = {
+  volunteers: number;
+  tasksCompleted: number;
+  tasksTotal: number;
+  projectsActive: number;
+  projectsCompleted: number;
+};
+
 export type HonourBoardEntry = { userUrn: string; name: string; count: number; rank: number };
 export type HonourBoardPeriod = { top: HonourBoardEntry[]; you: HonourBoardEntry | null };
 
@@ -366,6 +374,18 @@ export const institutionsApi = {
 
   getActiveProjectSlugs: (slug: string) =>
     csFetch<{ projectSlugs: string[] }>(`/institutions/active/${slug}/projects?slug=${getSiteSlug()}`),
+
+  getStats: (slug: string) =>
+    csFetch<InstitutionOverview>(`/institutions/active/${slug}/stats?slug=${getSiteSlug()}`),
+  // Pure cache read, never triggers a recompute -- for periodic polling.
+  getStatsCurrent: (slug: string) =>
+    csFetch<InstitutionOverview>(`/institutions/active/${slug}/stats/current?slug=${getSiteSlug()}`),
+
+  getHonourBoard: (slug: string) =>
+    csFetch<HonourBoardLeaderboard>(`/institutions/active/${slug}/honour-board?slug=${getSiteSlug()}`),
+  // Pure cache read, never triggers a recompute -- for periodic polling.
+  getHonourBoardCurrent: (slug: string) =>
+    csFetch<HonourBoardLeaderboard>(`/institutions/active/${slug}/honour-board/current?slug=${getSiteSlug()}`),
 
   listAdmin: () => csFetch<{ institutions: Institution[] }>('/institutions'),
 

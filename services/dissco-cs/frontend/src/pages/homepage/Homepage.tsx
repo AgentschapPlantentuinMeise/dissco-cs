@@ -88,7 +88,7 @@ export const Homepage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <HonourBoardSpotlight className="mt-8 lg:mt-6 lg:col-start-2 lg:row-start-1 lg:self-start" />
+            <HonourBoardSpotlight className="mt-8 lg:mt-0 lg:col-start-2 lg:row-start-1" />
           </div>
         </main>
 

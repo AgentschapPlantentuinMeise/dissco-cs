@@ -3,6 +3,7 @@ import { serve } from '@hono/node-server';
 import { appConfig } from './config.js';
 import { DisscoCSRepository } from './db.js';
 import { HonourBoardRepository } from './repositories/honour-board.repository.js';
+import { InstitutionStatsRepository } from './repositories/institution-stats.repository.js';
 import { MadocUsersRepository } from './repositories/madoc-users.repository.js';
 import { SiteTaskTotalsRepository } from './repositories/site-task-totals.repository.js';
 import { createDisscoCSApp } from './app.js';
@@ -12,7 +13,14 @@ export async function bootstrap(): Promise<void> {
   const honourBoardRepository = new HonourBoardRepository();
   const madocUsersRepository = new MadocUsersRepository();
   const siteTaskTotalsRepository = new SiteTaskTotalsRepository();
-  const app = createDisscoCSApp(repository, honourBoardRepository, madocUsersRepository, siteTaskTotalsRepository);
+  const institutionStatsRepository = new InstitutionStatsRepository();
+  const app = createDisscoCSApp(
+    repository,
+    honourBoardRepository,
+    madocUsersRepository,
+    siteTaskTotalsRepository,
+    institutionStatsRepository
+  );
 
   try {
     await repository.waitUntilReady(appConfig.startupRetryCount, appConfig.startupRetryMs);
@@ -37,6 +45,7 @@ export async function bootstrap(): Promise<void> {
       await honourBoardRepository.close();
       await madocUsersRepository.close();
       await siteTaskTotalsRepository.close();
+      await institutionStatsRepository.close();
       process.exit(0);
     };
 
@@ -48,6 +57,7 @@ export async function bootstrap(): Promise<void> {
     await honourBoardRepository.close();
     await madocUsersRepository.close();
     await siteTaskTotalsRepository.close();
+    await institutionStatsRepository.close();
     process.exit(1);
   }
 }

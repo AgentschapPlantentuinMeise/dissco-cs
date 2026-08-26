@@ -1,5 +1,5 @@
 import { useQuery } from 'react-query';
-import { honourBoardApi } from '../api/cs-api';
+import { institutionsApi } from '../api/cs-api';
 import { usePollingWindow } from './use-polling-window';
 
 // One triggering fetch on page load (starts a background recompute if the cache is stale) plus
@@ -7,16 +7,15 @@ import { usePollingWindow } from './use-polling-window';
 // only reads whatever the cache currently holds and must never cause a recompute, so it hits a
 // different, pure-read endpoint. refetchOnWindowFocus is off on the triggering query so
 // tab-switching doesn't also trigger SQL.
-export function useHonourBoard() {
-  const initial = useQuery('honour-board', () => honourBoardApi.get(), {
+export function useInstitutionStats(slug: string | undefined) {
+  const initial = useQuery(['institution-stats', slug], () => institutionsApi.getStats(slug!), {
+    enabled: !!slug,
     refetchOnWindowFocus: false,
-    // TODO: temporary for diagnosis, remove once the cause of the honour-board errors is found.
-    onError: err => console.error('[honour-board] initial fetch failed', err),
   });
   const refetchInterval = usePollingWindow();
-  const peek = useQuery('honour-board-current', () => honourBoardApi.getCurrent(), {
+  const peek = useQuery(['institution-stats-current', slug], () => institutionsApi.getStatsCurrent(slug!), {
+    enabled: !!slug,
     refetchInterval,
-    onError: err => console.error('[honour-board] peek fetch failed', err),
   });
 
   return { ...initial, data: peek.data ?? initial.data };

@@ -48,11 +48,11 @@ export const HonourBoardSpotlight: React.FC<{ className?: string }> = ({ classNa
 
   if (spotlight.length === 0) {
     return (
-      <div className={className}>
+      <div className={`bg-[var(--cs-dark)] rounded-[4px] p-6 flex flex-col ${className}`}>
         <div className="flex items-center justify-center gap-2 mb-4">
-          <div className="text-xs font-bold uppercase tracking-wider text-gray-500">{t('honour_board_spotlight_title')}</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-[#9fc9c4]">{t('honour_board_spotlight_title')}</div>
         </div>
-        <p className="text-sm text-gray-400 text-center">{t('honour_board_spotlight_empty')}</p>
+        <p className="text-sm text-[#a9c9c5] text-center">{t('honour_board_spotlight_empty')}</p>
       </div>
     );
   }
@@ -60,35 +60,35 @@ export const HonourBoardSpotlight: React.FC<{ className?: string }> = ({ classNa
   const featured = spotlight[new Date().getHours() % spotlight.length];
 
   return (
-    <div className={className}>
+    <div className={`bg-[var(--cs-dark)] rounded-[4px] p-6 flex flex-col ${className}`}>
       <div className="flex items-center justify-center gap-2 mb-4">
-        <div className="text-xs font-bold uppercase tracking-wider text-gray-500">{t('honour_board_spotlight_title')}</div>
+        <div className="text-xs font-bold uppercase tracking-wider text-[#9fc9c4]">{t('honour_board_spotlight_title')}</div>
       </div>
 
-      <div className="text-center pb-5 mb-5 border-b border-gray-100">
-        <span className="inline-block text-xs font-bold uppercase tracking-wide text-[var(--cs-primary)] bg-[#eaf3f2] rounded-full px-2.5 py-1 mb-3">
+      <div className="text-center pb-5 mb-5 border-b border-white/10">
+        <span className="inline-block text-xs font-bold uppercase tracking-wide text-[#eafcf9] bg-white/10 rounded-full px-2.5 py-1 mb-3">
           {t(PERIOD_LABEL_KEY[featured.period])}
         </span>
-        <MedalIcon className="w-7 h-7 text-[var(--cs-primary)] mx-auto mb-2" aria-hidden="true" />
-        <div className="text-2xl font-bold text-gray-800 mb-1.5">{featured.name}</div>
-        <div className="text-sm text-gray-500">
+        <MedalIcon className="w-7 h-7 text-white/90 mx-auto mb-2" aria-hidden="true" />
+        <div className="text-2xl font-bold text-white mb-1.5">{featured.name}</div>
+        <div className="text-sm text-[#a9c9c5]">
           {t(PERIOD_LINE_KEY[featured.period], { value: formatNumber(featured.count) })}
         </div>
       </div>
 
       <ol className="list-none m-0 p-0 flex flex-col">
         {spotlight.map(entry => (
-          <li key={entry.period} className="flex items-baseline gap-3 py-2.5 border-b border-gray-100 last:border-b-0">
-            <span className="whitespace-nowrap flex-shrink-0 w-[68px] text-[0.68rem] font-medium uppercase tracking-wide text-gray-400">
+          <li key={entry.period} className="flex items-baseline gap-3 py-3.5 border-b border-white/10 last:border-b-0">
+            <span className="whitespace-nowrap flex-shrink-0 w-[68px] text-[0.68rem] font-medium uppercase tracking-wide text-[#82a19c]">
               {t(PERIOD_LABEL_KEY[entry.period])}
             </span>
-            <span className="flex-1 text-sm text-gray-600">{entry.name}</span>
-            <span className="text-xs text-gray-400 tabular-nums">{formatNumber(entry.count)}</span>
+            <span className="flex-1 text-sm text-[#d3e8e5]">{entry.name}</span>
+            <span className="text-xs text-[#82a19c] tabular-nums">{formatNumber(entry.count)}</span>
           </li>
         ))}
       </ol>
 
-      <Link to="/honour-board" className="inline-block text-sm font-bold text-[var(--cs-primary)] no-underline hover:underline mt-4">
+      <Link to="/honour-board" className="inline-block text-sm font-bold text-[#7fe0d4] no-underline hover:underline mt-4">
         {t('honour_board_spotlight_link')} →
       </Link>
     </div>

@@ -10,27 +10,14 @@ import { PhoneIcon } from '../../icons/PhoneIcon';
 import { GlobeIcon } from '../../icons/GlobeIcon';
 import { institutionsApi, Institution } from '../../api/cs-api';
 import { StatBanner } from '../../components/StatBanner';
-import { MockBadge } from '../../components/MockBadge';
-import { useProjectList } from '../../hooks/use-project-list';
+import { PeriodCard } from '../../components/honour-board/PeriodCard';
+import { getAllSiteProjects } from '../../api/madoc-client/projects';
+import { useInstitutionStats } from '../../hooks/use-institution-stats';
+import { useInstitutionHonourBoard } from '../../hooks/use-institution-honour-board';
 import { ProjectCard } from '../../components/projectcard/ProjectCard';
-
-// Placeholder cijfers tot statistieken effectief aan een instituut gekoppeld kunnen worden.
-const mockOverview = {
-  projectsActive: 3,
-  projectsCompleted: 5,
-  tasksTotal: 12480,
-  tasksCompletedPct: 61,
-};
-
-const mockLeaderboard = [
-  { rank: 1, name: 'Vrijwilliger A', tasks: 812 },
-  { rank: 2, name: 'Vrijwilliger B', tasks: 645 },
-  { rank: 3, name: 'Vrijwilliger C', tasks: 590 },
-  { rank: 4, name: 'Vrijwilliger D', tasks: 477 },
-  { rank: 5, name: 'Vrijwilliger E', tasks: 320 },
-];
-
-const mockVolunteers = 84;
+import { MedalIcon } from '../../icons/MedalIcon';
+import { ClockIcon } from '../../icons/ClockIcon';
+import { CalendarIcon } from '../../icons/CalendarIcon';
 
 export const InstitutionDetail: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
@@ -48,8 +35,20 @@ export const InstitutionDetail: React.FC = () => {
   );
   const projectSlugs = projectSlugsResponse?.projectSlugs ?? [];
 
-  const { data: allProjectsResponse } = useProjectList();
-  const linkedProjects = (allProjectsResponse?.projects ?? []).filter((p: any) => projectSlugs.includes(p.slug));
+  // All pages, published-only -- same reasoning as Homepage/Projects.tsx: a site-admin viewer
+  // otherwise gets every status unfiltered from page 1 only, which can miss this institution's
+  // linked projects entirely if enough other/older projects exist.
+  const { data: allProjects } = useQuery(
+    ['all-site-projects', { published: true }],
+    () => getAllSiteProjects({ published: true }),
+    { staleTime: 5 * 60 * 1000 }
+  );
+  const linkedProjects = (allProjects ?? []).filter((p: any) => projectSlugs.includes(p.slug));
+
+  const { data: overview } = useInstitutionStats(slug);
+  const { data: honourBoard } = useInstitutionHonourBoard(slug);
+  const tasksCompletedPct = overview && overview.tasksTotal > 0 ? Math.round((overview.tasksCompleted / overview.tasksTotal) * 100) : 0;
+  const legendLeader = honourBoard?.legend.top[0];
 
   const [descExpanded, setDescExpanded] = React.useState(false);
 
@@ -128,49 +127,72 @@ export const InstitutionDetail: React.FC = () => {
                   </div>
                 )}
 
-                {/* Stats banner — confined to the text column's width, same signature as the volunteer dashboard */}
-                <StatBanner
-                  className="mt-14 lg:col-start-1 lg:row-start-2"
-                  stats={[
-                    {
-                      value: `${mockOverview.tasksCompletedPct}%`,
-                      label: t('pdp_transcribed'),
-                      note: `${formatNumber(mockOverview.tasksTotal)} ${t('institution_progress_tasks')}`,
-                    },
-                    { value: mockOverview.projectsActive, label: t('institution_projects_active') },
-                    { value: mockOverview.projectsCompleted, label: t('institution_projects_completed') },
-                    { value: formatNumber(mockVolunteers), label: t('institution_stats_volunteers') },
-                  ]}
-                  trailing={<MockBadge label={t('institution_mock_badge')} />}
-                />
+                {/* Stats banner + projects — one grid cell so the projects section sits right under the banner, independent of the leaderboard's height */}
+                <div className="mt-14 lg:col-start-1 lg:row-start-2 flex flex-col">
+                  <StatBanner
+                    eyebrow={t('institution_stats_caption', { name: text(institution.name) })}
+                    stats={[
+                      {
+                        value: `${tasksCompletedPct}%`,
+                        label: t('pdp_transcribed'),
+                        note: overview ? `${formatNumber(overview.tasksTotal)} ${t('institution_progress_tasks')}` : undefined,
+                      },
+                      { value: overview ? overview.projectsActive : '—', label: t('institution_projects_active') },
+                      { value: overview ? overview.projectsCompleted : '—', label: t('institution_projects_completed') },
+                      { value: overview ? formatNumber(overview.volunteers) : '—', label: t('institution_stats_volunteers') },
+                    ]}
+                    trailing={
+                      legendLeader && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <MedalIcon className="w-[18px] h-[18px] opacity-90" aria-hidden="true" />
+                          <span>{t('honour_board_legend_headline', { name: legendLeader.name, value: formatNumber(legendLeader.count) })}</span>
+                        </div>
+                      )
+                    }
+                    trailingDivider
+                  />
 
-                {/* Leaderboard — starts level with the banner, runs down alongside the projects */}
-                <div className="order-5 lg:order-none mt-14 lg:col-start-2 lg:row-start-2 lg:row-span-2">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="text-xs font-bold uppercase tracking-wider text-gray-500">{t('institution_leaderboard_title')}</div>
-                    <MockBadge label={t('institution_mock_badge')} />
+                  <div className="mt-8">
+                    {linkedProjects.length === 0 ? (
+                      <p className="text-sm text-gray-500">{t('institution_projects_empty')}</p>
+                    ) : (
+                      <div className="cs-projects-grid cs-projects-grid--compact">
+                        {linkedProjects.map((project: any) => (
+                          <ProjectCard key={project.id} projectSummaryData={project} />
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <ol className="list-none m-0 p-0 flex flex-col">
-                    {mockLeaderboard.map(entry => (
-                      <li key={entry.rank} className="flex items-baseline gap-2.5 py-2 border-b border-gray-100 last:border-b-0 text-sm">
-                        <span className="w-[1.2em] text-gray-500 tabular-nums">{entry.rank}</span>
-                        <span className="flex-1 text-gray-700">{entry.name}</span>
-                        <span className="text-gray-500 tabular-nums">{formatNumber(entry.tasks)}</span>
-                      </li>
-                    ))}
-                  </ol>
                 </div>
 
-                {/* Projects */}
-                <div className="order-4 lg:order-none mt-8 lg:col-start-1 lg:row-start-3">
-                  {linkedProjects.length === 0 ? (
-                    <p className="text-sm text-gray-500">{t('institution_projects_empty')}</p>
+                {/* Leaderboard — starts level with the banner, runs down alongside it */}
+                <div className="mt-14 lg:col-start-2 lg:row-start-2 flex flex-col gap-4">
+                  {honourBoard ? (
+                    <>
+                      <PeriodCard
+                        titleKey="honour_board_period_today"
+                        icon={<ClockIcon className="w-4 h-4" />}
+                        period={honourBoard.today}
+                        formatNumber={formatNumber}
+                        dark
+                      />
+                      <PeriodCard
+                        titleKey="honour_board_period_week"
+                        icon={<CalendarIcon className="w-4 h-4" />}
+                        period={honourBoard.week}
+                        formatNumber={formatNumber}
+                        dark
+                      />
+                      <PeriodCard
+                        titleKey="honour_board_period_month"
+                        icon={<CalendarIcon className="w-4 h-4" />}
+                        period={honourBoard.month}
+                        formatNumber={formatNumber}
+                        dark
+                      />
+                    </>
                   ) : (
-                    <div className="cs-projects-grid cs-projects-grid--compact">
-                      {linkedProjects.map((project: any) => (
-                        <ProjectCard key={project.id} projectSummaryData={project} />
-                      ))}
-                    </div>
+                    <p className="text-sm text-gray-400">{t('card_loading')}</p>
                   )}
                 </div>
               </div>

@@ -46,7 +46,7 @@ export const Institutions: React.FC = () => {
             )}
           </div>
 
-          <HonourBoardSpotlight className="mt-8 lg:mt-6 lg:col-start-2 lg:row-start-2 lg:self-start" />
+          <HonourBoardSpotlight className="mt-8 lg:mt-0 lg:col-start-2 lg:row-start-2" />
 
         </div>
       </div>

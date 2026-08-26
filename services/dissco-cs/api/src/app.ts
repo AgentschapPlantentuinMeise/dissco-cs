@@ -10,6 +10,7 @@ import { announcementsRoutes } from './routes/announcements.routes.js';
 import { contactRoutes } from './routes/contact.routes.js';
 import { forumRoutes } from './routes/forum.routes.js';
 import { honourBoardRoutes } from './routes/honour-board.routes.js';
+import { InstitutionStatsRepository } from './repositories/institution-stats.repository.js';
 import { institutionsRoutes } from './routes/institutions.routes.js';
 import { manifestClaimRoutes } from './routes/manifest-claim.routes.js';
 import { projectDebugRoutes } from './routes/project-debug.routes.js';
@@ -26,7 +27,8 @@ export function createDisscoCSApp(
   repository: DisscoCSRepository,
   honourBoardRepository: HonourBoardRepository,
   madocUsersRepository: MadocUsersRepository,
-  siteTaskTotalsRepository: SiteTaskTotalsRepository
+  siteTaskTotalsRepository: SiteTaskTotalsRepository,
+  institutionStatsRepository: InstitutionStatsRepository
 ): Hono {
   const app = new Hono();
 
@@ -35,7 +37,7 @@ export function createDisscoCSApp(
   app.route('/api/dissco-cs/site-pages', sitePagesRoutes(repository));
   app.route('/api/dissco-cs/contact', contactRoutes(repository));
   app.route('/api/dissco-cs/announcements', announcementsRoutes(repository));
-  app.route('/api/dissco-cs/institutions', institutionsRoutes(repository));
+  app.route('/api/dissco-cs/institutions', institutionsRoutes(repository, institutionStatsRepository, honourBoardRepository));
   app.route('/api/dissco-cs/stats', statsRoutes(madocUsersRepository, siteTaskTotalsRepository));
   app.route('/api/dissco-cs/honour-board', honourBoardRoutes(honourBoardRepository));
   app.route('/api/dissco-cs/projects', projectProgressRoutes());

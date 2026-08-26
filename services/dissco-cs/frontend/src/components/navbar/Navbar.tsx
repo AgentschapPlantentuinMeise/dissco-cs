@@ -22,7 +22,7 @@ const navLinkClass = (isActive: boolean) =>
   `no-underline text-base transition-colors duration-200 hover:text-[var(--cs-primary)]
    block py-[10px] border-t border-[#f0f0f0]
    md:inline md:py-0 md:border-t-0
-   ${isActive ? 'font-bold text-[var(--cs-accent)]' : 'font-medium text-gray-600'}`;
+   ${isActive ? 'font-medium text-[var(--cs-accent)]' : 'font-[380] text-gray-600'}`;
 
 const dropdownItemClass =
   'block w-full px-4 py-[10px] no-underline text-gray-600 text-[0.9rem] bg-transparent border-none cursor-pointer text-left box-border transition-colors duration-150 hover:bg-gray-100 hover:text-[var(--cs-primary)]';
@@ -222,7 +222,7 @@ export const Navbar: React.FC = () => {
           <li className="relative max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:w-full">
             <div className="relative">
               <button
-                className="bg-transparent border-none cursor-pointer text-gray-600 font-medium text-base p-0 hover:text-[var(--cs-primary)] transition-colors duration-200 max-[768px]:py-[10px]"
+                className="bg-transparent border-none cursor-pointer text-gray-600 font-[380] text-base p-0 hover:text-[var(--cs-primary)] transition-colors duration-200 max-[768px]:py-[10px]"
                 {...langBtnProps}
               >
                 {currentLang.code.toUpperCase()} ▾
@@ -257,7 +257,7 @@ export const Navbar: React.FC = () => {
             {user ? (
               <div className="relative">
                 <button
-                  className="bg-transparent border-none cursor-pointer text-gray-600 font-medium text-base flex items-center gap-1 p-0 hover:text-[var(--cs-primary)] transition-colors duration-200 max-[768px]:py-[10px] max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:w-full"
+                  className="bg-transparent border-none cursor-pointer text-gray-600 font-[380] text-base flex items-center gap-1 p-0 hover:text-[var(--cs-primary)] transition-colors duration-200 max-[768px]:py-[10px] max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:w-full"
                   {...buttonProps}
                 >
                   <span className="relative inline-flex">

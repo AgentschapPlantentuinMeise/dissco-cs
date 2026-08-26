@@ -7,12 +7,26 @@
 }
 
 /*
+  Self-hosted so every browser renders the exact same font file/outlines —
+  a system-font stack (e.g. "Segoe UI") renders visibly differently between
+  Firefox and Chromium-based browsers.
+*/
+@font-face {
+  font-family: "Inter";
+  src: url("./fonts/InterVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
   Shared wrapper used across all citizen science pages.
   padding-top schuift de content onder de vaste navbar (zie .cs-navbar
   hieronder) — hier gezet i.p.v. per pagina, zodat het altijd consistent is.
 */
 .cs-bootstrap-wrapper {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 380;
   background-color: #f8f9fa;
   color: #212529;
   min-height: 100vh;

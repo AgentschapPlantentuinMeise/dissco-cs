@@ -13,8 +13,10 @@ export const Projects: React.FC = () => {
   // All pages, published-only, so every active project shows regardless of how many draft/paused
   // projects exist (and regardless of whether the viewer is a site-admin, who would otherwise see
   // every status unfiltered -- see useProjectList's `published` option).
-  const { data: allProjects, status } = useQuery(['all-site-projects', { published: true }], () =>
-    getAllSiteProjects({ published: true })
+  const { data: allProjects, status } = useQuery(
+    ['all-site-projects', { published: true }],
+    () => getAllSiteProjects({ published: true }),
+    { staleTime: 5 * 60 * 1000 }
   );
   const { data: siteStats } = useSiteStats();
   const { t, i18n } = useTranslation('dissco-cs');
@@ -61,7 +63,7 @@ export const Projects: React.FC = () => {
             </div>
           </div>
 
-          <HonourBoardSpotlight className="mt-8 lg:mt-6 lg:col-start-2 lg:row-start-3 lg:self-start" />
+          <HonourBoardSpotlight className="mt-8 lg:mt-0 lg:col-start-2 lg:row-start-3" />
 
         </div>
       </div>
