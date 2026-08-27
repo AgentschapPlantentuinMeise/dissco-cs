@@ -1,7 +1,7 @@
 import React from 'react';
 import { CsPage } from '../../components/CsPage';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { ChevronIcon } from '../../icons/ChevronIcon';
+import { Select } from '../../components/Select';
 import { MailIcon } from '../../icons/MailIcon';
 import { localeText } from '../../utility/locale-text';
 import { ImagePreviewPopup } from '../../components/ImagePreviewPopup';
@@ -26,19 +26,16 @@ export const ReviewTasks: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-3 mb-5">
             <ReviewSearchInput value={c.searchQuery} onChange={c.setSearchQuery} />
-            <div className="relative">
-              <select
-                value={c.statusFilter}
-                onChange={e => c.setStatusFilter(e.target.value as '' | '0' | '1' | '2')}
-                className="appearance-none border border-gray-300 rounded-lg p-2 pr-8"
-              >
-                <option value="">{t('review_filter_status_all')}</option>
-                <option value="0">{t('review_status_not_started')}</option>
-                <option value="1">{t('review_status_todo')}</option>
-                <option value="2">{t('review_status_in_review')}</option>
-              </select>
-              <ChevronIcon aria-hidden="true" className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-            </div>
+            <Select
+              value={c.statusFilter}
+              onChange={e => c.setStatusFilter(e.target.value as '' | '0' | '1' | '2')}
+              className="border border-gray-300 rounded-lg p-2"
+            >
+              <option value="">{t('review_filter_status_all')}</option>
+              <option value="0">{t('review_status_not_started')}</option>
+              <option value="1">{t('review_status_todo')}</option>
+              <option value="2">{t('review_status_in_review')}</option>
+            </Select>
             {c.queryStatus === 'success' && (
               <ReviewCountSummary visibleCount={c.visibleRows.length} totalCount={c.rows.length} className="ml-auto" />
             )}

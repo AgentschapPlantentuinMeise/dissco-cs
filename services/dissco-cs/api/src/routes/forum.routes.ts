@@ -38,6 +38,8 @@ export function forumRoutes(repository: DisscoCSRepository): Hono {
     }
 
     const taskUrl = isNonEmptyString(payload.taskUrl) ? payload.taskUrl : null;
+    const projectSlug = isNonEmptyString(payload.projectSlug) ? payload.projectSlug : null;
+    const projectLabel = isNonEmptyString(payload.projectLabel) ? payload.projectLabel : null;
 
     const topic = await repository.forum.createTopic({
       siteId: identity.siteId,
@@ -45,6 +47,8 @@ export function forumRoutes(repository: DisscoCSRepository): Hono {
       authorName: identity.name,
       title: payload.title,
       taskUrl,
+      projectSlug,
+      projectLabel,
       body: payload.body,
     });
 

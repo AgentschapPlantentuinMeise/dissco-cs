@@ -7,6 +7,8 @@ export type ForumTopic = {
   author_name: string;
   title: string;
   task_url: string | null;
+  project_slug: string | null;
+  project_label: string | null;
   body: string;
   created_at: Date;
   last_activity: Date;
@@ -58,16 +60,27 @@ export class ForumRepository {
     authorName: string;
     title: string;
     taskUrl: string | null;
+    projectSlug: string | null;
+    projectLabel: string | null;
     body: string;
   }): Promise<ForumTopic> {
     const result = await this.pool.query<ForumTopic>(
       `
       INSERT INTO ${this.table('forum_topics')} (
-        site_id, author_user_id, author_name, title, task_url, body
-      ) VALUES ($1, $2, $3, $4, $5, $6)
+        site_id, author_user_id, author_name, title, task_url, project_slug, project_label, body
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `,
-      [input.siteId, input.authorUserId, input.authorName, input.title, input.taskUrl, input.body]
+      [
+        input.siteId,
+        input.authorUserId,
+        input.authorName,
+        input.title,
+        input.taskUrl,
+        input.projectSlug,
+        input.projectLabel,
+        input.body,
+      ]
     );
 
     return result.rows[0];

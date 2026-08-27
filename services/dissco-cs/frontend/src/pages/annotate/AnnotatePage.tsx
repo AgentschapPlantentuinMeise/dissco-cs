@@ -18,7 +18,7 @@ import { useRouteContext } from '../../hooks/use-route-context';
 import { useDisscoCSNavigation } from '../../hooks/use-dissco-cs-navigation';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { CsPage } from '../../components/CsPage';
-import { LocaleString } from '../../components/LocaleString';
+import { LocaleString, useLocaleString } from '../../components/LocaleString';
 import { ProjectManualModal } from '../../components/ProjectManualModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Modal } from '../../components/Modal';
@@ -50,6 +50,7 @@ export function AnnotatePage() {
   const { t } = useTranslation('dissco-cs');
   const { projectId, manifestId } = useRouteContext();
   const { data: project } = useProject();
+  const [projectLabel] = useLocaleString(project?.label);
   const { requestNextUrl, isLoadingNext } = useDisscoCSNavigation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -399,7 +400,7 @@ export function AnnotatePage() {
   // returnTo (if they came from their saved-tasks list) or the next task, exactly like a normal
   // draft save.
   const handlePostForumMessage = async (data: MessageFormData) => {
-    await forumApi.createTopic(data);
+    await forumApi.createTopic({ ...data, projectSlug: project?.slug, projectLabel });
     setForumOpen(false);
     await handleSaveAndAdvance('draft');
   };
@@ -579,6 +580,8 @@ export function AnnotatePage() {
       <Modal open={forumOpen} onClose={() => setForumOpen(false)} eyebrow={t('nav_messageboard')} size="lg">
         <MessageForm
           initialTaskUrl={window.location.href}
+          taskUrlReadOnly
+          fixedProjectLabel={projectLabel}
           onSubmit={data => void handlePostForumMessage(data)}
           onCancel={() => setForumOpen(false)}
         />

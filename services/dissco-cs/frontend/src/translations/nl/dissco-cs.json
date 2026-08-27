@@ -101,6 +101,8 @@
   "forum_filters_heading": "Filters",
   "forum_form_label_body": "Bericht",
   "forum_form_label_link": "Link naar taak",
+  "forum_form_label_project": "Project",
+  "forum_form_project_none": "— Geen project —",
   "forum_form_label_title": "Titel",
   "forum_form_placeholder_body": "Beschrijf je vraag...",
   "forum_form_placeholder_reply": "Schrijf een antwoord...",

@@ -1,18 +1,33 @@
 ﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useQuery } from 'react-query';
 import { CsPage } from '../../components/CsPage';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { MessageForm, MessageFormData } from '../../components/messageform/MessageForm';
 import { useUser } from '../../hooks/use-current-user';
 import { useTranslation } from 'react-i18next';
 import { forumApi, ForumTopicWithReplyCount, ForumReply } from '../../api/cs-api';
+import { getAllSiteProjects } from '../../api/madoc-client/projects';
 import { DeleteIconButton } from '../../components/DeleteIconButton';
 import { ChevronIcon } from '../../icons/ChevronIcon';
-import { ArrowRightIcon } from '../../icons/ArrowRightIcon';
 import { SearchIcon } from '../../icons/SearchIcon';
+import { PersonIcon } from '../../icons/PersonIcon';
+import { ClockIcon } from '../../icons/ClockIcon';
+import { FolderIcon } from '../../icons/FolderIcon';
+import { LinkIcon } from '../../icons/LinkIcon';
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString('nl-BE', { dateStyle: 'short', timeStyle: 'short' });
+
+// Mirrors the fallback chain LocaleString/useLocaleString use (current language, then
+// nl/en/fr/de) but as a plain function — needed here because it runs over a whole project list,
+// not a single value, so the hook form doesn't fit.
+function resolveProjectLabel(label: Record<string, string[] | string> | undefined, lang: string): string {
+  if (!label) return '';
+  const value = label[lang] || label.nl || label.en || label.fr || label.de;
+  if (!value) return '';
+  return Array.isArray(value) ? value.join(' ') : value;
+}
 
 const btnPrimary = 'bg-[var(--cs-primary)] text-white border-none px-[18px] py-[10px] rounded text-[0.95rem] font-medium cursor-pointer transition-colors duration-200 hover:bg-[var(--cs-dark)]';
 const btnGhost = 'bg-transparent border border-gray-300 px-3 py-1.5 rounded text-[0.85rem] text-gray-600 cursor-pointer whitespace-nowrap transition-[border-color,color] duration-200 hover:border-[var(--cs-primary)] hover:text-[var(--cs-primary)]';
@@ -26,9 +41,17 @@ const filterRowClass = (isActive: boolean) =>
 const inputClass = 'py-[9px] px-3 border border-gray-300 rounded text-[0.95rem] font-[inherit] resize-y transition-colors duration-200 focus:outline-none focus:border-[var(--cs-primary)]';
 
 export const MessageBoard: React.FC = () => {
-  const { t } = useTranslation('dissco-cs');
+  const { t, i18n } = useTranslation('dissco-cs');
   const user = useUser();
   const authorName = user?.name || t('forum_meta_author');
+
+  const { data: allProjects } = useQuery('forum-project-options', () => getAllSiteProjects({ published: true }), {
+    staleTime: 5 * 60 * 1000,
+  });
+  const projectOptions = useMemo(
+    () => (allProjects || []).map((p: any) => ({ slug: p.slug, label: resolveProjectLabel(p.label, i18n.language) })),
+    [allProjects, i18n.language]
+  );
 
   const [topics, setTopics] = useState<ForumTopicWithReplyCount[]>([]);
   const [repliesByTopic, setRepliesByTopic] = useState<Record<string, ForumReply[]>>({});
@@ -89,7 +112,8 @@ export const MessageBoard: React.FC = () => {
     return sortedTopics.filter(m =>
       m.title.toLowerCase().includes(q) ||
       m.body.toLowerCase().includes(q) ||
-      m.author_name.toLowerCase().includes(q)
+      m.author_name.toLowerCase().includes(q) ||
+      (m.project_label || '').toLowerCase().includes(q)
     );
   }, [sortedTopics, searchQuery]);
 
@@ -166,6 +190,7 @@ export const MessageBoard: React.FC = () => {
               <MessageForm
                 onSubmit={handleSubmitMessage}
                 onCancel={() => setShowNewForm(false)}
+                projectOptions={projectOptions}
               />
             )}
 
@@ -185,12 +210,17 @@ export const MessageBoard: React.FC = () => {
                   <div key={msg.id} id={`topic-${msg.id}`} className={`flex bg-white rounded-lg shadow-sm border border-gray-100 border-l-4 ${unread ? 'border-l-[var(--cs-secondary)]' : 'border-l-transparent'} px-4 py-3.5`}>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start gap-3 mb-1">
-                        <div className="min-w-0">
-                          <h3 className={`m-0 mb-[2px] text-[0.95rem] text-[var(--cs-primary)] flex items-center gap-[6px] ${unread ? 'font-bold' : 'font-medium'}`}>
+                        {/* Clicking the title/meta/body reads the full message — same toggle as
+                            "Antwoord", so opening it to just read doesn't require hitting the
+                            reply button specifically. */}
+                        <div
+                          className="min-w-0 flex-1 cursor-pointer"
+                          onClick={() => handleToggleExpand(msg.id)}
+                        >
+                          <h3 className={`m-0 text-[0.95rem] text-[var(--cs-primary)] flex items-center gap-[6px] min-w-0 ${unread ? 'font-bold' : 'font-medium'}`}>
                             {unread && <span className="inline-block w-2 h-2 rounded-full bg-[var(--cs-secondary)] flex-shrink-0" aria-label="nieuw" />}
                             {msg.title}
                           </h3>
-                          <span className="text-xs text-gray-400">{msg.author_name} · {formatDate(msg.created_at)}</span>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <button className={`${btnGhost} flex items-center gap-1`} onClick={() => handleToggleExpand(msg.id)}>
@@ -207,13 +237,46 @@ export const MessageBoard: React.FC = () => {
                         </div>
                       </div>
 
-                      <p className="text-[0.9rem] text-[#555] leading-[1.4] my-1 mb-[6px] line-clamp-2">{msg.body}</p>
+                      {/* Fixed order (who → when → about which project → which task) so every card
+                          reads the same regardless of which fields it has. */}
+                      <div
+                        className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 mb-1.5 cursor-pointer"
+                        onClick={() => handleToggleExpand(msg.id)}
+                      >
+                        <span className="inline-flex items-center gap-1 text-xs text-gray-400">
+                          <PersonIcon aria-hidden="true" className="text-gray-300" /> {msg.author_name}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-xs text-gray-400">
+                          <ClockIcon aria-hidden="true" className="text-gray-300" /> {formatDate(msg.created_at)}
+                        </span>
+                        {msg.project_slug && (
+                          <Link
+                            to={`/explore/${msg.project_slug}`}
+                            onClick={e => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--cs-primary)] no-underline hover:underline"
+                          >
+                            <FolderIcon aria-hidden="true" /> {msg.project_label || msg.project_slug}
+                          </Link>
+                        )}
+                        {msg.task_url && (
+                          <a
+                            href={msg.task_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-xs text-[var(--cs-primary)] no-underline hover:underline"
+                          >
+                            <LinkIcon aria-hidden="true" /> {t('forum_view_task')}
+                          </a>
+                        )}
+                      </div>
 
-                      {msg.task_url && (
-                        <a href={msg.task_url} className="inline-flex items-center gap-1 text-[0.85rem] text-[var(--cs-primary)] no-underline mb-1 hover:underline" target="_blank" rel="noopener noreferrer">
-                          {t('forum_view_task')} <ArrowRightIcon aria-hidden="true" />
-                        </a>
-                      )}
+                      <p
+                        className={`text-[0.9rem] text-[#555] leading-[1.4] my-1 mb-[6px] whitespace-pre-line cursor-pointer ${expandedId === msg.id ? '' : 'line-clamp-2'}`}
+                        onClick={() => handleToggleExpand(msg.id)}
+                      >
+                        {msg.body}
+                      </p>
 
                       {expandedId === msg.id && (
                         <div className="mt-3 border-t border-gray-100 pt-3 flex flex-col gap-2">
@@ -222,7 +285,7 @@ export const MessageBoard: React.FC = () => {
                               {replies.map(reply => (
                                 <div key={reply.id} className="bg-gray-50 border-l-[3px] border-[var(--cs-primary)] rounded-r-[6px] py-2 px-3 ml-2">
                                   <span className="text-xs text-gray-400">{reply.author_name} · {formatDate(reply.created_at)}</span>
-                                  <p className="m-0 mt-1 text-[0.9rem] text-gray-800 leading-[1.5]">{reply.body}</p>
+                                  <p className="m-0 mt-1 text-[0.9rem] text-gray-800 leading-[1.5] whitespace-pre-line">{reply.body}</p>
                                 </div>
                               ))}
                             </div>

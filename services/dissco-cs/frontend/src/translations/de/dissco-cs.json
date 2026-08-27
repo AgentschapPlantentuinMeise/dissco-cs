@@ -101,6 +101,8 @@
   "forum_filters_heading": "Filter",
   "forum_form_label_body": "Nachricht",
   "forum_form_label_link": "Link zur Aufgabe",
+  "forum_form_label_project": "Projekt",
+  "forum_form_project_none": "— Kein Projekt —",
   "forum_form_label_title": "Titel",
   "forum_form_placeholder_body": "Beschreiben Sie Ihre Frage...",
   "forum_form_placeholder_reply": "Schreiben Sie eine Antwort...",

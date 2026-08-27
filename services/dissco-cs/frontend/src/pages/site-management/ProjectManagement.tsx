@@ -17,9 +17,9 @@ import { SaveButton } from '../../components/SaveButton';
 import { DeleteIconButton } from '../../components/DeleteIconButton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { MarkdownToolbar } from '../../components/MarkdownToolbar';
+import { Select } from '../../components/Select';
 import { ArrowLeftIcon } from '../../icons/ArrowLeftIcon';
 import { CheckIcon } from '../../icons/CheckIcon';
-import { ChevronIcon } from '../../icons/ChevronIcon';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import {
   projectManualsApi,
@@ -417,28 +417,22 @@ const ProjectsSubview: React.FC<{
 
           <div className="mb-5">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sm_project_institution_label')}</label>
-            <div className="relative">
-              <select
-                value={pickedInstitutionId}
-                onChange={e => setPickedInstitutionId(e.target.value ? Number(e.target.value) : '')}
-                className="w-full appearance-none border border-gray-300 rounded-lg p-2 pr-8"
-              >
-                {pickedInstitutionId === '' && (
-                  <option value="" disabled>
-                    {t('sm_project_institution_placeholder')}
-                  </option>
-                )}
-                {institutions.map(institution => (
-                  <option key={institution.id} value={institution.id}>
-                    {institutionName(institution, i18n.language)}
-                  </option>
-                ))}
-              </select>
-              <ChevronIcon
-                aria-hidden="true"
-                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
-              />
-            </div>
+            <Select
+              value={pickedInstitutionId}
+              onChange={e => setPickedInstitutionId(e.target.value ? Number(e.target.value) : '')}
+              className="w-full border border-gray-300 rounded-lg p-2"
+            >
+              {pickedInstitutionId === '' && (
+                <option value="" disabled>
+                  {t('sm_project_institution_placeholder')}
+                </option>
+              )}
+              {institutions.map(institution => (
+                <option key={institution.id} value={institution.id}>
+                  {institutionName(institution, i18n.language)}
+                </option>
+              ))}
+            </Select>
           </div>
 
           <div className="mb-2">
@@ -446,36 +440,30 @@ const ProjectsSubview: React.FC<{
             {manuals.length === 0 ? (
               <p className="text-sm text-gray-500">{t('sm_manuals_none_available')}</p>
             ) : (
-              <div className="relative">
-                <select
-                  value={pickedManualId}
-                  onChange={e => setPickedManualId(e.target.value ? Number(e.target.value) : '')}
-                  className="w-full appearance-none border border-gray-300 rounded-lg p-2 pr-8"
-                >
-                  {pickedManualId === '' && (
-                    <option value="" disabled>
-                      {t('sm_manuals_pick_placeholder')}
+              <Select
+                value={pickedManualId}
+                onChange={e => setPickedManualId(e.target.value ? Number(e.target.value) : '')}
+                className="w-full border border-gray-300 rounded-lg p-2"
+              >
+                {pickedManualId === '' && (
+                  <option value="" disabled>
+                    {t('sm_manuals_pick_placeholder')}
+                  </option>
+                )}
+                {manuals.map(manual => {
+                  const hasContent = manualHasContent(manual);
+                  return (
+                    <option key={manual.id} value={manual.id} disabled={!hasContent}>
+                      {manualTitleText(manual.title, i18n.language, `#${manual.id}`)}
+                      {!hasContent
+                        ? ` — ${t('sm_manuals_empty_note')}`
+                        : manual.linkedProjectSlugs.length > 0
+                          ? ` — ${t('sm_manuals_used_by_count', { count: manual.linkedProjectSlugs.length })}`
+                          : ''}
                     </option>
-                  )}
-                  {manuals.map(manual => {
-                    const hasContent = manualHasContent(manual);
-                    return (
-                      <option key={manual.id} value={manual.id} disabled={!hasContent}>
-                        {manualTitleText(manual.title, i18n.language, `#${manual.id}`)}
-                        {!hasContent
-                          ? ` — ${t('sm_manuals_empty_note')}`
-                          : manual.linkedProjectSlugs.length > 0
-                            ? ` — ${t('sm_manuals_used_by_count', { count: manual.linkedProjectSlugs.length })}`
-                            : ''}
-                      </option>
-                    );
-                  })}
-                </select>
-                <ChevronIcon
-                  aria-hidden="true"
-                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
-                />
-              </div>
+                  );
+                })}
+              </Select>
             )}
             <p className="text-xs text-gray-500 mt-2">{t('sm_project_manual_edit_hint')}</p>
           </div>
@@ -832,20 +820,17 @@ const TaskDebugSubview: React.FC<{ projects: any[] }> = ({ projects }) => {
 
       <div className="mb-5 max-w-sm">
         <label className="block text-sm font-medium text-gray-700 mb-1.5">Project</label>
-        <div className="relative">
-          <select
-            value={selectedSlug}
-            onChange={e => setSelectedSlug(e.target.value)}
-            className="w-full appearance-none border border-gray-300 rounded-lg p-2 pr-8"
-          >
-            {projects.map(project => (
-              <option key={project.slug} value={project.slug}>
-                {getLabelText(project.label, project.slug)}
-              </option>
-            ))}
-          </select>
-          <ChevronIcon aria-hidden="true" className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        </div>
+        <Select
+          value={selectedSlug}
+          onChange={e => setSelectedSlug(e.target.value)}
+          className="w-full border border-gray-300 rounded-lg p-2"
+        >
+          {projects.map(project => (
+            <option key={project.slug} value={project.slug}>
+              {getLabelText(project.label, project.slug)}
+            </option>
+          ))}
+        </Select>
       </div>
 
       {queryStatus === 'loading' && <p className="text-sm text-gray-500">Loading…</p>}
@@ -995,25 +980,19 @@ const BulkCreateSubview: React.FC<{ projects: any[] }> = ({ projects }) => {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sm_bulk_source_label')}</label>
-          <div className="relative">
-            <select
-              value={sourceSlug}
-              onChange={e => setSourceSlug(e.target.value)}
-              disabled={running}
-              className="w-full appearance-none border border-gray-300 rounded-lg p-2 pr-8"
-            >
-              <option value="">{t('sm_bulk_source_none')}</option>
-              {projects.map(project => (
-                <option key={project.slug} value={project.slug}>
-                  {getLabelText(project.label, project.slug)}
-                </option>
-              ))}
-            </select>
-            <ChevronIcon
-              aria-hidden="true"
-              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-          </div>
+          <Select
+            value={sourceSlug}
+            onChange={e => setSourceSlug(e.target.value)}
+            disabled={running}
+            className="w-full border border-gray-300 rounded-lg p-2"
+          >
+            <option value="">{t('sm_bulk_source_none')}</option>
+            {projects.map(project => (
+              <option key={project.slug} value={project.slug}>
+                {getLabelText(project.label, project.slug)}
+              </option>
+            ))}
+          </Select>
         </div>
       </div>
 

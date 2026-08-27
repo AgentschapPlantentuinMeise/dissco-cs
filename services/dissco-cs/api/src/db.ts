@@ -98,6 +98,8 @@ export class DisscoCSRepository {
           author_name TEXT NOT NULL,
           title TEXT NOT NULL,
           task_url TEXT,
+          project_slug TEXT,
+          project_label TEXT,
           body TEXT NOT NULL,
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
           last_activity TIMESTAMPTZ NOT NULL DEFAULT NOW()

@@ -9,6 +9,7 @@ import { SaveButton } from '../../components/SaveButton';
 import { CancelButton } from '../../components/CancelButton';
 import { ActiveStatusToggle } from '../../components/ActiveStatusToggle';
 import { ActiveToggleField } from '../../components/ActiveToggleField';
+import { Select } from '../../components/Select';
 import { PencilIcon } from '../../icons/PencilIcon';
 import { ArrowLeftIcon } from '../../icons/ArrowLeftIcon';
 import { disscoCSConfig } from '../../dissco-cs-config';
@@ -287,10 +288,11 @@ export const Announcements: React.FC = () => {
                     ))}
 
                     {draft.targetType === 'project' && (
-                      <select
+                      <Select
                         value={draft.targetProjectSlug ?? ''}
                         onChange={e => setDraft(prev => ({ ...prev, targetProjectSlug: e.target.value || null }))}
-                        className="border border-gray-300 rounded-lg p-2 ml-6"
+                        className="border border-gray-300 rounded-lg p-2"
+                        wrapperClassName="ml-6"
                       >
                         <option value="">{t('sm_announcements_select_project')}</option>
                         {projects.map((project: any) => (
@@ -298,7 +300,7 @@ export const Announcements: React.FC = () => {
                             {getLabelText(project.label, project.slug)}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     )}
                   </div>
 

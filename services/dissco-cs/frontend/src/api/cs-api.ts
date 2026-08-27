@@ -37,6 +37,8 @@ export type ForumTopic = {
   author_name: string;
   title: string;
   task_url: string | null;
+  project_slug: string | null;
+  project_label: string | null;
   body: string;
   created_at: string;
   last_activity: string;
@@ -59,7 +61,7 @@ export type ForumTopicWithReplies = ForumTopic & { replies: ForumReply[] };
 export const forumApi = {
   listTopics: () => csFetch<{ topics: ForumTopicWithReplyCount[] }>('/forum/topics'),
 
-  createTopic: (data: { title: string; taskUrl: string; body: string }) =>
+  createTopic: (data: { title: string; taskUrl: string; body: string; projectSlug?: string; projectLabel?: string }) =>
     csFetch<ForumTopic>('/forum/topics', { method: 'POST', body: JSON.stringify(data) }),
 
   getTopic: (topicId: string) => csFetch<ForumTopicWithReplies>(`/forum/topics/${topicId}`),

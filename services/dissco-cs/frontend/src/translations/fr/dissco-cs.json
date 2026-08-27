@@ -101,6 +101,8 @@
   "forum_filters_heading": "Filtres",
   "forum_form_label_body": "Message",
   "forum_form_label_link": "Lien vers la tâche",
+  "forum_form_label_project": "Projet",
+  "forum_form_project_none": "— Aucun projet —",
   "forum_form_label_title": "Titre",
   "forum_form_placeholder_body": "Décrivez votre question...",
   "forum_form_placeholder_reply": "Écrire une réponse...",

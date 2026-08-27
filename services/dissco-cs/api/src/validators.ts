@@ -9,7 +9,13 @@ import {
   SitePageLang,
 } from './repositories/site-pages.repository.js';
 
-export type CreateTopicBody = { title?: unknown; taskUrl?: unknown; body?: unknown };
+export type CreateTopicBody = {
+  title?: unknown;
+  taskUrl?: unknown;
+  projectSlug?: unknown;
+  projectLabel?: unknown;
+  body?: unknown;
+};
 export type CreateReplyBody = { body?: unknown };
 export type CreateFeedbackThreadBody = {
   recipientUserId?: unknown;
