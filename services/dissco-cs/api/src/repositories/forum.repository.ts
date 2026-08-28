@@ -12,6 +12,7 @@ export type ForumTopic = {
   body: string;
   created_at: Date;
   last_activity: Date;
+  closed_at: Date | null;
 };
 
 export type ForumTopicWithReplyCount = ForumTopic & { reply_count: number; last_seen_reply_count: number | null };
@@ -159,6 +160,37 @@ export class ForumRepository {
     const result = await this.pool.query(
       `DELETE FROM ${this.table('forum_topics')} WHERE id = $1 AND site_id = $2`,
       [topicId, siteId]
+    );
+
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async closeTopic(siteId: number, topicId: number): Promise<ForumTopic | null> {
+    const result = await this.pool.query<ForumTopic>(
+      `
+      UPDATE ${this.table('forum_topics')} SET closed_at = NOW()
+      WHERE id = $1 AND site_id = $2 AND closed_at IS NULL
+      RETURNING *
+    `,
+      [topicId, siteId]
+    );
+
+    return result.rows[0] ?? null;
+  }
+
+  async getReply(siteId: number, replyId: number): Promise<ForumReply | null> {
+    const result = await this.pool.query<ForumReply>(
+      `SELECT * FROM ${this.table('forum_replies')} WHERE id = $1 AND site_id = $2`,
+      [replyId, siteId]
+    );
+
+    return result.rows[0] ?? null;
+  }
+
+  async deleteReply(siteId: number, replyId: number): Promise<boolean> {
+    const result = await this.pool.query(
+      `DELETE FROM ${this.table('forum_replies')} WHERE id = $1 AND site_id = $2`,
+      [replyId, siteId]
     );
 
     return (result.rowCount ?? 0) > 0;

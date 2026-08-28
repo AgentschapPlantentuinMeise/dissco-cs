@@ -42,6 +42,7 @@ export type ForumTopic = {
   body: string;
   created_at: string;
   last_activity: string;
+  closed_at: string | null;
 };
 
 export type ForumTopicWithReplyCount = ForumTopic & { reply_count: number; last_seen_reply_count: number | null };
@@ -75,6 +76,11 @@ export const forumApi = {
   visitForum: () => csFetch<void>('/forum/topics/visit', { method: 'POST' }),
 
   deleteTopic: (topicId: string) => csFetch<void>(`/forum/topics/${topicId}`, { method: 'DELETE' }),
+
+  closeTopic: (topicId: string) => csFetch<ForumTopic>(`/forum/topics/${topicId}/close`, { method: 'POST' }),
+
+  deleteReply: (topicId: string, replyId: string) =>
+    csFetch<void>(`/forum/topics/${topicId}/replies/${replyId}`, { method: 'DELETE' }),
 };
 
 // Order here is the default display order (navbar + page management) for sites that

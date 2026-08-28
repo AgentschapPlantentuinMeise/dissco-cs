@@ -15,6 +15,7 @@ import { PersonIcon } from '../../icons/PersonIcon';
 import { ClockIcon } from '../../icons/ClockIcon';
 import { FolderIcon } from '../../icons/FolderIcon';
 import { LinkIcon } from '../../icons/LinkIcon';
+import { CheckIcon } from '../../icons/CheckIcon';
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString('nl-BE', { dateStyle: 'short', timeStyle: 'short' });
@@ -61,6 +62,8 @@ export const MessageBoard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'mine' | 'unread' | 'unanswered' | null>(null);
   const [pendingDeleteTopicId, setPendingDeleteTopicId] = useState<string | null>(null);
+  const [pendingCloseTopicId, setPendingCloseTopicId] = useState<string | null>(null);
+  const [pendingDeleteReply, setPendingDeleteReply] = useState<{ topicId: string; replyId: string } | null>(null);
   const [searchParams] = useSearchParams();
   const deepLinkTopicId = searchParams.get('topic');
   const didHandleDeepLink = useRef(false);
@@ -150,6 +153,38 @@ export const MessageBoard: React.FC = () => {
     });
   };
 
+  const confirmCloseTopic = () => {
+    if (pendingCloseTopicId === null) return;
+    const topicId = pendingCloseTopicId;
+
+    forumApi.closeTopic(topicId).then(closed => {
+      setTopics(prev => prev.map(m => (m.id === topicId ? { ...m, closed_at: closed.closed_at } : m)));
+      setPendingCloseTopicId(null);
+    });
+  };
+
+  const confirmDeleteReply = () => {
+    if (pendingDeleteReply === null) return;
+    const { topicId, replyId } = pendingDeleteReply;
+
+    forumApi.deleteReply(topicId, replyId).then(() => {
+      setRepliesByTopic(prev => ({
+        ...prev,
+        [topicId]: (prev[topicId] || []).filter(r => r.id !== replyId),
+      }));
+      setTopics(prev => prev.map(m =>
+        m.id === topicId
+          ? {
+              ...m,
+              reply_count: Math.max(0, m.reply_count - 1),
+              last_seen_reply_count: m.last_seen_reply_count === null ? null : Math.max(0, m.last_seen_reply_count - 1),
+            }
+          : m
+      ));
+      setPendingDeleteReply(null);
+    });
+  };
+
   const handleSubmitMessage = (data: MessageFormData) => {
     forumApi.createTopic(data).then(topic => {
       setTopics(prev => [{ ...topic, reply_count: 0, last_seen_reply_count: 0 }, ...prev]);
@@ -206,6 +241,9 @@ export const MessageBoard: React.FC = () => {
               {displayTopics.map((msg: ForumTopicWithReplyCount) => {
                 const unread = isUnread(msg);
                 const replies = repliesByTopic[msg.id] || [];
+                const isAdmin = !!user?.scope.includes('site.admin');
+                const isTopicOwner = user?.id === msg.author_user_id;
+                const closed = !!msg.closed_at;
                 return (
                   <div key={msg.id} id={`topic-${msg.id}`} className={`flex bg-white rounded-lg shadow-sm border border-gray-100 border-l-4 ${unread ? 'border-l-[var(--cs-secondary)]' : 'border-l-transparent'} px-4 py-3.5`}>
                     <div className="flex-1 min-w-0">
@@ -220,9 +258,31 @@ export const MessageBoard: React.FC = () => {
                           <h3 className={`m-0 text-[0.95rem] text-[var(--cs-primary)] flex items-center gap-[6px] min-w-0 ${unread ? 'font-bold' : 'font-medium'}`}>
                             {unread && <span className="inline-block w-2 h-2 rounded-full bg-[var(--cs-secondary)] flex-shrink-0" aria-label="nieuw" />}
                             {msg.title}
+                            {closed && (
+                              <span className="text-[0.68rem] font-semibold text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 flex-shrink-0">
+                                {t('forum_closed_badge')}
+                              </span>
+                            )}
                           </h3>
                         </div>
+                        {/* Reply stays last so it always sits flush against the card's right
+                            edge — the context actions before it (close/delete) vary per row
+                            (owner/admin, open/closed), so those are the ones that shift, not the
+                            button people click most often. */}
                         <div className="flex items-center gap-2 flex-shrink-0">
+                          {(isAdmin || isTopicOwner) && !closed && (
+                            <button
+                              onClick={() => setPendingCloseTopicId(msg.id)}
+                              aria-label={t('forum_btn_close')}
+                              title={t('forum_btn_close')}
+                              className="bg-transparent border-none cursor-pointer text-gray-600 text-base px-1 flex items-center hover:text-[var(--cs-primary)] transition-colors duration-200"
+                            >
+                              <CheckIcon />
+                            </button>
+                          )}
+                          {(isAdmin || isTopicOwner) && (
+                            <DeleteIconButton onClick={() => setPendingDeleteTopicId(msg.id)} />
+                          )}
                           <button className={`${btnGhost} flex items-center gap-1`} onClick={() => handleToggleExpand(msg.id)}>
                             {msg.reply_count > 0
                               ? msg.reply_count === 1
@@ -231,9 +291,6 @@ export const MessageBoard: React.FC = () => {
                               : t('forum_btn_reply')}
                             <ChevronIcon className={`transition-transform duration-200 ${expandedId === msg.id ? 'rotate-180' : ''}`} />
                           </button>
-                          {user?.scope.includes('site.admin') && (
-                            <DeleteIconButton onClick={() => setPendingDeleteTopicId(msg.id)} />
-                          )}
                         </div>
                       </div>
 
@@ -283,24 +340,33 @@ export const MessageBoard: React.FC = () => {
                           {replies.length > 0 && (
                             <div className="flex flex-col gap-[6px]">
                               {replies.map(reply => (
-                                <div key={reply.id} className="bg-gray-50 border-l-[3px] border-[var(--cs-primary)] rounded-r-[6px] py-2 px-3 ml-2">
-                                  <span className="text-xs text-gray-400">{reply.author_name} · {formatDate(reply.created_at)}</span>
-                                  <p className="m-0 mt-1 text-[0.9rem] text-gray-800 leading-[1.5] whitespace-pre-line">{reply.body}</p>
+                                <div key={reply.id} className="flex items-start justify-between gap-2 bg-gray-50 border-l-[3px] border-[var(--cs-primary)] rounded-r-[6px] py-2 px-3 ml-2">
+                                  <div className="min-w-0">
+                                    <span className="text-xs text-gray-400">{reply.author_name} · {formatDate(reply.created_at)}</span>
+                                    <p className="m-0 mt-1 text-[0.9rem] text-gray-800 leading-[1.5] whitespace-pre-line">{reply.body}</p>
+                                  </div>
+                                  {(isAdmin || user?.id === reply.author_user_id) && (
+                                    <DeleteIconButton onClick={() => setPendingDeleteReply({ topicId: msg.id, replyId: reply.id })} />
+                                  )}
                                 </div>
                               ))}
                             </div>
                           )}
-                          <form className="flex flex-col gap-[14px] mt-1" onSubmit={e => handleSubmitReply(e, msg.id)}>
-                            <textarea
-                              className={inputClass}
-                              value={replyDrafts[msg.id] || ''}
-                              onChange={e => setReplyDrafts(prev => ({ ...prev, [msg.id]: e.target.value }))}
-                              placeholder={t('forum_form_placeholder_reply')}
-                              rows={2}
-                              required
-                            />
-                            <button type="submit" className={btnPrimary}>{t('forum_form_submit_reply')}</button>
-                          </form>
+                          {closed ? (
+                            <p className="text-xs text-gray-400 italic mt-1">{t('forum_closed_notice')}</p>
+                          ) : (
+                            <form className="flex flex-col gap-[14px] mt-1" onSubmit={e => handleSubmitReply(e, msg.id)}>
+                              <textarea
+                                className={inputClass}
+                                value={replyDrafts[msg.id] || ''}
+                                onChange={e => setReplyDrafts(prev => ({ ...prev, [msg.id]: e.target.value }))}
+                                placeholder={t('forum_form_placeholder_reply')}
+                                rows={2}
+                                required
+                              />
+                              <button type="submit" className={btnPrimary}>{t('forum_form_submit_reply')}</button>
+                            </form>
+                          )}
                         </div>
                       )}
                     </div>
@@ -347,6 +413,29 @@ export const MessageBoard: React.FC = () => {
             cancelLabel={t('common_cancel')}
             onConfirm={confirmDeleteTopic}
             onCancel={() => setPendingDeleteTopicId(null)}
+          />
+        )}
+
+        {pendingDeleteReply !== null && (
+          <ConfirmDialog
+            title={t('forum_confirm_delete_reply_title')}
+            message={t('forum_confirm_delete_reply')}
+            confirmLabel={t('common_delete')}
+            cancelLabel={t('common_cancel')}
+            onConfirm={confirmDeleteReply}
+            onCancel={() => setPendingDeleteReply(null)}
+          />
+        )}
+
+        {pendingCloseTopicId !== null && (
+          <ConfirmDialog
+            title={t('forum_confirm_close_title')}
+            message={t('forum_confirm_close')}
+            confirmLabel={t('forum_btn_close')}
+            cancelLabel={t('common_cancel')}
+            tone="affirm"
+            onConfirm={confirmCloseTopic}
+            onCancel={() => setPendingCloseTopicId(null)}
           />
         )}
       </div>

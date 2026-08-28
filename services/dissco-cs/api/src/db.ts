@@ -102,7 +102,8 @@ export class DisscoCSRepository {
           project_label TEXT,
           body TEXT NOT NULL,
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          last_activity TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          last_activity TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          closed_at TIMESTAMPTZ
         )
       `);
 
