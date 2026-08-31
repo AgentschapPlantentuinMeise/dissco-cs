@@ -2,7 +2,7 @@ import React from 'react';
 import { CsPage } from '../../components/CsPage';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Select } from '../../components/Select';
-import { MailIcon } from '../../icons/MailIcon';
+import { LuMail } from 'react-icons/lu';
 import { localeText } from '../../utility/locale-text';
 import { ImagePreviewPopup } from '../../components/ImagePreviewPopup';
 import { ReviewCountSummary } from './ReviewCountSummary';
@@ -60,7 +60,7 @@ export const ReviewTasks: React.FC = () => {
                     title={c.canSendBulkFeedback ? undefined : t('review_feedback_multi_submitter_hint')}
                     className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-none bg-transparent text-[var(--cs-tertiary)] cursor-pointer hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    <MailIcon aria-hidden="true" />
+                    <LuMail aria-hidden="true" />
                     {t('review_feedback_button')}
                   </button>
                   <button
@@ -88,7 +88,7 @@ export const ReviewTasks: React.FC = () => {
                         onClick={c.openFeedbackForLastBatch}
                         className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border border-[var(--cs-tertiary)] bg-white text-[var(--cs-tertiary)] cursor-pointer hover:bg-gray-50"
                       >
-                        <MailIcon aria-hidden="true" />
+                        <LuMail aria-hidden="true" />
                         {t('review_feedback_button')}
                       </button>
                     )}
@@ -123,7 +123,7 @@ export const ReviewTasks: React.FC = () => {
                       onClick={c.openFeedbackForLastBatch}
                       className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-none bg-transparent text-[var(--cs-tertiary)] cursor-pointer hover:bg-gray-50"
                     >
-                      <MailIcon aria-hidden="true" />
+                      <LuMail aria-hidden="true" />
                       {t('review_feedback_button')}
                     </button>
                   )}

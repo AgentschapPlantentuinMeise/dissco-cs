@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CloseIcon } from '../icons/CloseIcon';
+import { LuX } from 'react-icons/lu';
 
 type ModalProps = {
   open: boolean;
@@ -82,7 +82,7 @@ export const Modal: React.FC<ModalProps> = ({
               aria-label={t('common_close')}
               className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-none bg-gray-100 text-gray-600 cursor-pointer hover:bg-gray-200"
             >
-              <CloseIcon />
+              <LuX />
             </button>
           </div>
         )}

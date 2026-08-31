@@ -1,7 +1,6 @@
 import React from 'react';
 import { Modal } from './Modal';
-import { WarningIcon } from '../icons/WarningIcon';
-import { CheckIcon } from '../icons/CheckIcon';
+import { LuTriangleAlert, LuCheck } from 'react-icons/lu';
 
 export const ConfirmDialog: React.FC<{
   title: string;
@@ -41,7 +40,7 @@ export const ConfirmDialog: React.FC<{
       }
     >
       <div className={`flex items-center gap-2 mb-2 ${toneColor}`}>
-        {tone === 'affirm' ? <CheckIcon /> : <WarningIcon />}
+        {tone === 'affirm' ? <LuCheck /> : <LuTriangleAlert />}
         <h4 className="m-0 text-base font-bold text-gray-900">{title}</h4>
       </div>
       <p className="text-sm leading-relaxed text-gray-600">{message}</p>

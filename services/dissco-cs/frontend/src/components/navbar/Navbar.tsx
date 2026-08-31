@@ -7,9 +7,7 @@ import { useQuery } from 'react-query';
 import Cookies from 'js-cookie';
 import { HrefLink } from '../../utility/href-link';
 import { useUser } from '../../hooks/use-current-user';
-import { PersonIcon } from '../../icons/PersonIcon';
-import { SearchIcon } from '../../icons/SearchIcon';
-import { CloseIcon } from '../../icons/CloseIcon';
+import { LuUser, LuSearch, LuX } from 'react-icons/lu';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { getSiteSlug } from '../../api/slug';
 import { forumApi, reviewApi, reviewFeedbackApi } from '../../api/cs-api';
@@ -202,7 +200,7 @@ export const Navbar: React.FC = () => {
                       aria-label={t('search_clear')}
                       className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-400 p-0 flex items-center hover:text-[var(--cs-primary)]"
                     >
-                      <CloseIcon style={{ fontSize: '0.75em' }} />
+                      <LuX style={{ fontSize: '0.75em' }} />
                     </button>
                   )}
                 </form>
@@ -213,7 +211,7 @@ export const Navbar: React.FC = () => {
                 aria-label={t('search_nav_label')}
                 className="bg-transparent border-none cursor-pointer text-gray-600 p-0 flex items-center hover:text-[var(--cs-primary)] transition-colors duration-200"
               >
-                <SearchIcon style={{ fontSize: '1.1em' }} />
+                <LuSearch style={{ fontSize: '1.1em' }} />
               </button>
             </div>
           </li>
@@ -261,7 +259,7 @@ export const Navbar: React.FC = () => {
                   {...buttonProps}
                 >
                   <span className="relative inline-flex">
-                    <PersonIcon style={{ fontSize: '1.2em', fill: 'currentColor', flexShrink: 0 }} />
+                    <LuUser style={{ fontSize: '1.2em', flexShrink: 0 }} />
                     {feedbackUnreadCount > 0 && (
                       <span
                         className="absolute -top-0.5 -right-0.5 flex w-[9px] h-[9px]"

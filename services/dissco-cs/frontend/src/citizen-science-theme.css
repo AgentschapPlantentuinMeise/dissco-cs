@@ -44,7 +44,7 @@
 
 /* Bredere variant voor schermen met meerdere kolommen naast elkaar (bv. Review lijst + detailpaneel) */
 .cs-container--wide {
-  max-width: 1400px;
+  max-width: clamp(1400px, 90vw, 1700px);
 }
 
 /* Auto-fill project card grid */

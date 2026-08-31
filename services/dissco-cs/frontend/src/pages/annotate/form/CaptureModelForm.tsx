@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CaptureModel, ModelFields, NestedModelFields, StructureNode } from '../../../capture-model/types/capture-model';
 import { AnnotationDocument } from '../../../capture-model/types/document';
@@ -181,6 +181,57 @@ function resolveSingleChoice(node: StructureNode): StructureNode {
   return node;
 }
 
+// `collapsible` distinguishes the two uses: entity groups keep a static frame (a border showing
+// the fields belong together, no click-to-toggle — a real "section" concept didn't exist when
+// entities were pressed into that role, so it looked like one), while the tabs-profile model
+// sections below are meant to be genuinely collapsible.
+function CollapsibleFieldset({
+  label,
+  required,
+  collapsible = true,
+  children,
+}: {
+  label: string;
+  required: boolean;
+  collapsible?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(true);
+
+  if (!collapsible) {
+    return (
+      <fieldset className="border border-gray-200 rounded mb-4">
+        <legend className="w-full px-1">
+          <div className="px-2 py-2 text-[0.85rem] font-semibold text-gray-700">
+            {label}
+            {required && <span className="text-red-500"> *</span>}
+          </div>
+        </legend>
+        <div className="px-3 pb-3">{children}</div>
+      </fieldset>
+    );
+  }
+
+  return (
+    <fieldset className="border border-gray-200 rounded mb-4 overflow-hidden">
+      <legend className="w-full px-0">
+        <button
+          type="button"
+          className="w-full flex items-center justify-between px-3.5 py-2.5 bg-[rgba(26,91,102,0.07)] border-b border-[rgba(26,91,102,0.15)] text-[0.92rem] font-bold text-[var(--cs-primary)] cursor-pointer"
+          onClick={() => setOpen(o => !o)}
+        >
+          <span>
+            {label}
+            {required && <span className="text-red-500"> *</span>}
+          </span>
+          <span className="text-[var(--cs-accent)] text-[0.8rem] flex-shrink-0">{open ? '▾' : '▸'}</span>
+        </button>
+      </legend>
+      {open && <div className="px-3.5 py-4">{children}</div>}
+    </fieldset>
+  );
+}
+
 function EntityFieldset({
   label,
   required,
@@ -200,34 +251,27 @@ function EntityFieldset({
   onChange: CaptureModelFormProps['onChange'];
   selectorControls: SelectorControls;
 }) {
-  const [open, setOpen] = useState(true);
-
   return (
-    <fieldset className="border border-gray-200 rounded mb-4">
-      <legend className="w-full px-1">
-        <button
-          type="button"
-          className="w-full flex items-center justify-between px-2 py-2 text-[0.85rem] font-semibold text-gray-700 cursor-pointer"
-          onClick={() => setOpen(o => !o)}
-        >
-          <span>
-            {label}
-            {required && <span className="text-red-500"> *</span>}
-          </span>
-          <span className="text-gray-400">{open ? '▾' : '▸'}</span>
-        </button>
-      </legend>
-      {open && (
-        <div className="px-3 pb-3">
-          {entities.map((entity, idx) => (
-            <div key={entity.id ?? idx} className="mb-2">
-              {renderFields(nestedFields, entity, [...pathPrefix, term, idx], onChange, selectorControls)}
-            </div>
-          ))}
+    <CollapsibleFieldset label={label} required={required} collapsible={false}>
+      {entities.map((entity, idx) => (
+        <div key={entity.id ?? idx} className="mb-2">
+          {renderFields(nestedFields, entity, [...pathPrefix, term, idx], onChange, selectorControls)}
         </div>
-      )}
-    </fieldset>
+      ))}
+    </CollapsibleFieldset>
   );
+}
+
+// A choice's items are only rendered as sections when its own `profile` opts in via 'tabs' — the
+// same profile Madoc's own model editor exposes (StructureMetadataEditor's "tabs" toggle), reused
+// here as the "these are not real alternatives, show them together" signal instead of introducing
+// a separate custom flag. Each item is unwrapped through resolveSingleChoice first so an
+// accidental single-item nested choice still resolves to its model instead of being skipped.
+function resolveSectionModels(node: StructureNode): Array<StructureNode & { type: 'model' }> | null {
+  if (node.type !== 'choice' || !node.profile?.includes('tabs')) return null;
+  return node.items
+    .map(resolveSingleChoice)
+    .filter((item): item is StructureNode & { type: 'model' } => item.type === 'model');
 }
 
 function renderFields(
@@ -320,19 +364,36 @@ export function CaptureModelForm({
   const current = stack[stack.length - 1];
   const [missingRequired, setMissingRequired] = useState<string[]>([]);
 
+  // Non-null when `current` is a choice opted into 'tabs' — its models are shown together as
+  // sections instead of a pick-one-then-navigate screen. See resolveSectionModels above.
+  // Memoized so the array stays referentially stable across renders (it only depends on
+  // `current`) — otherwise combinedSectionsModel/activeModel below would recompute every render,
+  // re-firing the onActiveStructureChange effect and looping the component into a render storm.
+  const sectionModels = useMemo(() => resolveSectionModels(current), [current]);
+
+  // Sections mode has no single 'model' node to report/submit against, so its models' fields are
+  // combined into one synthetic model — memoized so the object stays stable across renders (it
+  // only depends on `current`), matching how `current` itself is already stable per stack entry.
+  const combinedSectionsModel = useMemo<(StructureNode & { type: 'model' }) | null>(() => {
+    if (!sectionModels) return null;
+    return { id: current.id, label: current.label, type: 'model', fields: sectionModels.flatMap(m => m.fields) };
+  }, [sectionModels, current]);
+
+  const activeModel = current.type === 'model' ? current : combinedSectionsModel;
+
   useEffect(() => {
-    if (current.type === 'model') onActiveStructureChange?.(current);
-  }, [current, onActiveStructureChange]);
+    if (activeModel) onActiveStructureChange?.(activeModel);
+  }, [activeModel, onActiveStructureChange]);
 
   const handleSubmit = () => {
-    if (current.type !== 'model') return;
-    const missing = collectMissingRequiredLabels(current.fields, document);
+    if (!activeModel) return;
+    const missing = collectMissingRequiredLabels(activeModel.fields, document);
     setMissingRequired(missing);
     if (missing.length > 0) return;
     onSubmit();
   };
 
-  if (current.type === 'choice') {
+  if (current.type === 'choice' && !sectionModels) {
     return (
       <div className="flex flex-col h-full">
         {readOnly && readOnlyBanner && (
@@ -378,12 +439,18 @@ export function CaptureModelForm({
         </div>
       )}
       <div className={`flex-1 min-h-0 px-5 py-5 pb-2 overflow-y-auto ${readOnly ? 'pointer-events-none opacity-60 select-none' : ''}`}>
-        {hasVisibleRequiredField(current.fields, document) && (
+        {activeModel && hasVisibleRequiredField(activeModel.fields, document) && (
           <p className="text-[0.78rem] text-gray-500 mb-3">
             <span className="text-red-500">*</span> verplicht veld
           </p>
         )}
-        {renderFields(current.fields, document, [], onChange, selectorControls)}
+        {sectionModels
+          ? sectionModels.map(sectionModel => (
+              <CollapsibleFieldset key={sectionModel.id} label={sectionModel.label} required={false}>
+                {renderFields(sectionModel.fields, document, [], onChange, selectorControls)}
+              </CollapsibleFieldset>
+            ))
+          : current.type === 'model' && renderFields(current.fields, document, [], onChange, selectorControls)}
       </div>
       {!readOnly && (
         <div className="px-5 py-3 border-t border-gray-300 bg-gray-50">

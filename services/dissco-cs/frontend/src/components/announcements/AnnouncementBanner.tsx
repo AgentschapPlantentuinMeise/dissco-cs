@@ -3,8 +3,7 @@ import { useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import { Announcement, announcementsApi, AnnouncementTargetType } from '../../api/cs-api';
-import { PinIcon } from '../../icons/PinIcon';
-import { ChevronIcon } from '../../icons/ChevronIcon';
+import { LuPin, LuChevronDown } from 'react-icons/lu';
 import { useUser } from '../../hooks/use-current-user';
 
 // Compact overrides so markdown content fits the banner's small text-sm style instead of
@@ -102,12 +101,12 @@ export const AnnouncementBanner: React.FC<{ target: AnnouncementTargetType; proj
         className="flex w-full items-center justify-between gap-3 bg-transparent border-none cursor-pointer px-4 py-3 text-left"
       >
         <span className="flex items-center gap-2 font-semibold text-amber-800">
-          <PinIcon aria-hidden="true" />
+          <LuPin aria-hidden="true" />
           {collapsed
             ? t('announcement_summary_collapsed', { count: announcements.length })
             : t('announcement_header_title')}
         </span>
-        <ChevronIcon
+        <LuChevronDown
           aria-hidden="true"
           className={`text-amber-800 transition-transform ${collapsed ? '' : 'rotate-180'}`}
         />

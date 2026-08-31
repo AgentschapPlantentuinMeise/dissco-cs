@@ -127,8 +127,8 @@ export type ProjectProgress = {
 };
 
 export const projectProgressApi = {
-  get: (projectId: string | number) =>
-    csFetch<ProjectProgress>(`/projects/${projectId}/progress?slug=${getSiteSlug()}`),
+  get: (projectId: string | number, signal?: AbortSignal) =>
+    csFetch<ProjectProgress>(`/projects/${projectId}/progress?slug=${getSiteSlug()}`, { signal }),
 };
 
 export const manifestClaimApi = {
@@ -332,18 +332,14 @@ export type InstitutionOverview = {
 
 export type HonourBoardEntry = { userUrn: string; name: string; count: number; rank: number };
 export type HonourBoardPeriod = { top: HonourBoardEntry[]; you: HonourBoardEntry | null };
-
-export type HonourBoardLeaderboard = {
-  today: HonourBoardPeriod;
-  week: HonourBoardPeriod;
-  month: HonourBoardPeriod;
-  legend: HonourBoardPeriod;
-};
+export type HonourBoardPeriodKey = 'today' | 'week' | 'month' | 'legend';
+export const HONOUR_BOARD_PERIODS: HonourBoardPeriodKey[] = ['today', 'week', 'month', 'legend'];
 
 export const honourBoardApi = {
-  get: () => csFetch<HonourBoardLeaderboard>(`/honour-board?slug=${getSiteSlug()}`),
+  get: (period: HonourBoardPeriodKey) => csFetch<HonourBoardPeriod>(`/honour-board/${period}?slug=${getSiteSlug()}`),
   // Pure cache read, never triggers a recompute -- for periodic polling.
-  getCurrent: () => csFetch<HonourBoardLeaderboard>(`/honour-board/current?slug=${getSiteSlug()}`),
+  getCurrent: (period: HonourBoardPeriodKey) =>
+    csFetch<HonourBoardPeriod>(`/honour-board/${period}/current?slug=${getSiteSlug()}`),
 };
 
 export type Institution = {
@@ -389,11 +385,11 @@ export const institutionsApi = {
   getStatsCurrent: (slug: string) =>
     csFetch<InstitutionOverview>(`/institutions/active/${slug}/stats/current?slug=${getSiteSlug()}`),
 
-  getHonourBoard: (slug: string) =>
-    csFetch<HonourBoardLeaderboard>(`/institutions/active/${slug}/honour-board?slug=${getSiteSlug()}`),
+  getHonourBoard: (slug: string, period: HonourBoardPeriodKey) =>
+    csFetch<HonourBoardPeriod>(`/institutions/active/${slug}/honour-board/${period}?slug=${getSiteSlug()}`),
   // Pure cache read, never triggers a recompute -- for periodic polling.
-  getHonourBoardCurrent: (slug: string) =>
-    csFetch<HonourBoardLeaderboard>(`/institutions/active/${slug}/honour-board/current?slug=${getSiteSlug()}`),
+  getHonourBoardCurrent: (slug: string, period: HonourBoardPeriodKey) =>
+    csFetch<HonourBoardPeriod>(`/institutions/active/${slug}/honour-board/${period}/current?slug=${getSiteSlug()}`),
 
   listAdmin: () => csFetch<{ institutions: Institution[] }>('/institutions'),
 

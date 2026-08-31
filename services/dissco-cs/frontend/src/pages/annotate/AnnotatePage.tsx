@@ -23,8 +23,7 @@ import { ProjectManualModal } from '../../components/ProjectManualModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Modal } from '../../components/Modal';
 import { MessageForm, MessageFormData } from '../../components/messageform/MessageForm';
-import { BookIcon } from '../../icons/BookIcon';
-import { MailIcon } from '../../icons/MailIcon';
+import { LuBookOpen, LuMail } from 'react-icons/lu';
 import { AnnotateLayout } from './AnnotateLayout';
 import { OpenSeadragonViewer } from './viewer/OpenSeadragonViewer';
 import { CaptureModelForm } from './form/CaptureModelForm';
@@ -503,14 +502,14 @@ export function AnnotatePage() {
               className="text-[0.85rem] text-[var(--cs-primary)] border border-[var(--cs-primary)] rounded px-2 py-1 inline-flex items-center gap-1.5 leading-none cursor-pointer bg-white"
               onClick={() => setManualOpen(true)}
             >
-              <BookIcon aria-hidden="true" className="translate-y-px" /> {t('annotate_manual_button', 'Handleiding')}
+              <LuBookOpen aria-hidden="true" className="translate-y-px" /> {t('annotate_manual_button', 'Handleiding')}
             </button>
             {!isSubmittedTask && (
               <button
                 className="text-[0.85rem] text-[var(--cs-primary)] border border-[var(--cs-primary)] rounded px-2 py-1 inline-flex items-center gap-1.5 leading-none cursor-pointer bg-white"
                 onClick={() => setForumOpen(true)}
               >
-                <MailIcon aria-hidden="true" className="translate-y-px" /> {t('annotate_forum_button', 'Forumbericht')}
+                <LuMail aria-hidden="true" className="translate-y-px" /> {t('annotate_forum_button', 'Forumbericht')}
               </button>
             )}
             <button

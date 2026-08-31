@@ -4,8 +4,7 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/CsPage';
 import { setPassword as submitSetPassword, checkReset } from '../../api/madoc-client/auth';
 import { getSiteSlug } from '../../api/slug';
-import { EyeIcon } from '../../icons/EyeIcon';
-import { EyeOffIcon } from '../../icons/EyeOffIcon';
+import { LuEye, LuEyeOff } from 'react-icons/lu';
 
 // Mirrors validatePasswordStrength() in services/madoc-ts/src/routes/dissco-cs-auth.ts -
 // this is client-side feedback only, the server call is the real source of truth.
@@ -104,7 +103,7 @@ export const SetPassword: React.FC = () => {
                   aria-label={t(showPassword ? 'password_toggle_hide' : 'password_toggle_show')}
                   className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-500 flex items-center p-1"
                 >
-                  {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                  {showPassword ? <LuEyeOff /> : <LuEye />}
                 </button>
               </div>
               {password && (
@@ -137,7 +136,7 @@ export const SetPassword: React.FC = () => {
                   aria-label={t(showConfirmPassword ? 'password_toggle_hide' : 'password_toggle_show')}
                   className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-500 flex items-center p-1"
                 >
-                  {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
+                  {showConfirmPassword ? <LuEyeOff /> : <LuEye />}
                 </button>
               </div>
               {confirmPassword && confirmPassword !== password && (

@@ -18,8 +18,7 @@ import { DeleteIconButton } from '../../components/DeleteIconButton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { MarkdownToolbar } from '../../components/MarkdownToolbar';
 import { Select } from '../../components/Select';
-import { ArrowLeftIcon } from '../../icons/ArrowLeftIcon';
-import { CheckIcon } from '../../icons/CheckIcon';
+import { LuArrowLeft, LuCheck } from 'react-icons/lu';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import {
   projectManualsApi,
@@ -281,7 +280,7 @@ const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }) => {
       </div>
       {attachmentSaved && (
         <p className="flex items-center gap-2 text-sm text-green-700 mt-2">
-          <CheckIcon aria-hidden="true" /> {t('sm_manuals_attachment_saved')}
+          <LuCheck aria-hidden="true" /> {t('sm_manuals_attachment_saved')}
         </p>
       )}
 
@@ -289,7 +288,7 @@ const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }) => {
         <SaveButton onClick={() => void save()} disabled={!canSave} loading={saveState === 'saving'} />
         {saveState === 'saved' && (
           <span className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">
-            <CheckIcon aria-hidden="true" /> {t('common_saved')}
+            <LuCheck aria-hidden="true" /> {t('common_saved')}
           </span>
         )}
         {saveState === 'error' && (
@@ -1171,7 +1170,7 @@ export const ProjectManagement: React.FC = () => {
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container cs-container--wide">
           <HrefLink href="/manage" className="inline-flex items-center gap-1 text-[var(--cs-primary)] no-underline font-medium hover:underline">
-            <ArrowLeftIcon aria-hidden="true" /> {t('sm_back_to_hub')}
+            <LuArrowLeft aria-hidden="true" /> {t('sm_back_to_hub')}
           </HrefLink>
 
           <h1 className="text-4xl text-[var(--cs-primary)] mt-4 mb-8">{t('sm_tile_projects_title')}</h1>

@@ -5,7 +5,7 @@ import { buildTaskLink } from '../utility/build-task-link';
 import { localeText } from '../utility/locale-text';
 import { DeleteIconButton } from './DeleteIconButton';
 import { TaskRevisionView } from './TaskRevisionView';
-import { EyeIcon } from '../icons/EyeIcon';
+import { LuEye } from 'react-icons/lu';
 import { ImagePreviewPopup } from './ImagePreviewPopup';
 
 const BADGE_CLASSES: Record<string, string> = {
@@ -109,7 +109,7 @@ export function TaskTable({ tasks, userName, language, t, linkable = true, expan
                           title={t('review_view_image')}
                           className="bg-transparent border-none text-gray-400 cursor-pointer hover:text-[var(--cs-primary)] p-1"
                         >
-                          <EyeIcon />
+                          <LuEye />
                         </button>
                       )}
                     </td>

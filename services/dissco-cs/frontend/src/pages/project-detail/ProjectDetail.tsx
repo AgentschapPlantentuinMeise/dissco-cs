@@ -122,9 +122,9 @@ export const ProjectDetail: React.FC = () => {
   return (
     <CsPage>
       <div className="cs-main-wrapper">
-        <div className="cs-container cs-container--wide pt-20 pb-12">
+        <div className="cs-container cs-container--wide pt-10 pb-12">
 
-          <div className="grid [grid-template-columns:45%_55%] min-h-[340px] rounded-[10px] overflow-hidden mt-10 mb-10 max-[700px]:grid-cols-1 max-[700px]:min-h-0">
+          <div className="grid [grid-template-columns:45%_55%] min-h-[340px] rounded-[10px] overflow-hidden mb-10 max-[700px]:grid-cols-1 max-[700px]:min-h-0">
 
             <div
               className="relative bg-[#c8dfe2] bg-cover bg-center bg-no-repeat min-h-[280px] max-[700px]:min-h-[200px]"
@@ -134,7 +134,7 @@ export const ProjectDetail: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2 text-center text-[0.75rem] mb-[6px] opacity-90">
                   <div>
                     <div className="text-base font-bold">{transcribedPercentage}%</div>
-                    <div>{t('pdp_transcribed')}</div>
+                    <div>{t('pdp_completed')}</div>
                   </div>
                   <div>
                     <div className="text-base font-bold">{totalTasks}</div>

@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { DisscoCSRepository } from '../db.js';
 import { requireSiteAdmin, requestMadocUserIdentity, resolveSiteId } from '../jwt.js';
-import { HonourBoardRepository } from '../repositories/honour-board.repository.js';
+import { HonourBoardRepository, isHonourBoardPeriod } from '../repositories/honour-board.repository.js';
 import { InstitutionStatsRepository } from '../repositories/institution-stats.repository.js';
 import {
   InstitutionBody,
@@ -98,7 +98,12 @@ export function institutionsRoutes(
     return c.json(overview);
   });
 
-  app.get('/active/:slug/honour-board', async c => {
+  app.get('/active/:slug/honour-board/:period', async c => {
+    const period = c.req.param('period');
+    if (!isHonourBoardPeriod(period)) {
+      return c.text('Unknown period', 400);
+    }
+
     const siteId = await resolveSiteId(c);
     if (siteId === null) {
       return c.text('Could not resolve site', 400);
@@ -116,14 +121,19 @@ export function institutionsRoutes(
     const projects = await institutionStatsRepository.resolveProjects(siteId, projectSlugs);
     const taskIds = projects.map(p => p.task_id);
 
-    const leaderboard = await honourBoardRepository.getInstitutionLeaderboard(siteId, institution.id, taskIds, userUrn);
-    return c.json(leaderboard);
+    const result = await honourBoardRepository.getInstitutionPeriod(siteId, institution.id, taskIds, period, userUrn);
+    return c.json(result);
   });
 
   // Pure cache read for the frontend's periodic poll -- never triggers a recompute itself,
-  // unlike '/honour-board'. Falls back to the triggering path only if nothing has ever been
-  // cached yet.
-  app.get('/active/:slug/honour-board/current', async c => {
+  // unlike '/honour-board/:period'. Falls back to the triggering path only if nothing has ever
+  // been cached yet.
+  app.get('/active/:slug/honour-board/:period/current', async c => {
+    const period = c.req.param('period');
+    if (!isHonourBoardPeriod(period)) {
+      return c.text('Unknown period', 400);
+    }
+
     const siteId = await resolveSiteId(c);
     if (siteId === null) {
       return c.text('Could not resolve site', 400);
@@ -137,7 +147,7 @@ export function institutionsRoutes(
     const identity = requestMadocUserIdentity(c);
     const userUrn = identity ? `urn:madoc:user:${identity.userId}` : null;
 
-    const cached = honourBoardRepository.peekInstitutionLeaderboard(siteId, institution.id, userUrn);
+    const cached = honourBoardRepository.peekInstitutionPeriod(siteId, institution.id, period, userUrn);
     if (cached) {
       return c.json(cached);
     }
@@ -146,8 +156,8 @@ export function institutionsRoutes(
     const projects = await institutionStatsRepository.resolveProjects(siteId, projectSlugs);
     const taskIds = projects.map(p => p.task_id);
 
-    const leaderboard = await honourBoardRepository.getInstitutionLeaderboard(siteId, institution.id, taskIds, userUrn);
-    return c.json(leaderboard);
+    const result = await honourBoardRepository.getInstitutionPeriod(siteId, institution.id, taskIds, period, userUrn);
+    return c.json(result);
   });
 
   app.get('/for-project/:projectSlug', async c => {

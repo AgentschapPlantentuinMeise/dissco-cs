@@ -4,10 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import ReactMarkdown from 'react-markdown';
 import { Modal } from './Modal';
-import { ChevronIcon } from '../icons/ChevronIcon';
-import { CloseIcon } from '../icons/CloseIcon';
-import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
+import { LuChevronDown, LuX, LuArrowLeft, LuArrowRight } from 'react-icons/lu';
 import { projectManualsApi, SitePageLang } from '../api/cs-api';
 
 type ProjectManualModalProps = {
@@ -347,7 +344,7 @@ const PdfGallery: React.FC<{ url: string; filename: string; openDirectly?: boole
               aria-label={t('common_close') as string}
               className="ml-1 flex h-9 w-9 items-center justify-center rounded-full border-none bg-white/10 text-white cursor-pointer hover:bg-white/20"
             >
-              <CloseIcon />
+              <LuX />
             </button>
           </div>
         </div>
@@ -389,7 +386,7 @@ const PdfGallery: React.FC<{ url: string; filename: string; openDirectly?: boole
           aria-label={t('manual_pdf_prev_page') as string}
           className="fixed left-4 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full border-none bg-white/10 text-white cursor-pointer hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-30"
         >
-          <ArrowLeftIcon />
+          <LuArrowLeft />
         </button>
         <button
           type="button"
@@ -401,7 +398,7 @@ const PdfGallery: React.FC<{ url: string; filename: string; openDirectly?: boole
           aria-label={t('manual_pdf_next_page') as string}
           className="fixed right-4 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full border-none bg-white/10 text-white cursor-pointer hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-30"
         >
-          <ArrowRightIcon />
+          <LuArrowRight />
         </button>
       </div>,
       document.body
@@ -545,7 +542,7 @@ export const ProjectManualModal: React.FC<ProjectManualModalProps> = ({
                     }`}
                   >
                     <span>{section.heading}</span>
-                    <ChevronIcon className={`flex-shrink-0 transition-transform ${isOpen ? '-rotate-180' : ''}`} />
+                    <LuChevronDown className={`flex-shrink-0 transition-transform ${isOpen ? '-rotate-180' : ''}`} />
                   </button>
                 )}
                 {isOpen && (

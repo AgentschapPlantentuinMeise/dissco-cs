@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { CloseIcon } from '../../icons/CloseIcon';
+import { LuX } from 'react-icons/lu';
 
 interface ReviewSearchInputProps {
   value: string;
@@ -24,7 +24,7 @@ export function ReviewSearchInput({ value, onChange }: ReviewSearchInputProps) {
           aria-label={t('common_close')}
           className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none text-gray-400 hover:text-[var(--cs-primary)] cursor-pointer p-1"
         >
-          <CloseIcon />
+          <LuX />
         </button>
       )}
     </div>

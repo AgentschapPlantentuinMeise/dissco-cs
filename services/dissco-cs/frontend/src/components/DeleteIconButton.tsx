@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { TrashIcon } from '../icons/TrashIcon';
+import { LuTrash2 } from 'react-icons/lu';
 
 export const DeleteIconButton: React.FC<{
   onClick: () => void;
@@ -13,7 +13,7 @@ export const DeleteIconButton: React.FC<{
       title={t('common_delete')}
       className="bg-transparent border-none cursor-pointer text-gray-600 text-base px-1 flex items-center hover:text-[var(--cs-primary)] transition-colors duration-200"
     >
-      <TrashIcon />
+      <LuTrash2 />
     </button>
   );
 };

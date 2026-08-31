@@ -1,16 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MedalIcon } from '../../icons/MedalIcon';
+import { LuMedal } from 'react-icons/lu';
 import { useHonourBoard } from '../../hooks/use-honour-board';
 
 type SpotlightPeriod = 'today' | 'week' | 'month' | 'legend';
-
-interface SpotlightEntry {
-  period: SpotlightPeriod;
-  name: string;
-  count: number;
-}
 
 const PERIODS: SpotlightPeriod[] = ['today', 'week', 'month', 'legend'];
 
@@ -28,37 +22,29 @@ const PERIOD_LINE_KEY: Record<SpotlightPeriod, string> = {
   legend: 'honour_board_line_legend',
 };
 
-// "Featured" column: one hourly-rotating featured person on top, full 4-period list below.
+// "Featured" column: one hourly-rotating featured person on top, full 4-period list below. Each
+// period is an independent query (see useHonourBoard), so this renders progressively -- whichever
+// period resolves first (usually "today", the smallest/fastest query) shows immediately instead
+// of the whole widget waiting on the slowest one (legend, unfiltered). A period that resolves
+// empty (nobody today/this week yet) still shows its row with a message instead of being hidden.
 export const HonourBoardSpotlight: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data: leaderboard, status } = useHonourBoard();
+  const board = useHonourBoard();
   const formatNumber = (n: number) => n.toLocaleString(i18n.language);
 
-  if (status === 'loading') {
-    return null;
-  }
+  // Only periods that actually resolved with a top entry are candidates for the rotating featured
+  // spot -- an empty or still-loading period would make a poor hero.
+  const featuredCandidates = PERIODS.map(period => ({ period, entry: board[period].data?.top[0] })).filter(
+    (c): c is { period: SpotlightPeriod; entry: NonNullable<(typeof c)['entry']> } => !!c.entry
+  );
 
-  const spotlight: SpotlightEntry[] = leaderboard
-    ? PERIODS.reduce<SpotlightEntry[]>((acc, period) => {
-        const entry = leaderboard[period].top[0];
-        if (entry) acc.push({ period, name: entry.name, count: entry.count });
-        return acc;
-      }, [])
-    : [];
+  const allSettled = PERIODS.every(period => board[period].status !== 'loading');
+  const featured = featuredCandidates.length > 0 ? featuredCandidates[new Date().getHours() % featuredCandidates.length] : null;
 
-  if (spotlight.length === 0) {
-    return (
-      <div className={`bg-[var(--cs-dark)] rounded-[4px] p-6 flex flex-col ${className}`}>
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <div className="text-xs font-bold uppercase tracking-wider text-[#9fc9c4]">{t('honour_board_spotlight_title')}</div>
-        </div>
-        <p className="text-sm text-[#a9c9c5] text-center">{t('honour_board_spotlight_empty')}</p>
-      </div>
-    );
-  }
-
-  const featured = spotlight[new Date().getHours() % spotlight.length];
-
+  // Shell (title, hero slot, all 4 rows, link) always renders immediately -- no more blank space
+  // while waiting on the first period. The hero slot itself has 3 states: a resolved leader, the
+  // confirmed-empty message once every period has settled with nothing, or a loading placeholder
+  // in between.
   return (
     <div className={`bg-[var(--cs-dark)] rounded-[4px] p-6 flex flex-col ${className}`}>
       <div className="flex items-center justify-center gap-2 mb-4">
@@ -66,26 +52,47 @@ export const HonourBoardSpotlight: React.FC<{ className?: string }> = ({ classNa
       </div>
 
       <div className="text-center pb-5 mb-5 border-b border-white/10">
-        <span className="inline-block text-xs font-bold uppercase tracking-wide text-[#eafcf9] bg-white/10 rounded-full px-2.5 py-1 mb-3">
-          {t(PERIOD_LABEL_KEY[featured.period])}
-        </span>
-        <MedalIcon className="w-7 h-7 text-white/90 mx-auto mb-2" aria-hidden="true" />
-        <div className="text-2xl font-bold text-white mb-1.5">{featured.name}</div>
-        <div className="text-sm text-[#a9c9c5]">
-          {t(PERIOD_LINE_KEY[featured.period], { value: formatNumber(featured.count) })}
-        </div>
+        {featured ? (
+          <>
+            <span className="inline-block text-xs font-bold uppercase tracking-wide text-[#eafcf9] bg-white/10 rounded-full px-2.5 py-1 mb-3">
+              {t(PERIOD_LABEL_KEY[featured.period])}
+            </span>
+            <LuMedal className="w-7 h-7 text-white/90 mx-auto mb-2" aria-hidden="true" />
+            <div className="text-2xl font-bold text-white mb-1.5">{featured.entry.name}</div>
+            <div className="text-sm text-[#a9c9c5]">
+              {t(PERIOD_LINE_KEY[featured.period], { value: formatNumber(featured.entry.count) })}
+            </div>
+          </>
+        ) : (
+          <>
+            <LuMedal className="w-7 h-7 text-white/40 mx-auto mb-2" aria-hidden="true" />
+            <p className="text-sm text-[#a9c9c5]">{t(allSettled ? 'honour_board_spotlight_empty' : 'card_loading')}</p>
+          </>
+        )}
       </div>
 
       <ol className="list-none m-0 p-0 flex flex-col">
-        {spotlight.map(entry => (
-          <li key={entry.period} className="flex items-baseline gap-3 py-3.5 border-b border-white/10 last:border-b-0">
-            <span className="whitespace-nowrap flex-shrink-0 w-[68px] text-[0.68rem] font-medium uppercase tracking-wide text-[#82a19c]">
-              {t(PERIOD_LABEL_KEY[entry.period])}
-            </span>
-            <span className="flex-1 text-sm text-[#d3e8e5]">{entry.name}</span>
-            <span className="text-xs text-[#82a19c] tabular-nums">{formatNumber(entry.count)}</span>
-          </li>
-        ))}
+        {PERIODS.map(period => {
+          const result = board[period];
+          const entry = result.data?.top[0];
+          return (
+            <li key={period} className="flex items-baseline gap-3 py-3.5 border-b border-white/10 last:border-b-0">
+              <span className="whitespace-nowrap flex-shrink-0 w-[68px] text-[0.68rem] font-medium uppercase tracking-wide text-[#82a19c]">
+                {t(PERIOD_LABEL_KEY[period])}
+              </span>
+              {result.status === 'loading' ? (
+                <span className="flex-1 text-sm text-[#82a19c]">{t('card_loading')}</span>
+              ) : entry ? (
+                <>
+                  <span className="flex-1 text-sm text-[#d3e8e5]">{entry.name}</span>
+                  <span className="text-xs text-[#82a19c] tabular-nums">{formatNumber(entry.count)}</span>
+                </>
+              ) : (
+                <span className="flex-1 text-sm text-[#82a19c]">{t('honour_board_spotlight_empty')}</span>
+              )}
+            </li>
+          );
+        })}
       </ol>
 
       <Link to="/honour-board" className="inline-block text-sm font-bold text-[#7fe0d4] no-underline hover:underline mt-4">

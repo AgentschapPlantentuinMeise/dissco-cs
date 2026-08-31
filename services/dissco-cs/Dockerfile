@@ -1,9 +1,9 @@
 FROM node:22-alpine AS frontend-build
 WORKDIR /frontend
-COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci --legacy-peer-deps
+RUN corepack enable
 COPY frontend/ ./
-RUN npm run build
+RUN pnpm install --frozen-lockfile
+RUN pnpm run build
 
 FROM node:22-alpine AS api-build
 WORKDIR /app

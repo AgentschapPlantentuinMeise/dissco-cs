@@ -10,8 +10,7 @@ import { CancelButton } from '../../components/CancelButton';
 import { ActiveStatusToggle } from '../../components/ActiveStatusToggle';
 import { ActiveToggleField } from '../../components/ActiveToggleField';
 import { Select } from '../../components/Select';
-import { PencilIcon } from '../../icons/PencilIcon';
-import { ArrowLeftIcon } from '../../icons/ArrowLeftIcon';
+import { LuPencil, LuArrowLeft } from 'react-icons/lu';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { announcementsApi, Announcement, AnnouncementInput, AnnouncementTargetType, SitePageLang } from '../../api/cs-api';
 import { useProjectList } from '../../hooks/use-project-list';
@@ -142,7 +141,7 @@ export const Announcements: React.FC = () => {
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container cs-container--wide">
           <HrefLink href="/manage" className="inline-flex items-center gap-1 text-[var(--cs-primary)] no-underline font-medium hover:underline">
-            <ArrowLeftIcon aria-hidden="true" /> {t('sm_back_to_hub')}
+            <LuArrowLeft aria-hidden="true" /> {t('sm_back_to_hub')}
           </HrefLink>
 
           <div className="flex items-center justify-between mt-4 mb-8">
@@ -165,7 +164,7 @@ export const Announcements: React.FC = () => {
             <div className="flex flex-col lg:flex-row items-start gap-5 mb-8">
               <ul
                 className={`list-none m-0 p-0 bg-white border-t border-gray-200 divide-y divide-gray-100 min-w-0 w-full ${
-                  isFormOpen ? 'lg:flex-[1_1_55%]' : ''
+                  isFormOpen ? 'lg:flex-[1_1_45%]' : ''
                 }`}
               >
                 {isFormOpen && editingId === null && (
@@ -210,7 +209,7 @@ export const Announcements: React.FC = () => {
                         title={t('sm_pages_edit')}
                         className="bg-transparent border-none cursor-pointer text-gray-500 hover:text-[var(--cs-primary)] p-1"
                       >
-                        <PencilIcon />
+                        <LuPencil />
                       </button>
                       <DeleteIconButton onClick={() => setPendingDeleteId(announcement.id)} />
                     </div>
@@ -219,7 +218,7 @@ export const Announcements: React.FC = () => {
               </ul>
 
               {isFormOpen && (
-                <div className="w-full lg:flex-[0_0_42%] lg:min-w-[380px] bg-white border border-gray-200 rounded-[10px] p-6">
+                <div className="w-full lg:flex-[0_0_55%] lg:min-w-[420px] bg-white border border-gray-200 rounded-[10px] p-6">
                   <h2 className="text-xl font-semibold text-[var(--cs-primary)] mb-4">
                     {editingId !== null ? t('sm_announcements_edit') : t('sm_announcements_new')}
                   </h2>

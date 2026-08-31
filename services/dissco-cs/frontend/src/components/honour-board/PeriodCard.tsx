@@ -5,16 +5,16 @@ import { HonourBoardEntry, HonourBoardPeriod } from '../../api/cs-api';
 export const PeriodCard: React.FC<{
   titleKey: string;
   icon: React.ReactNode;
-  period: HonourBoardPeriod;
+  period: HonourBoardPeriod | undefined;
   formatNumber: (n: number) => string;
   dark?: boolean;
-}> = ({ titleKey, icon, period, formatNumber, dark = false }) => {
+  loading?: boolean;
+}> = ({ titleKey, icon, period, formatNumber, dark = false, loading = false }) => {
   const { t } = useTranslation('dissco-cs');
-  const rows: Array<{ entry: HonourBoardEntry; isYou: boolean }> = period.top.map(entry => ({
-    entry,
-    isYou: entry.userUrn === period.you?.userUrn,
-  }));
-  if (period.you && !rows.some(row => row.isYou)) {
+  const rows: Array<{ entry: HonourBoardEntry; isYou: boolean }> = period
+    ? period.top.map(entry => ({ entry, isYou: entry.userUrn === period.you?.userUrn }))
+    : [];
+  if (period?.you && !rows.some(row => row.isYou)) {
     rows.push({ entry: period.you, isYou: true });
   }
 
@@ -27,7 +27,9 @@ export const PeriodCard: React.FC<{
         <h3 className={`text-sm font-bold ${dark ? 'text-white' : 'text-[var(--cs-primary)]'}`}>{t(titleKey)}</h3>
       </div>
 
-      {rows.length === 0 ? (
+      {loading ? (
+        <p className={`text-sm ${dark ? 'text-[#a9c9c5]' : 'text-gray-400'}`}>{t('card_loading')}</p>
+      ) : rows.length === 0 ? (
         <p className={`text-sm ${dark ? 'text-[#a9c9c5]' : 'text-gray-400'}`}>{t('honour_board_spotlight_empty')}</p>
       ) : (
         <ol className="list-none m-0 p-0">

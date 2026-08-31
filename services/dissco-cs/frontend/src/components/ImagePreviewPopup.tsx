@@ -5,7 +5,7 @@ import { getManifestStructure, getSiteCanvas } from '../api/madoc-client/collect
 import { parseUrn } from '../utility/parse-urn';
 import { getImageServiceId } from '../utility/get-image-service-id';
 import { OpenSeadragonViewer } from '../pages/annotate/viewer/OpenSeadragonViewer';
-import { CloseIcon } from '../icons/CloseIcon';
+import { LuX } from 'react-icons/lu';
 
 export interface ImagePreviewPopupProps {
   /** Raw subject urn of the task -- canvas of manifest, bv. urn:madoc:canvas:123 of urn:madoc:manifest:456. */
@@ -116,7 +116,7 @@ export const ImagePreviewPopup: React.FC<ImagePreviewPopupProps> = ({ subject, l
           aria-label={t('common_close')}
           className="flex-shrink-0 bg-transparent border-none text-white/90 cursor-pointer hover:text-white p-1"
         >
-          <CloseIcon />
+          <LuX />
         </button>
       </div>
       <div className="flex-1 min-h-0 bg-[#1e1e1e] relative">

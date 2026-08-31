@@ -6,7 +6,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useReviewRevisionDocument } from './useReviewRevisionDocument';
 import { AnnotationDocument } from '../../capture-model/types/document';
 import { localeText } from '../../utility/locale-text';
-import { TrashIcon } from '../../icons/TrashIcon';
+import { LuTrash2 } from 'react-icons/lu';
 
 interface ReviewInlineExpansionProps {
   row: ReviewTaskRow;
@@ -109,7 +109,7 @@ export function ReviewInlineExpansion({ row, editedDocument, onDocumentChange, o
           title={t('review_detail_release_button')}
           className="bg-transparent border-none text-gray-600 hover:text-[var(--cs-primary)] transition-colors duration-200 cursor-pointer p-1 disabled:opacity-50"
         >
-          <TrashIcon />
+          <LuTrash2 />
         </button>
       }
     >

@@ -9,13 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { forumApi, ForumTopicWithReplyCount, ForumReply } from '../../api/cs-api';
 import { getAllSiteProjects } from '../../api/madoc-client/projects';
 import { DeleteIconButton } from '../../components/DeleteIconButton';
-import { ChevronIcon } from '../../icons/ChevronIcon';
-import { SearchIcon } from '../../icons/SearchIcon';
-import { PersonIcon } from '../../icons/PersonIcon';
-import { ClockIcon } from '../../icons/ClockIcon';
-import { FolderIcon } from '../../icons/FolderIcon';
-import { LinkIcon } from '../../icons/LinkIcon';
-import { CheckIcon } from '../../icons/CheckIcon';
+import { LuChevronDown, LuSearch, LuUser, LuClock, LuFolder, LuLink, LuCheck } from 'react-icons/lu';
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString('nl-BE', { dateStyle: 'short', timeStyle: 'short' });
@@ -277,7 +271,7 @@ export const MessageBoard: React.FC = () => {
                               title={t('forum_btn_close')}
                               className="bg-transparent border-none cursor-pointer text-gray-600 text-base px-1 flex items-center hover:text-[var(--cs-primary)] transition-colors duration-200"
                             >
-                              <CheckIcon />
+                              <LuCheck />
                             </button>
                           )}
                           {(isAdmin || isTopicOwner) && (
@@ -289,7 +283,7 @@ export const MessageBoard: React.FC = () => {
                                 ? `${msg.reply_count} ${t('forum_btn_replies_one')}`
                                 : `${msg.reply_count} ${t('forum_btn_replies_many')}`
                               : t('forum_btn_reply')}
-                            <ChevronIcon className={`transition-transform duration-200 ${expandedId === msg.id ? 'rotate-180' : ''}`} />
+                            <LuChevronDown className={`transition-transform duration-200 ${expandedId === msg.id ? 'rotate-180' : ''}`} />
                           </button>
                         </div>
                       </div>
@@ -301,10 +295,10 @@ export const MessageBoard: React.FC = () => {
                         onClick={() => handleToggleExpand(msg.id)}
                       >
                         <span className="inline-flex items-center gap-1 text-xs text-gray-400">
-                          <PersonIcon aria-hidden="true" className="text-gray-300" /> {msg.author_name}
+                          <LuUser aria-hidden="true" className="text-gray-300" /> {msg.author_name}
                         </span>
                         <span className="inline-flex items-center gap-1 text-xs text-gray-400">
-                          <ClockIcon aria-hidden="true" className="text-gray-300" /> {formatDate(msg.created_at)}
+                          <LuClock aria-hidden="true" className="text-gray-300" /> {formatDate(msg.created_at)}
                         </span>
                         {msg.project_slug && (
                           <Link
@@ -312,7 +306,7 @@ export const MessageBoard: React.FC = () => {
                             onClick={e => e.stopPropagation()}
                             className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--cs-primary)] no-underline hover:underline"
                           >
-                            <FolderIcon aria-hidden="true" /> {msg.project_label || msg.project_slug}
+                            <LuFolder aria-hidden="true" /> {msg.project_label || msg.project_slug}
                           </Link>
                         )}
                         {msg.task_url && (
@@ -323,7 +317,7 @@ export const MessageBoard: React.FC = () => {
                             onClick={e => e.stopPropagation()}
                             className="inline-flex items-center gap-1 text-xs text-[var(--cs-primary)] no-underline hover:underline"
                           >
-                            <LinkIcon aria-hidden="true" /> {t('forum_view_task')}
+                            <LuLink aria-hidden="true" /> {t('forum_view_task')}
                           </a>
                         )}
                       </div>
@@ -378,7 +372,7 @@ export const MessageBoard: React.FC = () => {
 
           <aside className="order-1 lg:order-2 flex flex-col gap-6 lg:sticky lg:top-[90px]">
             <div className="relative">
-              <SearchIcon className="absolute left-[11px] top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" aria-hidden="true" />
+              <LuSearch className="absolute left-[11px] top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" aria-hidden="true" />
               <input
                 className={`${inputClass} w-full pl-9 box-border`}
                 type="search"

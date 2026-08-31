@@ -4,10 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { CsPage } from '../../components/CsPage';
 import { HrefLink } from '../../utility/href-link';
-import { ArrowLeftIcon } from '../../icons/ArrowLeftIcon';
-import { MailIcon } from '../../icons/MailIcon';
-import { PhoneIcon } from '../../icons/PhoneIcon';
-import { GlobeIcon } from '../../icons/GlobeIcon';
+import { LuArrowLeft, LuMail, LuPhone, LuGlobe, LuMedal, LuClock, LuCalendar } from 'react-icons/lu';
 import { institutionsApi, Institution } from '../../api/cs-api';
 import { StatBanner } from '../../components/StatBanner';
 import { PeriodCard } from '../../components/honour-board/PeriodCard';
@@ -15,9 +12,6 @@ import { getAllSiteProjects } from '../../api/madoc-client/projects';
 import { useInstitutionStats } from '../../hooks/use-institution-stats';
 import { useInstitutionHonourBoard } from '../../hooks/use-institution-honour-board';
 import { ProjectCard } from '../../components/projectcard/ProjectCard';
-import { MedalIcon } from '../../icons/MedalIcon';
-import { ClockIcon } from '../../icons/ClockIcon';
-import { CalendarIcon } from '../../icons/CalendarIcon';
 
 export const InstitutionDetail: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
@@ -46,9 +40,9 @@ export const InstitutionDetail: React.FC = () => {
   const linkedProjects = (allProjects ?? []).filter((p: any) => projectSlugs.includes(p.slug));
 
   const { data: overview } = useInstitutionStats(slug);
-  const { data: honourBoard } = useInstitutionHonourBoard(slug);
+  const { today, week, month, legend } = useInstitutionHonourBoard(slug);
   const tasksCompletedPct = overview && overview.tasksTotal > 0 ? Math.round((overview.tasksCompleted / overview.tasksTotal) * 100) : 0;
-  const legendLeader = honourBoard?.legend.top[0];
+  const legendLeader = legend.data?.top[0];
 
   const [descExpanded, setDescExpanded] = React.useState(false);
 
@@ -66,7 +60,7 @@ export const InstitutionDetail: React.FC = () => {
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container cs-container--wide">
           <HrefLink href="/institutions" className="inline-flex items-center gap-1 text-[var(--cs-primary)] no-underline font-medium hover:underline">
-            <ArrowLeftIcon aria-hidden="true" /> {t('institution_back_to_list')}
+            <LuArrowLeft aria-hidden="true" /> {t('institution_back_to_list')}
           </HrefLink>
 
           {isLoading && <p className="text-center py-10">{t('loading_projects')}</p>}
@@ -111,17 +105,17 @@ export const InstitutionDetail: React.FC = () => {
                     )}
                     {institution.email && (
                       <a className="flex items-center gap-2.5 text-sm text-gray-700 no-underline hover:text-[var(--cs-primary)] whitespace-nowrap" href={`mailto:${institution.email}`}>
-                        <MailIcon aria-hidden="true" className="text-[var(--cs-primary)] flex-shrink-0" /> {institution.email}
+                        <LuMail aria-hidden="true" className="text-[var(--cs-primary)] flex-shrink-0" /> {institution.email}
                       </a>
                     )}
                     {institution.phone && (
                       <span className="flex items-center gap-2.5 text-sm text-gray-700 whitespace-nowrap">
-                        <PhoneIcon aria-hidden="true" className="text-[var(--cs-primary)] flex-shrink-0" /> {institution.phone}
+                        <LuPhone aria-hidden="true" className="text-[var(--cs-primary)] flex-shrink-0" /> {institution.phone}
                       </span>
                     )}
                     {institution.website && (
                       <a className="flex items-center gap-2.5 text-sm text-gray-700 no-underline hover:text-[var(--cs-primary)] whitespace-nowrap" href={institution.website} target="_blank" rel="noreferrer">
-                        <GlobeIcon aria-hidden="true" className="text-[var(--cs-primary)] flex-shrink-0" /> {displayUrl(institution.website)}
+                        <LuGlobe aria-hidden="true" className="text-[var(--cs-primary)] flex-shrink-0" /> {displayUrl(institution.website)}
                       </a>
                     )}
                   </div>
@@ -134,7 +128,7 @@ export const InstitutionDetail: React.FC = () => {
                     stats={[
                       {
                         value: `${tasksCompletedPct}%`,
-                        label: t('pdp_transcribed'),
+                        label: t('pdp_completed'),
                         note: overview ? `${formatNumber(overview.tasksTotal)} ${t('institution_progress_tasks')}` : undefined,
                       },
                       { value: overview ? overview.projectsActive : '—', label: t('institution_projects_active') },
@@ -144,7 +138,7 @@ export const InstitutionDetail: React.FC = () => {
                     trailing={
                       legendLeader && (
                         <div className="flex items-center gap-2 text-sm">
-                          <MedalIcon className="w-[18px] h-[18px] opacity-90" aria-hidden="true" />
+                          <LuMedal className="w-[18px] h-[18px] opacity-90" aria-hidden="true" />
                           <span>{t('honour_board_legend_headline', { name: legendLeader.name, value: formatNumber(legendLeader.count) })}</span>
                         </div>
                       )
@@ -167,33 +161,30 @@ export const InstitutionDetail: React.FC = () => {
 
                 {/* Leaderboard — starts level with the banner, runs down alongside it */}
                 <div className="mt-14 lg:col-start-2 lg:row-start-2 flex flex-col gap-4">
-                  {honourBoard ? (
-                    <>
-                      <PeriodCard
-                        titleKey="honour_board_period_today"
-                        icon={<ClockIcon className="w-4 h-4" />}
-                        period={honourBoard.today}
-                        formatNumber={formatNumber}
-                        dark
-                      />
-                      <PeriodCard
-                        titleKey="honour_board_period_week"
-                        icon={<CalendarIcon className="w-4 h-4" />}
-                        period={honourBoard.week}
-                        formatNumber={formatNumber}
-                        dark
-                      />
-                      <PeriodCard
-                        titleKey="honour_board_period_month"
-                        icon={<CalendarIcon className="w-4 h-4" />}
-                        period={honourBoard.month}
-                        formatNumber={formatNumber}
-                        dark
-                      />
-                    </>
-                  ) : (
-                    <p className="text-sm text-gray-400">{t('card_loading')}</p>
-                  )}
+                  <PeriodCard
+                    titleKey="honour_board_period_today"
+                    icon={<LuClock className="w-4 h-4" />}
+                    period={today.data}
+                    loading={today.status === 'loading'}
+                    formatNumber={formatNumber}
+                    dark
+                  />
+                  <PeriodCard
+                    titleKey="honour_board_period_week"
+                    icon={<LuCalendar className="w-4 h-4" />}
+                    period={week.data}
+                    loading={week.status === 'loading'}
+                    formatNumber={formatNumber}
+                    dark
+                  />
+                  <PeriodCard
+                    titleKey="honour_board_period_month"
+                    icon={<LuCalendar className="w-4 h-4" />}
+                    period={month.data}
+                    loading={month.status === 'loading'}
+                    formatNumber={formatNumber}
+                    dark
+                  />
                 </div>
               </div>
             </>

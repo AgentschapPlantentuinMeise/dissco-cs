@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '../../components/Modal';
-import { MailIcon } from '../../icons/MailIcon';
+import { LuMail } from 'react-icons/lu';
 import { FeedbackComposeTarget } from './useReviewTasksController';
 
 interface ReviewFeedbackModalProps {
@@ -45,7 +45,7 @@ export function ReviewFeedbackModal({ target, onSend, onClose, sending, error }:
             disabled={!canSend}
             className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-none text-white cursor-pointer bg-[var(--cs-tertiary)] hover:brightness-90 disabled:opacity-50"
           >
-            <MailIcon aria-hidden="true" />
+            <LuMail aria-hidden="true" />
             {sending ? t('review_feedback_sending') : t('review_feedback_send')}
           </button>
         </div>

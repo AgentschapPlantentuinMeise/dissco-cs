@@ -12,7 +12,7 @@ import { localeText } from '../../utility/locale-text';
 import { CsPage } from '../../components/CsPage';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { TrashIcon } from '../../icons/TrashIcon';
+import { LuTrash2 } from 'react-icons/lu';
 import { StatBanner } from '../../components/StatBanner';
 import { TaskTable, tabBtnClass } from '../../components/TaskTable';
 import { forumApi, ForumTopicWithReplyCount, reviewFeedbackApi, FeedbackThreadWithMeta } from '../../api/cs-api';
@@ -156,7 +156,7 @@ function FeedbackThreadRow({
           title={t('dashboard_feedback_delete_label')}
           className="flex-shrink-0 bg-transparent border-none text-gray-600 cursor-pointer hover:text-[var(--cs-primary)] transition-colors duration-200 p-1"
         >
-          <TrashIcon />
+          <LuTrash2 />
         </button>
       </div>
       {isOpen && <FeedbackThreadDetail threadId={thread.id} />}

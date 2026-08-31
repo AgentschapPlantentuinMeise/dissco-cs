@@ -9,7 +9,7 @@ export type StructureNode = {
   id: string;
   label: string;
 } & (
-  | { type: 'choice'; items: StructureNode[] }
+  | { type: 'choice'; items: StructureNode[]; profile?: string[] }
   | {
       type: 'model';
       fields: ModelFields;

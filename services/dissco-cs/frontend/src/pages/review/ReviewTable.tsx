@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronIcon } from '../../icons/ChevronIcon';
-import { EyeIcon } from '../../icons/EyeIcon';
+import { LuChevronDown, LuEye } from 'react-icons/lu';
 import { ReviewTaskRow } from '../../api/cs-api';
 import { localeText } from '../../utility/locale-text';
 import { SortKey, SortDir } from './useReviewTasksController';
@@ -44,7 +43,7 @@ export function ReviewTable({
   const { t, i18n } = useTranslation('dissco-cs');
 
   const sortIndicator = (key: SortKey) => (
-    <ChevronIcon
+    <LuChevronDown
       aria-hidden="true"
       className={`inline-block ml-1 transition-transform ${sortKey === key ? 'opacity-100' : 'opacity-0'} ${
         sortKey === key && sortDir === 'desc' ? 'rotate-180' : ''
@@ -135,7 +134,7 @@ export function ReviewTable({
                       title={t('review_view_image')}
                       className="bg-transparent border-none text-gray-400 cursor-pointer hover:text-[var(--cs-primary)] p-1"
                     >
-                      <EyeIcon />
+                      <LuEye />
                     </button>
                   )}
                 </td>

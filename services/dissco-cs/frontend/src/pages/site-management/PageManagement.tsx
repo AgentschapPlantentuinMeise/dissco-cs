@@ -5,10 +5,7 @@ import { CsPage } from '../../components/CsPage';
 import { ToggleSwitch } from '../../components/ToggleSwitch';
 import { SaveButton } from '../../components/SaveButton';
 import { ActiveStatusToggle } from '../../components/ActiveStatusToggle';
-import { PencilIcon } from '../../icons/PencilIcon';
-import { ArrowUpIcon } from '../../icons/ArrowUpIcon';
-import { ArrowDownIcon } from '../../icons/ArrowDownIcon';
-import { ArrowLeftIcon } from '../../icons/ArrowLeftIcon';
+import { LuPencil, LuArrowUp, LuArrowDown, LuArrowLeft } from 'react-icons/lu';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { sitePagesApi, SitePage, SitePageKey, SitePageLang } from '../../api/cs-api';
 import { useSitePages } from '../../contexts/SitePagesContext';
@@ -108,7 +105,7 @@ export const PageManagement: React.FC = () => {
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container cs-container--wide">
           <HrefLink href="/manage" className="inline-flex items-center gap-1 text-[var(--cs-primary)] no-underline font-medium hover:underline">
-            <ArrowLeftIcon aria-hidden="true" /> {t('sm_back_to_hub')}
+            <LuArrowLeft aria-hidden="true" /> {t('sm_back_to_hub')}
           </HrefLink>
 
           <h1 className="text-3xl text-[var(--cs-primary)] mt-4 mb-6">{t('sm_tile_pages_title')}</h1>
@@ -146,7 +143,7 @@ export const PageManagement: React.FC = () => {
                             aria-label={t('sm_pages_edit')}
                             className="bg-transparent border-none cursor-pointer text-gray-500 hover:text-[var(--cs-primary)] p-1"
                           >
-                            <PencilIcon />
+                            <LuPencil />
                           </button>
                         )}
                       </span>
@@ -158,7 +155,7 @@ export const PageManagement: React.FC = () => {
                           aria-label={t('sm_pages_move_up')}
                           className="flex items-center bg-transparent border-none cursor-pointer text-gray-400 hover:text-[var(--cs-primary)] disabled:opacity-25 disabled:cursor-not-allowed p-1"
                         >
-                          <ArrowUpIcon />
+                          <LuArrowUp />
                         </button>
                         <button
                           onClick={() => void movePage(index, 1)}
@@ -166,7 +163,7 @@ export const PageManagement: React.FC = () => {
                           aria-label={t('sm_pages_move_down')}
                           className="flex items-center bg-transparent border-none cursor-pointer text-gray-400 hover:text-[var(--cs-primary)] disabled:opacity-25 disabled:cursor-not-allowed p-1"
                         >
-                          <ArrowDownIcon />
+                          <LuArrowDown />
                         </button>
                       </span>
                     </span>

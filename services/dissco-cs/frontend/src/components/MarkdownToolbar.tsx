@@ -1,8 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { LinkIcon } from '../icons/LinkIcon';
-import { ImageIcon } from '../icons/ImageIcon';
-import { ListIcon } from '../icons/ListIcon';
+import { LuLink, LuImage, LuList } from 'react-icons/lu';
 
 type MarkdownToolbarProps = {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
@@ -102,14 +100,14 @@ export const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ textareaRef, v
       </button>
       <div className="w-px h-4 bg-gray-300 mx-1" />
       <button type="button" title={t('md_toolbar_bullet_list')} aria-label={t('md_toolbar_bullet_list')} onClick={applyBulletList} className={btnClass}>
-        <ListIcon />
+        <LuList />
       </button>
       <div className="w-px h-4 bg-gray-300 mx-1" />
       <button type="button" title={t('md_toolbar_link')} aria-label={t('md_toolbar_link')} onClick={applyLink} className={btnClass}>
-        <LinkIcon />
+        <LuLink />
       </button>
       <button type="button" title={t('md_toolbar_image')} aria-label={t('md_toolbar_image')} onClick={applyImage} className={btnClass}>
-        <ImageIcon />
+        <LuImage />
       </button>
     </div>
   );

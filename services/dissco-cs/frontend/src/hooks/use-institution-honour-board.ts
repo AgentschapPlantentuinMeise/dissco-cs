@@ -1,21 +1,34 @@
 import { useQuery } from 'react-query';
-import { institutionsApi } from '../api/cs-api';
+import { institutionsApi, HonourBoardPeriodKey } from '../api/cs-api';
 import { usePollingWindow } from './use-polling-window';
 
-// Same pattern as use-honour-board.ts, scoped to one institution's projects.
-export function useInstitutionHonourBoard(slug: string | undefined) {
-  const initial = useQuery(['institution-honour-board', slug], () => institutionsApi.getHonourBoard(slug!), {
+// Same per-period pattern as use-honour-board.ts, scoped to one institution's projects.
+function usePeriod(slug: string | undefined, period: HonourBoardPeriodKey, refetchInterval: number | false) {
+  const initial = useQuery(['institution-honour-board', slug, period], () => institutionsApi.getHonourBoard(slug!, period), {
     enabled: !!slug,
     refetchOnWindowFocus: false,
-    // TODO: temporary for diagnosis, remove once the cause of the honour-board errors is found.
-    onError: err => console.error('[institution-honour-board] initial fetch failed', slug, err),
+    onError: err => console.error('[institution-honour-board] initial fetch failed', slug, period, err),
   });
-  const refetchInterval = usePollingWindow();
-  const peek = useQuery(['institution-honour-board-current', slug], () => institutionsApi.getHonourBoardCurrent(slug!), {
-    enabled: !!slug,
-    refetchInterval,
-    onError: err => console.error('[institution-honour-board] peek fetch failed', slug, err),
-  });
+  const peek = useQuery(
+    ['institution-honour-board-current', slug, period],
+    () => institutionsApi.getHonourBoardCurrent(slug!, period),
+    {
+      enabled: !!slug,
+      refetchInterval,
+      onError: err => console.error('[institution-honour-board] peek fetch failed', slug, period, err),
+    }
+  );
 
   return { ...initial, data: peek.data ?? initial.data };
+}
+
+export function useInstitutionHonourBoard(slug: string | undefined) {
+  const refetchInterval = usePollingWindow();
+
+  return {
+    today: usePeriod(slug, 'today', refetchInterval),
+    week: usePeriod(slug, 'week', refetchInterval),
+    month: usePeriod(slug, 'month', refetchInterval),
+    legend: usePeriod(slug, 'legend', refetchInterval),
+  };
 }

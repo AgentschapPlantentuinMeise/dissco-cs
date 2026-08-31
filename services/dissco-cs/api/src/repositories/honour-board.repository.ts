@@ -23,14 +23,25 @@ function startOfMonth(now: Date): Date {
   return new Date(now.getFullYear(), now.getMonth(), 1);
 }
 
-export type HonourBoardLeaderboard = {
-  today: HonourBoardPeriod;
-  week: HonourBoardPeriod;
-  month: HonourBoardPeriod;
-  legend: HonourBoardPeriod;
-};
+export type PeriodKey = 'today' | 'week' | 'month' | 'legend';
+export const HONOUR_BOARD_PERIODS: PeriodKey[] = ['today', 'week', 'month', 'legend'];
+export function isHonourBoardPeriod(value: string): value is PeriodKey {
+  return (HONOUR_BOARD_PERIODS as string[]).includes(value);
+}
 
-type PeriodKey = 'today' | 'week' | 'month' | 'legend';
+function sinceForPeriod(period: PeriodKey, now: Date): Date | null {
+  switch (period) {
+    case 'today':
+      return startOfDay(now);
+    case 'week':
+      return startOfWeek(now);
+    case 'month':
+      return startOfMonth(now);
+    case 'legend':
+      return null;
+  }
+}
+
 type PeriodRankingCacheEntry = { ranking: RankedHonourBoardEntry[]; refreshing: boolean };
 
 // A ranking is either scoped to an entire site (context contains the site urn) or to one
@@ -156,65 +167,38 @@ export class HonourBoardRepository {
     return { top, you };
   }
 
-  // Pure cache read, no side effects: never triggers a recompute, unlike getLeaderboard. For the
+  // Pure cache read, no side effects: never triggers a recompute, unlike getPeriod. For the
   // frontend's frequent "did it change yet?" poll, which must never itself cause work. Returns
-  // null only if nothing has ever been cached yet for this scope (all 4 periods must be present).
-  private peek(scope: LeaderboardScope, userUrn: string | null): HonourBoardLeaderboard | null {
-    const periods: PeriodKey[] = ['today', 'week', 'month', 'legend'];
-    const rankings: Partial<Record<PeriodKey, RankedHonourBoardEntry[]>> = {};
-
-    for (const period of periods) {
-      const cached = this.cache.get(`${scopeCacheKey(scope)}:${period}`);
-      if (!cached) {
-        return null;
-      }
-      rankings[period] = cached.ranking;
-    }
-
-    return {
-      today: this.toPeriod(rankings.today as RankedHonourBoardEntry[], userUrn),
-      week: this.toPeriod(rankings.week as RankedHonourBoardEntry[], userUrn),
-      month: this.toPeriod(rankings.month as RankedHonourBoardEntry[], userUrn),
-      legend: this.toPeriod(rankings.legend as RankedHonourBoardEntry[], userUrn),
-    };
+  // null only if this period has never been cached yet for this scope.
+  private peekPeriod(scope: LeaderboardScope, period: PeriodKey, userUrn: string | null): HonourBoardPeriod | null {
+    const cached = this.cache.get(`${scopeCacheKey(scope)}:${period}`);
+    return cached ? this.toPeriod(cached.ranking, userUrn) : null;
   }
 
-  private async getLeaderboardForScope(scope: LeaderboardScope, userUrn: string | null): Promise<HonourBoardLeaderboard> {
-    const now = new Date();
-
-    const [today, week, month, legend] = await Promise.all([
-      this.getPeriodRanking(scope, 'today', startOfDay(now)),
-      this.getPeriodRanking(scope, 'week', startOfWeek(now)),
-      this.getPeriodRanking(scope, 'month', startOfMonth(now)),
-      this.getPeriodRanking(scope, 'legend', null),
-    ]);
-
-    return {
-      today: this.toPeriod(today, userUrn),
-      week: this.toPeriod(week, userUrn),
-      month: this.toPeriod(month, userUrn),
-      legend: this.toPeriod(legend, userUrn),
-    };
+  private async getPeriod(scope: LeaderboardScope, period: PeriodKey, userUrn: string | null): Promise<HonourBoardPeriod> {
+    const ranking = await this.getPeriodRanking(scope, period, sinceForPeriod(period, new Date()));
+    return this.toPeriod(ranking, userUrn);
   }
 
-  peekLeaderboard(siteId: number, userUrn: string | null): HonourBoardLeaderboard | null {
-    return this.peek({ kind: 'site', siteId }, userUrn);
+  peekSitePeriod(siteId: number, period: PeriodKey, userUrn: string | null): HonourBoardPeriod | null {
+    return this.peekPeriod({ kind: 'site', siteId }, period, userUrn);
   }
 
-  async getLeaderboard(siteId: number, userUrn: string | null): Promise<HonourBoardLeaderboard> {
-    return this.getLeaderboardForScope({ kind: 'site', siteId }, userUrn);
+  async getSitePeriod(siteId: number, period: PeriodKey, userUrn: string | null): Promise<HonourBoardPeriod> {
+    return this.getPeriod({ kind: 'site', siteId }, period, userUrn);
   }
 
-  peekInstitutionLeaderboard(siteId: number, institutionId: number, userUrn: string | null): HonourBoardLeaderboard | null {
-    return this.peek({ kind: 'institution', siteId, institutionId, taskIds: [] }, userUrn);
+  peekInstitutionPeriod(siteId: number, institutionId: number, period: PeriodKey, userUrn: string | null): HonourBoardPeriod | null {
+    return this.peekPeriod({ kind: 'institution', siteId, institutionId, taskIds: [] }, period, userUrn);
   }
 
-  async getInstitutionLeaderboard(
+  async getInstitutionPeriod(
     siteId: number,
     institutionId: number,
     taskIds: string[],
+    period: PeriodKey,
     userUrn: string | null
-  ): Promise<HonourBoardLeaderboard> {
-    return this.getLeaderboardForScope({ kind: 'institution', siteId, institutionId, taskIds }, userUrn);
+  ): Promise<HonourBoardPeriod> {
+    return this.getPeriod({ kind: 'institution', siteId, institutionId, taskIds }, period, userUrn);
   }
 }

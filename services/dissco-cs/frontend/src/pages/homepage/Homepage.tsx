@@ -5,11 +5,12 @@ import { CsPage } from '../../components/CsPage';
 import { ProjectCard } from '../../components/projectcard/ProjectCard';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
 import { WelcomeModal } from '../../components/WelcomeModal';
-import { ArrowDownIcon } from '../../icons/ArrowDownIcon';
+import { LuArrowDown, LuArrowRight } from 'react-icons/lu';
 import { StatBanner } from '../../components/StatBanner';
 import { HonourBoardSpotlight } from '../../components/honour-board/HonourBoardSpotlight';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { useSiteStats } from '../../hooks/use-site-stats';
+import { HrefLink } from '../../utility/href-link';
 
 export const Homepage: React.FC = () => {
   const [isClient, setIsClient] = useState(false);
@@ -48,7 +49,7 @@ export const Homepage: React.FC = () => {
             <p className="text-[20px] text-white/90 max-w-[650px] mb-5 leading-[1.5]" dangerouslySetInnerHTML={{ __html: t('hero_lead') }} />
             <div className="flex gap-4 items-center">
               <button className="inline-flex items-center gap-1 bg-[var(--cs-secondary)] text-white border-none px-6 py-2.5 rounded-full font-medium cursor-pointer text-base no-underline">
-                {t('btn_active')} <ArrowDownIcon aria-hidden="true" />
+                {t('btn_active')} <LuArrowDown aria-hidden="true" />
               </button>
               <button className="bg-transparent text-white border border-white/60 px-6 py-2.5 rounded-full font-medium cursor-pointer text-base no-underline">
                 {t('btn_read_more')}
@@ -86,6 +87,14 @@ export const Homepage: React.FC = () => {
                     <ProjectCard key={project.id} projectSummaryData={project} />
                   ))}
                 </div>
+                {isClient && !isLoadingList && latestProjects.length > 0 && (
+                  <HrefLink
+                    href="/explore"
+                    className="inline-flex items-center gap-1 text-sm text-[var(--cs-primary)] font-semibold no-underline hover:underline mt-4"
+                  >
+                    {t('homepage_view_all_projects')} <LuArrowRight aria-hidden="true" />
+                  </HrefLink>
+                )}
               </div>
             </div>
             <HonourBoardSpotlight className="mt-8 lg:mt-0 lg:col-start-2 lg:row-start-1" />

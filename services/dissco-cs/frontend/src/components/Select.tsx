@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronIcon } from '../icons/ChevronIcon';
+import { LuChevronDown } from 'react-icons/lu';
 
 type Props = React.SelectHTMLAttributes<HTMLSelectElement> & {
   wrapperClassName?: string;
@@ -8,7 +8,7 @@ type Props = React.SelectHTMLAttributes<HTMLSelectElement> & {
 // Shared dropdown control. Every <select> in the app should render through this instead of a bare
 // <select> -- browsers each draw their own native arrow/weighting for <select>, which is why every
 // hand-rolled dropdown in this codebase ended up looking slightly different. appearance-none hides
-// that native rendering; the ChevronIcon here is the one consistent arrow used everywhere.
+// that native rendering; the LuChevronDown here is the one consistent arrow used everywhere.
 export const Select = React.forwardRef<HTMLSelectElement, Props>(
   ({ className = '', wrapperClassName = '', children, value, ...props }, ref) => {
     // An empty value is always a "nothing chosen" state (placeholder option, "all", "none", ...)
@@ -21,12 +21,12 @@ export const Select = React.forwardRef<HTMLSelectElement, Props>(
         <select
           ref={ref}
           value={value}
-          className={`w-full appearance-none pr-8 ${isPlaceholder ? 'text-gray-400' : ''} ${className}`}
+          className={`w-full appearance-none pr-8 [&>option]:text-gray-900 [&>option[value=""]]:text-gray-400 [&>option:disabled]:text-gray-300 ${isPlaceholder ? 'text-gray-400' : ''} ${className}`}
           {...props}
         >
           {children}
         </select>
-        <ChevronIcon
+        <LuChevronDown
           aria-hidden="true"
           className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
         />

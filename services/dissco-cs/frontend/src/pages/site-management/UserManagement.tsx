@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { getSiteSlug } from '../../api/slug';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/CsPage';
-import { ArrowLeftIcon } from '../../icons/ArrowLeftIcon';
+import { LuArrowLeft } from 'react-icons/lu';
 
 export const UserManagement: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
@@ -20,7 +20,7 @@ export const UserManagement: React.FC = () => {
             href="/manage"
             className="inline-flex items-center gap-1 text-[var(--cs-primary)] no-underline font-medium hover:underline"
           >
-            <ArrowLeftIcon aria-hidden="true" /> {t('sm_back_to_hub')}
+            <LuArrowLeft aria-hidden="true" /> {t('sm_back_to_hub')}
           </HrefLink>
 
           <h1 className="text-3xl text-[var(--cs-primary)] mt-4 mb-8">{t('sm_tile_users_title')}</h1>
