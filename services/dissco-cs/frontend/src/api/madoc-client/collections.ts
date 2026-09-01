@@ -22,13 +22,23 @@ export async function getAllAdminCollections(): Promise<MadocCollectionSummary[]
     return collections;
   }
 
-  const rest = await Promise.all(
-    Array.from({ length: totalPages - 1 }, (_, i) =>
-      request<{ collections: MadocCollectionSummary[] }>(`/api/madoc/iiif/collections?page=${i + 1}`)
-    )
-  );
+  // Fetch remaining pages in small batches instead of all at once -- with thousands of
+  // collections this could otherwise fire thousands of concurrent fetches and hit the
+  // browser's connection limit (net::ERR_INSUFFICIENT_RESOURCES).
+  const BATCH_SIZE = 6;
+  const remainingPages = Array.from({ length: totalPages - 1 }, (_, i) => i + 1);
 
-  return collections.concat(...rest.map(page => page?.collections || []));
+  for (let i = 0; i < remainingPages.length; i += BATCH_SIZE) {
+    const batch = remainingPages.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(
+      batch.map(page =>
+        request<{ collections: MadocCollectionSummary[] }>(`/api/madoc/iiif/collections?page=${page}`)
+      )
+    );
+    collections.push(...results.flatMap(page => page?.collections || []));
+  }
+
+  return collections;
 }
 
 // Full desired `item_ids` list for a project's flat collection -- this replaces the whole list
