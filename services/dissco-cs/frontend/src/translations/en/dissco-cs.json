@@ -265,6 +265,7 @@
   "review_detail_submitted_by": "Submitted by {{name}}",
   "review_detail_field_empty": "— empty —",
   "review_detail_now_reviewing": "Now reviewing",
+  "review_select_to_accept": "Select to accept",
   "review_detail_close": "Close",
   "review_feedback_button": "Send feedback",
   "review_feedback_modal_eyebrow": "Feedback",

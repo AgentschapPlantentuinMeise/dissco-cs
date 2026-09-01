@@ -27,6 +27,19 @@ function resolveDisplayStructure(node: StructureNode): StructureNode {
   return node;
 }
 
+// Mirrors CaptureModelForm.tsx's resolveSectionModels: a choice opted into 'tabs' via its own
+// `profile` isn't a real either/or (see resolveDisplayStructure above) -- it's a set of sections
+// that were all filled in together, so the reviewer needs to see all of them, not just the first.
+function resolveDisplayModels(node: StructureNode): Array<StructureNode & { type: 'model' }> {
+  if (node.type === 'choice' && node.profile?.includes('tabs')) {
+    return node.items
+      .map(resolveDisplayStructure)
+      .filter((item): item is StructureNode & { type: 'model' } => item.type === 'model');
+  }
+  const resolved = resolveDisplayStructure(node);
+  return resolved.type === 'model' ? [resolved] : [];
+}
+
 function fieldToText(value: unknown): string {
   if (value === undefined || value === null) return '';
   if (typeof value === 'string') return value;
@@ -62,7 +75,9 @@ function FieldRow({ field, path, onChange, readOnly }: { field: BaseField; path:
   );
 }
 
-type Block = { key: string; label: string | null; fields: React.ReactNode[] };
+// `boxed` distinguishes an entity group (a repeatable nested model, always framed so it reads as
+// its own record) from a section/ungrouped block (a plain heading, no frame).
+type Block = { key: string; label: string | null; fields: React.ReactNode[]; boxed?: boolean };
 
 // Grid-layout geeft elk blok een eigen kolom -- een blok met veel velden (bv. een plat formulier
 // zonder secties) zou anders als één lange kolom renderen terwijl de andere kolommen leeg
@@ -104,6 +119,7 @@ function collectBlocks(fields: ModelFields, doc: AnnotationDocument, pathPrefix:
       blocks.push({
         key: term,
         label: entities[0]?.label ?? term,
+        boxed: true,
         fields: entities.map((entity, idx) => (
           <div key={entity.id ?? idx}>{collectBlocks(nestedFields, entity, [...pathPrefix, term, idx], onChange, readOnly).map(b => b.fields)}</div>
         )),
@@ -130,25 +146,46 @@ function collectBlocks(fields: ModelFields, doc: AnnotationDocument, pathPrefix:
 // Secties staan altijd naast elkaar in 3 vaste kolommen (valt terug naar 1 kolom op smalle
 // schermen); bij >3 secties valt de rest gewoon naar een nieuwe rij van 3.
 export function ReviewFieldForm({ model, document, onChange, readOnly }: ReviewFieldFormProps) {
-  const resolved = resolveDisplayStructure(model.structure);
-  if (resolved.type !== 'model') {
+  const models = resolveDisplayModels(model.structure);
+  if (models.length === 0) {
     return null;
   }
 
-  const blocks = collectBlocks(resolved.fields, document, [], onChange, readOnly);
+  // With a single (implicit) model, top-level fields stay unlabeled as before -- only once there
+  // are real sections do their own top-level fields need the model's label as a heading, the same
+  // way a nested entity's fields already get one.
+  const blocks = models.flatMap(m => {
+    const modelBlocks = collectBlocks(m.fields, document, [], onChange, readOnly);
+    return modelBlocks.map(b => ({
+      ...b,
+      key: `${m.id}::${b.key}`,
+      label: models.length > 1 && b.key === '__ungrouped' ? m.label : b.label,
+    }));
+  });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
-      {chunkForGrid(blocks).map(block => (
-        <div key={block.key}>
-          {block.label && (
-            <h3 className="text-[0.68rem] font-bold uppercase tracking-wide text-[var(--cs-tertiary)] mb-2.5 pb-1.5 border-b border-gray-200">
-              {block.label}
-            </h3>
-          )}
-          {block.fields}
-        </div>
-      ))}
+      {chunkForGrid(blocks).map(block =>
+        block.boxed ? (
+          <fieldset key={block.key} className="border border-gray-200 rounded-md p-3">
+            {block.label && (
+              <legend className="px-1 text-[0.68rem] font-bold uppercase tracking-wide text-[var(--cs-tertiary)]">
+                {block.label}
+              </legend>
+            )}
+            {block.fields}
+          </fieldset>
+        ) : (
+          <div key={block.key}>
+            {block.label && (
+              <h3 className="text-[0.68rem] font-bold uppercase tracking-wide text-[var(--cs-tertiary)] mb-2.5 pb-1.5 border-b border-gray-200">
+                {block.label}
+              </h3>
+            )}
+            {block.fields}
+          </div>
+        )
+      )}
     </div>
   );
 }

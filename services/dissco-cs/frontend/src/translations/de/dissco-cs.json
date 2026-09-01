@@ -264,6 +264,7 @@
   "review_detail_submitted_by": "Eingereicht von {{name}}",
   "review_detail_field_empty": "— leer —",
   "review_detail_now_reviewing": "Wird gerade geprüft",
+  "review_select_to_accept": "Zum Akzeptieren auswählen",
   "review_detail_close": "Schließen",
   "review_feedback_button": "Feedback senden",
   "review_feedback_modal_eyebrow": "Feedback",

@@ -96,10 +96,18 @@ export class HonourBoardRepository {
     const params: unknown[] = [scope.kind === 'site' ? JSON.stringify([`urn:madoc:site:${scope.siteId}`]) : scope.taskIds];
     const scopeClause = scope.kind === 'site' ? `context @> $1::jsonb` : `root_task = ANY($1::uuid[])`;
 
-    let sinceClause = '';
+    // A status-3 (reviewed) row only counts within a bounded period (today/week/month) if it was
+    // also *created* (claimed/started) within that same period -- otherwise a reviewer approving
+    // an old submission bumps modified_at into the period and misattributes it to the original
+    // assignee, who may have done the actual work long before. Status-2 (submitted, not yet
+    // reviewed) rows are still bounded on modified_at, since submitting is what sets that
+    // timestamp. Legend (since = null) has no period to leak across, so it keeps the original
+    // unconditional check.
+    let statusClause = 'status IN (2, 3)';
     if (since) {
       params.push(since.toISOString());
-      sinceClause = `AND modified_at >= $${params.length}`;
+      const sinceParam = `$${params.length}`;
+      statusClause = `((status = 2 AND modified_at >= ${sinceParam}) OR (status = 3 AND created_at >= ${sinceParam}))`;
     }
 
     const { rows } = await this.pool.query<{
@@ -113,11 +121,10 @@ export class HonourBoardRepository {
           SELECT assignee_id, assignee_name, COUNT(*) AS completed_count
           FROM ${this.schemaRef}.tasks
           WHERE type = 'crowdsourcing-task'
-            AND status IN (2, 3)
+            AND ${statusClause}
             AND assignee_is_service IS NOT TRUE
             AND assignee_id IS NOT NULL
             AND ${scopeClause}
-            ${sinceClause}
           GROUP BY assignee_id, assignee_name
         )
         SELECT *, DENSE_RANK() OVER (ORDER BY completed_count DESC) AS rank

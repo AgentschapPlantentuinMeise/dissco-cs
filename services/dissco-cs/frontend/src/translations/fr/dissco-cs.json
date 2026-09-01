@@ -264,6 +264,7 @@
   "review_detail_submitted_by": "Soumis par {{name}}",
   "review_detail_field_empty": "— vide —",
   "review_detail_now_reviewing": "En cours de révision",
+  "review_select_to_accept": "Sélectionner pour accepter",
   "review_detail_close": "Fermer",
   "review_feedback_button": "Envoyer un retour",
   "review_feedback_modal_eyebrow": "Retour",

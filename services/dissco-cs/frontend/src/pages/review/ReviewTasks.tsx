@@ -171,6 +171,9 @@ export const ReviewTasks: React.FC = () => {
                     releasing={c.releasing === row.id}
                     releaseError={c.releaseError}
                     onClose={() => c.setOpenRowId(null)}
+                    selected={c.selectedIds.has(row.id)}
+                    onToggleSelect={() => c.toggleSelectRow(row.id)}
+                    selectable={c.isOwnTask(row)}
                   />
                 )}
               />

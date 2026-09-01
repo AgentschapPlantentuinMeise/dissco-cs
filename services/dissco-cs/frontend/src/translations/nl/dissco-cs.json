@@ -264,6 +264,7 @@
   "review_detail_submitted_by": "Ingediend door {{name}}",
   "review_detail_field_empty": "— leeg —",
   "review_detail_now_reviewing": "Nu aan het reviewen",
+  "review_select_to_accept": "Selecteer om te accepteren",
   "review_detail_close": "Sluiten",
   "review_feedback_button": "Stuur feedback",
   "review_feedback_modal_eyebrow": "Feedback",

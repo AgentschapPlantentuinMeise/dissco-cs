@@ -16,6 +16,11 @@ interface ReviewInlineExpansionProps {
   releasing: boolean;
   releaseError: string | null;
   onClose: () => void;
+  /** Mirrors the row's own bulk-selection checkbox — same state, same handler, just reachable
+      from the detail view too instead of only from the (possibly scrolled-away) row. */
+  selected: boolean;
+  onToggleSelect: () => void;
+  selectable: boolean;
 }
 
 function ExpansionChrome({
@@ -54,7 +59,18 @@ function ExpansionChrome({
 // Inline-uitklap-variant: verschijnt als een extra rij direct onder de aangeklikte tabelrij (zie
 // ReviewTable's renderRowExpansion) i.p.v. een zijpaneel. Velden staan in een grid die zelf
 // herschikt naar het aantal secties -- zie ReviewFieldForm.
-export function ReviewInlineExpansion({ row, editedDocument, onDocumentChange, onRelease, releasing, releaseError, onClose }: ReviewInlineExpansionProps) {
+export function ReviewInlineExpansion({
+  row,
+  editedDocument,
+  onDocumentChange,
+  onRelease,
+  releasing,
+  releaseError,
+  onClose,
+  selected,
+  onToggleSelect,
+  selectable,
+}: ReviewInlineExpansionProps) {
   const { t, i18n } = useTranslation('dissco-cs');
   const [confirmingRelease, setConfirmingRelease] = useState(false);
   const title = localeText(row.subject.label, i18n.language) || row.id;
@@ -102,15 +118,26 @@ export function ReviewInlineExpansion({ row, editedDocument, onDocumentChange, o
       subtitle={subtitle}
       onClose={onClose}
       headerAction={
-        <button
-          onClick={() => setConfirmingRelease(true)}
-          disabled={releasing}
-          aria-label={t('review_detail_release_button')}
-          title={t('review_detail_release_button')}
-          className="bg-transparent border-none text-gray-600 hover:text-[var(--cs-primary)] transition-colors duration-200 cursor-pointer p-1 disabled:opacity-50"
-        >
-          <LuTrash2 />
-        </button>
+        <>
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onToggleSelect}
+            disabled={!selectable}
+            title={selectable ? t('review_select_to_accept') : t('review_not_own_task')}
+            aria-label={title}
+            className="cursor-pointer disabled:cursor-not-allowed"
+          />
+          <button
+            onClick={() => setConfirmingRelease(true)}
+            disabled={releasing}
+            aria-label={t('review_detail_release_button')}
+            title={t('review_detail_release_button')}
+            className="bg-transparent border-none text-gray-600 hover:text-[var(--cs-primary)] transition-colors duration-200 cursor-pointer p-1 disabled:opacity-50"
+          >
+            <LuTrash2 />
+          </button>
+        </>
       }
     >
       <ReviewFieldForm model={modelQuery.data} document={currentDocument} onChange={handleChange} />
