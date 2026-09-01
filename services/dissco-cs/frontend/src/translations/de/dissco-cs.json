@@ -335,6 +335,7 @@
   "sm_bulk_source_none": "Keines — leeres Projekt",
   "sm_bulk_manifest_label": "Manifeste/Sammlungen verknüpfen (optional, mehrere möglich)",
   "sm_bulk_manifest_hint": "Wird mit jedem erstellten Projekt verknüpft und sofort aktiv gesetzt, ohne erneuten Import. Nichts ausgewählt = nicht verknüpfen.",
+  "sm_bulk_manifest_item_count": "{{count}} Elemente",
   "sm_bulk_title_label": "Titel",
   "sm_bulk_title_placeholder": "z. B. Lasttest-Projekt",
   "sm_bulk_title_hint": "Jedes Projekt erhält automatisch eine Nummer am Ende des Titels (1, 2, 3, ...).",

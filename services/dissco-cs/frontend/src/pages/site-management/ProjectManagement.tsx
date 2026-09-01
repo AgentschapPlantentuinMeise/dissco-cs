@@ -1007,7 +1007,7 @@ const BulkCreateSubview: React.FC<{ projects: any[] }> = ({ projects }) => {
         >
           {collections.map(collection => (
             <option key={collection.id} value={collection.id}>
-              {getLabelText(collection.label, collection.slug)}
+              {getLabelText(collection.label, collection.slug)} — {t('sm_bulk_manifest_item_count', { count: collection.itemCount ?? 0 })}
             </option>
           ))}
         </select>

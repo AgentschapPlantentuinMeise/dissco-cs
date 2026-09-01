@@ -7,10 +7,11 @@ export const getSiteCanvas = (id: number, query?: Record<string, unknown>) => pu
 export const getManifestStructure = (id: number) => publicRequest<{ items: any[] }>(`/manifests/${id}/structure`);
 
 // -- Collections (gated admin API) --
-export type MadocCollectionSummary = { id: number; slug: string; label?: unknown };
+export type MadocCollectionSummary = { id: number; slug: string; label?: unknown; itemCount?: number };
 
 // All top-level IIIF collections on the site, for the bulk-create manifest/collection picker --
 // same gated route the admin "browse collections" page uses, so unpublished ones show up too.
+// Empty collections (itemCount 0) are filtered out since linking them would be pointless.
 export async function getAllAdminCollections(): Promise<MadocCollectionSummary[]> {
   const first = await request<{ collections: MadocCollectionSummary[]; pagination?: { totalPages?: number } }>(
     '/api/madoc/iiif/collections?page=0'
@@ -19,7 +20,7 @@ export async function getAllAdminCollections(): Promise<MadocCollectionSummary[]
   const collections = first?.collections || [];
 
   if (totalPages <= 1) {
-    return collections;
+    return collections.filter(c => c.itemCount !== 0);
   }
 
   // Fetch remaining pages in small batches instead of all at once -- with thousands of
@@ -38,7 +39,7 @@ export async function getAllAdminCollections(): Promise<MadocCollectionSummary[]
     collections.push(...results.flatMap(page => page?.collections || []));
   }
 
-  return collections;
+  return collections.filter(c => c.itemCount !== 0);
 }
 
 // Full desired `item_ids` list for a project's flat collection -- this replaces the whole list

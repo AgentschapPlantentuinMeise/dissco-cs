@@ -335,6 +335,7 @@
   "sm_bulk_source_none": "Geen — leeg project",
   "sm_bulk_manifest_label": "Manifesten/collecties koppelen (optioneel, meerdere mogelijk)",
   "sm_bulk_manifest_hint": "Worden aan elk aangemaakt project gekoppeld en meteen actief gezet, zonder opnieuw te importeren. Niets geselecteerd = niet koppelen.",
+  "sm_bulk_manifest_item_count": "{{count}} items",
   "sm_bulk_title_label": "Titel",
   "sm_bulk_title_placeholder": "bv. Belasting test project",
   "sm_bulk_title_hint": "Elk project krijgt automatisch een volgnummer achter de titel (1, 2, 3, ...).",

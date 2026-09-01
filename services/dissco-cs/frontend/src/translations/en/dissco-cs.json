@@ -336,6 +336,7 @@
   "sm_bulk_source_none": "None — blank project",
   "sm_bulk_manifest_label": "Link manifests/collections (optional, multiple allowed)",
   "sm_bulk_manifest_hint": "Linked to every created project and set active right away, without re-importing. Nothing selected = don't link.",
+  "sm_bulk_manifest_item_count": "{{count}} items",
   "sm_bulk_title_label": "Title",
   "sm_bulk_title_placeholder": "e.g. Load test project",
   "sm_bulk_title_hint": "Each project automatically gets a number appended to the title (1, 2, 3, ...).",

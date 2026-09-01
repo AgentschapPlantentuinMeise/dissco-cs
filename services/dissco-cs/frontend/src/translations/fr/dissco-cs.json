@@ -335,6 +335,7 @@
   "sm_bulk_source_none": "Aucun — projet vide",
   "sm_bulk_manifest_label": "Lier des manifestes/collections (facultatif, plusieurs possibles)",
   "sm_bulk_manifest_hint": "Liés à chaque projet créé et activés immédiatement, sans réimportation. Rien de sélectionné = ne pas lier.",
+  "sm_bulk_manifest_item_count": "{{count}} éléments",
   "sm_bulk_title_label": "Titre",
   "sm_bulk_title_placeholder": "p. ex. Projet de test de charge",
   "sm_bulk_title_hint": "Chaque projet reçoit automatiquement un numéro après le titre (1, 2, 3, ...).",
