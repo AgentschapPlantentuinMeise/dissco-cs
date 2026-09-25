@@ -2,10 +2,8 @@ import React from 'react';
 import { Select } from '../../../../components/Select';
 import { FieldProps } from './registry';
 
-type DropdownOption = { value: string; text: string; label?: string };
-
 export function DropdownField({ field, path, onChange }: FieldProps) {
-  const options: DropdownOption[] = (field as any).options ?? [];
+  const options = field.options ?? [];
 
   return (
     <Select

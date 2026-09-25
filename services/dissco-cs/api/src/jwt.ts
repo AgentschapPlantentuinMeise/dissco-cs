@@ -54,28 +54,6 @@ export function jwtPayloadFromRequest(context: Context): Record<string, unknown>
   return null;
 }
 
-export function getHeaderMadocSiteUrn(context: Context): string | null {
-  const siteId = context.req.header('x-madoc-site-id');
-  if (!siteId) {
-    return null;
-  }
-  return `urn:madoc:site:${siteId}`;
-}
-
-export function requestMadocSiteUrn(context: Context): string | null {
-  const payload = jwtPayloadFromRequest(context);
-  if (!payload) {
-    return null;
-  }
-
-  if (payload.service === true) {
-    return getHeaderMadocSiteUrn(context);
-  }
-
-  const iss = payload.iss;
-  return typeof iss === 'string' ? iss : null;
-}
-
 export type MadocUserIdentity = {
   userId: number;
   siteId: number;

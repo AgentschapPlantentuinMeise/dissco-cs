@@ -6,23 +6,13 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { MessageForm, MessageFormData } from '../../components/messageform/MessageForm';
 import { useUser } from '../../hooks/use-current-user';
 import { useTranslation } from 'react-i18next';
-import { forumApi, ForumTopicWithReplyCount, ForumReply } from '../../api/cs-api';
+import { forumApi } from '../../api/cs-api';
 import { getAllSiteProjects } from '../../api/madoc-client/projects';
+import { MadocProjectListItem, ForumTopicWithReplyCount, ForumReply } from '@dissco-cs/shared-types';
 import { DeleteIconButton } from '../../components/DeleteIconButton';
+import { localeText } from '../../utility/locale-text';
+import { formatDate } from '../../utility/format-date';
 import { LuChevronDown, LuSearch, LuUser, LuClock, LuFolder, LuLink, LuCheck } from 'react-icons/lu';
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleString('nl-BE', { dateStyle: 'short', timeStyle: 'short' });
-
-// Mirrors the fallback chain LocaleString/useLocaleString use (current language, then
-// nl/en/fr/de) but as a plain function — needed here because it runs over a whole project list,
-// not a single value, so the hook form doesn't fit.
-function resolveProjectLabel(label: Record<string, string[] | string> | undefined, lang: string): string {
-  if (!label) return '';
-  const value = label[lang] || label.nl || label.en || label.fr || label.de;
-  if (!value) return '';
-  return Array.isArray(value) ? value.join(' ') : value;
-}
 
 const btnPrimary = 'bg-[var(--cs-primary)] text-white border-none px-[18px] py-[10px] rounded text-[0.95rem] font-medium cursor-pointer transition-colors duration-200 hover:bg-[var(--cs-dark)]';
 const btnGhost = 'bg-transparent border border-gray-300 px-3 py-1.5 rounded text-[0.85rem] text-gray-600 cursor-pointer whitespace-nowrap transition-[border-color,color] duration-200 hover:border-[var(--cs-primary)] hover:text-[var(--cs-primary)]';
@@ -44,20 +34,20 @@ export const MessageBoard: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
   const projectOptions = useMemo(
-    () => (allProjects || []).map((p: any) => ({ slug: p.slug, label: resolveProjectLabel(p.label, i18n.language) })),
+    () => (allProjects || []).map((p: MadocProjectListItem) => ({ slug: p.slug, label: localeText(p.label, i18n.language) })),
     [allProjects, i18n.language]
   );
 
   const [topics, setTopics] = useState<ForumTopicWithReplyCount[]>([]);
   const [repliesByTopic, setRepliesByTopic] = useState<Record<string, ForumReply[]>>({});
   const [showNewForm, setShowNewForm] = useState(false);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'mine' | 'unread' | 'unanswered' | null>(null);
-  const [pendingDeleteTopicId, setPendingDeleteTopicId] = useState<string | null>(null);
-  const [pendingCloseTopicId, setPendingCloseTopicId] = useState<string | null>(null);
-  const [pendingDeleteReply, setPendingDeleteReply] = useState<{ topicId: string; replyId: string } | null>(null);
+  const [pendingDeleteTopicId, setPendingDeleteTopicId] = useState<number | null>(null);
+  const [pendingCloseTopicId, setPendingCloseTopicId] = useState<number | null>(null);
+  const [pendingDeleteReply, setPendingDeleteReply] = useState<{ topicId: number; replyId: number } | null>(null);
   const [searchParams] = useSearchParams();
   const deepLinkTopicId = searchParams.get('topic');
   const didHandleDeepLink = useRef(false);
@@ -75,17 +65,18 @@ export const MessageBoard: React.FC = () => {
   // zodra de topics geladen zijn. De ref voorkomt dat het topic zich meteen weer opent na sluiten.
   useEffect(() => {
     if (didHandleDeepLink.current || !deepLinkTopicId || topics.length === 0) return;
-    if (!topics.some(m => m.id === deepLinkTopicId)) return;
+    const topicId = Number(deepLinkTopicId);
+    if (!topics.some(m => m.id === topicId)) return;
     didHandleDeepLink.current = true;
 
-    setExpandedId(deepLinkTopicId);
-    forumApi.getTopic(deepLinkTopicId).then(detail => {
-      setRepliesByTopic(prev => ({ ...prev, [deepLinkTopicId]: detail.replies }));
+    setExpandedId(topicId);
+    forumApi.getTopic(topicId).then(detail => {
+      setRepliesByTopic(prev => ({ ...prev, [topicId]: detail.replies }));
       setTopics(prev => prev.map(m =>
-        m.id === deepLinkTopicId ? { ...m, last_seen_reply_count: detail.replies.length } : m
+        m.id === topicId ? { ...m, last_seen_reply_count: detail.replies.length } : m
       ));
     });
-    document.getElementById(`topic-${deepLinkTopicId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById(`topic-${topicId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [deepLinkTopicId, topics]);
 
   useEffect(() => {
@@ -122,7 +113,7 @@ export const MessageBoard: React.FC = () => {
     return filteredTopics;
   }, [filteredTopics, activeFilter, user]);
 
-  const handleToggleExpand = (topicId: string) => {
+  const handleToggleExpand = (topicId: number) => {
     if (expandedId === topicId) {
       setExpandedId(null);
       return;
@@ -186,7 +177,7 @@ export const MessageBoard: React.FC = () => {
     });
   };
 
-  const handleSubmitReply = (e: React.FormEvent, topicId: string) => {
+  const handleSubmitReply = (e: React.FormEvent, topicId: number) => {
     e.preventDefault();
     const body = replyDrafts[topicId] || '';
     if (!body.trim()) return;
@@ -298,7 +289,7 @@ export const MessageBoard: React.FC = () => {
                           <LuUser aria-hidden="true" className="text-gray-300" /> {msg.author_name}
                         </span>
                         <span className="inline-flex items-center gap-1 text-xs text-gray-400">
-                          <LuClock aria-hidden="true" className="text-gray-300" /> {formatDate(msg.created_at)}
+                          <LuClock aria-hidden="true" className="text-gray-300" /> {formatDate(msg.created_at, i18n.language)}
                         </span>
                         {msg.project_slug && (
                           <Link
@@ -336,7 +327,7 @@ export const MessageBoard: React.FC = () => {
                               {replies.map(reply => (
                                 <div key={reply.id} className="flex items-start justify-between gap-2 bg-gray-50 border-l-[3px] border-[var(--cs-primary)] rounded-r-[6px] py-2 px-3 ml-2">
                                   <div className="min-w-0">
-                                    <span className="text-xs text-gray-400">{reply.author_name} · {formatDate(reply.created_at)}</span>
+                                    <span className="text-xs text-gray-400">{reply.author_name} · {formatDate(reply.created_at, i18n.language)}</span>
                                     <p className="m-0 mt-1 text-[0.9rem] text-gray-800 leading-[1.5] whitespace-pre-line">{reply.body}</p>
                                   </div>
                                   {(isAdmin || user?.id === reply.author_user_id) && (

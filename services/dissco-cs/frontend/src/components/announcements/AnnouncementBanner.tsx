@@ -2,9 +2,11 @@
 import { useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
-import { Announcement, announcementsApi, AnnouncementTargetType } from '../../api/cs-api';
+import { announcementsApi } from '../../api/cs-api';
+import { Announcement, AnnouncementTargetType } from '@dissco-cs/shared-types';
 import { LuPin, LuChevronDown } from 'react-icons/lu';
 import { useUser } from '../../hooks/use-current-user';
+import { siteLangText } from '../../utility/site-lang-text';
 
 // Compact overrides so markdown content fits the banner's small text-sm style instead of
 // CsMarkdown's full-page heading/paragraph sizes.
@@ -57,9 +59,6 @@ export const AnnouncementBanner: React.FC<{ target: AnnouncementTargetType; proj
     () => announcementsApi.listActive(target, projectSlug),
     { staleTime: 0, enabled: !!user }
   );
-  const text = (field: Announcement['title']) =>
-    field[i18n.language as keyof Announcement['title']] || field.nl || '';
-
   const announcements = data?.announcements ?? [];
   const signatures = announcements.map(signatureOf);
   const key = storageKey(target, projectSlug);
@@ -115,8 +114,8 @@ export const AnnouncementBanner: React.FC<{ target: AnnouncementTargetType; proj
         <div className="flex flex-col gap-3 px-4 pb-4">
           {announcements.map((announcement, index) => (
             <div key={announcement.id} className={index > 0 ? 'border-t border-black/10 pt-3' : undefined}>
-              <p className="font-semibold text-amber-800 m-0">{text(announcement.title)}</p>
-              <ReactMarkdown components={descriptionMarkdownComponents}>{text(announcement.description)}</ReactMarkdown>
+              <p className="font-semibold text-amber-800 m-0">{siteLangText(announcement.title, i18n.language, '')}</p>
+              <ReactMarkdown components={descriptionMarkdownComponents}>{siteLangText(announcement.description, i18n.language, '')}</ReactMarkdown>
             </div>
           ))}
         </div>

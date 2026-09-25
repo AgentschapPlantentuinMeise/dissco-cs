@@ -1,7 +1,8 @@
 import { appConfig } from '../config.js';
 import { getServiceJwt } from './client.js';
+import { MadocProject, MadocProjectListItem } from '@dissco-cs/shared-types';
 
-export async function getMadocProject(siteId: number, projectId: string): Promise<unknown> {
+export async function getMadocProject(siteId: number, projectId: string): Promise<MadocProject> {
   const response = await fetch(`${appConfig.madocGatewayUrl}/api/madoc/projects/${projectId}`, {
     headers: {
       Authorization: `Bearer ${getServiceJwt()}`,
@@ -16,12 +17,10 @@ export async function getMadocProject(siteId: number, projectId: string): Promis
   return response.json();
 }
 
-export type MadocProjectSummary = { id: number; slug: string; label?: unknown };
-
 // task.metadata.project turns out to be empty for crowdsourcing-review tasks (unlike
 // crowdsourcing-task), so the project is looked up via root_task_id instead -- the same
 // filter list-projects.ts already supports server-side.
-export async function getMadocProjectByRootTaskId(siteId: number, rootTaskId: string): Promise<MadocProjectSummary | null> {
+export async function getMadocProjectByRootTaskId(siteId: number, rootTaskId: string): Promise<MadocProjectListItem | null> {
   const query = new URLSearchParams({ root_task_id: rootTaskId });
   const response = await fetch(`${appConfig.madocGatewayUrl}/api/madoc/projects?${query}`, {
     headers: {
@@ -34,11 +33,9 @@ export async function getMadocProjectByRootTaskId(siteId: number, rootTaskId: st
     throw new Error(`Madoc project-by-root-task request failed with status ${response.status}`);
   }
 
-  const data = (await response.json()) as { projects: MadocProjectSummary[] };
+  const data = (await response.json()) as { projects: MadocProjectListItem[] };
   return data.projects[0] ?? null;
 }
-
-export type MadocProjectListItem = { id: number; collection_id: number; task_id: string; status: number };
 
 // All projects on the site regardless of status (including unpublished/finished ones) -- the
 // public listProjects route in madoc-ts only shows status 1/2 unless the caller has site.admin

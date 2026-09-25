@@ -5,7 +5,9 @@ import { useQuery } from 'react-query';
 import ReactMarkdown from 'react-markdown';
 import { Modal } from './Modal';
 import { LuChevronDown, LuX, LuArrowLeft, LuArrowRight } from 'react-icons/lu';
-import { projectManualsApi, SitePageLang } from '../api/cs-api';
+import { projectManualsApi } from '../api/cs-api';
+import { SitePageLang } from '@dissco-cs/shared-types';
+import { siteLangText } from '../utility/site-lang-text';
 
 type ProjectManualModalProps = {
   projectSlug: string;
@@ -54,13 +56,6 @@ function toEmbedUrl(url: string): string | null {
     return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
   }
   return null;
-}
-
-function displayText(field: Partial<Record<SitePageLang, string>> | undefined, lang: string, fallback: string): string {
-  if (!field) {
-    return fallback;
-  }
-  return field[lang as SitePageLang] || field.nl || field.en || field.fr || field.de || fallback;
 }
 
 // Beheerders kunnen dit token ergens in een sectie plaatsen om de bijlage-galerij daar
@@ -474,7 +469,7 @@ export const ProjectManualModal: React.FC<ProjectManualModalProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, manual]);
 
-  const content = displayText(manual?.content, i18n.language, '');
+  const content = siteLangText(manual?.content, i18n.language, '');
   const sections = useMemo(() => splitIntoSections(content), [content]);
 
   const lang = (manual?.attachments?.[i18n.language as SitePageLang] ? i18n.language : 'nl') as SitePageLang;
@@ -520,7 +515,7 @@ export const ProjectManualModal: React.FC<ProjectManualModalProps> = ({
       open={open}
       onClose={onClose}
       eyebrow={t('manual_modal_eyebrow')}
-      title={projectLabel || displayText(manual.title, i18n.language, '')}
+      title={projectLabel || siteLangText(manual.title, i18n.language, '')}
       size="lg"
     >
       {sections.length === 0 ? (

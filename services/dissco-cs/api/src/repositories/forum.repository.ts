@@ -1,6 +1,6 @@
 import { Pool, PoolClient } from 'pg';
 
-export type ForumTopic = {
+export type ForumTopicRow = {
   id: number;
   site_id: number;
   author_user_id: number;
@@ -15,9 +15,9 @@ export type ForumTopic = {
   closed_at: Date | null;
 };
 
-export type ForumTopicWithReplyCount = ForumTopic & { reply_count: number; last_seen_reply_count: number | null };
+export type ForumTopicWithReplyCount = ForumTopicRow & { reply_count: number; last_seen_reply_count: number | null };
 
-export type ForumReply = {
+export type ForumReplyRow = {
   id: number;
   topic_id: number;
   site_id: number;
@@ -64,8 +64,8 @@ export class ForumRepository {
     projectSlug: string | null;
     projectLabel: string | null;
     body: string;
-  }): Promise<ForumTopic> {
-    const result = await this.pool.query<ForumTopic>(
+  }): Promise<ForumTopicRow > {
+    const result = await this.pool.query<ForumTopicRow>(
       `
       INSERT INTO ${this.table('forum_topics')} (
         site_id, author_user_id, author_name, title, task_url, project_slug, project_label, body
@@ -87,8 +87,8 @@ export class ForumRepository {
     return result.rows[0];
   }
 
-  async getTopic(siteId: number, topicId: number): Promise<ForumTopic | null> {
-    const result = await this.pool.query<ForumTopic>(
+  async getTopic(siteId: number, topicId: number): Promise<ForumTopicRow | null> {
+    const result = await this.pool.query<ForumTopicRow>(
       `SELECT * FROM ${this.table('forum_topics')} WHERE id = $1 AND site_id = $2`,
       [topicId, siteId]
     );
@@ -96,8 +96,8 @@ export class ForumRepository {
     return result.rows[0] ?? null;
   }
 
-  async listReplies(siteId: number, topicId: number): Promise<ForumReply[]> {
-    const result = await this.pool.query<ForumReply>(
+  async listReplies(siteId: number, topicId: number): Promise<ForumReplyRow[]> {
+    const result = await this.pool.query<ForumReplyRow>(
       `
       SELECT * FROM ${this.table('forum_replies')}
       WHERE topic_id = $1 AND site_id = $2
@@ -115,7 +115,7 @@ export class ForumRepository {
     authorUserId: number;
     authorName: string;
     body: string;
-  }): Promise<ForumReply | null> {
+  }): Promise<ForumReplyRow | null> {
     const client = await this.pool.connect();
 
     try {
@@ -131,7 +131,7 @@ export class ForumRepository {
         return null;
       }
 
-      const reply = await client.query<ForumReply>(
+      const reply = await client.query<ForumReplyRow>(
         `
         INSERT INTO ${this.table('forum_replies')} (
           topic_id, site_id, author_user_id, author_name, body
@@ -165,8 +165,8 @@ export class ForumRepository {
     return (result.rowCount ?? 0) > 0;
   }
 
-  async closeTopic(siteId: number, topicId: number): Promise<ForumTopic | null> {
-    const result = await this.pool.query<ForumTopic>(
+  async closeTopic(siteId: number, topicId: number): Promise<ForumTopicRow | null> {
+    const result = await this.pool.query<ForumTopicRow>(
       `
       UPDATE ${this.table('forum_topics')} SET closed_at = NOW()
       WHERE id = $1 AND site_id = $2 AND closed_at IS NULL
@@ -178,8 +178,8 @@ export class ForumRepository {
     return result.rows[0] ?? null;
   }
 
-  async getReply(siteId: number, replyId: number): Promise<ForumReply | null> {
-    const result = await this.pool.query<ForumReply>(
+  async getReply(siteId: number, replyId: number): Promise<ForumReplyRow | null> {
+    const result = await this.pool.query<ForumReplyRow>(
       `SELECT * FROM ${this.table('forum_replies')} WHERE id = $1 AND site_id = $2`,
       [replyId, siteId]
     );

@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { DisscoCSRepository } from '../db.js';
 import { requireSiteAdmin, resolveSiteId } from '../jwt.js';
-import { SitePageLang } from '../repositories/site-pages.repository.js';
+import { SitePageLang } from '@dissco-cs/shared-types';
+import { ProjectManualAttachmentMeta } from '@dissco-cs/shared-types';
 import {
   isSitePageLang,
   MAX_MANUAL_ATTACHMENT_LENGTH,
@@ -9,11 +10,8 @@ import {
   parseSetManualContentBody,
   parseSetManualLinkBody,
   parseSetManualTitleBody,
-  PruneProjectLinksBody,
-  SetManualContentBody,
-  SetManualLinkBody,
-  SetManualTitleBody,
 } from '../validators.js';
+import { PruneProjectLinksBody, SetManualContentBody, SetManualLinkBody, SetManualTitleBody } from '../types/request-bodies.js';
 
 export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
   const app = new Hono();
@@ -32,7 +30,7 @@ export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
     }
 
     const attachmentMeta = await repository.projectManuals.listAttachmentMeta(manual.id);
-    const attachments: Partial<Record<SitePageLang, { filename: string; mimeType: string; size: number }>> = {};
+    const attachments: Partial<Record<SitePageLang, ProjectManualAttachmentMeta>> = {};
     for (const meta of attachmentMeta) {
       attachments[meta.lang] = { filename: meta.filename, mimeType: meta.mime_type, size: meta.file_size };
     }
@@ -152,7 +150,7 @@ export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
     }
 
     const attachmentMeta = await repository.projectManuals.listAttachmentMeta(manual.id);
-    const attachments: Partial<Record<SitePageLang, { filename: string; mimeType: string; size: number }>> = {};
+    const attachments: Partial<Record<SitePageLang, ProjectManualAttachmentMeta>> = {};
     for (const meta of attachmentMeta) {
       attachments[meta.lang] = { filename: meta.filename, mimeType: meta.mime_type, size: meta.file_size };
     }

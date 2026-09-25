@@ -4,8 +4,9 @@ import { useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/CsPage';
 import { TermsModal } from '../../components/TermsModal';
 import { HrefLink } from '../../utility/href-link';
-import { login, getTerms, SiteTerms } from '../../api/madoc-client/auth';
+import { login, getTerms } from '../../api/madoc-client/auth';
 import { acceptTerms } from '../../api/madoc-client/crowdsourcing';
+import { SiteTerms } from '@dissco-cs/shared-types';
 import { clearJwt } from '../../api/jwt';
 
 export const Login: React.FC = () => {

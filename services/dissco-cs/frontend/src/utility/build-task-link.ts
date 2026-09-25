@@ -1,4 +1,4 @@
-import { CrowdsourcingTask } from '../types/crowdsourcing-task';
+import { CrowdsourcingTask } from '@dissco-cs/shared-types';
 import { parseUrn } from './parse-urn';
 
 export function buildTaskLink(task: CrowdsourcingTask): string {

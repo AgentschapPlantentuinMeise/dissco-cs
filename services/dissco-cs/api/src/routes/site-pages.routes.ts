@@ -2,17 +2,19 @@ import { Hono } from 'hono';
 import { DisscoCSRepository } from '../db.js';
 import { requireSiteAdmin, resolveSiteId } from '../jwt.js';
 import {
-  SetContactEmailBody,
-  SetPageActiveBody,
-  SetPageContentBody,
-  SetPagesOrderBody,
-  SetShowContactFormBody,
   isEmailLike,
   isSitePageContentKey,
   isSitePageKey,
   isSitePageKeyPermutation,
   isSitePageLang,
 } from '../validators.js';
+import {
+  SetContactEmailBody,
+  SetPageActiveBody,
+  SetPageContentBody,
+  SetPagesOrderBody,
+  SetShowContactFormBody,
+} from '../types/request-bodies.js';
 
 export function sitePagesRoutes(repository: DisscoCSRepository): Hono {
   const app = new Hono();

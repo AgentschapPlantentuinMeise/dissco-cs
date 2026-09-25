@@ -1,10 +1,9 @@
 import { Pool } from 'pg';
-import { SitePageLang } from './site-pages.repository.js';
+import { ANNOUNCEMENT_TARGET_TYPES, AnnouncementTargetType, SitePageLang } from '@dissco-cs/shared-types';
 
-export const ANNOUNCEMENT_TARGET_TYPES = ['homepage', 'projects', 'project'] as const;
-export type AnnouncementTargetType = (typeof ANNOUNCEMENT_TARGET_TYPES)[number];
-
-export type Announcement = {
+// Local row shape (`Date | null` fields, from `pg`) -- the shared `Announcement` DTO type
+// describes the wire shape (all strings) route handlers actually send.
+export type AnnouncementRow = {
   id: string;
   site_id: number;
   title: Partial<Record<SitePageLang, string>>;
@@ -27,8 +26,8 @@ export class AnnouncementsRepository {
     return `${this.schemaRef}.${name}`;
   }
 
-  async listAnnouncements(siteId: number): Promise<Announcement[]> {
-    const result = await this.pool.query<Announcement>(
+  async listAnnouncements(siteId: number): Promise<AnnouncementRow[]> {
+    const result = await this.pool.query<AnnouncementRow>(
       `SELECT * FROM ${this.table('announcements')} WHERE site_id = $1 ORDER BY created_at DESC`,
       [siteId]
     );
@@ -40,8 +39,8 @@ export class AnnouncementsRepository {
     siteId: number,
     targetType: AnnouncementTargetType,
     targetProjectSlug: string | null
-  ): Promise<Announcement[]> {
-    const result = await this.pool.query<Announcement>(
+  ): Promise<AnnouncementRow[]> {
+    const result = await this.pool.query<AnnouncementRow>(
       `
       SELECT * FROM ${this.table('announcements')}
       WHERE site_id = $1
@@ -67,8 +66,8 @@ export class AnnouncementsRepository {
     isActive: boolean;
     startDate: string | null;
     endDate: string | null;
-  }): Promise<Announcement> {
-    const result = await this.pool.query<Announcement>(
+  }): Promise<AnnouncementRow> {
+    const result = await this.pool.query<AnnouncementRow>(
       `
       INSERT INTO ${this.table('announcements')} (
         site_id, title, description, target_type, target_project_slug, is_active, start_date, end_date
@@ -102,8 +101,8 @@ export class AnnouncementsRepository {
       startDate: string | null;
       endDate: string | null;
     }
-  ): Promise<Announcement | null> {
-    const result = await this.pool.query<Announcement>(
+  ): Promise<AnnouncementRow | null> {
+    const result = await this.pool.query<AnnouncementRow>(
       `
       UPDATE ${this.table('announcements')}
       SET title = $3, description = $4, target_type = $5, target_project_slug = $6,

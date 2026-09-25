@@ -7,12 +7,12 @@ import { institutionsApi } from '../../api/cs-api';
 import { StatBanner } from '../../components/StatBanner';
 import { HonourBoardSpotlight } from '../../components/honour-board/HonourBoardSpotlight';
 import { useSiteStats } from '../../hooks/use-site-stats';
+import { formatNumber } from '../../utility/format-number';
 
 export const Institutions: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const { data } = useQuery('institutions-active', () => institutionsApi.listActive());
   const { data: siteStats } = useSiteStats();
-  const formatNumber = (n: number) => n.toLocaleString(i18n.language);
 
   const institutions = data?.institutions ?? [];
 
@@ -29,9 +29,9 @@ export const Institutions: React.FC = () => {
           <div className="lg:col-start-1 lg:row-start-2 lg:self-start flex flex-col">
             <StatBanner
               stats={[
-                { value: siteStats ? formatNumber(siteStats.volunteers) : '—', label: t('institution_stats_volunteers') },
+                { value: siteStats ? formatNumber(siteStats.volunteers, i18n.language) : '—', label: t('institution_stats_volunteers') },
                 {
-                  value: siteStats ? `${formatNumber(siteStats.tasksCompleted)} / ${formatNumber(siteStats.tasksTotal)}` : '—',
+                  value: siteStats ? `${formatNumber(siteStats.tasksCompleted, i18n.language)} / ${formatNumber(siteStats.tasksTotal, i18n.language)}` : '—',
                   label: t('honour_board_stat_tasks_label'),
                 },
               ]}

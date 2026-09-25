@@ -10,32 +10,24 @@ import { CancelButton } from '../../components/CancelButton';
 import { ActiveStatusToggle } from '../../components/ActiveStatusToggle';
 import { ActiveToggleField } from '../../components/ActiveToggleField';
 import { LuPencil, LuArrowLeft } from 'react-icons/lu';
-import { disscoCSConfig } from '../../dissco-cs-config';
-import { institutionsApi, Institution, InstitutionInput, SitePageLang } from '../../api/cs-api';
+import { institutionsApi } from '../../api/cs-api';
+import { Institution, InstitutionInput, SitePageLang, SITE_PAGE_LANGS, institutionInputSchema } from '@dissco-cs/shared-types';
+import { LANGUAGES, defaultLang, siteLangText } from '../../utility/site-lang-text';
 
-const LANGUAGES = disscoCSConfig.supportedLanguages;
-
-function defaultLang(currentLanguage: string): SitePageLang {
-  return (LANGUAGES.find(lang => lang.code === currentLanguage)?.code ?? LANGUAGES[0].code) as SitePageLang;
-}
+const emptyMultilingualText = Object.fromEntries(SITE_PAGE_LANGS.map(lang => [lang, ''])) as Record<SitePageLang, string>;
 
 const emptyDraft: InstitutionInput = {
-  name: {},
-  description: {},
-  email: null,
-  phone: null,
-  website: null,
-  logo: null,
+  name: { ...emptyMultilingualText },
+  description: { ...emptyMultilingualText },
+  email: '',
+  phone: '',
+  website: '',
+  logo: '',
   isActive: true,
 };
 
-function isValidEmail(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
-
-function isValidPhone(value: string): boolean {
-  const digitCount = (value.match(/\d/g) ?? []).length;
-  return /^[0-9+\-\s().\/]+$/.test(value) && digitCount >= 6;
+function toMultilingualDraft(value: Partial<Record<SitePageLang, string>>): Record<SitePageLang, string> {
+  return Object.fromEntries(SITE_PAGE_LANGS.map(lang => [lang, value[lang] ?? ''])) as Record<SitePageLang, string>;
 }
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -74,12 +66,12 @@ export const InstitutionManagement: React.FC = () => {
   const startEdit = (institution: Institution) => {
     setEditingId(institution.id);
     setDraft({
-      name: institution.name,
-      description: institution.description,
-      email: institution.email,
-      phone: institution.phone,
-      website: institution.website,
-      logo: institution.logo,
+      name: toMultilingualDraft(institution.name),
+      description: toMultilingualDraft(institution.description),
+      email: institution.email ?? '',
+      phone: institution.phone ?? '',
+      website: institution.website ?? '',
+      logo: institution.logo ?? '',
       isActive: institution.is_active,
     });
     setLogoFileName(null);
@@ -96,28 +88,24 @@ export const InstitutionManagement: React.FC = () => {
     setSaveError(false);
   };
 
-  const allNamesFilled = LANGUAGES.every(lang => (draft.name[lang.code] ?? '').trim().length > 0);
-  const allDescriptionsFilled = LANGUAGES.every(lang => (draft.description[lang.code] ?? '').trim().length > 0);
-  const emailValid = !draft.email?.trim() || isValidEmail(draft.email.trim());
-  const phoneValid = !draft.phone?.trim() || isValidPhone(draft.phone.trim());
-  const canSave =
-    allNamesFilled &&
-    allDescriptionsFilled &&
-    !!draft.email?.trim() &&
-    emailValid &&
-    !!draft.phone?.trim() &&
-    phoneValid &&
-    !!draft.website?.trim() &&
-    !!draft.logo?.trim();
+  const validation = institutionInputSchema.safeParse(draft);
+  const issues = validation.success ? [] : validation.error.issues;
+  const issueAt = (...path: (string | number)[]) =>
+    issues.some(issue => issue.path.length === path.length && issue.path.every((seg, i) => seg === path[i]));
+
+  const emailValid = !issueAt('email');
+  const phoneValid = !issueAt('phone');
+  const canSave = validation.success;
 
   const save = async () => {
-    if (!canSave) return;
+    const result = institutionInputSchema.safeParse(draft);
+    if (!result.success) return;
     setSaveError(false);
     try {
       if (editingId !== null) {
-        await institutionsApi.update(editingId, draft);
+        await institutionsApi.update(editingId, result.data);
       } else {
-        await institutionsApi.create(draft);
+        await institutionsApi.create(result.data);
       }
       cancelForm();
       refresh();
@@ -135,12 +123,12 @@ export const InstitutionManagement: React.FC = () => {
 
   const toggleActive = async (institution: Institution) => {
     await institutionsApi.update(institution.id, {
-      name: institution.name,
-      description: institution.description,
-      email: institution.email,
-      phone: institution.phone,
-      website: institution.website,
-      logo: institution.logo,
+      name: toMultilingualDraft(institution.name),
+      description: toMultilingualDraft(institution.description),
+      email: institution.email ?? '',
+      phone: institution.phone ?? '',
+      website: institution.website ?? '',
+      logo: institution.logo ?? '',
       isActive: !institution.is_active,
     });
     refresh();
@@ -206,14 +194,14 @@ export const InstitutionManagement: React.FC = () => {
                         className="h-10 w-10 flex-shrink-0 bg-contain bg-center bg-no-repeat bg-gray-100 rounded"
                         style={{ backgroundImage: institution.logo ? `url(${institution.logo})` : undefined }}
                       />
-                      <p className="font-semibold m-0 truncate">{institution.name.nl || institution.name.en || institution.slug}</p>
+                      <p className="font-semibold m-0 truncate">{siteLangText(institution.name, i18n.language, institution.slug)}</p>
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0">
                       <ActiveStatusToggle
                         active={institution.is_active}
                         onChange={() => void toggleActive(institution)}
-                        label={institution.name.nl || institution.slug}
+                        label={siteLangText(institution.name, i18n.language, institution.slug)}
                       />
                       <button
                         onClick={() => startEdit(institution)}
@@ -247,7 +235,7 @@ export const InstitutionManagement: React.FC = () => {
                         }`}
                       >
                         {t(`lang_${lang.code}`)}
-                        {(!(draft.name[lang.code] ?? '').trim() || !(draft.description[lang.code] ?? '').trim()) && <span className="text-red-500 ml-1">•</span>}
+                        {(issueAt('name', lang.code) || issueAt('description', lang.code)) && <span className="text-red-500 ml-1">•</span>}
                       </button>
                     ))}
                   </div>
@@ -256,7 +244,7 @@ export const InstitutionManagement: React.FC = () => {
                     <span className="text-sm font-medium text-gray-700">{t('sm_institutions_field_name')} *</span>
                     <input
                       type="text"
-                      value={draft.name[selectedLang] ?? ''}
+                      value={draft.name[selectedLang]}
                       onChange={e => setDraft(prev => ({ ...prev, name: { ...prev.name, [selectedLang]: e.target.value } }))}
                       className="border border-gray-300 rounded-lg p-2"
                     />
@@ -265,7 +253,7 @@ export const InstitutionManagement: React.FC = () => {
                   <label className="flex flex-col gap-1 mb-4">
                     <span className="text-sm font-medium text-gray-700">{t('sm_institutions_field_description')}*</span>
                     <textarea
-                      value={draft.description[selectedLang] ?? ''}
+                      value={draft.description[selectedLang]}
                       onChange={e =>
                         setDraft(prev => ({ ...prev, description: { ...prev.description, [selectedLang]: e.target.value } }))
                       }
@@ -278,8 +266,8 @@ export const InstitutionManagement: React.FC = () => {
                       <span className="text-sm font-medium text-gray-700">{t('sm_institutions_field_email')}*</span>
                       <input
                         type="email"
-                        value={draft.email ?? ''}
-                        onChange={e => setDraft(prev => ({ ...prev, email: e.target.value || null }))}
+                        value={draft.email}
+                        onChange={e => setDraft(prev => ({ ...prev, email: e.target.value }))}
                         className={`border rounded-lg p-2 ${emailValid ? 'border-gray-300' : 'border-red-500'}`}
                       />
                       {!emailValid && <span className="text-xs text-red-600">{t('sm_institutions_invalid_email')}</span>}
@@ -289,8 +277,8 @@ export const InstitutionManagement: React.FC = () => {
                       <span className="text-sm font-medium text-gray-700">{t('sm_institutions_field_phone')}*</span>
                       <input
                         type="text"
-                        value={draft.phone ?? ''}
-                        onChange={e => setDraft(prev => ({ ...prev, phone: e.target.value || null }))}
+                        value={draft.phone}
+                        onChange={e => setDraft(prev => ({ ...prev, phone: e.target.value }))}
                         className={`border rounded-lg p-2 ${phoneValid ? 'border-gray-300' : 'border-red-500'}`}
                       />
                       {!phoneValid && <span className="text-xs text-red-600">{t('sm_institutions_invalid_phone')}</span>}
@@ -301,8 +289,8 @@ export const InstitutionManagement: React.FC = () => {
                     <span className="text-sm font-medium text-gray-700">{t('sm_institutions_field_website')}*</span>
                     <input
                       type="text"
-                      value={draft.website ?? ''}
-                      onChange={e => setDraft(prev => ({ ...prev, website: e.target.value || null }))}
+                      value={draft.website}
+                      onChange={e => setDraft(prev => ({ ...prev, website: e.target.value }))}
                       className="border border-gray-300 rounded-lg p-2"
                     />
                   </label>

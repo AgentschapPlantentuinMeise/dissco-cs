@@ -1,61 +1,23 @@
-import { ANNOUNCEMENT_TARGET_TYPES, AnnouncementTargetType } from './repositories/announcements.repository.js';
-import { InstitutionInput } from './repositories/institutions.repository.js';
 import {
+  ANNOUNCEMENT_TARGET_TYPES,
+  AnnouncementTargetType,
   SITE_PAGE_CONTENT_KEYS,
   SITE_PAGE_KEYS,
   SITE_PAGE_LANGS,
   SitePageContentKey,
   SitePageKey,
   SitePageLang,
-} from './repositories/site-pages.repository.js';
+} from '@dissco-cs/shared-types';
+import {
+  AnnouncementBody,
+  CreateFeedbackThreadBody,
+  PruneProjectLinksBody,
+  SetInstitutionLinkBody,
+  SetManualContentBody,
+  SetManualLinkBody,
+  SetManualTitleBody,
+} from './types/request-bodies.js';
 
-export type CreateTopicBody = {
-  title?: unknown;
-  taskUrl?: unknown;
-  projectSlug?: unknown;
-  projectLabel?: unknown;
-  body?: unknown;
-};
-export type CreateReplyBody = { body?: unknown };
-export type CreateFeedbackThreadBody = {
-  recipientUserId?: unknown;
-  recipientName?: unknown;
-  subject?: unknown;
-  body?: unknown;
-};
-export type CreateFeedbackReplyBody = { body?: unknown };
-export type SetPageActiveBody = { isActive?: unknown };
-export type SetPageContentBody = { lang?: unknown; contentMd?: unknown };
-export type SetContactEmailBody = { email?: unknown };
-export type SetShowContactFormBody = { showForm?: unknown };
-export type ContactSubmissionBody = { name?: unknown; email?: unknown; message?: unknown; website?: unknown };
-export type SetPagesOrderBody = { order?: unknown };
-export type AnnouncementBody = {
-  title?: unknown;
-  description?: unknown;
-  targetType?: unknown;
-  targetProjectSlug?: unknown;
-  isActive?: unknown;
-  startDate?: unknown;
-  endDate?: unknown;
-};
-export type InstitutionBody = {
-  name?: unknown;
-  description?: unknown;
-  email?: unknown;
-  phone?: unknown;
-  website?: unknown;
-  logo?: unknown;
-  isActive?: unknown;
-};
-export type SetInstitutionsOrderBody = { order?: unknown };
-export type SetManualTitleBody = { lang?: unknown; title?: unknown };
-export type SetManualContentBody = { content?: unknown };
-export type SetManualLinkBody = { manualId?: unknown };
-export type SetInstitutionLinkBody = { institutionId?: unknown };
-export type PruneProjectLinksBody = { liveSlugs?: unknown };
-
-export const MAX_LOGO_LENGTH = 3_000_000;
 export const MAX_MANUAL_TITLE_LENGTH = 200;
 export const MAX_MANUAL_CONTENT_LENGTH = 200_000;
 export const MAX_MANUAL_ATTACHMENT_LENGTH = 8_000_000;
@@ -106,10 +68,6 @@ export function endOfDayIfDateOnly(value: string | null): string | null {
   return `${value}T23:59:59.999`;
 }
 
-export function isOptionalString(value: unknown): value is string | null | undefined {
-  return value === null || value === undefined || typeof value === 'string';
-}
-
 export function isMultilingualText(value: unknown, requireFilled: boolean): value is Partial<Record<SitePageLang, string>> {
   if (typeof value !== 'object' || value === null) {
     return false;
@@ -135,48 +93,12 @@ export function isMultilingualText(value: unknown, requireFilled: boolean): valu
   return true;
 }
 
-export function isValidLogo(value: unknown): value is string | null {
-  if (value === null || value === undefined) {
-    return true;
-  }
-  return typeof value === 'string' && value.startsWith('data:image/') && value.length <= MAX_LOGO_LENGTH;
-}
-
 export function isSitePageKeyPermutation(value: unknown): value is SitePageKey[] {
   if (!Array.isArray(value) || value.length !== SITE_PAGE_KEYS.length) {
     return false;
   }
   const seen = new Set(value);
   return seen.size === SITE_PAGE_KEYS.length && SITE_PAGE_KEYS.every(key => seen.has(key));
-}
-
-export function parseInstitutionBody(payload: InstitutionBody | null): InstitutionInput | null {
-  if (
-    !payload ||
-    !isMultilingualText(payload.name, true) ||
-    !isMultilingualText(payload.description, false) ||
-    !isOptionalString(payload.email) ||
-    !isOptionalString(payload.phone) ||
-    !isOptionalString(payload.website) ||
-    !isValidLogo(payload.logo) ||
-    typeof payload.isActive !== 'boolean'
-  ) {
-    return null;
-  }
-
-  if (isOptionalString(payload.email) && payload.email && !isEmailLike(payload.email)) {
-    return null;
-  }
-
-  return {
-    name: payload.name,
-    description: payload.description,
-    email: payload.email || null,
-    phone: payload.phone || null,
-    website: payload.website || null,
-    logo: payload.logo ?? null,
-    isActive: payload.isActive,
-  };
 }
 
 export function isValidManualTitle(value: unknown): value is string {

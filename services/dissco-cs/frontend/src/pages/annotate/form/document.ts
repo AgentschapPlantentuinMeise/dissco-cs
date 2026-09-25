@@ -1,7 +1,4 @@
-import { CaptureModel } from '../../../capture-model/types/capture-model';
-import { AnnotationDocument } from '../../../capture-model/types/document';
-import { BaseField } from '../../../capture-model/types/field-types';
-import { BoxSelectorState } from '../../../capture-model/types/selector-types';
+import { CaptureModel, AnnotationDocument, BaseField, BoxSelectorState } from '@dissco-cs/shared-types';
 
 /** A path into the document tree: alternating property name and instance index, e.g. ['author', 0, 'name', 0]. */
 export type DocumentPath = Array<string | number>;

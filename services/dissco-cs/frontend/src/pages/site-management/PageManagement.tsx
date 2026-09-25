@@ -6,17 +6,13 @@ import { ToggleSwitch } from '../../components/ToggleSwitch';
 import { SaveButton } from '../../components/SaveButton';
 import { ActiveStatusToggle } from '../../components/ActiveStatusToggle';
 import { LuPencil, LuArrowUp, LuArrowDown, LuArrowLeft } from 'react-icons/lu';
-import { disscoCSConfig } from '../../dissco-cs-config';
-import { sitePagesApi, SitePage, SitePageKey, SitePageLang } from '../../api/cs-api';
+import { sitePagesApi } from '../../api/cs-api';
+import { SitePage, SitePageKey, SitePageLang } from '@dissco-cs/shared-types';
+import { LANGUAGES, defaultLang } from '../../utility/site-lang-text';
 import { useSitePages } from '../../contexts/SitePagesContext';
 import { MarkdownToolbar } from '../../components/MarkdownToolbar';
 
 const CONTENT_PAGE_KEYS: SitePageKey[] = ['about', 'help', 'contact', 'welcome'];
-const LANGUAGES = disscoCSConfig.supportedLanguages;
-
-function defaultLang(currentLanguage: string): SitePageLang {
-  return (LANGUAGES.find(lang => lang.code === currentLanguage)?.code ?? LANGUAGES[0].code) as SitePageLang;
-}
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

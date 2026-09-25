@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { BaseField } from '../../../../capture-model/types/field-types';
+import { BaseField } from '@dissco-cs/shared-types';
 import { DocumentPath } from '../document';
 import { TextField } from './TextField';
 import { HtmlField } from './HtmlField';

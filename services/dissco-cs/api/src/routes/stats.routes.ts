@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { resolveSiteId } from '../jwt.js';
 import { MadocUsersRepository } from '../repositories/madoc-users.repository.js';
 import { SiteTaskTotalsRepository } from '../repositories/site-task-totals.repository.js';
+import { SiteStats } from '@dissco-cs/shared-types';
 
 export function statsRoutes(madocUsersRepository: MadocUsersRepository, siteTaskTotalsRepository: SiteTaskTotalsRepository): Hono {
   const app = new Hono();
@@ -18,7 +19,8 @@ export function statsRoutes(madocUsersRepository: MadocUsersRepository, siteTask
       siteTaskTotalsRepository.getTotals(siteId),
     ]);
 
-    return c.json({ volunteers, tasksCompleted: taskTotals.completed, tasksTotal: taskTotals.total });
+    const stats: SiteStats = { volunteers, tasksCompleted: taskTotals.completed, tasksTotal: taskTotals.total };
+    return c.json(stats);
   });
 
   // Pure cache read for the frontend's periodic poll -- never triggers a recompute itself,
@@ -34,7 +36,8 @@ export function statsRoutes(madocUsersRepository: MadocUsersRepository, siteTask
       siteTaskTotalsRepository.peekTotals(siteId) ?? (await siteTaskTotalsRepository.getTotals(siteId)),
     ]);
 
-    return c.json({ volunteers, tasksCompleted: taskTotals.completed, tasksTotal: taskTotals.total });
+    const stats: SiteStats = { volunteers, tasksCompleted: taskTotals.completed, tasksTotal: taskTotals.total };
+    return c.json(stats);
   });
 
   return app;

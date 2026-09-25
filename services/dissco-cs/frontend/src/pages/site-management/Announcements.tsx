@@ -11,30 +11,16 @@ import { ActiveStatusToggle } from '../../components/ActiveStatusToggle';
 import { ActiveToggleField } from '../../components/ActiveToggleField';
 import { Select } from '../../components/Select';
 import { LuPencil, LuArrowLeft } from 'react-icons/lu';
-import { disscoCSConfig } from '../../dissco-cs-config';
-import { announcementsApi, Announcement, AnnouncementInput, AnnouncementTargetType, SitePageLang } from '../../api/cs-api';
+import { LANGUAGES, defaultLang, siteLangText } from '../../utility/site-lang-text';
+import { localeText } from '../../utility/locale-text';
+import { announcementsApi } from '../../api/cs-api';
 import { useProjectList } from '../../hooks/use-project-list';
 import { MarkdownToolbar } from '../../components/MarkdownToolbar';
-
-const LANGUAGES = disscoCSConfig.supportedLanguages;
-
-function defaultLang(currentLanguage: string): SitePageLang {
-  return (LANGUAGES.find(lang => lang.code === currentLanguage)?.code ?? LANGUAGES[0].code) as SitePageLang;
-}
-
-function getLabelText(label: any, fallback: string): string {
-  if (!label) return fallback;
-  const firstLang = Object.keys(label)[0];
-  return firstLang && Array.isArray(label[firstLang]) ? label[firstLang][0] || fallback : fallback;
-}
+import { MadocProjectListItem, Announcement, AnnouncementInput, AnnouncementTargetType, SitePageLang } from '@dissco-cs/shared-types';
 
 function toDateInputValue(iso: string | null): string {
   if (!iso) return '';
   return iso.slice(0, 10);
-}
-
-function displayText(text: Partial<Record<SitePageLang, string>>, fallback: string, lang: string): string {
-  return text[lang as SitePageLang] || text.nl || text.en || text.fr || text.de || fallback;
 }
 
 function targetLabel(t: (key: string) => string, announcement: Announcement): string {
@@ -58,7 +44,7 @@ export const Announcements: React.FC = () => {
   const { data, isLoading, refetch } = useQuery('admin-announcements', () => announcementsApi.listAdmin());
   const { data: projectsResponse } = useProjectList();
   const announcements = data?.announcements ?? [];
-  const projects = (projectsResponse?.projects ?? []).filter((p: any) => p.status === 1);
+  const projects = (projectsResponse?.projects ?? []).filter((p: MadocProjectListItem) => p.status === 1);
 
   const [editingId, setEditingId] = useState<Announcement['id'] | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -183,7 +169,7 @@ export const Announcements: React.FC = () => {
                     }`}
                   >
                     <div className="min-w-0">
-                      <p className="font-semibold m-0 truncate">{displayText(announcement.title, announcement.id, i18n.language)}</p>
+                      <p className="font-semibold m-0 truncate">{siteLangText(announcement.title, i18n.language, announcement.id)}</p>
                       <p className="text-sm text-gray-500 m-0">
                         {targetLabel(t, announcement)}
                         {(announcement.start_date || announcement.end_date) && (
@@ -201,7 +187,7 @@ export const Announcements: React.FC = () => {
                       <ActiveStatusToggle
                         active={announcement.is_active}
                         onChange={() => void toggleActive(announcement)}
-                        label={displayText(announcement.title, announcement.id, i18n.language)}
+                        label={siteLangText(announcement.title, i18n.language, announcement.id)}
                       />
                       <button
                         onClick={() => startEdit(announcement)}
@@ -294,9 +280,9 @@ export const Announcements: React.FC = () => {
                         wrapperClassName="ml-6"
                       >
                         <option value="">{t('sm_announcements_select_project')}</option>
-                        {projects.map((project: any) => (
+                        {projects.map((project: MadocProjectListItem) => (
                           <option key={project.id} value={project.slug}>
-                            {getLabelText(project.label, project.slug)}
+                            {localeText(project.label, i18n.language) || project.slug}
                           </option>
                         ))}
                       </Select>

@@ -2,6 +2,7 @@ import { appConfig } from '../config.js';
 import { getServiceJwt } from './client.js';
 import { listAllMadocProjects } from './projects.js';
 import { getMadocTaskDetail, updateMadocTask } from './tasks.js';
+import { InternationalString, StuckManifestCounter } from '@dissco-cs/shared-types';
 
 // Madoc-ts only re-computes a manifest-task's shared max-contributors counter when a NEW claim
 // is created, never when an existing one is abandoned/released — so a manifest can stay stuck
@@ -110,18 +111,6 @@ export async function getStuckMadocTasks(siteId: number): Promise<StuckTask[]> {
   return perProject.flat();
 }
 
-export type StuckManifestCounter = {
-  id: string;
-  name?: string;
-  subject: string;
-  modified_at: number;
-  maxContributors: number;
-  validCount: number;
-  metadata?: {
-    project?: { id: number; slug: string; label?: unknown };
-  };
-};
-
 // Site-wide manifest-tasks stuck on status 2 ("max contributors") whose underlying claims are
 // ALL already resolved (-1/abandoned) — no single task to release, just a stale counter that
 // resyncManifestTaskCounter() would fix, but nothing ever triggers that automatically.
@@ -179,7 +168,7 @@ export async function getStuckManifestCounters(siteId: number): Promise<StuckMan
         modified_at: container.modified_at,
         maxContributors: maximum,
         validCount,
-        metadata: project ? { project } : undefined,
+        metadata: project ? { project: project as { id: number; slug: string; label?: InternationalString | string } } : undefined,
       });
     }
   }

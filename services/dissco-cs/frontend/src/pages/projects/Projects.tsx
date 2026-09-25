@@ -9,6 +9,8 @@ import { StatBanner } from '../../components/StatBanner';
 import { HonourBoardSpotlight } from '../../components/honour-board/HonourBoardSpotlight';
 import { useSiteStats } from '../../hooks/use-site-stats';
 import { useGridColumnCount } from '../../hooks/use-grid-column-count';
+import { formatNumber } from '../../utility/format-number';
+import { MadocProjectListItem } from '@dissco-cs/shared-types';
 
 // Rijen i.p.v. een vast aantal kaarten, zodat elke pagina een volledig gevulde grid toont ongeacht
 // hoeveel kolommen er op het scherm passen (zie useGridColumnCount).
@@ -25,9 +27,8 @@ export const Projects: React.FC = () => {
   );
   const { data: siteStats } = useSiteStats();
   const { t, i18n } = useTranslation('dissco-cs');
-  const projects = (allProjects ?? []).filter((p: any) => p.status === 1);
+  const projects = (allProjects ?? []).filter((p: MadocProjectListItem) => p.status === 1);
   const isLoadingList = status === 'loading';
-  const formatNumber = (n: number) => n.toLocaleString(i18n.language);
 
   const [gridRef, columns] = useGridColumnCount<HTMLDivElement>();
   const pageSize = columns * ROWS_PER_PAGE;
@@ -60,9 +61,9 @@ export const Projects: React.FC = () => {
           <div className="mt-8 lg:mt-0 lg:col-start-1 lg:row-start-3 lg:self-start flex flex-col">
             <StatBanner
               stats={[
-                { value: siteStats ? formatNumber(siteStats.volunteers) : '—', label: t('institution_stats_volunteers') },
+                { value: siteStats ? formatNumber(siteStats.volunteers, i18n.language) : '—', label: t('institution_stats_volunteers') },
                 {
-                  value: siteStats ? `${formatNumber(siteStats.tasksCompleted)} / ${formatNumber(siteStats.tasksTotal)}` : '—',
+                  value: siteStats ? `${formatNumber(siteStats.tasksCompleted, i18n.language)} / ${formatNumber(siteStats.tasksTotal, i18n.language)}` : '—',
                   label: t('honour_board_stat_tasks_label'),
                 },
               ]}
@@ -75,7 +76,7 @@ export const Projects: React.FC = () => {
               )}
 
               <div ref={gridRef} className="cs-projects-grid cs-projects-grid--compact">
-                {pagedProjects.map((project: any) => (
+                {pagedProjects.map((project: MadocProjectListItem) => (
                   <ProjectCard key={project.id} projectSummaryData={project} />
                 ))}
               </div>

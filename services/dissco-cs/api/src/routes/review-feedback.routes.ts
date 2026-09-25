@@ -1,12 +1,8 @@
 import { Hono } from 'hono';
 import { DisscoCSRepository } from '../db.js';
 import { requestMadocUserIdentity } from '../jwt.js';
-import {
-  CreateFeedbackReplyBody,
-  CreateFeedbackThreadBody,
-  isNonEmptyString,
-  parseCreateFeedbackThreadBody,
-} from '../validators.js';
+import { isNonEmptyString, parseCreateFeedbackThreadBody } from '../validators.js';
+import { CreateFeedbackReplyBody, CreateFeedbackThreadBody } from '../types/request-bodies.js';
 import { isReviewerOrAdmin } from './review.routes.js';
 
 export function reviewFeedbackRoutes(repository: DisscoCSRepository): Hono {

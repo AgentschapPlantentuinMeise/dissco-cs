@@ -5,17 +5,18 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useUser } from '../../hooks/use-current-user';
 import { getSiteSlug } from '../../api/slug';
 import { getTasks, updateTask } from '../../api/madoc-client/tasks';
-import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
 import { parseUrn } from '../../utility/parse-urn';
 import { HrefLink } from '../../utility/href-link';
 import { localeText } from '../../utility/locale-text';
+import { formatDate } from '../../utility/format-date';
 import { CsPage } from '../../components/CsPage';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { LuTrash2 } from 'react-icons/lu';
 import { StatBanner } from '../../components/StatBanner';
 import { TaskTable, tabBtnClass } from '../../components/TaskTable';
-import { forumApi, ForumTopicWithReplyCount, reviewFeedbackApi, FeedbackThreadWithMeta } from '../../api/cs-api';
+import { forumApi, reviewFeedbackApi } from '../../api/cs-api';
+import { CrowdsourcingTask, ForumTopicWithReplyCount, FeedbackThreadWithMeta } from '@dissco-cs/shared-types';
 import { useSiteStats } from '../../hooks/use-site-stats';
 
 
@@ -42,10 +43,7 @@ function DonutChart({ segments }: { segments: ChartSegment[] }) {
   );
 }
 
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleString('nl-BE', { dateStyle: 'short', timeStyle: 'short' });
-
-function FeedbackThreadDetail({ threadId }: { threadId: string }) {
+function FeedbackThreadDetail({ threadId }: { threadId: number }) {
   const { t, i18n } = useTranslation('dissco-cs');
   const [replyBody, setReplyBody] = useState('');
 
@@ -182,7 +180,7 @@ export const UserDashboard: React.FC = () => {
   const user = useUser();
   const [activeTab, setActiveTab] = useState<'saved' | 'done' | 'feedback'>('saved');
   const [releaseTarget, setReleaseTarget] = useState<CrowdsourcingTask | null>(null);
-  const [openThreadId, setOpenThreadId] = useState<string | null>(null);
+  const [openThreadId, setOpenThreadId] = useState<number | null>(null);
 
   const [releaseTask] = useMutation(
     (task: CrowdsourcingTask) => updateTask(task.id, { status: -1, status_text: 'abandoned' }),
@@ -416,7 +414,7 @@ export const UserDashboard: React.FC = () => {
                         >
                           <span className="text-sm font-semibold text-gray-800">{topic.title}</span>
                           <span className="text-xs text-gray-500">
-                            {topic.author_name} · {formatDate(topic.created_at)} · {t('dashboard_widget_no_reply')}
+                            {topic.author_name} · {formatDate(topic.created_at, i18n.language)} · {t('dashboard_widget_no_reply')}
                           </span>
                         </HrefLink>
                       </li>

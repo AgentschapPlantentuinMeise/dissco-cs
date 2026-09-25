@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { LuChevronDown, LuEye } from 'react-icons/lu';
-import { ReviewTaskRow } from '../../api/cs-api';
+import { ReviewTaskRow } from '@dissco-cs/shared-types';
 import { localeText } from '../../utility/locale-text';
 import { SortKey, SortDir } from './useReviewTasksController';
 import { reviewStatusKey, STATUS_BADGE_CLASSES, badgeClass, thClass, tdClass } from './review-table-styles';

@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { reviewApi, reviewFeedbackApi, ReviewTaskRow } from '../../api/cs-api';
+import { reviewApi, reviewFeedbackApi } from '../../api/cs-api';
+import { ReviewTaskRow, AnnotationDocument } from '@dissco-cs/shared-types';
 import { ApiError } from '../../api/madoc-client/request';
 import { getCaptureModelRevision, updateCaptureModelRevision, updateRevisionTask } from '../../api/madoc-client/crowdsourcing';
 import { localeText } from '../../utility/locale-text';
 import { useUser } from '../../hooks/use-current-user';
-import { AnnotationDocument } from '../../capture-model/types/document';
 
 export type SortKey = 'project' | 'subject' | 'status' | 'submitter' | 'reviewer' | 'modified_at';
 export type SortDir = 'asc' | 'desc';

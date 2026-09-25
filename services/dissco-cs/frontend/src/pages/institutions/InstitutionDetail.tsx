@@ -5,13 +5,16 @@ import { useQuery } from 'react-query';
 import { CsPage } from '../../components/CsPage';
 import { HrefLink } from '../../utility/href-link';
 import { LuArrowLeft, LuMail, LuPhone, LuGlobe, LuMedal, LuClock, LuCalendar } from 'react-icons/lu';
-import { institutionsApi, Institution } from '../../api/cs-api';
+import { institutionsApi } from '../../api/cs-api';
 import { StatBanner } from '../../components/StatBanner';
 import { PeriodCard } from '../../components/honour-board/PeriodCard';
 import { getAllSiteProjects } from '../../api/madoc-client/projects';
 import { useInstitutionStats } from '../../hooks/use-institution-stats';
 import { useInstitutionHonourBoard } from '../../hooks/use-institution-honour-board';
 import { ProjectCard } from '../../components/projectcard/ProjectCard';
+import { siteLangText } from '../../utility/site-lang-text';
+import { formatNumber as formatCount } from '../../utility/format-number';
+import { MadocProjectListItem } from '@dissco-cs/shared-types';
 
 export const InstitutionDetail: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
@@ -37,7 +40,7 @@ export const InstitutionDetail: React.FC = () => {
     () => getAllSiteProjects({ published: true }),
     { staleTime: 5 * 60 * 1000 }
   );
-  const linkedProjects = (allProjects ?? []).filter((p: any) => projectSlugs.includes(p.slug));
+  const linkedProjects = (allProjects ?? []).filter((p: MadocProjectListItem) => projectSlugs.includes(p.slug));
 
   const { data: overview } = useInstitutionStats(slug);
   const { today, week, month, legend } = useInstitutionHonourBoard(slug);
@@ -46,13 +49,12 @@ export const InstitutionDetail: React.FC = () => {
 
   const [descExpanded, setDescExpanded] = React.useState(false);
 
-  const text = (field: Institution['name']) => field[i18n.language as keyof Institution['name']] || field.nl || '';
-  const formatNumber = (n: number) => n.toLocaleString(i18n.language);
+  const formatNumber = (n: number) => formatCount(n, i18n.language);
   const displayUrl = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
   const hasContact = institution && (institution.email || institution.phone || institution.website);
   const hasSidebar = institution && (institution.logo || hasContact);
-  const description = institution ? text(institution.description) : '';
+  const description = institution ? siteLangText(institution.description, i18n.language, '') : '';
   const isLongDescription = description.length > 400;
 
   return (
@@ -75,7 +77,7 @@ export const InstitutionDetail: React.FC = () => {
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-x-14 mt-6">
                 {/* Hero: title/description */}
                 <div className="min-w-0 max-w-[720px] lg:col-start-1 lg:row-start-1">
-                  <h1 className="text-4xl text-[var(--cs-primary)] mt-0 mb-5">{text(institution.name)}</h1>
+                  <h1 className="text-4xl text-[var(--cs-primary)] mt-0 mb-5">{siteLangText(institution.name, i18n.language, '')}</h1>
                   {description && (
                     <>
                       <p className={`text-base leading-relaxed text-gray-700 m-0 whitespace-pre-line ${!descExpanded && isLongDescription ? 'line-clamp-4' : ''}`}>
@@ -124,7 +126,7 @@ export const InstitutionDetail: React.FC = () => {
                 {/* Stats banner + projects — one grid cell so the projects section sits right under the banner, independent of the leaderboard's height */}
                 <div className="mt-14 lg:col-start-1 lg:row-start-2 flex flex-col">
                   <StatBanner
-                    eyebrow={t('institution_stats_caption', { name: text(institution.name) })}
+                    eyebrow={t('institution_stats_caption', { name: siteLangText(institution.name, i18n.language, '') })}
                     stats={[
                       {
                         value: `${tasksCompletedPct}%`,
@@ -151,7 +153,7 @@ export const InstitutionDetail: React.FC = () => {
                       <p className="text-sm text-gray-500">{t('institution_projects_empty')}</p>
                     ) : (
                       <div className="cs-projects-grid cs-projects-grid--compact">
-                        {linkedProjects.map((project: any) => (
+                        {linkedProjects.map((project: MadocProjectListItem) => (
                           <ProjectCard key={project.id} projectSummaryData={project} />
                         ))}
                       </div>

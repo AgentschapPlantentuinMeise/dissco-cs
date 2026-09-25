@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import OpenSeadragon from 'openseadragon';
-import { BoxSelectorState } from '../../../capture-model/types/selector-types';
+import { BoxSelectorState } from '@dissco-cs/shared-types';
 
 export interface OpenSeadragonViewerProps {
   imageServiceId?: string;

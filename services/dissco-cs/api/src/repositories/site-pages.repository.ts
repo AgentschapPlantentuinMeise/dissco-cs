@@ -1,16 +1,8 @@
 import { Pool, PoolClient } from 'pg';
+import { SITE_PAGE_KEYS, SitePageContentKey, SitePageKey, SitePageLang } from '@dissco-cs/shared-types';
 
-// Order here is the default display order (navbar + page management) for sites that
-// haven't customized it yet — see `sort_order` on the `site_pages` table.
-export const SITE_PAGE_KEYS = ['institutions', 'forum', 'about', 'help', 'contact', 'welcome'] as const;
-export type SitePageKey = (typeof SITE_PAGE_KEYS)[number];
-
-export const SITE_PAGE_CONTENT_KEYS = ['about', 'help', 'contact', 'welcome'] as const;
-export type SitePageContentKey = (typeof SITE_PAGE_CONTENT_KEYS)[number];
-
-export const SITE_PAGE_LANGS = ['nl', 'en', 'fr', 'de'] as const;
-export type SitePageLang = (typeof SITE_PAGE_LANGS)[number];
-
+// Local row shape (`updated_at: Date`, from `pg`) -- the shared `SitePage` DTO type describes
+// the wire shape (`updated_at: string`) route handlers actually send.
 export type SitePage = {
   site_id: number;
   page_key: SitePageKey;

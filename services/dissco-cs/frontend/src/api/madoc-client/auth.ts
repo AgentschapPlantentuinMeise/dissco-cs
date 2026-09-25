@@ -1,11 +1,5 @@
 import { publicPost, publicRequest } from './request';
-
-export type InvitationResponse =
-  | { expired: true }
-  | { id: string; message: unknown; role: string; site_role: string };
-
-export type SiteTerms = { id: string; createdAt: string; terms?: { markdown: string; text: string } };
-export type TermsStatus = { hasTerms: boolean; hasAccepted: boolean };
+import { SiteTerms, TermsStatus, InvitationResponse } from '@dissco-cs/shared-types';
 
 // -- dissco-cs auth pages (register/login/forgot-password/set-password) --
 export const getInvitation = (code: string) => publicRequest<InvitationResponse>('/auth/invitation', { code });

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CrowdsourcingTask } from '../types/crowdsourcing-task';
+import { CrowdsourcingTask } from '@dissco-cs/shared-types';
 import { HrefLink } from '../utility/href-link';
 import { buildTaskLink } from '../utility/build-task-link';
 import { localeText } from '../utility/locale-text';

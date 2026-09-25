@@ -2,7 +2,7 @@ import React from 'react';
 import { FieldProps } from './registry';
 
 export function TextField({ field, path, onChange }: FieldProps) {
-  const multiline = !!(field as any).multiline;
+  const multiline = !!field.multiline;
   const inputClass = 'w-full border border-gray-300 rounded px-2 py-1 text-[0.9rem]';
 
   if (multiline) {

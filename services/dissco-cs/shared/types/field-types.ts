@@ -1,4 +1,4 @@
-import { BaseSelector } from './selector-types';
+import { BaseSelector } from './selector-types.js';
 
 // Plain data shapes copied from madoc-ts's BaseProperty/BaseField
 // (services/madoc-ts/src/frontend/shared/capture-models/types/base-property.ts, field-types.ts).
@@ -24,8 +24,22 @@ export interface BaseProperty {
   revision?: string;
 }
 
+// Option entry as used by dropdown/checkbox-list fields -- the two widgets read different subsets
+// (dropdown: value+text, checkbox-list: value+label+description), kept together since both live
+// under the same field.options key.
+export type FieldOption = { value: string; label?: string; text?: string; description?: string };
+
 export interface BaseField extends BaseProperty {
   id: string;
   type: string;
+  // The field's actual runtime shape (string, boolean, string[], {uri,label}, ...) depends
+  // entirely on `type`, which none of the field components (TextField, CheckboxField, ...)
+  // discriminate on structurally -- each just reads field.value assuming its own shape.
   value: any;
+  // Present only on specific field types -- Madoc's model-editor stores these directly on the
+  // field config rather than through a discriminated union.
+  dataSource?: string;
+  placeholder?: string;
+  options?: FieldOption[];
+  multiline?: boolean;
 }

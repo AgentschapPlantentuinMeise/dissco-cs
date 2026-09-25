@@ -1,27 +1,11 @@
 import { Hono } from 'hono';
 
 import { MadocUserIdentity, requireUser } from '../jwt.js';
-import { getMadocProjectByRootTaskId, MadocProjectSummary } from '../madoc-client/projects.js';
+import { getMadocProjectByRootTaskId } from '../madoc-client/projects.js';
 import { getMadocTaskDetail } from '../madoc-client/tasks.js';
 import { getMadocReviewTasks, ReviewTask } from '../madoc-client/reviews.js';
 import { getMadocSiteUserRole } from '../madoc-client/users.js';
-
-export type ReviewTaskRow = {
-  id: string;
-  project: { id?: number; slug?: string; label?: unknown };
-  subject: { id?: number; label?: unknown };
-  subject_raw?: string;
-  subject_parent_raw?: string;
-  status: number;
-  status_text?: string;
-  submitter?: string;
-  submitterId?: number;
-  reviewer?: string;
-  reviewerId?: number;
-  originalTaskId?: string;
-  revisionId?: string;
-  modified_at: number;
-};
+import { InternationalString, MadocProjectListItem, ReviewTaskRow } from '@dissco-cs/shared-types';
 
 function parseUserId(urn: string | undefined): number | undefined {
   const match = urn?.match(/^urn:madoc:user:(\d+)$/);
@@ -70,7 +54,7 @@ export function reviewRoutes(): Hono {
       return c.text('Internal Server Error', 500);
     }
 
-    const projectByRootTask = new Map<string, MadocProjectSummary | null>();
+    const projectByRootTask = new Map<string, MadocProjectListItem | null>();
 
     const rows: ReviewTaskRow[] = [];
     for (const task of tasks) {
@@ -104,7 +88,7 @@ export function reviewRoutes(): Hono {
       // task.metadata.project is niet gevuld voor crowdsourcing-review-taken (in
       // tegenstelling tot crowdsourcing-task) -- opzoeken via root_task_id, één keer per
       // uniek project.
-      let project: MadocProjectSummary | null = null;
+      let project: MadocProjectListItem | null = null;
       if (task.root_task) {
         if (projectByRootTask.has(task.root_task)) {
           project = projectByRootTask.get(task.root_task) ?? null;
@@ -121,7 +105,7 @@ export function reviewRoutes(): Hono {
       rows.push({
         id: task.id,
         project: { id: project?.id, slug: project?.slug, label: project?.label },
-        subject: { id: task.metadata?.subject?.id, label: task.metadata?.subject?.label },
+        subject: { id: task.metadata?.subject?.id, label: task.metadata?.subject?.label as InternationalString | string | undefined },
         subject_raw: task.subject,
         subject_parent_raw: task.subject_parent,
         status: task.status,

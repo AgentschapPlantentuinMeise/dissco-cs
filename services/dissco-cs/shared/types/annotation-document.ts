@@ -1,5 +1,5 @@
-import { BaseField } from './field-types';
-import { BaseSelector } from './selector-types';
+import { BaseField } from './field-types.js';
+import { BaseSelector } from './selector-types.js';
 
 // Same entity/properties tree shape as madoc-ts's "Document" type, renamed so it isn't
 // confused with the browser's global Document.

@@ -1,5 +1,6 @@
 import { useQuery } from 'react-query';
-import { institutionsApi, HonourBoardPeriodKey } from '../api/cs-api';
+import { institutionsApi } from '../api/cs-api';
+import { HonourBoardPeriodKey } from '@dissco-cs/shared-types';
 import { usePollingWindow } from './use-polling-window';
 
 // Same per-period pattern as use-honour-board.ts, scoped to one institution's projects.

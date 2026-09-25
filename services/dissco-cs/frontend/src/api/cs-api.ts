@@ -1,6 +1,35 @@
 import { getJwt, redirectToExpiredLogin } from './jwt';
 import { getSiteSlug } from './slug';
-import { CrowdsourcingTask } from '../types/crowdsourcing-task';
+import {
+  CrowdsourcingTask,
+  ForumTopic,
+  ForumTopicWithReplyCount,
+  ForumReply,
+  ForumTopicWithReplies,
+  SitePageKey,
+  SitePageLang,
+  SitePage,
+  FeedbackThread,
+  FeedbackThreadWithMeta,
+  FeedbackMessage,
+  AnnouncementTargetType,
+  Announcement,
+  AnnouncementInput,
+  SiteStats,
+  HonourBoardPeriod,
+  HonourBoardPeriodKey,
+  Institution,
+  InstitutionInput,
+  InstitutionOverview,
+  ProjectManual,
+  ProjectManualSummary,
+  ProjectManualForVolunteer,
+  ProjectManualDetail,
+  ProjectProgress,
+  StuckManifestCounter,
+  ProjectDebugResult,
+  ReviewTaskRow,
+} from '@dissco-cs/shared-types';
 
 async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const jwt = getJwt();
@@ -30,44 +59,15 @@ async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json();
 }
 
-export type ForumTopic = {
-  id: string;
-  site_id: number;
-  author_user_id: number;
-  author_name: string;
-  title: string;
-  task_url: string | null;
-  project_slug: string | null;
-  project_label: string | null;
-  body: string;
-  created_at: string;
-  last_activity: string;
-  closed_at: string | null;
-};
-
-export type ForumTopicWithReplyCount = ForumTopic & { reply_count: number; last_seen_reply_count: number | null };
-
-export type ForumReply = {
-  id: string;
-  topic_id: string;
-  site_id: number;
-  author_user_id: number;
-  author_name: string;
-  body: string;
-  created_at: string;
-};
-
-export type ForumTopicWithReplies = ForumTopic & { replies: ForumReply[] };
-
 export const forumApi = {
   listTopics: () => csFetch<{ topics: ForumTopicWithReplyCount[] }>('/forum/topics'),
 
   createTopic: (data: { title: string; taskUrl: string; body: string; projectSlug?: string; projectLabel?: string }) =>
     csFetch<ForumTopic>('/forum/topics', { method: 'POST', body: JSON.stringify(data) }),
 
-  getTopic: (topicId: string) => csFetch<ForumTopicWithReplies>(`/forum/topics/${topicId}`),
+  getTopic: (topicId: number) => csFetch<ForumTopicWithReplies>(`/forum/topics/${topicId}`),
 
-  createReply: (topicId: string, body: string) =>
+  createReply: (topicId: number, body: string) =>
     csFetch<ForumReply>(`/forum/topics/${topicId}/replies`, {
       method: 'POST',
       body: JSON.stringify({ body }),
@@ -75,29 +75,12 @@ export const forumApi = {
 
   visitForum: () => csFetch<void>('/forum/topics/visit', { method: 'POST' }),
 
-  deleteTopic: (topicId: string) => csFetch<void>(`/forum/topics/${topicId}`, { method: 'DELETE' }),
+  deleteTopic: (topicId: number) => csFetch<void>(`/forum/topics/${topicId}`, { method: 'DELETE' }),
 
-  closeTopic: (topicId: string) => csFetch<ForumTopic>(`/forum/topics/${topicId}/close`, { method: 'POST' }),
+  closeTopic: (topicId: number) => csFetch<ForumTopic>(`/forum/topics/${topicId}/close`, { method: 'POST' }),
 
-  deleteReply: (topicId: string, replyId: string) =>
+  deleteReply: (topicId: number, replyId: number) =>
     csFetch<void>(`/forum/topics/${topicId}/replies/${replyId}`, { method: 'DELETE' }),
-};
-
-// Order here is the default display order (navbar + page management) for sites that
-// haven't customized it yet — must match SITE_PAGE_KEYS in services/dissco-cs/api/src/db.ts.
-export const SITE_PAGE_KEYS = ['institutions', 'forum', 'about', 'help', 'contact', 'welcome'] as const;
-export type SitePageKey = (typeof SITE_PAGE_KEYS)[number];
-export type SitePageLang = 'nl' | 'en' | 'fr' | 'de';
-
-export type SitePage = {
-  site_id: number;
-  page_key: SitePageKey;
-  is_active: boolean;
-  content: Partial<Record<SitePageLang, string>>;
-  contact_email: string | null;
-  show_contact_form: boolean;
-  sort_order: number;
-  updated_at: string;
 };
 
 export const sitePagesApi = {
@@ -119,13 +102,6 @@ export const sitePagesApi = {
     csFetch<void>('/site-pages/order', { method: 'PUT', body: JSON.stringify({ order }) }),
 };
 
-export type ProjectProgress = {
-  transcribedPercentage: number;
-  totalTasks: number;
-  allTasksTaken: boolean;
-  availableManifests: Array<{ id: number; label: unknown; thumbnail?: string }>;
-};
-
 export const projectProgressApi = {
   get: (projectId: string | number, signal?: AbortSignal) =>
     csFetch<ProjectProgress>(`/projects/${projectId}/progress?slug=${getSiteSlug()}`, { signal }),
@@ -138,41 +114,6 @@ export const manifestClaimApi = {
     csFetch<{ resynced: boolean }>(`/projects/${projectId}/manifests/${manifestId}/resync-claim?slug=${getSiteSlug()}`, {
       method: 'POST',
     }),
-};
-
-// A manifest-task stuck on "max contributors" whose underlying claims are all already -1 —
-// nothing to release, just a stale counter that needs resyncing (see StuckTasks.tsx).
-export type StuckManifestCounter = {
-  id: string;
-  name?: string;
-  subject: string;
-  modified_at: number;
-  maxContributors: number;
-  validCount: number;
-  metadata?: {
-    project?: { id: number; slug: string; label?: Record<string, string[]> | string };
-  };
-};
-
-export type ProjectDebugTaskEntry = {
-  id: string;
-  status: number;
-  status_text?: string;
-  assignee?: string;
-  modified_at: number;
-};
-
-export type ProjectDebugManifest = {
-  manifestId: number;
-  label?: Record<string, string[]> | string;
-  countsAsTranscribed: boolean;
-  tasks: ProjectDebugTaskEntry[];
-};
-
-export type ProjectDebugResult = {
-  totalManifests: number;
-  transcribedPercentage: number;
-  manifests: ProjectDebugManifest[];
 };
 
 export const projectDebugApi = {
@@ -188,57 +129,10 @@ export const stuckTasksApi = {
     csFetch<{ resynced: boolean }>(`/projects/stuck-tasks/manifests/${containerId}/resync`, { method: 'POST' }),
 };
 
-export type ReviewTaskRow = {
-  id: string;
-  project: { id?: number; slug?: string; label?: Record<string, string[]> | string };
-  subject: { id?: number; label?: Record<string, string[]> | string };
-  subject_raw?: string;
-  subject_parent_raw?: string;
-  status: number;
-  status_text?: string;
-  submitter?: string;
-  submitterId?: number;
-  reviewer?: string;
-  reviewerId?: number;
-  originalTaskId?: string;
-  revisionId?: string;
-  modified_at: number;
-};
-
 export const reviewApi = {
   myTasks: () => csFetch<{ tasks: ReviewTaskRow[] }>('/review/my-tasks'),
 
   isReviewer: () => csFetch<{ isReviewer: boolean }>('/review/is-reviewer'),
-};
-
-export type FeedbackThreadRole = 'recipient' | 'reviewer';
-
-export type FeedbackThread = {
-  id: string;
-  site_id: number;
-  reviewer_user_id: number;
-  reviewer_name: string;
-  recipient_user_id: number;
-  recipient_name: string;
-  subject: string;
-  created_at: string;
-  last_activity: string;
-};
-
-export type FeedbackThreadWithMeta = FeedbackThread & {
-  role: FeedbackThreadRole;
-  message_count: number;
-  unread_count: number;
-};
-
-export type FeedbackMessage = {
-  id: string;
-  thread_id: string;
-  author_user_id: number;
-  author_name: string;
-  body: string;
-  read_at: string | null;
-  created_at: string;
 };
 
 export const reviewFeedbackApi = {
@@ -247,48 +141,22 @@ export const reviewFeedbackApi = {
   createThread: (data: { recipientUserId: number; recipientName: string; subject: string; body: string }) =>
     csFetch<FeedbackThread>('/review-feedback/threads', { method: 'POST', body: JSON.stringify(data) }),
 
-  getThread: (threadId: string) =>
+  getThread: (threadId: number) =>
     csFetch<{ thread: FeedbackThread; messages: FeedbackMessage[] }>(`/review-feedback/threads/${threadId}`),
 
-  createReply: (threadId: string, body: string) =>
+  createReply: (threadId: number, body: string) =>
     csFetch<FeedbackMessage>(`/review-feedback/threads/${threadId}/replies`, {
       method: 'POST',
       body: JSON.stringify({ body }),
     }),
 
-  deleteThread: (threadId: string) =>
+  deleteThread: (threadId: number) =>
     csFetch<void>(`/review-feedback/threads/${threadId}`, { method: 'DELETE' }),
 };
 
 export const contactApi = {
   send: (data: { name: string; email: string; message: string; website: string }) =>
     csFetch<void>(`/contact?slug=${getSiteSlug()}`, { method: 'POST', body: JSON.stringify(data) }),
-};
-
-export const ANNOUNCEMENT_TARGET_TYPES = ['homepage', 'projects', 'project'] as const;
-export type AnnouncementTargetType = (typeof ANNOUNCEMENT_TARGET_TYPES)[number];
-
-export type Announcement = {
-  id: string;
-  site_id: number;
-  title: Partial<Record<SitePageLang, string>>;
-  description: Partial<Record<SitePageLang, string>>;
-  target_type: AnnouncementTargetType;
-  target_project_slug: string | null;
-  is_active: boolean;
-  start_date: string | null;
-  end_date: string | null;
-  created_at: string;
-};
-
-export type AnnouncementInput = {
-  title: Partial<Record<SitePageLang, string>>;
-  description: Partial<Record<SitePageLang, string>>;
-  targetType: AnnouncementTargetType;
-  targetProjectSlug: string | null;
-  isActive: boolean;
-  startDate: string | null;
-  endDate: string | null;
 };
 
 export const announcementsApi = {
@@ -310,62 +178,17 @@ export const announcementsApi = {
   remove: (id: Announcement['id']) => csFetch<void>(`/announcements/${id}`, { method: 'DELETE' }),
 };
 
-export type SiteStats = {
-  volunteers: number;
-  tasksCompleted: number;
-  tasksTotal: number;
-};
-
 export const statsApi = {
   get: () => csFetch<SiteStats>(`/stats?slug=${getSiteSlug()}`),
   // Pure cache read, never triggers a recompute -- for periodic polling.
   getCurrent: () => csFetch<SiteStats>(`/stats/current?slug=${getSiteSlug()}`),
 };
 
-export type InstitutionOverview = {
-  volunteers: number;
-  tasksCompleted: number;
-  tasksTotal: number;
-  projectsActive: number;
-  projectsCompleted: number;
-};
-
-export type HonourBoardEntry = { userUrn: string; name: string; count: number; rank: number };
-export type HonourBoardPeriod = { top: HonourBoardEntry[]; you: HonourBoardEntry | null };
-export type HonourBoardPeriodKey = 'today' | 'week' | 'month' | 'legend';
-export const HONOUR_BOARD_PERIODS: HonourBoardPeriodKey[] = ['today', 'week', 'month', 'legend'];
-
 export const honourBoardApi = {
   get: (period: HonourBoardPeriodKey) => csFetch<HonourBoardPeriod>(`/honour-board/${period}?slug=${getSiteSlug()}`),
   // Pure cache read, never triggers a recompute -- for periodic polling.
   getCurrent: (period: HonourBoardPeriodKey) =>
     csFetch<HonourBoardPeriod>(`/honour-board/${period}/current?slug=${getSiteSlug()}`),
-};
-
-export type Institution = {
-  id: number;
-  site_id: number;
-  slug: string;
-  name: Partial<Record<SitePageLang, string>>;
-  description: Partial<Record<SitePageLang, string>>;
-  email: string | null;
-  phone: string | null;
-  website: string | null;
-  logo: string | null;
-  is_active: boolean;
-  sort_order: number;
-  created_at: string;
-  updated_at: string;
-};
-
-export type InstitutionInput = {
-  name: Partial<Record<SitePageLang, string>>;
-  description: Partial<Record<SitePageLang, string>>;
-  email: string | null;
-  phone: string | null;
-  website: string | null;
-  logo: string | null;
-  isActive: boolean;
 };
 
 export const institutionsApi = {
@@ -417,29 +240,6 @@ export const institutionsApi = {
       method: 'PUT',
       body: JSON.stringify({ liveSlugs }),
     }),
-};
-
-export type ProjectManualAttachmentMeta = { filename: string; mimeType: string; size: number };
-
-export type ProjectManual = {
-  id: number;
-  site_id: number;
-  title: Partial<Record<SitePageLang, string>>;
-  content: Partial<Record<SitePageLang, string>>;
-  updated_at: string;
-};
-
-export type ProjectManualSummary = ProjectManual & { linkedProjectSlugs: string[]; attachmentLangs: SitePageLang[] };
-
-export type ProjectManualForVolunteer = {
-  id: number;
-  title: Partial<Record<SitePageLang, string>>;
-  content: Partial<Record<SitePageLang, string>>;
-  attachments: Partial<Record<SitePageLang, ProjectManualAttachmentMeta>>;
-};
-
-export type ProjectManualDetail = ProjectManual & {
-  attachments: Partial<Record<SitePageLang, ProjectManualAttachmentMeta>>;
 };
 
 export const projectManualsApi = {

@@ -4,8 +4,7 @@ import { resolveSiteId, requestMadocUserIdentity } from '../jwt.js';
 import { getMadocProject } from '../madoc-client/projects.js';
 import { getMadocTasksBySubjectAndType } from '../madoc-client/tasks.js';
 import { resyncManifestTaskCounter } from '../madoc-client/stuck-tasks.js';
-
-type MadocProjectSummary = { id: number; task_id: string };
+import { MadocProject } from '@dissco-cs/shared-types';
 
 export function manifestClaimRoutes(): Hono {
   const app = new Hono();
@@ -30,9 +29,9 @@ export function manifestClaimRoutes(): Hono {
     const projectId = c.req.param('projectId');
     const manifestId = c.req.param('manifestId');
 
-    let project: MadocProjectSummary;
+    let project: MadocProject;
     try {
-      project = (await getMadocProject(siteId, projectId)) as MadocProjectSummary;
+      project = await getMadocProject(siteId, projectId);
     } catch (err) {
       console.error('[manifest-claim] getMadocProject failed', { siteId, projectId }, err);
       return c.text('Internal Server Error', 500);

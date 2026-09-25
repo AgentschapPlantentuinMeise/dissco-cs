@@ -8,24 +8,6 @@ import { ProjectManualsRepository } from './repositories/project-manuals.reposit
 import { ReviewFeedbackRepository } from './repositories/review-feedback.repository.js';
 import { SitePagesRepository } from './repositories/site-pages.repository.js';
 
-export type { Announcement, AnnouncementTargetType } from './repositories/announcements.repository.js';
-export { ANNOUNCEMENT_TARGET_TYPES } from './repositories/announcements.repository.js';
-export type { ForumReply, ForumTopic, ForumTopicWithReplyCount } from './repositories/forum.repository.js';
-export type { Institution, InstitutionInput } from './repositories/institutions.repository.js';
-export type {
-  ProjectManual,
-  ProjectManualAttachmentMeta,
-  ProjectManualSummary,
-} from './repositories/project-manuals.repository.js';
-export type {
-  FeedbackMessage,
-  FeedbackThread,
-  FeedbackThreadRole,
-  FeedbackThreadWithMeta,
-} from './repositories/review-feedback.repository.js';
-export type { SitePage, SitePageContentKey, SitePageKey, SitePageLang } from './repositories/site-pages.repository.js';
-export { SITE_PAGE_CONTENT_KEYS, SITE_PAGE_KEYS, SITE_PAGE_LANGS } from './repositories/site-pages.repository.js';
-
 export class DisscoCSRepository {
   readonly forum: ForumRepository;
   readonly sitePages: SitePagesRepository;

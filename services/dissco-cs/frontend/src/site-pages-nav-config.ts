@@ -1,4 +1,4 @@
-import { SitePageKey } from './api/cs-api';
+import { SitePageKey } from '@dissco-cs/shared-types';
 
 type SitePageNavEntry = {
   labelKey: string;

@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { DisscoCSRepository } from '../db.js';
 import { requireSiteAdmin, resolveSiteId } from '../jwt.js';
-import { AnnouncementBody, isAnnouncementTargetType, parseAnnouncementBody } from '../validators.js';
+import { isAnnouncementTargetType, parseAnnouncementBody } from '../validators.js';
+import { AnnouncementBody } from '../types/request-bodies.js';
 
 export function announcementsRoutes(repository: DisscoCSRepository): Hono {
   const app = new Hono();

@@ -4,17 +4,7 @@ import { resolveSiteId } from '../jwt.js';
 import { getMadocProject } from '../madoc-client/projects.js';
 import { getMadocCollectionManifestThumbnails, getMadocProjectManifestsAndTaskStats } from '../madoc-client/collections.js';
 import { getMadocProjectTasks } from '../madoc-client/tasks.js';
-
-type MadocProjectSummary = {
-  id: number;
-  collection_id: number;
-  task_id: string;
-  config?: {
-    maxContributionsPerResource?: number;
-    contributionMode?: string;
-    claimGranularity?: 'canvas' | 'manifest';
-  };
-};
+import { MadocProject, ProjectProgress } from '@dissco-cs/shared-types';
 
 export function projectProgressRoutes(): Hono {
   const app = new Hono();
@@ -27,9 +17,9 @@ export function projectProgressRoutes(): Hono {
 
     const projectId = c.req.param('projectId');
 
-    let project: MadocProjectSummary;
+    let project: MadocProject;
     try {
-      project = (await getMadocProject(siteId, projectId)) as MadocProjectSummary;
+      project = await getMadocProject(siteId, projectId);
     } catch (err) {
       console.error('[project-progress] getMadocProject failed', { siteId, projectId }, err);
       return c.text('Internal Server Error', 500);
@@ -107,7 +97,7 @@ export function projectProgressRoutes(): Hono {
       return true;
     });
 
-    return c.json({
+    const result: ProjectProgress = {
       transcribedPercentage,
       totalTasks: manifestCount,
       allTasksTaken: manifestCount > 0 && availableManifests.length === 0,
@@ -116,7 +106,8 @@ export function projectProgressRoutes(): Hono {
         label: item.label,
         thumbnail: item.thumbnail,
       })),
-    });
+    };
+    return c.json(result);
   });
 
   return app;

@@ -3,7 +3,8 @@ import { DisscoCSRepository } from '../db.js';
 import { resolveSiteId } from '../jwt.js';
 import { mailer } from '../mailer.js';
 import { isRateLimited } from '../rate-limit.js';
-import { CONTACT_RATE_LIMIT, ContactSubmissionBody, getClientIp, isEmailLike, isNonEmptyString } from '../validators.js';
+import { CONTACT_RATE_LIMIT, getClientIp, isEmailLike, isNonEmptyString } from '../validators.js';
+import { ContactSubmissionBody } from '../types/request-bodies.js';
 
 export function contactRoutes(repository: DisscoCSRepository): Hono {
   const app = new Hono();

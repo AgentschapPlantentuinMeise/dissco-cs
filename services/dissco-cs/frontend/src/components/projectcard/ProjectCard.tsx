@@ -5,9 +5,10 @@ import { useProjectProgress } from '../../hooks/use-project-progress';
 import { LocaleString } from '../LocaleString';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { LuShapes } from 'react-icons/lu';
+import { MadocProject, MadocProjectListItem } from '@dissco-cs/shared-types';
 
 interface ProjectCardProps {
-  projectSummaryData: any;
+  projectSummaryData: MadocProjectListItem | MadocProject;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({ projectSummaryData }) => {

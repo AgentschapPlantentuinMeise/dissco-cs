@@ -1,14 +1,7 @@
 import { Pool } from 'pg';
 
 import { appConfig } from '../config.js';
-
-export type InstitutionOverview = {
-  volunteers: number;
-  tasksCompleted: number;
-  tasksTotal: number;
-  projectsActive: number;
-  projectsCompleted: number;
-};
+import { InstitutionOverview } from '@dissco-cs/shared-types';
 
 export type InstitutionProjectRow = { id: number; task_id: string; status: number };
 

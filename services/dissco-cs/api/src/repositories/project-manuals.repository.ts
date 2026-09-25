@@ -1,7 +1,7 @@
 import { Pool } from 'pg';
-import { SitePageLang } from './site-pages.repository.js';
+import { SitePageLang } from '@dissco-cs/shared-types';
 
-export type ProjectManual = {
+export type ProjectManualRow = {
   id: number;
   site_id: number;
   title: Partial<Record<SitePageLang, string>>;
@@ -9,7 +9,7 @@ export type ProjectManual = {
   updated_at: Date;
 };
 
-export type ProjectManualSummary = ProjectManual & { linkedProjectSlugs: string[]; attachmentLangs: SitePageLang[] };
+export type ProjectManualSummary = ProjectManualRow & { linkedProjectSlugs: string[]; attachmentLangs: SitePageLang[] };
 
 export type ProjectManualAttachmentMeta = {
   lang: SitePageLang;
@@ -36,7 +36,7 @@ export class ProjectManualsRepository {
   }
 
   async listManuals(siteId: number): Promise<ProjectManualSummary[]> {
-    const manuals = await this.pool.query<ProjectManual>(
+    const manuals = await this.pool.query<ProjectManualRow>(
       `SELECT * FROM ${this.table('project_manuals')} WHERE site_id = $1 ORDER BY updated_at DESC`,
       [siteId]
     );
@@ -76,8 +76,8 @@ export class ProjectManualsRepository {
     }));
   }
 
-  async getManualForProject(siteId: number, projectSlug: string): Promise<ProjectManual | null> {
-    const result = await this.pool.query<ProjectManual>(
+  async getManualForProject(siteId: number, projectSlug: string): Promise<ProjectManualRow | null> {
+    const result = await this.pool.query<ProjectManualRow>(
       `
       SELECT m.* FROM ${this.table('project_manuals')} m
       JOIN ${this.table('project_manual_links')} l ON l.manual_id = m.id
@@ -89,8 +89,8 @@ export class ProjectManualsRepository {
     return result.rows[0] ?? null;
   }
 
-  async getManualById(siteId: number, manualId: number): Promise<ProjectManual | null> {
-    const result = await this.pool.query<ProjectManual>(
+  async getManualById(siteId: number, manualId: number): Promise<ProjectManualRow | null> {
+    const result = await this.pool.query<ProjectManualRow>(
       `SELECT * FROM ${this.table('project_manuals')} WHERE id = $1 AND site_id = $2`,
       [manualId, siteId]
     );
@@ -98,8 +98,8 @@ export class ProjectManualsRepository {
     return result.rows[0] ?? null;
   }
 
-  async createManual(siteId: number, title: Partial<Record<SitePageLang, string>>): Promise<ProjectManual> {
-    const result = await this.pool.query<ProjectManual>(
+  async createManual(siteId: number, title: Partial<Record<SitePageLang, string>>): Promise<ProjectManualRow> {
+    const result = await this.pool.query<ProjectManualRow>(
       `INSERT INTO ${this.table('project_manuals')} (site_id, title) VALUES ($1, $2) RETURNING *`,
       [siteId, JSON.stringify(title)]
     );
@@ -112,8 +112,8 @@ export class ProjectManualsRepository {
     manualId: number,
     lang: SitePageLang,
     title: string
-  ): Promise<ProjectManual | null> {
-    const result = await this.pool.query<ProjectManual>(
+  ): Promise<ProjectManualRow | null> {
+    const result = await this.pool.query<ProjectManualRow>(
       `
       UPDATE ${this.table('project_manuals')}
       SET title = jsonb_set(title, ARRAY[$3::text], to_jsonb($4::text)), updated_at = NOW()

@@ -6,12 +6,13 @@ import { PeriodCard } from '../../components/honour-board/PeriodCard';
 import { useHonourBoard } from '../../hooks/use-honour-board';
 import { useSiteStats } from '../../hooks/use-site-stats';
 import { LuMedal, LuClock, LuCalendar } from 'react-icons/lu';
+import { formatNumber as formatCount } from '../../utility/format-number';
 
 export const HonourBoard: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const { today, week, month, legend } = useHonourBoard();
   const { data: siteStats } = useSiteStats();
-  const formatNumber = (n: number) => n.toLocaleString(i18n.language);
+  const formatNumber = (n: number) => formatCount(n, i18n.language);
   const legendLeader = legend.data?.top[0];
 
   return (

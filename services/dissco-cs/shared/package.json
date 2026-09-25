@@ -1,0 +1,11 @@
+{
+  "name": "@dissco-cs/shared-types",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./types/index.ts",
+  "types": "./types/index.ts",
+  "dependencies": {
+    "zod": "^4.6.5"
+  }
+}

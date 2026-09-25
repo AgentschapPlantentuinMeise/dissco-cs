@@ -1,3 +1,5 @@
+import { InternationalString } from './madoc-project.js';
+
 /** Minimal subset of Madoc's CrowdsourcingTask type — only the fields the citizen-science UI reads. */
 export type CrowdsourcingTask = {
   id: string;
@@ -19,13 +21,36 @@ export type CrowdsourcingTask = {
     project?: {
       id: number;
       slug: string;
-      label?: Record<string, string[]> | string;
+      label?: InternationalString | string;
     };
     subject?: {
       id: number;
       type: string;
-      label?: Record<string, string[]> | string;
+      label?: InternationalString | string;
       thumbnail?: string;
     };
   };
+};
+
+// Resource claim, as embedded in prepare-claim/claim/random responses -- `state.revisionId` is
+// only present once a claim has an in-progress revision attached to it.
+export type ResourceClaim = {
+  id: string;
+  status: number;
+  state?: { revisionId?: string };
+};
+
+export type PrepareClaimResult = {
+  model: { id: string; label: string };
+  claim?: ResourceClaim;
+};
+
+export type CreateResourceClaimResult = {
+  claim?: ResourceClaim;
+};
+
+export type RandomManifestResult = {
+  remainingTasks: number;
+  manifest: number;
+  claim?: ResourceClaim;
 };

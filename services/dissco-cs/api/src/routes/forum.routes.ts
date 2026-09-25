@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { DisscoCSRepository } from '../db.js';
 import { MadocUserIdentity, requestMadocUserIdentity, requireUser } from '../jwt.js';
-import { CreateReplyBody, CreateTopicBody, isNonEmptyString } from '../validators.js';
+import { isNonEmptyString } from '../validators.js';
+import { CreateReplyBody, CreateTopicBody } from '../types/request-bodies.js';
 
 // A piece of forum content (topic or reply) can be removed/closed by whoever wrote it, or by
 // any site admin -- same rule for both content types and both actions (delete, close).

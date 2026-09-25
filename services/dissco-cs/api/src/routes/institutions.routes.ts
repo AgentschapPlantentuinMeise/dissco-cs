@@ -3,15 +3,16 @@ import { DisscoCSRepository } from '../db.js';
 import { requireSiteAdmin, requestMadocUserIdentity, resolveSiteId } from '../jwt.js';
 import { HonourBoardRepository, isHonourBoardPeriod } from '../repositories/honour-board.repository.js';
 import { InstitutionStatsRepository } from '../repositories/institution-stats.repository.js';
-import {
-  InstitutionBody,
-  PruneProjectLinksBody,
-  SetInstitutionLinkBody,
-  SetInstitutionsOrderBody,
-  parseInstitutionBody,
-  parsePruneProjectLinksBody,
-  parseSetInstitutionLinkBody,
-} from '../validators.js';
+import { InstitutionRow } from '../repositories/institutions.repository.js';
+import { parsePruneProjectLinksBody, parseSetInstitutionLinkBody } from '../validators.js';
+import { PruneProjectLinksBody, SetInstitutionLinkBody, SetInstitutionsOrderBody } from '../types/request-bodies.js';
+import { Institution, institutionInputSchema } from '@dissco-cs/shared-types';
+
+// created_at/updated_at are DB bookkeeping (see InstitutionRow), never part of the wire DTO.
+function toInstitutionDto(row: InstitutionRow): Institution {
+  const { created_at, updated_at, ...dto } = row;
+  return dto;
+}
 
 export function institutionsRoutes(
   repository: DisscoCSRepository,
@@ -27,7 +28,7 @@ export function institutionsRoutes(
     }
 
     const institutions = await repository.institutions.listActiveInstitutions(siteId);
-    return c.json({ institutions });
+    return c.json({ institutions: institutions.map(toInstitutionDto) });
   });
 
   app.get('/active/:slug', async c => {
@@ -41,7 +42,7 @@ export function institutionsRoutes(
       return c.notFound();
     }
 
-    return c.json(institution);
+    return c.json(toInstitutionDto(institution));
   });
 
   app.get('/active/:slug/projects', async c => {
@@ -171,7 +172,7 @@ export function institutionsRoutes(
       return c.notFound();
     }
 
-    return c.json(institution);
+    return c.json(toInstitutionDto(institution));
   });
 
   app.get('/', async c => {
@@ -181,7 +182,7 @@ export function institutionsRoutes(
     }
 
     const institutions = await repository.institutions.listInstitutions(identity.siteId);
-    return c.json({ institutions });
+    return c.json({ institutions: institutions.map(toInstitutionDto) });
   });
 
   app.post('/', async c => {
@@ -190,13 +191,13 @@ export function institutionsRoutes(
       return identity;
     }
 
-    const payload = parseInstitutionBody((await c.req.json().catch(() => null)) as InstitutionBody | null);
-    if (!payload) {
+    const result = institutionInputSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('Invalid institution payload', 400);
     }
 
-    const institution = await repository.institutions.createInstitution(identity.siteId, payload);
-    return c.json(institution, 201);
+    const institution = await repository.institutions.createInstitution(identity.siteId, result.data);
+    return c.json(toInstitutionDto(institution), 201);
   });
 
   app.put('/order', async c => {
@@ -275,17 +276,17 @@ export function institutionsRoutes(
       return c.notFound();
     }
 
-    const payload = parseInstitutionBody((await c.req.json().catch(() => null)) as InstitutionBody | null);
-    if (!payload) {
+    const result = institutionInputSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('Invalid institution payload', 400);
     }
 
-    const institution = await repository.institutions.updateInstitution(identity.siteId, id, payload);
+    const institution = await repository.institutions.updateInstitution(identity.siteId, id, result.data);
     if (!institution) {
       return c.notFound();
     }
 
-    return c.json(institution);
+    return c.json(toInstitutionDto(institution));
   });
 
   app.delete('/:id', async c => {

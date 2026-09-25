@@ -9,7 +9,7 @@ import { useUser } from '../../hooks/use-current-user';
 import { getTasks } from '../../api/madoc-client/tasks';
 import { randomlyAssignedManifest } from '../../api/madoc-client/crowdsourcing';
 import { institutionsApi } from '../../api/cs-api';
-import { CrowdsourcingTask } from '../../types/crowdsourcing-task';
+import { CrowdsourcingTask, InternationalString } from '@dissco-cs/shared-types';
 import { buildTaskLink } from '../../utility/build-task-link';
 import { HrefLink } from '../../utility/href-link';
 import { LocaleString } from '../../components/LocaleString';
@@ -198,7 +198,7 @@ export const ProjectDetail: React.FC = () => {
             <section className="mb-10">
               <h2 className="text-[1.2rem] font-semibold text-[var(--cs-primary)] mt-0 mb-5">{t('pdp_manifests_title')}</h2>
               <div className="grid [grid-template-columns:repeat(auto-fill,minmax(150px,1fr))] gap-[14px] max-[700px]:[grid-template-columns:repeat(auto-fill,minmax(120px,1fr))]">
-                {manifests.map((manifest: any) => (
+                {manifests.map(manifest => (
                   <button
                     key={manifest.id}
                     onClick={() => navigateToFirstCanvas(manifest.id)}
@@ -209,7 +209,7 @@ export const ProjectDetail: React.FC = () => {
                       style={manifest.thumbnail ? { backgroundImage: `url(${manifest.thumbnail})` } : undefined}
                     />
                     <LocaleString className="py-[7px] px-[9px] text-[0.78rem] text-[#343a40] leading-[1.35] m-0 line-clamp-2">
-                      {manifest.label || 'Naamloos'}
+                      {(manifest.label as string | InternationalString | undefined) || 'Naamloos'}
                     </LocaleString>
                   </button>
                 ))}

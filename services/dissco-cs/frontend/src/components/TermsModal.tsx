@@ -1,7 +1,7 @@
 import React from 'react';
 import { CsMarkdown } from './CsMarkdown';
 import { Modal } from './Modal';
-import { SiteTerms } from '../api/madoc-client/auth';
+import { SiteTerms } from '@dissco-cs/shared-types';
 
 type TermsModalProps = {
   title: string;

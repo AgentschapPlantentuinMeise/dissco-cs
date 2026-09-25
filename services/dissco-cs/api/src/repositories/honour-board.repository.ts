@@ -1,10 +1,9 @@
 import { Pool } from 'pg';
 
 import { appConfig } from '../config.js';
+import { HONOUR_BOARD_PERIODS, HonourBoardEntry, HonourBoardPeriod, HonourBoardPeriodKey } from '@dissco-cs/shared-types';
 
-export type HonourBoardEntry = { userUrn: string; name: string; count: number };
-export type RankedHonourBoardEntry = HonourBoardEntry & { rank: number };
-export type HonourBoardPeriod = { top: RankedHonourBoardEntry[]; you: RankedHonourBoardEntry | null };
+type RankedHonourBoardEntry = HonourBoardEntry;
 
 const TOP_N = 3;
 
@@ -23,13 +22,11 @@ function startOfMonth(now: Date): Date {
   return new Date(now.getFullYear(), now.getMonth(), 1);
 }
 
-export type PeriodKey = 'today' | 'week' | 'month' | 'legend';
-export const HONOUR_BOARD_PERIODS: PeriodKey[] = ['today', 'week', 'month', 'legend'];
-export function isHonourBoardPeriod(value: string): value is PeriodKey {
+export function isHonourBoardPeriod(value: string): value is HonourBoardPeriodKey {
   return (HONOUR_BOARD_PERIODS as string[]).includes(value);
 }
 
-function sinceForPeriod(period: PeriodKey, now: Date): Date | null {
+function sinceForPeriod(period: HonourBoardPeriodKey, now: Date): Date | null {
   switch (period) {
     case 'today':
       return startOfDay(now);
@@ -146,7 +143,7 @@ export class HonourBoardRepository {
   // pays for a live query; every request after that gets the cached ranking back immediately
   // while a background refresh (fire-and-forget) checks for changes, so the next request sees
   // up-to-date numbers without ever blocking on the query itself.
-  private async getPeriodRanking(scope: LeaderboardScope, period: PeriodKey, since: Date | null): Promise<RankedHonourBoardEntry[]> {
+  private async getPeriodRanking(scope: LeaderboardScope, period: HonourBoardPeriodKey, since: Date | null): Promise<RankedHonourBoardEntry[]> {
     const cacheKey = `${scopeCacheKey(scope)}:${period}`;
     const cached = this.cache.get(cacheKey);
 
@@ -177,25 +174,25 @@ export class HonourBoardRepository {
   // Pure cache read, no side effects: never triggers a recompute, unlike getPeriod. For the
   // frontend's frequent "did it change yet?" poll, which must never itself cause work. Returns
   // null only if this period has never been cached yet for this scope.
-  private peekPeriod(scope: LeaderboardScope, period: PeriodKey, userUrn: string | null): HonourBoardPeriod | null {
+  private peekPeriod(scope: LeaderboardScope, period: HonourBoardPeriodKey, userUrn: string | null): HonourBoardPeriod | null {
     const cached = this.cache.get(`${scopeCacheKey(scope)}:${period}`);
     return cached ? this.toPeriod(cached.ranking, userUrn) : null;
   }
 
-  private async getPeriod(scope: LeaderboardScope, period: PeriodKey, userUrn: string | null): Promise<HonourBoardPeriod> {
+  private async getPeriod(scope: LeaderboardScope, period: HonourBoardPeriodKey, userUrn: string | null): Promise<HonourBoardPeriod> {
     const ranking = await this.getPeriodRanking(scope, period, sinceForPeriod(period, new Date()));
     return this.toPeriod(ranking, userUrn);
   }
 
-  peekSitePeriod(siteId: number, period: PeriodKey, userUrn: string | null): HonourBoardPeriod | null {
+  peekSitePeriod(siteId: number, period: HonourBoardPeriodKey, userUrn: string | null): HonourBoardPeriod | null {
     return this.peekPeriod({ kind: 'site', siteId }, period, userUrn);
   }
 
-  async getSitePeriod(siteId: number, period: PeriodKey, userUrn: string | null): Promise<HonourBoardPeriod> {
+  async getSitePeriod(siteId: number, period: HonourBoardPeriodKey, userUrn: string | null): Promise<HonourBoardPeriod> {
     return this.getPeriod({ kind: 'site', siteId }, period, userUrn);
   }
 
-  peekInstitutionPeriod(siteId: number, institutionId: number, period: PeriodKey, userUrn: string | null): HonourBoardPeriod | null {
+  peekInstitutionPeriod(siteId: number, institutionId: number, period: HonourBoardPeriodKey, userUrn: string | null): HonourBoardPeriod | null {
     return this.peekPeriod({ kind: 'institution', siteId, institutionId, taskIds: [] }, period, userUrn);
   }
 
@@ -203,7 +200,7 @@ export class HonourBoardRepository {
     siteId: number,
     institutionId: number,
     taskIds: string[],
-    period: PeriodKey,
+    period: HonourBoardPeriodKey,
     userUrn: string | null
   ): Promise<HonourBoardPeriod> {
     return this.getPeriod({ kind: 'institution', siteId, institutionId, taskIds }, period, userUrn);

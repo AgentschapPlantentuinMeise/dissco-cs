@@ -8,8 +8,8 @@ type AutocompleteValue = { uri: string; label: string; resource_class?: string }
 // replaced by the typed query, fetched directly (no auth — term-proxy is a public site endpoint),
 // expecting back `{ completions: CompletionItem[] }`.
 export function AutocompleteField({ field, path, onChange }: FieldProps) {
-  const dataSource: string | undefined = (field as any).dataSource;
-  const placeholder: string | undefined = (field as any).placeholder;
+  const dataSource = field.dataSource;
+  const placeholder = field.placeholder;
   const value: AutocompleteValue | undefined = field.value;
 
   const [query, setQuery] = useState(value?.label ?? '');

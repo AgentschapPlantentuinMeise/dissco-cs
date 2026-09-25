@@ -4,8 +4,8 @@ import { requireSiteAdmin } from '../jwt.js';
 import { getMadocProject } from '../madoc-client/projects.js';
 import { getMadocCollectionStructure } from '../madoc-client/collections.js';
 import { getMadocProjectTasks, ProjectDebugTask } from '../madoc-client/tasks.js';
+import { InternationalString, MadocProject, ProjectDebugResult } from '@dissco-cs/shared-types';
 
-type MadocProjectSummary = { id: number; collection_id: number; task_id: string };
 type CollectionStructureItem = { id: number; label?: unknown };
 
 // Admin-only debugpagina: toont per manifest van een project welke crowdsourcing-task(s)
@@ -21,9 +21,9 @@ export function projectDebugRoutes(): Hono {
 
     const projectId = c.req.param('projectId');
 
-    let project: MadocProjectSummary;
+    let project: MadocProject;
     try {
-      project = (await getMadocProject(identity.siteId, projectId)) as MadocProjectSummary;
+      project = await getMadocProject(identity.siteId, projectId);
     } catch (err) {
       console.error('[project-debug] getMadocProject failed', { siteId: identity.siteId, projectId }, err);
       return c.text('Internal Server Error', 500);
@@ -65,7 +65,7 @@ export function projectDebugRoutes(): Hono {
       const manifestTasks = tasksByManifestId.get(String(item.id)) ?? [];
       return {
         manifestId: item.id,
-        label: item.label,
+        label: item.label as InternationalString | string | undefined,
         countsAsTranscribed: manifestTasks.some(t => t.status === 2 || t.status === 3),
         tasks: manifestTasks.map(t => ({
           id: t.id,
@@ -80,7 +80,8 @@ export function projectDebugRoutes(): Hono {
     const transcribedCount = manifests.filter(m => m.countsAsTranscribed).length;
     const transcribedPercentage = manifests.length === 0 ? 0 : Math.round((transcribedCount / manifests.length) * 100);
 
-    return c.json({ totalManifests: manifests.length, transcribedPercentage, manifests });
+    const result: ProjectDebugResult = { totalManifests: manifests.length, transcribedPercentage, manifests };
+    return c.json(result);
   });
 
   return app;

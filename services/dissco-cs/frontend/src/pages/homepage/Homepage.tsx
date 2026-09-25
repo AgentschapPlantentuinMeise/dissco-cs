@@ -11,13 +11,14 @@ import { HonourBoardSpotlight } from '../../components/honour-board/HonourBoardS
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { useSiteStats } from '../../hooks/use-site-stats';
 import { HrefLink } from '../../utility/href-link';
+import { formatNumber } from '../../utility/format-number';
+import { MadocProjectListItem } from '@dissco-cs/shared-types';
 
 export const Homepage: React.FC = () => {
   const [isClient, setIsClient] = useState(false);
   const { data: projectsResponse, status } = useProjectList(1, { published: true });
   const { data: siteStats } = useSiteStats();
   const { t, i18n } = useTranslation('dissco-cs');
-  const formatNumber = (n: number) => n.toLocaleString(i18n.language);
 
   useEffect(() => {
     setIsClient(true);
@@ -30,7 +31,7 @@ export const Homepage: React.FC = () => {
   const projects = projectsResponse?.projects || [];
   const isLoadingList = status === 'loading';
 
-  const latestProjects = projects.filter((p: any) => p.status === 1).slice(0, 6);
+  const latestProjects = projects.filter((p: MadocProjectListItem) => p.status === 1).slice(0, 6);
 
   return (
     <CsPage>
@@ -70,9 +71,9 @@ export const Homepage: React.FC = () => {
             <div className="lg:col-start-1 lg:row-start-1 lg:self-start flex flex-col">
               <StatBanner
                 stats={[
-                  { value: siteStats ? formatNumber(siteStats.volunteers) : '—', label: t('institution_stats_volunteers') },
+                  { value: siteStats ? formatNumber(siteStats.volunteers, i18n.language) : '—', label: t('institution_stats_volunteers') },
                   {
-                    value: siteStats ? `${formatNumber(siteStats.tasksCompleted)} / ${formatNumber(siteStats.tasksTotal)}` : '—',
+                    value: siteStats ? `${formatNumber(siteStats.tasksCompleted, i18n.language)} / ${formatNumber(siteStats.tasksTotal, i18n.language)}` : '—',
                     label: t('honour_board_stat_tasks_label'),
                   },
                 ]}
@@ -83,7 +84,7 @@ export const Homepage: React.FC = () => {
                   <p className="text-center py-5">{t('no_projects')}</p>
                 )}
                 <div className="cs-projects-grid cs-projects-grid--compact">
-                  {latestProjects.map((project: any) => (
+                  {latestProjects.map((project: MadocProjectListItem) => (
                     <ProjectCard key={project.id} projectSummaryData={project} />
                   ))}
                 </div>

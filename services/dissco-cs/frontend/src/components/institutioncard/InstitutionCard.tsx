@@ -1,7 +1,8 @@
 ﻿import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Institution } from '../../api/cs-api';
+import { Institution } from '@dissco-cs/shared-types';
+import { siteLangText } from '../../utility/site-lang-text';
 
 interface InstitutionCardProps {
   institution: Institution;
@@ -9,7 +10,7 @@ interface InstitutionCardProps {
 
 export const InstitutionCard: React.FC<InstitutionCardProps> = ({ institution }) => {
   const { i18n } = useTranslation('dissco-cs');
-  const name = institution.name[i18n.language as keyof Institution['name']] || institution.name.nl || institution.slug;
+  const name = siteLangText(institution.name, i18n.language, institution.slug);
 
   return (
     <Link

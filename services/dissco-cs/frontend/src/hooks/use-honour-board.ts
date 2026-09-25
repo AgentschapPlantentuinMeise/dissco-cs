@@ -1,5 +1,6 @@
 import { useQuery } from 'react-query';
-import { honourBoardApi, HonourBoardPeriodKey } from '../api/cs-api';
+import { honourBoardApi } from '../api/cs-api';
+import { HonourBoardPeriodKey } from '@dissco-cs/shared-types';
 import { usePollingWindow } from './use-polling-window';
 
 // One independent query per period instead of one bundled call, so each period can render as

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { HonourBoardEntry, HonourBoardPeriod } from '../../api/cs-api';
+import { HonourBoardEntry, HonourBoardPeriod } from '@dissco-cs/shared-types';
 
 export const PeriodCard: React.FC<{
   titleKey: string;

@@ -1,10 +1,8 @@
 import React from 'react';
 import { FieldProps } from './registry';
 
-type CheckboxOption = { value: string; label: string; description?: string };
-
 export function CheckboxListField({ field, path, onChange }: FieldProps) {
-  const options: CheckboxOption[] = (field as any).options ?? [];
+  const options = field.options ?? [];
   const value: Record<string, boolean> = field.value ?? {};
 
   return (

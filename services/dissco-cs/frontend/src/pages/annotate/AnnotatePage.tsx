@@ -28,9 +28,7 @@ import { AnnotateLayout } from './AnnotateLayout';
 import { OpenSeadragonViewer } from './viewer/OpenSeadragonViewer';
 import { CaptureModelForm } from './form/CaptureModelForm';
 import { cloneModelDocument, createBlankDocument, setFieldValue, setFieldSelector, collectSelectorStates, pathsEqual, DocumentPath } from './form/document';
-import { AnnotationDocument } from '../../capture-model/types/document';
-import { CaptureModel, StructureNode } from '../../capture-model/types/capture-model';
-import { BoxSelectorState } from '../../capture-model/types/selector-types';
+import { AnnotationDocument, CaptureModel, StructureNode, BoxSelectorState, CreateResourceClaimResult } from '@dissco-cs/shared-types';
 import { getImageServiceId } from '../../utility/get-image-service-id';
 
 // crypto.randomUUID() only exists in secure contexts (https/localhost); this dev
@@ -167,7 +165,7 @@ export function AnnotatePage() {
   // can leave faster than the claim POST round-trips. Without awaiting this, releaseClaim would
   // see claimIdRef.current still undefined, skip the abandon entirely, and the claim that finishes
   // arriving moments later (after this component already unmounted) would never get released.
-  const claimPromiseRef = useRef<Promise<{ claim: any } | undefined> | null>(null);
+  const claimPromiseRef = useRef<Promise<CreateResourceClaimResult> | null>(null);
 
   // Resolves the claim's task id, waiting on the in-flight claim request if it hasn't landed yet
   // (a user can act faster than the claim POST round-trips) — shared by releaseClaim and save.
@@ -308,7 +306,9 @@ export function AnnotatePage() {
     hasSaved.current = true;
     await createCaptureModelRevision(
       {
-        captureModelId: model.id,
+        // A model fetched via getCaptureModel() always carries its own id back -- id is only
+        // optional on CaptureModel because a freshly-built local model (never seen here) wouldn't.
+        captureModelId: model.id!,
         document: annotationDocument,
         // Same id reused across saves (see revisionIdRef above) — the server upserts a revision
         // row by id, so re-submitting with this id updates the same draft instead of creating a

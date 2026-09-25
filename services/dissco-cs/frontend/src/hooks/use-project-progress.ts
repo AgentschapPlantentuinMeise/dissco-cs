@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useQuery } from 'react-query';
-import { projectProgressApi, ProjectProgress } from '../api/cs-api';
+import { projectProgressApi } from '../api/cs-api';
+import { ProjectProgress } from '@dissco-cs/shared-types';
 
 // Caps how many /progress requests are in flight at once -- each one triggers several downstream
 // Madoc/DB calls, so a full page of ProjectCards firing them all simultaneously can exhaust

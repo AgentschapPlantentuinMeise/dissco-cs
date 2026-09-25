@@ -24,6 +24,9 @@ notes
 .env.dev
 .env.prod
 
+# Lokale dev-env-vars voor rechtstreeks (buiten Docker) draaien van api/frontend via pnpm dev
+.env.local
+
 # Gebouwde image-bundels ("docker save" output) -- enkel via scp naar de server, nooit in git
 *.tar
 

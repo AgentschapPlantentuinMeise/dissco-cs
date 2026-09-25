@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ReviewTaskRow } from '../../api/cs-api';
+import { ReviewTaskRow, AnnotationDocument } from '@dissco-cs/shared-types';
 import { ReviewFieldForm } from '../../components/ReviewFieldForm';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useReviewRevisionDocument } from './useReviewRevisionDocument';
-import { AnnotationDocument } from '../../capture-model/types/document';
 import { localeText } from '../../utility/locale-text';
 import { LuTrash2 } from 'react-icons/lu';
 

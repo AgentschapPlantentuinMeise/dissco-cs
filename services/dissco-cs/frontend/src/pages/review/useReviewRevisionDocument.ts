@@ -1,9 +1,7 @@
 import { useQuery } from 'react-query';
 import { getCaptureModelRevision, getCaptureModel } from '../../api/madoc-client/crowdsourcing';
-import { ReviewTaskRow } from '../../api/cs-api';
+import { ReviewTaskRow, AnnotationDocument, CaptureModel } from '@dissco-cs/shared-types';
 import { cloneModelDocument, setFieldValue, DocumentPath } from '../annotate/form/document';
-import { AnnotationDocument } from '../../capture-model/types/document';
-import { CaptureModel } from '../../capture-model/types/capture-model';
 
 // Gebruikt door ReviewInlineExpansion: haalt de revisie + het capture model op en levert het
 // document dat getoond moet worden (lokale correctie indien aanwezig, anders een leeg document
@@ -20,7 +18,7 @@ export function useReviewRevisionDocument(
   );
   const modelQuery = useQuery<CaptureModel>(
     ['capture-model', revisionQuery.data?.captureModelId],
-    () => getCaptureModel(revisionQuery.data.captureModelId),
+    () => getCaptureModel(revisionQuery.data!.captureModelId),
     { enabled: !!revisionQuery.data?.captureModelId }
   );
 

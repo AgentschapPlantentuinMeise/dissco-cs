@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { sitePagesApi, SitePage, SitePageKey, SITE_PAGE_KEYS } from '../api/cs-api';
+import { sitePagesApi } from '../api/cs-api';
+import { SitePage, SitePageKey, SITE_PAGE_KEYS } from '@dissco-cs/shared-types';
 
 // Used before the first fetch resolves (or if it fails) — fail-open, in the default order,
 // so the navbar never flashes empty/incomplete while loading.

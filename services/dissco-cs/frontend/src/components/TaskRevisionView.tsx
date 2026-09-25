@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { getTaskById } from '../api/madoc-client/tasks';
 import { getCaptureModelRevision, getCaptureModel } from '../api/madoc-client/crowdsourcing';
 import { cloneModelDocument } from '../pages/annotate/form/document';
-import { CaptureModel } from '../capture-model/types/capture-model';
+import { CaptureModel } from '@dissco-cs/shared-types';
 import { ReviewFieldForm } from './ReviewFieldForm';
 
 interface TaskRevisionViewProps {
@@ -29,7 +29,7 @@ export function TaskRevisionView({ taskId }: TaskRevisionViewProps) {
   );
   const modelQuery = useQuery<CaptureModel>(
     ['capture-model', revisionQuery.data?.captureModelId],
-    () => getCaptureModel(revisionQuery.data.captureModelId),
+    () => getCaptureModel(revisionQuery.data!.captureModelId),
     { enabled: !!revisionQuery.data?.captureModelId }
   );
 

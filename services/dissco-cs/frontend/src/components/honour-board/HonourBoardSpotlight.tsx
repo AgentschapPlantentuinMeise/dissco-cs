@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LuMedal } from 'react-icons/lu';
 import { useHonourBoard } from '../../hooks/use-honour-board';
+import { formatNumber } from '../../utility/format-number';
 
 type SpotlightPeriod = 'today' | 'week' | 'month' | 'legend';
 
@@ -30,7 +31,6 @@ const PERIOD_LINE_KEY: Record<SpotlightPeriod, string> = {
 export const HonourBoardSpotlight: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { t, i18n } = useTranslation('dissco-cs');
   const board = useHonourBoard();
-  const formatNumber = (n: number) => n.toLocaleString(i18n.language);
 
   // Only periods that actually resolved with a top entry are candidates for the rotating featured
   // spot -- an empty or still-loading period would make a poor hero.
@@ -60,7 +60,7 @@ export const HonourBoardSpotlight: React.FC<{ className?: string }> = ({ classNa
             <LuMedal className="w-7 h-7 text-white/90 mx-auto mb-2" aria-hidden="true" />
             <div className="text-2xl font-bold text-white mb-1.5">{featured.entry.name}</div>
             <div className="text-sm text-[#a9c9c5]">
-              {t(PERIOD_LINE_KEY[featured.period], { value: formatNumber(featured.entry.count) })}
+              {t(PERIOD_LINE_KEY[featured.period], { value: formatNumber(featured.entry.count, i18n.language) })}
             </div>
           </>
         ) : (
@@ -85,7 +85,7 @@ export const HonourBoardSpotlight: React.FC<{ className?: string }> = ({ classNa
               ) : entry ? (
                 <>
                   <span className="flex-1 text-sm text-[#d3e8e5]">{entry.name}</span>
-                  <span className="text-xs text-[#82a19c] tabular-nums">{formatNumber(entry.count)}</span>
+                  <span className="text-xs text-[#82a19c] tabular-nums">{formatNumber(entry.count, i18n.language)}</span>
                 </>
               ) : (
                 <span className="flex-1 text-sm text-[#82a19c]">{t('honour_board_spotlight_empty')}</span>

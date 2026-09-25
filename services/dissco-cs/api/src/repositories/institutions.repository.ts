@@ -1,7 +1,7 @@
 import { Pool, PoolClient } from 'pg';
-import { SitePageLang } from './site-pages.repository.js';
+import { InstitutionInput, SitePageLang } from '@dissco-cs/shared-types';
 
-export type Institution = {
+export type InstitutionRow = {
   id: number;
   site_id: number;
   slug: string;
@@ -15,16 +15,6 @@ export type Institution = {
   sort_order: number;
   created_at: Date;
   updated_at: Date;
-};
-
-export type InstitutionInput = {
-  name: Partial<Record<SitePageLang, string>>;
-  description: Partial<Record<SitePageLang, string>>;
-  email: string | null;
-  phone: string | null;
-  website: string | null;
-  logo: string | null;
-  isActive: boolean;
 };
 
 function slugify(text: string): string {
@@ -46,8 +36,8 @@ export class InstitutionsRepository {
     return `${this.schemaRef}.${name}`;
   }
 
-  async listInstitutions(siteId: number): Promise<Institution[]> {
-    const result = await this.pool.query<Institution>(
+  async listInstitutions(siteId: number): Promise<InstitutionRow[]> {
+    const result = await this.pool.query<InstitutionRow>(
       `SELECT * FROM ${this.table('institutions')} WHERE site_id = $1 ORDER BY sort_order ASC, id ASC`,
       [siteId]
     );
@@ -55,8 +45,8 @@ export class InstitutionsRepository {
     return result.rows;
   }
 
-  async listActiveInstitutions(siteId: number): Promise<Institution[]> {
-    const result = await this.pool.query<Institution>(
+  async listActiveInstitutions(siteId: number): Promise<InstitutionRow[]> {
+    const result = await this.pool.query<InstitutionRow>(
       `SELECT * FROM ${this.table('institutions')} WHERE site_id = $1 AND is_active = TRUE ORDER BY sort_order ASC, id ASC`,
       [siteId]
     );
@@ -64,8 +54,8 @@ export class InstitutionsRepository {
     return result.rows;
   }
 
-  async getActiveInstitutionBySlug(siteId: number, slug: string): Promise<Institution | null> {
-    const result = await this.pool.query<Institution>(
+  async getActiveInstitutionBySlug(siteId: number, slug: string): Promise<InstitutionRow | null> {
+    const result = await this.pool.query<InstitutionRow>(
       `SELECT * FROM ${this.table('institutions')} WHERE site_id = $1 AND slug = $2 AND is_active = TRUE`,
       [siteId, slug]
     );
@@ -73,8 +63,8 @@ export class InstitutionsRepository {
     return result.rows[0] ?? null;
   }
 
-  async getActiveInstitutionForProjectSlug(siteId: number, projectSlug: string): Promise<Institution | null> {
-    const result = await this.pool.query<Institution>(
+  async getActiveInstitutionForProjectSlug(siteId: number, projectSlug: string): Promise<InstitutionRow | null> {
+    const result = await this.pool.query<InstitutionRow>(
       `
       SELECT i.* FROM ${this.table('institutions')} i
       JOIN ${this.table('project_institution_links')} l ON l.institution_id = i.id
@@ -95,11 +85,11 @@ export class InstitutionsRepository {
     return result.rows.map(row => row.project_slug);
   }
 
-  async createInstitution(siteId: number, input: InstitutionInput): Promise<Institution> {
+  async createInstitution(siteId: number, input: InstitutionInput): Promise<InstitutionRow> {
     const baseName = input.name.nl || input.name.en || input.name.fr || input.name.de || 'instituut';
     const slug = await this.uniqueInstitutionSlug(siteId, baseName, null);
 
-    const result = await this.pool.query<Institution>(
+    const result = await this.pool.query<InstitutionRow>(
       `
       INSERT INTO ${this.table('institutions')} (
         site_id, slug, name, description, email, phone, website, logo, is_active
@@ -122,8 +112,8 @@ export class InstitutionsRepository {
     return result.rows[0];
   }
 
-  async updateInstitution(siteId: number, id: number, input: InstitutionInput): Promise<Institution | null> {
-    const existing = await this.pool.query<Institution>(
+  async updateInstitution(siteId: number, id: number, input: InstitutionInput): Promise<InstitutionRow | null> {
+    const existing = await this.pool.query<InstitutionRow>(
       `SELECT * FROM ${this.table('institutions')} WHERE id = $1 AND site_id = $2`,
       [id, siteId]
     );
@@ -135,7 +125,7 @@ export class InstitutionsRepository {
     const baseName = input.name.nl || input.name.en || input.name.fr || input.name.de || 'instituut';
     const slug = await this.uniqueInstitutionSlug(siteId, baseName, id);
 
-    const result = await this.pool.query<Institution>(
+    const result = await this.pool.query<InstitutionRow>(
       `
       UPDATE ${this.table('institutions')}
       SET slug = $3, name = $4, description = $5, email = $6, phone = $7, website = $8, logo = $9,
@@ -160,8 +150,8 @@ export class InstitutionsRepository {
     return result.rows[0] ?? null;
   }
 
-  async getInstitutionById(siteId: number, id: number): Promise<Institution | null> {
-    const result = await this.pool.query<Institution>(
+  async getInstitutionById(siteId: number, id: number): Promise<InstitutionRow | null> {
+    const result = await this.pool.query<InstitutionRow>(
       `SELECT * FROM ${this.table('institutions')} WHERE id = $1 AND site_id = $2`,
       [id, siteId]
     );
