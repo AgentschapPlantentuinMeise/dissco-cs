@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import {
   ANNOUNCEMENT_TARGET_TYPES,
   AnnouncementTargetType,
@@ -9,7 +10,6 @@ import {
   SitePageLang,
 } from '@dissco-cs/shared-types';
 import {
-  AnnouncementBody,
   CreateFeedbackThreadBody,
   PruneProjectLinksBody,
   SetInstitutionLinkBody,
@@ -22,6 +22,9 @@ export const MAX_MANUAL_TITLE_LENGTH = 200;
 export const MAX_MANUAL_CONTENT_LENGTH = 200_000;
 export const MAX_MANUAL_ATTACHMENT_LENGTH = 8_000_000;
 export const CONTACT_RATE_LIMIT = { maxAttempts: 5, windowMs: 10 * 60 * 1000 };
+
+const idOrNull = z.union([z.number().int(), z.string().regex(/^\d+$/).transform(Number)]).nullable();
+export const pruneProjectLinksSchema = z.object({ liveSlugs: z.array(z.string().trim().min(1)).min(1) });
 
 export function getClientIp(c: { req: { header: (name: string) => string | undefined } }): string {
   const forwardedFor = c.req.header('x-forwarded-for');
@@ -50,47 +53,6 @@ export function isSitePageLang(value: unknown): value is SitePageLang {
 
 export function isAnnouncementTargetType(value: unknown): value is AnnouncementTargetType {
   return typeof value === 'string' && (ANNOUNCEMENT_TARGET_TYPES as readonly string[]).includes(value);
-}
-
-export function isIsoDateOrNull(value: unknown): value is string | null {
-  if (value === null || value === undefined) {
-    return true;
-  }
-  return typeof value === 'string' && !Number.isNaN(Date.parse(value));
-}
-
-const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-
-export function endOfDayIfDateOnly(value: string | null): string | null {
-  if (value === null || !DATE_ONLY_PATTERN.test(value)) {
-    return value;
-  }
-  return `${value}T23:59:59.999`;
-}
-
-export function isMultilingualText(value: unknown, requireFilled: boolean): value is Partial<Record<SitePageLang, string>> {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  const record = value as Record<string, unknown>;
-  for (const lang of SITE_PAGE_LANGS) {
-    const entry = record[lang];
-    if (entry === undefined) {
-      if (requireFilled) {
-        return false;
-      }
-      continue;
-    }
-    if (typeof entry !== 'string') {
-      return false;
-    }
-    if (requireFilled && entry.trim().length === 0) {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 export function isSitePageKeyPermutation(value: unknown): value is SitePageKey[] {
@@ -177,51 +139,6 @@ export function parsePruneProjectLinksBody(payload: PruneProjectLinksBody | null
   }
 
   return { liveSlugs: payload.liveSlugs as string[] };
-}
-
-export function parseAnnouncementBody(
-  payload: AnnouncementBody | null
-): {
-  title: Partial<Record<SitePageLang, string>>;
-  description: Partial<Record<SitePageLang, string>>;
-  targetType: AnnouncementTargetType;
-  targetProjectSlug: string | null;
-  isActive: boolean;
-  startDate: string | null;
-  endDate: string | null;
-} | null {
-  if (
-    !payload ||
-    !isMultilingualText(payload.title, true) ||
-    !isMultilingualText(payload.description, true) ||
-    !isAnnouncementTargetType(payload.targetType) ||
-    typeof payload.isActive !== 'boolean' ||
-    !isIsoDateOrNull(payload.startDate ?? null) ||
-    !isIsoDateOrNull(payload.endDate ?? null)
-  ) {
-    return null;
-  }
-
-  if (payload.targetType === 'project' && !isNonEmptyString(payload.targetProjectSlug)) {
-    return null;
-  }
-
-  const startDate = (payload.startDate as string | null) ?? null;
-  const endDate = endOfDayIfDateOnly((payload.endDate as string | null) ?? null);
-
-  if (isNonEmptyString(startDate) && isNonEmptyString(endDate) && Date.parse(startDate) > Date.parse(endDate)) {
-    return null;
-  }
-
-  return {
-    title: payload.title,
-    description: payload.description,
-    targetType: payload.targetType,
-    targetProjectSlug: payload.targetType === 'project' ? (payload.targetProjectSlug as string) : null,
-    isActive: payload.isActive,
-    startDate,
-    endDate,
-  };
 }
 
 export function parseCreateFeedbackThreadBody(

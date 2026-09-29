@@ -1,11 +1,11 @@
 ﻿import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Institution } from '@dissco-cs/shared-types';
+import { InstitutionDto } from '@dissco-cs/shared-types';
 import { siteLangText } from '../../utility/site-lang-text';
 
 interface InstitutionCardProps {
-  institution: Institution;
+  institution: InstitutionDto;
 }
 
 export const InstitutionCard: React.FC<InstitutionCardProps> = ({ institution }) => {

@@ -1,13 +1,12 @@
 ﻿import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select } from '../Select';
-
-export type MessageFormData = { title: string; taskUrl: string; body: string; projectSlug?: string; projectLabel?: string };
+import { ForumTopicInput } from '@dissco-cs/shared-types';
 
 type ProjectOption = { slug: string; label: string };
 
 type Props = {
-  onSubmit: (data: MessageFormData) => void;
+  onSubmit: (data: ForumTopicInput) => void;
   onCancel?: () => void;
   initialTaskUrl?: string;
   // Set by AnnotatePage — the task link is already fixed by context there, same reasoning as
@@ -36,14 +35,20 @@ export const MessageForm: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation('dissco-cs');
 
-  const [fields, setFields] = useState<MessageFormData>({ title: '', taskUrl: initialTaskUrl, body: '', projectSlug: '' });
+  const [fields, setFields] = useState<ForumTopicInput>({
+    title: '',
+    taskUrl: initialTaskUrl,
+    body: '',
+    projectSlug: '',
+    projectLabel: '',
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!fields.title.trim() || !fields.body.trim()) return;
     const selectedProject = projectOptions?.find(p => p.slug === fields.projectSlug);
-    onSubmit({ ...fields, projectSlug: selectedProject?.slug, projectLabel: selectedProject?.label });
-    setFields({ title: '', taskUrl: initialTaskUrl, body: '', projectSlug: '' });
+    onSubmit({ ...fields, projectSlug: selectedProject?.slug ?? null, projectLabel: selectedProject?.label ?? null });
+    setFields({ title: '', taskUrl: initialTaskUrl, body: '', projectSlug: '', projectLabel: '' });
   };
 
   return (
@@ -65,7 +70,7 @@ export const MessageForm: React.FC<Props> = ({
         <input
           className={`${inputClass}${taskUrlReadOnly ? ' bg-gray-100 text-gray-600 cursor-default' : ''}`}
           type="url"
-          value={fields.taskUrl}
+          value={fields.taskUrl ?? ''}
           onChange={e => setFields(p => ({ ...p, taskUrl: e.target.value }))}
           placeholder={'https://...'}
           readOnly={taskUrlReadOnly}
@@ -85,7 +90,7 @@ export const MessageForm: React.FC<Props> = ({
             {t('forum_form_label_project') || 'Project'}
             <Select
               className={inputClass}
-              value={fields.projectSlug}
+              value={fields.projectSlug ?? ''}
               onChange={e => setFields(p => ({ ...p, projectSlug: e.target.value }))}
             >
               <option value="">{t('forum_form_project_none') || '— Geen project —'}</option>

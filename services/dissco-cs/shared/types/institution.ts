@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { SITE_PAGE_LANGS, SitePageLang } from './site-page.js';
+import { SitePageLang, multilingualTextSchema, emailSchema } from './common.js';
 
 // Wire shape -- created_at/updated_at are DB bookkeeping only (see InstitutionRow in the API
 // repository) and never sent to the frontend; routes strip them via toInstitutionDto().
-export type Institution = {
+export type InstitutionDto = {
   id: number;
   site_id: number;
   slug: string;
@@ -21,20 +21,14 @@ export type Institution = {
 // limit both client- and server-side.
 export const INSTITUTION_LOGO_MAX_LENGTH = 3_000_000;
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Copied verbatim from the frontend's old isValidPhone -- keep permissive, a stricter regex once
 // broke Belgian phone notation.
 const PHONE_CHARS_REGEX = /^[0-9+\-\s().\/]+$/;
 
-const multilingualTextShape = Object.fromEntries(
-  SITE_PAGE_LANGS.map(lang => [lang, z.string().trim().min(1, 'Required in all languages')])
-) as Record<SitePageLang, z.ZodString>;
-const multilingualTextSchema = z.object(multilingualTextShape);
-
 export const institutionInputSchema = z.object({
-  name: multilingualTextSchema,
-  description: multilingualTextSchema,
-  email: z.string().trim().min(1, 'Email is required').regex(EMAIL_REGEX, 'Invalid email'),
+  name: multilingualTextSchema(true),
+  description: multilingualTextSchema(true),
+  email: emailSchema,
   phone: z
     .string()
     .trim()
@@ -52,7 +46,7 @@ export const institutionInputSchema = z.object({
 
 export type InstitutionInput = z.infer<typeof institutionInputSchema>;
 
-export type InstitutionOverview = {
+export type InstitutionStatsDto = {
   volunteers: number;
   tasksCompleted: number;
   tasksTotal: number;

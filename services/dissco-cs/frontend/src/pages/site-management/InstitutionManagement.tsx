@@ -11,7 +11,7 @@ import { ActiveStatusToggle } from '../../components/ActiveStatusToggle';
 import { ActiveToggleField } from '../../components/ActiveToggleField';
 import { LuPencil, LuArrowLeft } from 'react-icons/lu';
 import { institutionsApi } from '../../api/cs-api';
-import { Institution, InstitutionInput, SitePageLang, SITE_PAGE_LANGS, institutionInputSchema } from '@dissco-cs/shared-types';
+import { InstitutionDto, InstitutionInput, SitePageLang, SITE_PAGE_LANGS, institutionInputSchema } from '@dissco-cs/shared-types';
 import { LANGUAGES, defaultLang, siteLangText } from '../../utility/site-lang-text';
 
 const emptyMultilingualText = Object.fromEntries(SITE_PAGE_LANGS.map(lang => [lang, ''])) as Record<SitePageLang, string>;
@@ -44,12 +44,12 @@ export const InstitutionManagement: React.FC = () => {
   const { data, isLoading, refetch } = useQuery('admin-institutions', () => institutionsApi.listAdmin());
   const institutions = data?.institutions ?? [];
 
-  const [editingId, setEditingId] = useState<Institution['id'] | null>(null);
+  const [editingId, setEditingId] = useState<InstitutionDto['id'] | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [draft, setDraft] = useState<InstitutionInput>(emptyDraft);
   const [logoFileName, setLogoFileName] = useState<string | null>(null);
   const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
-  const [pendingDeleteId, setPendingDeleteId] = useState<Institution['id'] | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<InstitutionDto['id'] | null>(null);
   const [saveError, setSaveError] = useState(false);
 
   const refresh = () => refetch();
@@ -63,7 +63,7 @@ export const InstitutionManagement: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const startEdit = (institution: Institution) => {
+  const startEdit = (institution: InstitutionDto) => {
     setEditingId(institution.id);
     setDraft({
       name: toMultilingualDraft(institution.name),
@@ -121,7 +121,7 @@ export const InstitutionManagement: React.FC = () => {
     refresh();
   };
 
-  const toggleActive = async (institution: Institution) => {
+  const toggleActive = async (institution: InstitutionDto) => {
     await institutionsApi.update(institution.id, {
       name: toMultilingualDraft(institution.name),
       description: toMultilingualDraft(institution.description),

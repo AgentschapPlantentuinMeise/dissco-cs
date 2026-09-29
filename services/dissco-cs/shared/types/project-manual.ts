@@ -1,4 +1,4 @@
-import { SitePageLang } from './site-page.js';
+import { SitePageLang } from './common.js';
 
 // Wire shape sent by project-manuals.routes.ts, built from the repository's own (differently
 // named/shaped) `ProjectManualAttachmentMeta` row -- `lang` is dropped (it's the record key) and

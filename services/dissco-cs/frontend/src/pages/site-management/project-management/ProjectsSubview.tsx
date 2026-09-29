@@ -6,13 +6,13 @@ import { Select } from '../../../components/Select';
 import { manualHasContent } from './manual-content';
 import { localeText } from '../../../utility/locale-text';
 import { siteLangText } from '../../../utility/site-lang-text';
-import { MadocProjectListItem, Institution, ProjectManualSummary } from '@dissco-cs/shared-types';
+import { MadocProjectListItem, InstitutionDto, ProjectManualSummary } from '@dissco-cs/shared-types';
 
 export const ProjectsSubview: React.FC<{
   projects: MadocProjectListItem[];
   manuals: ProjectManualSummary[];
   refetchManuals: () => void;
-  institutions: Institution[];
+  institutions: InstitutionDto[];
   institutionLinks: Record<string, number>;
   refetchInstitutionLinks: () => void;
 }> = ({ projects, manuals, refetchManuals, institutions, institutionLinks, refetchInstitutionLinks }) => {

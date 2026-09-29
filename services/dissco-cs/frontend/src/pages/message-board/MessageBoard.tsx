@@ -3,12 +3,12 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { CsPage } from '../../components/CsPage';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { MessageForm, MessageFormData } from '../../components/messageform/MessageForm';
+import { MessageForm } from '../../components/messageform/MessageForm';
 import { useUser } from '../../hooks/use-current-user';
 import { useTranslation } from 'react-i18next';
 import { forumApi } from '../../api/cs-api';
 import { getAllSiteProjects } from '../../api/madoc-client/projects';
-import { MadocProjectListItem, ForumTopicWithReplyCount, ForumReply } from '@dissco-cs/shared-types';
+import { MadocProjectListItem, ForumTopicDto, ForumReplyDto, ForumTopicInput } from '@dissco-cs/shared-types';
 import { DeleteIconButton } from '../../components/DeleteIconButton';
 import { localeText } from '../../utility/locale-text';
 import { formatDate } from '../../utility/format-date';
@@ -38,8 +38,8 @@ export const MessageBoard: React.FC = () => {
     [allProjects, i18n.language]
   );
 
-  const [topics, setTopics] = useState<ForumTopicWithReplyCount[]>([]);
-  const [repliesByTopic, setRepliesByTopic] = useState<Record<string, ForumReply[]>>({});
+  const [topics, setTopics] = useState<ForumTopicDto[]>([]);
+  const [repliesByTopic, setRepliesByTopic] = useState<Record<string, ForumReplyDto[]>>({});
   const [showNewForm, setShowNewForm] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
@@ -70,10 +70,10 @@ export const MessageBoard: React.FC = () => {
     didHandleDeepLink.current = true;
 
     setExpandedId(topicId);
-    forumApi.getTopic(topicId).then(detail => {
-      setRepliesByTopic(prev => ({ ...prev, [topicId]: detail.replies }));
+    forumApi.listReplies(topicId).then(replies => {
+      setRepliesByTopic(prev => ({ ...prev, [topicId]: replies }));
       setTopics(prev => prev.map(m =>
-        m.id === topicId ? { ...m, last_seen_reply_count: detail.replies.length } : m
+        m.id === topicId ? { ...m, last_seen_reply_count: replies.length } : m
       ));
     });
     document.getElementById(`topic-${topicId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -83,7 +83,7 @@ export const MessageBoard: React.FC = () => {
     window.dispatchEvent(new Event('mb_updated'));
   }, [topics]);
 
-  const isUnread = (msg: ForumTopicWithReplyCount) => {
+  const isUnread = (msg: ForumTopicDto) => {
     const seen = msg.last_seen_reply_count;
     return seen === null || msg.reply_count > seen;
   };
@@ -120,10 +120,10 @@ export const MessageBoard: React.FC = () => {
     }
 
     setExpandedId(topicId);
-    forumApi.getTopic(topicId).then(detail => {
-      setRepliesByTopic(prev => ({ ...prev, [topicId]: detail.replies }));
+    forumApi.listReplies(topicId).then(replies => {
+      setRepliesByTopic(prev => ({ ...prev, [topicId]: replies }));
       setTopics(prev => prev.map(m =>
-        m.id === topicId ? { ...m, last_seen_reply_count: detail.replies.length } : m
+        m.id === topicId ? { ...m, last_seen_reply_count: replies.length } : m
       ));
     });
   };
@@ -170,9 +170,9 @@ export const MessageBoard: React.FC = () => {
     });
   };
 
-  const handleSubmitMessage = (data: MessageFormData) => {
+  const handleSubmitMessage = (data: ForumTopicInput) => {
     forumApi.createTopic(data).then(topic => {
-      setTopics(prev => [{ ...topic, reply_count: 0, last_seen_reply_count: 0 }, ...prev]);
+      setTopics(prev => [topic, ...prev]);
       setShowNewForm(false);
     });
   };
@@ -223,7 +223,7 @@ export const MessageBoard: React.FC = () => {
             )}
 
             <div className="flex flex-col gap-2.5">
-              {displayTopics.map((msg: ForumTopicWithReplyCount) => {
+              {displayTopics.map((msg: ForumTopicDto) => {
                 const unread = isUnread(msg);
                 const replies = repliesByTopic[msg.id] || [];
                 const isAdmin = !!user?.scope.includes('site.admin');

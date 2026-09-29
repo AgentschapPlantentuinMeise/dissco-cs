@@ -6,10 +6,10 @@ import { InstitutionStatsRepository } from '../repositories/institution-stats.re
 import { InstitutionRow } from '../repositories/institutions.repository.js';
 import { parsePruneProjectLinksBody, parseSetInstitutionLinkBody } from '../validators.js';
 import { PruneProjectLinksBody, SetInstitutionLinkBody, SetInstitutionsOrderBody } from '../types/request-bodies.js';
-import { Institution, institutionInputSchema } from '@dissco-cs/shared-types';
+import { InstitutionDto, institutionInputSchema } from '@dissco-cs/shared-types';
 
 // created_at/updated_at are DB bookkeeping (see InstitutionRow), never part of the wire DTO.
-function toInstitutionDto(row: InstitutionRow): Institution {
+function toInstitutionDto(row: InstitutionRow): InstitutionDto {
   const { created_at, updated_at, ...dto } = row;
   return dto;
 }

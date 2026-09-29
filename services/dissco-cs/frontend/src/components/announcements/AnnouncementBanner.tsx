@@ -3,7 +3,7 @@ import { useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import { announcementsApi } from '../../api/cs-api';
-import { Announcement, AnnouncementTargetType } from '@dissco-cs/shared-types';
+import { AnnouncementDto, AnnouncementTargetType } from '@dissco-cs/shared-types';
 import { LuPin, LuChevronDown } from 'react-icons/lu';
 import { useUser } from '../../hooks/use-current-user';
 import { siteLangText } from '../../utility/site-lang-text';
@@ -31,7 +31,7 @@ function storageKey(target: AnnouncementTargetType, projectSlug?: string): strin
   return `cs-announcements-collapsed-${target}${projectSlug ? `-${projectSlug}` : ''}`;
 }
 
-function signatureOf(announcement: Announcement): string {
+function signatureOf(announcement: AnnouncementDto): string {
   return `${announcement.id}:${JSON.stringify(announcement.title)}:${JSON.stringify(announcement.description)}`;
 }
 

@@ -22,7 +22,8 @@ import { LocaleString, useLocaleString } from '../../components/LocaleString';
 import { ProjectManualModal } from '../../components/ProjectManualModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Modal } from '../../components/Modal';
-import { MessageForm, MessageFormData } from '../../components/messageform/MessageForm';
+import { MessageForm } from '../../components/messageform/MessageForm';
+import { ForumTopicInput } from '@dissco-cs/shared-types';
 import { LuBookOpen, LuMail } from 'react-icons/lu';
 import { AnnotateLayout } from './AnnotateLayout';
 import { OpenSeadragonViewer } from './viewer/OpenSeadragonViewer';
@@ -398,8 +399,8 @@ export function AnnotatePage() {
   // elsewhere (handleSaveAndAdvance) — the task lands in "Saved tasks" and the user proceeds to
   // returnTo (if they came from their saved-tasks list) or the next task, exactly like a normal
   // draft save.
-  const handlePostForumMessage = async (data: MessageFormData) => {
-    await forumApi.createTopic({ ...data, projectSlug: project?.slug, projectLabel });
+  const handlePostForumMessage = async (data: ForumTopicInput) => {
+    await forumApi.createTopic({ ...data, projectSlug: project?.slug ?? null, projectLabel: projectLabel ?? null });
     setForumOpen(false);
     await handleSaveAndAdvance('draft');
   };

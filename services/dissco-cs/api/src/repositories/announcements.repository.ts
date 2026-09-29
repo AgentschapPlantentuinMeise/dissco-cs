@@ -1,7 +1,7 @@
 import { Pool } from 'pg';
 import { ANNOUNCEMENT_TARGET_TYPES, AnnouncementTargetType, SitePageLang } from '@dissco-cs/shared-types';
 
-// Local row shape (`Date | null` fields, from `pg`) -- the shared `Announcement` DTO type
+// Local row shape (`Date | null` fields, from `pg`) -- the shared `AnnouncementDto` type
 // describes the wire shape (all strings) route handlers actually send.
 export type AnnouncementRow = {
   id: string;

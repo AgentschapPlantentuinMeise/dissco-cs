@@ -1,4 +1,5 @@
 export * from './madoc-project.js';
+export * from './common.js';
 export * from './site-page.js';
 export * from './institution.js';
 export * from './announcement.js';

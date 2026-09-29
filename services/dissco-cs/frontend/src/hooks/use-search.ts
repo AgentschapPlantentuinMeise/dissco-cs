@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { getAllSiteProjects } from '../api/madoc-client/projects';
 import { institutionsApi } from '../api/cs-api';
-import { Institution, MadocProjectListItem } from '@dissco-cs/shared-types';
+import { InstitutionDto, MadocProjectListItem } from '@dissco-cs/shared-types';
 
 const MIN_QUERY_LENGTH = 2;
 
@@ -48,7 +48,7 @@ export function useSearch(query: string) {
       return [];
     }
     return (institutionsQuery.data?.institutions || []).filter(
-      (institution: Institution) =>
+      (institution: InstitutionDto) =>
         matchesInternationalString(institution.name, trimmed) ||
         matchesInternationalString(institution.description, trimmed)
     );

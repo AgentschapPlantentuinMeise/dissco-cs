@@ -16,7 +16,7 @@ import { LuTrash2 } from 'react-icons/lu';
 import { StatBanner } from '../../components/StatBanner';
 import { TaskTable, tabBtnClass } from '../../components/TaskTable';
 import { forumApi, reviewFeedbackApi } from '../../api/cs-api';
-import { CrowdsourcingTask, ForumTopicWithReplyCount, FeedbackThreadWithMeta } from '@dissco-cs/shared-types';
+import { CrowdsourcingTask, ForumTopicDto, FeedbackThreadWithMeta } from '@dissco-cs/shared-types';
 import { useSiteStats } from '../../hooks/use-site-stats';
 
 
@@ -406,7 +406,7 @@ export const UserDashboard: React.FC = () => {
                   <p className="text-sm text-gray-500 m-0">{t('dashboard_widget_empty')}</p>
                 ) : (
                   <ul className="list-none m-0 p-0 flex flex-col">
-                    {unansweredTopics.map((topic: ForumTopicWithReplyCount) => (
+                    {unansweredTopics.map((topic: ForumTopicDto) => (
                       <li key={topic.id} className="border-b border-gray-200 last:border-b-0">
                         <HrefLink
                           href={`/messageboard?topic=${topic.id}`}

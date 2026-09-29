@@ -2,10 +2,9 @@ import { getJwt, redirectToExpiredLogin } from './jwt';
 import { getSiteSlug } from './slug';
 import {
   CrowdsourcingTask,
-  ForumTopic,
-  ForumTopicWithReplyCount,
-  ForumReply,
-  ForumTopicWithReplies,
+  ForumTopicDto,
+  ForumReplyDto,
+  ForumTopicInput,
   SitePageKey,
   SitePageLang,
   SitePage,
@@ -13,14 +12,14 @@ import {
   FeedbackThreadWithMeta,
   FeedbackMessage,
   AnnouncementTargetType,
-  Announcement,
+  AnnouncementDto,
   AnnouncementInput,
   SiteStats,
   HonourBoardPeriod,
   HonourBoardPeriodKey,
-  Institution,
+  InstitutionDto,
   InstitutionInput,
-  InstitutionOverview,
+  InstitutionStatsDto,
   ProjectManual,
   ProjectManualSummary,
   ProjectManualForVolunteer,
@@ -60,15 +59,15 @@ async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const forumApi = {
-  listTopics: () => csFetch<{ topics: ForumTopicWithReplyCount[] }>('/forum/topics'),
+  listTopics: () => csFetch<{ topics: ForumTopicDto[] }>('/forum/topics'),
 
-  createTopic: (data: { title: string; taskUrl: string; body: string; projectSlug?: string; projectLabel?: string }) =>
-    csFetch<ForumTopic>('/forum/topics', { method: 'POST', body: JSON.stringify(data) }),
+  createTopic: (data: ForumTopicInput) =>
+    csFetch<ForumTopicDto>('/forum/topics', { method: 'POST', body: JSON.stringify(data) }),
 
-  getTopic: (topicId: number) => csFetch<ForumTopicWithReplies>(`/forum/topics/${topicId}`),
+  listReplies: (topicId: number) => csFetch<ForumReplyDto[]>(`/forum/topics/${topicId}/replies`),
 
   createReply: (topicId: number, body: string) =>
-    csFetch<ForumReply>(`/forum/topics/${topicId}/replies`, {
+    csFetch<ForumReplyDto>(`/forum/topics/${topicId}/replies`, {
       method: 'POST',
       body: JSON.stringify({ body }),
     }),
@@ -77,7 +76,7 @@ export const forumApi = {
 
   deleteTopic: (topicId: number) => csFetch<void>(`/forum/topics/${topicId}`, { method: 'DELETE' }),
 
-  closeTopic: (topicId: number) => csFetch<ForumTopic>(`/forum/topics/${topicId}/close`, { method: 'POST' }),
+  closeTopic: (topicId: number) => csFetch<ForumTopicDto>(`/forum/topics/${topicId}/close`, { method: 'POST' }),
 
   deleteReply: (topicId: number, replyId: number) =>
     csFetch<void>(`/forum/topics/${topicId}/replies/${replyId}`, { method: 'DELETE' }),
@@ -160,22 +159,22 @@ export const contactApi = {
 };
 
 export const announcementsApi = {
-  listAdmin: () => csFetch<{ announcements: Announcement[] }>('/announcements'),
+  listAdmin: () => csFetch<{ announcements: AnnouncementDto[] }>('/announcements'),
 
   listActive: (target: AnnouncementTargetType, projectSlug?: string) =>
-    csFetch<{ announcements: Announcement[] }>(
+    csFetch<{ announcements: AnnouncementDto[] }>(
       `/announcements/active?slug=${getSiteSlug()}&target=${target}${
         projectSlug ? `&projectSlug=${encodeURIComponent(projectSlug)}` : ''
       }`
     ),
 
   create: (data: AnnouncementInput) =>
-    csFetch<Announcement>('/announcements', { method: 'POST', body: JSON.stringify(data) }),
+    csFetch<AnnouncementDto>('/announcements', { method: 'POST', body: JSON.stringify(data) }),
 
-  update: (id: Announcement['id'], data: AnnouncementInput) =>
-    csFetch<Announcement>(`/announcements/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  update: (id: AnnouncementDto['id'], data: AnnouncementInput) =>
+    csFetch<AnnouncementDto>(`/announcements/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
-  remove: (id: Announcement['id']) => csFetch<void>(`/announcements/${id}`, { method: 'DELETE' }),
+  remove: (id: AnnouncementDto['id']) => csFetch<void>(`/announcements/${id}`, { method: 'DELETE' }),
 };
 
 export const statsApi = {
@@ -192,21 +191,21 @@ export const honourBoardApi = {
 };
 
 export const institutionsApi = {
-  listActive: () => csFetch<{ institutions: Institution[] }>(`/institutions/active?slug=${getSiteSlug()}`),
+  listActive: () => csFetch<{ institutions: InstitutionDto[] }>(`/institutions/active?slug=${getSiteSlug()}`),
 
-  getActive: (slug: string) => csFetch<Institution>(`/institutions/active/${slug}?slug=${getSiteSlug()}`),
+  getActive: (slug: string) => csFetch<InstitutionDto>(`/institutions/active/${slug}?slug=${getSiteSlug()}`),
 
   getForProject: (projectSlug: string) =>
-    csFetch<Institution>(`/institutions/for-project/${encodeURIComponent(projectSlug)}?slug=${getSiteSlug()}`),
+    csFetch<InstitutionDto>(`/institutions/for-project/${encodeURIComponent(projectSlug)}?slug=${getSiteSlug()}`),
 
   getActiveProjectSlugs: (slug: string) =>
     csFetch<{ projectSlugs: string[] }>(`/institutions/active/${slug}/projects?slug=${getSiteSlug()}`),
 
   getStats: (slug: string) =>
-    csFetch<InstitutionOverview>(`/institutions/active/${slug}/stats?slug=${getSiteSlug()}`),
+    csFetch<InstitutionStatsDto>(`/institutions/active/${slug}/stats?slug=${getSiteSlug()}`),
   // Pure cache read, never triggers a recompute -- for periodic polling.
   getStatsCurrent: (slug: string) =>
-    csFetch<InstitutionOverview>(`/institutions/active/${slug}/stats/current?slug=${getSiteSlug()}`),
+    csFetch<InstitutionStatsDto>(`/institutions/active/${slug}/stats/current?slug=${getSiteSlug()}`),
 
   getHonourBoard: (slug: string, period: HonourBoardPeriodKey) =>
     csFetch<HonourBoardPeriod>(`/institutions/active/${slug}/honour-board/${period}?slug=${getSiteSlug()}`),
@@ -214,17 +213,17 @@ export const institutionsApi = {
   getHonourBoardCurrent: (slug: string, period: HonourBoardPeriodKey) =>
     csFetch<HonourBoardPeriod>(`/institutions/active/${slug}/honour-board/${period}/current?slug=${getSiteSlug()}`),
 
-  listAdmin: () => csFetch<{ institutions: Institution[] }>('/institutions'),
+  listAdmin: () => csFetch<{ institutions: InstitutionDto[] }>('/institutions'),
 
   create: (data: InstitutionInput) =>
-    csFetch<Institution>('/institutions', { method: 'POST', body: JSON.stringify(data) }),
+    csFetch<InstitutionDto>('/institutions', { method: 'POST', body: JSON.stringify(data) }),
 
-  update: (id: Institution['id'], data: InstitutionInput) =>
-    csFetch<Institution>(`/institutions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  update: (id: InstitutionDto['id'], data: InstitutionInput) =>
+    csFetch<InstitutionDto>(`/institutions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
-  remove: (id: Institution['id']) => csFetch<void>(`/institutions/${id}`, { method: 'DELETE' }),
+  remove: (id: InstitutionDto['id']) => csFetch<void>(`/institutions/${id}`, { method: 'DELETE' }),
 
-  setOrder: (order: Institution['id'][]) =>
+  setOrder: (order: InstitutionDto['id'][]) =>
     csFetch<void>('/institutions/order', { method: 'PUT', body: JSON.stringify({ order }) }),
 
   listProjectLinks: () => csFetch<{ links: Record<string, number> }>('/institutions/project-links'),

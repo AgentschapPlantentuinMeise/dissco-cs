@@ -16,14 +16,21 @@ import { localeText } from '../../utility/locale-text';
 import { announcementsApi } from '../../api/cs-api';
 import { useProjectList } from '../../hooks/use-project-list';
 import { MarkdownToolbar } from '../../components/MarkdownToolbar';
-import { MadocProjectListItem, Announcement, AnnouncementInput, AnnouncementTargetType, SitePageLang } from '@dissco-cs/shared-types';
+import {
+  MadocProjectListItem,
+  AnnouncementDto,
+  AnnouncementInput,
+  AnnouncementTargetType,
+  SitePageLang,
+  announcementInputSchema,
+} from '@dissco-cs/shared-types';
 
 function toDateInputValue(iso: string | null): string {
   if (!iso) return '';
   return iso.slice(0, 10);
 }
 
-function targetLabel(t: (key: string) => string, announcement: Announcement): string {
+function targetLabel(t: (key: string) => string, announcement: AnnouncementDto): string {
   if (announcement.target_type === 'homepage') return t('sm_announcements_target_homepage');
   if (announcement.target_type === 'projects') return t('sm_announcements_target_projects');
   return `${t('sm_announcements_target_project')}: ${announcement.target_project_slug}`;
@@ -46,11 +53,11 @@ export const Announcements: React.FC = () => {
   const announcements = data?.announcements ?? [];
   const projects = (projectsResponse?.projects ?? []).filter((p: MadocProjectListItem) => p.status === 1);
 
-  const [editingId, setEditingId] = useState<Announcement['id'] | null>(null);
+  const [editingId, setEditingId] = useState<AnnouncementDto['id'] | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [draft, setDraft] = useState<AnnouncementInput>(emptyDraft);
   const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
-  const [pendingDeleteId, setPendingDeleteId] = useState<Announcement['id'] | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<AnnouncementDto['id'] | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const refresh = () => refetch();
@@ -62,7 +69,7 @@ export const Announcements: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const startEdit = (announcement: Announcement) => {
+  const startEdit = (announcement: AnnouncementDto) => {
     setEditingId(announcement.id);
     setDraft({
       title: announcement.title,
@@ -83,20 +90,19 @@ export const Announcements: React.FC = () => {
     setDraft(emptyDraft);
   };
 
-  const allTitlesFilled = LANGUAGES.every(lang => (draft.title[lang.code] ?? '').trim().length > 0);
-  const allDescriptionsFilled = LANGUAGES.every(lang => (draft.description[lang.code] ?? '').trim().length > 0);
-  const canSave =
-    allTitlesFilled &&
-    allDescriptionsFilled &&
-    (draft.targetType !== 'project' || !!draft.targetProjectSlug) &&
-    (!draft.startDate || !draft.endDate || draft.startDate <= draft.endDate);
+  const validation = announcementInputSchema.safeParse(draft);
+  const issues = validation.success ? [] : validation.error.issues;
+  const issueAt = (...path: (string | number)[]) =>
+    issues.some(issue => issue.path.length === path.length && issue.path.every((seg, i) => seg === path[i]));
+  const canSave = validation.success;
 
   const save = async () => {
-    if (!canSave) return;
+    const result = announcementInputSchema.safeParse(draft);
+    if (!result.success) return;
     if (editingId !== null) {
-      await announcementsApi.update(editingId, draft);
+      await announcementsApi.update(editingId, result.data);
     } else {
-      await announcementsApi.create(draft);
+      await announcementsApi.create(result.data);
     }
     cancelForm();
     refresh();
@@ -109,7 +115,7 @@ export const Announcements: React.FC = () => {
     refresh();
   };
 
-  const toggleActive = async (announcement: Announcement) => {
+  const toggleActive = async (announcement: AnnouncementDto) => {
     await announcementsApi.update(announcement.id, {
       title: announcement.title,
       description: announcement.description,

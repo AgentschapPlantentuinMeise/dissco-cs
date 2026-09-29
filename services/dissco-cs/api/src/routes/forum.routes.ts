@@ -1,8 +1,7 @@
 import { Hono } from 'hono';
 import { DisscoCSRepository } from '../db.js';
 import { MadocUserIdentity, requestMadocUserIdentity, requireUser } from '../jwt.js';
-import { isNonEmptyString } from '../validators.js';
-import { CreateReplyBody, CreateTopicBody } from '../types/request-bodies.js';
+import { forumReplyInputSchema, forumTopicInputSchema } from '@dissco-cs/shared-types';
 
 // A piece of forum content (topic or reply) can be removed/closed by whoever wrote it, or by
 // any site admin -- same rule for both content types and both actions (delete, close).
@@ -39,32 +38,29 @@ export function forumRoutes(repository: DisscoCSRepository): Hono {
       return c.text('Unauthorized', 401);
     }
 
-    const payload = (await c.req.json().catch(() => null)) as CreateTopicBody | null;
-    if (!payload || !isNonEmptyString(payload.title) || !isNonEmptyString(payload.body)) {
+    const result = forumTopicInputSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('title and body are required', 400);
     }
-
-    const taskUrl = isNonEmptyString(payload.taskUrl) ? payload.taskUrl : null;
-    const projectSlug = isNonEmptyString(payload.projectSlug) ? payload.projectSlug : null;
-    const projectLabel = isNonEmptyString(payload.projectLabel) ? payload.projectLabel : null;
 
     const topic = await repository.forum.createTopic({
       siteId: identity.siteId,
       authorUserId: identity.userId,
       authorName: identity.name,
-      title: payload.title,
-      taskUrl,
-      projectSlug,
-      projectLabel,
-      body: payload.body,
+      title: result.data.title,
+      taskUrl: result.data.taskUrl,
+      projectSlug: result.data.projectSlug,
+      projectLabel: result.data.projectLabel,
+      body: result.data.body,
     });
 
     await repository.forum.markTopicSeen(identity.userId, topic.id, 0);
 
-    return c.json(topic, 201);
+    // A freshly created topic trivially has no replies yet -- no extra query needed.
+    return c.json({ ...topic, reply_count: 0, last_seen_reply_count: 0 }, 201);
   });
 
-  app.get('/topics/:id', async c => {
+  app.get('/topics/:id/replies', async c => {
     const identity = requestMadocUserIdentity(c);
     if (!identity) {
       return c.text('Unauthorized', 401);
@@ -82,7 +78,7 @@ export function forumRoutes(repository: DisscoCSRepository): Hono {
 
     const replies = await repository.forum.listReplies(identity.siteId, topicId);
     await repository.forum.markTopicSeen(identity.userId, topicId, replies.length);
-    return c.json({ ...topic, replies });
+    return c.json(replies);
   });
 
   app.delete('/topics/:id', async c => {
@@ -132,7 +128,8 @@ export function forumRoutes(repository: DisscoCSRepository): Hono {
     }
 
     const closed = await repository.forum.closeTopic(identity.siteId, topicId);
-    return c.json(closed ?? topic);
+    const replies = await repository.forum.listReplies(identity.siteId, topicId);
+    return c.json({ ...(closed ?? topic), reply_count: replies.length, last_seen_reply_count: replies.length });
   });
 
   app.delete('/topics/:id/replies/:replyId', async c => {
@@ -173,8 +170,8 @@ export function forumRoutes(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const payload = (await c.req.json().catch(() => null)) as CreateReplyBody | null;
-    if (!payload || !isNonEmptyString(payload.body)) {
+    const result = forumReplyInputSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('body is required', 400);
     }
 
@@ -191,7 +188,7 @@ export function forumRoutes(repository: DisscoCSRepository): Hono {
       topicId,
       authorUserId: identity.userId,
       authorName: identity.name,
-      body: payload.body,
+      body: result.data.body,
     });
 
     if (!reply) {

@@ -1,11 +1,11 @@
 import { Pool } from 'pg';
 
 import { appConfig } from '../config.js';
-import { InstitutionOverview } from '@dissco-cs/shared-types';
+import { InstitutionStatsDto } from '@dissco-cs/shared-types';
 
 export type InstitutionProjectRow = { id: number; task_id: string; status: number };
 
-const EMPTY_OVERVIEW: InstitutionOverview = {
+const EMPTY_OVERVIEW: InstitutionStatsDto = {
   volunteers: 0,
   tasksCompleted: 0,
   tasksTotal: 0,
@@ -13,7 +13,7 @@ const EMPTY_OVERVIEW: InstitutionOverview = {
   projectsCompleted: 0,
 };
 
-type CacheEntry = { overview: InstitutionOverview; refreshing: boolean };
+type CacheEntry = { overview: InstitutionStatsDto; refreshing: boolean };
 
 // Same read-only direct-SQL approach as SiteTaskTotalsRepository, scoped to one institution's
 // linked projects (dissco_cs.project_institution_links) instead of every project on the site.
@@ -73,7 +73,7 @@ export class InstitutionStatsRepository {
     return rows;
   }
 
-  private async fetchOverview(siteId: number, projects: InstitutionProjectRow[]): Promise<InstitutionOverview> {
+  private async fetchOverview(siteId: number, projects: InstitutionProjectRow[]): Promise<InstitutionStatsDto> {
     if (projects.length === 0) {
       return EMPTY_OVERVIEW;
     }
@@ -145,18 +145,18 @@ export class InstitutionStatsRepository {
     };
   }
 
-  peekOverview(siteId: number, institutionId: number): InstitutionOverview | null {
+  peekOverview(siteId: number, institutionId: number): InstitutionStatsDto | null {
     return this.cache.get(`${siteId}:${institutionId}`)?.overview ?? null;
   }
 
   // Stale-while-revalidate, shared across every requester for an institution: the first request
   // pays for a live query; every request after that gets the cached overview back immediately
   // while a background refresh (fire-and-forget) checks for changes.
-  async getOverview(siteId: number, institutionId: number, projectSlugs: string[]): Promise<InstitutionOverview> {
+  async getOverview(siteId: number, institutionId: number, projectSlugs: string[]): Promise<InstitutionStatsDto> {
     const cacheKey = `${siteId}:${institutionId}`;
     const cached = this.cache.get(cacheKey);
 
-    const recompute = async (): Promise<InstitutionOverview> => {
+    const recompute = async (): Promise<InstitutionStatsDto> => {
       const projects = await this.resolveProjects(siteId, projectSlugs);
       return this.fetchOverview(siteId, projects);
     };
