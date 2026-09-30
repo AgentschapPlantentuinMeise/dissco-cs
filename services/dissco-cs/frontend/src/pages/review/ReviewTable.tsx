@@ -1,13 +1,13 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { LuChevronDown, LuEye } from 'react-icons/lu';
-import { ReviewTaskRow } from '@dissco-cs/shared-types';
+import { ReviewTaskDto } from '@dissco-cs/shared-types';
 import { localeText } from '../../utility/locale-text';
 import { SortKey, SortDir } from './useReviewTasksController';
 import { reviewStatusKey, STATUS_BADGE_CLASSES, badgeClass, thClass, tdClass } from './review-table-styles';
 
 interface ReviewTableProps {
-  visibleRows: ReviewTaskRow[];
+  visibleRows: ReviewTaskDto[];
   sortKey: SortKey;
   sortDir: SortDir;
   toggleSort: (key: SortKey) => void;
@@ -15,13 +15,13 @@ interface ReviewTableProps {
   toggleSelectAllVisible: () => void;
   selectedIds: Set<string>;
   toggleSelectRow: (id: string) => void;
-  isOwnTask: (row: ReviewTaskRow) => boolean;
+  isOwnTask: (row: ReviewTaskDto) => boolean;
   filterBySubmitter: (name: string) => void;
-  onPreview: (row: ReviewTaskRow) => void;
+  onPreview: (row: ReviewTaskDto) => void;
   openRowId: string | null;
-  onRowClick: (row: ReviewTaskRow) => void;
+  onRowClick: (row: ReviewTaskDto) => void;
   /** Rendert een extra rij vlak onder de aangeklikte rij (inline-uitklap-weergave). */
-  renderRowExpansion?: (row: ReviewTaskRow) => React.ReactNode;
+  renderRowExpansion?: (row: ReviewTaskDto) => React.ReactNode;
 }
 
 export function ReviewTable({
@@ -80,7 +80,7 @@ export function ReviewTable({
         </tr>
       </thead>
       <tbody>
-        {visibleRows.map((row: ReviewTaskRow) => {
+        {visibleRows.map((row: ReviewTaskDto) => {
           const projectLabel = localeText(row.project.label, i18n.language) || row.project.slug || '—';
           const subjectLabel = localeText(row.subject.label, i18n.language) || row.id;
           const modified = row.modified_at ? new Date(row.modified_at).toLocaleString(i18n.language) : '—';

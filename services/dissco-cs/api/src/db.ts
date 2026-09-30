@@ -5,7 +5,7 @@ import { AnnouncementsRepository } from './repositories/announcements.repository
 import { ForumRepository } from './repositories/forum.repository.js';
 import { InstitutionsRepository } from './repositories/institutions.repository.js';
 import { ProjectManualsRepository } from './repositories/project-manuals.repository.js';
-import { ReviewFeedbackRepository } from './repositories/review-feedback.repository.js';
+import { FeedbackRepository } from './repositories/feedback.repository.js';
 import { SitePagesRepository } from './repositories/site-pages.repository.js';
 
 export class DisscoCSRepository {
@@ -14,7 +14,7 @@ export class DisscoCSRepository {
   readonly announcements: AnnouncementsRepository;
   readonly institutions: InstitutionsRepository;
   readonly projectManuals: ProjectManualsRepository;
-  readonly reviewFeedback: ReviewFeedbackRepository;
+  readonly feedback: FeedbackRepository;
 
   private readonly pool: Pool;
   private readonly schemaRef: string;
@@ -42,7 +42,7 @@ export class DisscoCSRepository {
     this.projectManuals = new ProjectManualsRepository(this.pool, this.schemaRef);
     this.announcements = new AnnouncementsRepository(this.pool, this.schemaRef);
     this.institutions = new InstitutionsRepository(this.pool, this.schemaRef);
-    this.reviewFeedback = new ReviewFeedbackRepository(this.pool, this.schemaRef);
+    this.feedback = new FeedbackRepository(this.pool, this.schemaRef);
   }
 
   async close(): Promise<void> {
@@ -257,7 +257,7 @@ export class DisscoCSRepository {
       `);
 
       await client.query(`
-        CREATE TABLE IF NOT EXISTS ${this.schemaRef}.review_feedback_threads (
+        CREATE TABLE IF NOT EXISTS ${this.schemaRef}.feedback_threads (
           id BIGSERIAL PRIMARY KEY,
           site_id INTEGER NOT NULL,
           reviewer_user_id INTEGER NOT NULL,
@@ -273,19 +273,19 @@ export class DisscoCSRepository {
       `);
 
       await client.query(`
-        CREATE INDEX IF NOT EXISTS review_feedback_threads_recipient_idx
-        ON ${this.schemaRef}.review_feedback_threads (site_id, recipient_user_id, last_activity DESC)
+        CREATE INDEX IF NOT EXISTS feedback_threads_recipient_idx
+        ON ${this.schemaRef}.feedback_threads (site_id, recipient_user_id, last_activity DESC)
       `);
 
       await client.query(`
-        CREATE INDEX IF NOT EXISTS review_feedback_threads_reviewer_idx
-        ON ${this.schemaRef}.review_feedback_threads (site_id, reviewer_user_id, last_activity DESC)
+        CREATE INDEX IF NOT EXISTS feedback_threads_reviewer_idx
+        ON ${this.schemaRef}.feedback_threads (site_id, reviewer_user_id, last_activity DESC)
       `);
 
       await client.query(`
-        CREATE TABLE IF NOT EXISTS ${this.schemaRef}.review_feedback_messages (
+        CREATE TABLE IF NOT EXISTS ${this.schemaRef}.feedback_messages (
           id BIGSERIAL PRIMARY KEY,
-          thread_id BIGINT NOT NULL REFERENCES ${this.schemaRef}.review_feedback_threads (id) ON DELETE CASCADE,
+          thread_id BIGINT NOT NULL REFERENCES ${this.schemaRef}.feedback_threads (id) ON DELETE CASCADE,
           author_user_id INTEGER NOT NULL,
           author_name TEXT NOT NULL,
           body TEXT NOT NULL,
@@ -295,8 +295,8 @@ export class DisscoCSRepository {
       `);
 
       await client.query(`
-        CREATE INDEX IF NOT EXISTS review_feedback_messages_thread_idx
-        ON ${this.schemaRef}.review_feedback_messages (thread_id, created_at ASC)
+        CREATE INDEX IF NOT EXISTS feedback_messages_thread_idx
+        ON ${this.schemaRef}.feedback_messages (thread_id, created_at ASC)
       `);
 
       await client.query('COMMIT');

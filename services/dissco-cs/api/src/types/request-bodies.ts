@@ -1,12 +1,5 @@
 // Unvalidated JSON request-body shapes for dissco-cs's own routes -- every field is `unknown`
 // on purpose, the corresponding parse*/is* functions in validators.ts do the actual narrowing.
-export type CreateFeedbackThreadBody = {
-  recipientUserId?: unknown;
-  recipientName?: unknown;
-  subject?: unknown;
-  body?: unknown;
-};
-export type CreateFeedbackReplyBody = { body?: unknown };
 export type SetPageActiveBody = { isActive?: unknown };
 export type SetPageContentBody = { lang?: unknown; contentMd?: unknown };
 export type SetContactEmailBody = { email?: unknown };

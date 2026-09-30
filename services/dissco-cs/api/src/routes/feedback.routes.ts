@@ -1,11 +1,10 @@
 import { Hono } from 'hono';
 import { DisscoCSRepository } from '../db.js';
 import { requestMadocUserIdentity } from '../jwt.js';
-import { isNonEmptyString, parseCreateFeedbackThreadBody } from '../validators.js';
-import { CreateFeedbackReplyBody, CreateFeedbackThreadBody } from '../types/request-bodies.js';
+import { feedbackReplyInputSchema, feedbackThreadInputSchema } from '@dissco-cs/shared-types';
 import { isReviewerOrAdmin } from './review.routes.js';
 
-export function reviewFeedbackRoutes(repository: DisscoCSRepository): Hono {
+export function feedbackRoutes(repository: DisscoCSRepository): Hono {
   const app = new Hono();
 
   app.get('/threads', async c => {
@@ -14,7 +13,7 @@ export function reviewFeedbackRoutes(repository: DisscoCSRepository): Hono {
       return c.text('Unauthorized', 401);
     }
 
-    const threads = await repository.reviewFeedback.listThreadsForUser(identity.siteId, identity.userId);
+    const threads = await repository.feedback.listThreadsForUser(identity.siteId, identity.userId);
     return c.json({ threads });
   });
 
@@ -28,23 +27,24 @@ export function reviewFeedbackRoutes(repository: DisscoCSRepository): Hono {
       return c.text('Forbidden', 403);
     }
 
-    const payload = (await c.req.json().catch(() => null)) as CreateFeedbackThreadBody | null;
-    const parsed = parseCreateFeedbackThreadBody(payload);
-    if (!parsed) {
+    const result = feedbackThreadInputSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('recipientUserId, recipientName, subject and body are required', 400);
     }
 
-    const thread = await repository.reviewFeedback.createThread({
+    const thread = await repository.feedback.createThread({
       siteId: identity.siteId,
       reviewerUserId: identity.userId,
       reviewerName: identity.name,
-      recipientUserId: parsed.recipientUserId,
-      recipientName: parsed.recipientName,
-      subject: parsed.subject,
-      body: parsed.body,
+      recipientUserId: result.data.recipientUserId,
+      recipientName: result.data.recipientName,
+      subject: result.data.subject,
+      body: result.data.body,
     });
 
-    return c.json(thread, 201);
+    // The creator is always the reviewer (gated above), with the one message just inserted --
+    // nothing to count via an extra query.
+    return c.json({ ...thread, role: 'reviewer', message_count: 1, unread_count: 0 }, 201);
   });
 
   app.get('/threads/:id', async c => {
@@ -58,13 +58,19 @@ export function reviewFeedbackRoutes(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const result = await repository.reviewFeedback.getThread(identity.siteId, threadId, identity.userId);
+    const result = await repository.feedback.getThread(identity.siteId, threadId, identity.userId);
     if (!result) {
       return c.notFound();
     }
 
-    await repository.reviewFeedback.markThreadSeen(identity.userId, threadId);
-    return c.json(result);
+    await repository.feedback.markThreadSeen(identity.userId, threadId);
+    // markThreadSeen above just cleared this user's unread messages, so unread_count is 0 here --
+    // no extra query needed.
+    const role = identity.userId === result.thread.recipient_user_id ? 'recipient' : 'reviewer';
+    return c.json({
+      thread: { ...result.thread, role, message_count: result.messages.length, unread_count: 0 },
+      messages: result.messages,
+    });
   });
 
   app.post('/threads/:id/replies', async c => {
@@ -78,24 +84,24 @@ export function reviewFeedbackRoutes(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const payload = (await c.req.json().catch(() => null)) as CreateFeedbackReplyBody | null;
-    if (!payload || !isNonEmptyString(payload.body)) {
+    const result = feedbackReplyInputSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('body is required', 400);
     }
 
-    const reply = await repository.reviewFeedback.createReply({
+    const reply = await repository.feedback.createReply({
       siteId: identity.siteId,
       threadId,
       authorUserId: identity.userId,
       authorName: identity.name,
-      body: payload.body,
+      body: result.data.body,
     });
 
     if (!reply) {
       return c.notFound();
     }
 
-    await repository.reviewFeedback.markThreadSeen(identity.userId, threadId);
+    await repository.feedback.markThreadSeen(identity.userId, threadId);
     return c.json(reply, 201);
   });
 
@@ -110,7 +116,7 @@ export function reviewFeedbackRoutes(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const result = await repository.reviewFeedback.deleteThreadForUser(identity.siteId, threadId, identity.userId);
+    const result = await repository.feedback.deleteThreadForUser(identity.siteId, threadId, identity.userId);
     if (!result) {
       return c.notFound();
     }

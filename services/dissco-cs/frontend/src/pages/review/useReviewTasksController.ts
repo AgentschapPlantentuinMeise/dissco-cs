@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { reviewApi, reviewFeedbackApi } from '../../api/cs-api';
-import { ReviewTaskRow, AnnotationDocument } from '@dissco-cs/shared-types';
+import { reviewApi, feedbackApi } from '../../api/cs-api';
+import { ReviewTaskDto, AnnotationDocument } from '@dissco-cs/shared-types';
 import { ApiError } from '../../api/madoc-client/request';
 import { getCaptureModelRevision, updateCaptureModelRevision, updateRevisionTask } from '../../api/madoc-client/crowdsourcing';
 import { localeText } from '../../utility/locale-text';
@@ -18,7 +18,7 @@ export type BulkResult = { id: string; label: string; success: boolean; error?: 
 type BatchSubmitterRef = { submitterId?: number; submitterName?: string };
 export type FeedbackComposeTarget = { submitterId: number; submitterName: string };
 
-function submitterRefFromRow(row: ReviewTaskRow): BatchSubmitterRef {
+function submitterRefFromRow(row: ReviewTaskDto): BatchSubmitterRef {
   return {
     submitterId: row.submitterId,
     submitterName: row.submitter,
@@ -51,7 +51,7 @@ export function useReviewTasksController() {
   const [bulkRunning, setBulkRunning] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
   const [bulkResults, setBulkResults] = useState<BulkResult[] | null>(null);
-  const [previewRow, setPreviewRow] = useState<ReviewTaskRow | null>(null);
+  const [previewRow, setPreviewRow] = useState<ReviewTaskDto | null>(null);
 
   // Welke rij het detail toont, en de nog-niet-geaccepteerde correcties per
   // rij -- bewust NIET auto-saved, blijft lokale state tot de taak (los of in bulk) geaccepteerd
@@ -139,7 +139,7 @@ export function useReviewTasksController() {
   // Enkel taken die effectief aan de ingelogde gebruiker toegewezen zijn mogen geselecteerd/
   // geaccepteerd worden -- Madoc's eigen "limited-reviewer"-check zou dit server-side ook
   // blokkeren, maar we willen het hier al duidelijk maken i.p.v. pas na een mislukte poging.
-  const isOwnTask = (row: ReviewTaskRow) => !!user && row.reviewerId === user.id;
+  const isOwnTask = (row: ReviewTaskDto) => !!user && row.reviewerId === user.id;
 
   const selectableVisibleRows = visibleRows.filter(isOwnTask);
   const allVisibleSelected = selectableVisibleRows.length > 0 && selectableVisibleRows.every(row => selectedIds.has(row.id));
@@ -191,7 +191,7 @@ export function useReviewTasksController() {
   // Gedeeld door bulk-accept en de losse "Accepteer taak"-actie: haalt de revisie vers op (zoals
   // voorheen), maar overschrijft het document met de lokale correctie indien de reviewer die
   // gemaakt heeft -- structureId/fields komen ongewijzigd mee via revisionRequest.revision.
-  const acceptOneRow = async (row: ReviewTaskRow, editedDocument: AnnotationDocument | undefined) => {
+  const acceptOneRow = async (row: ReviewTaskDto, editedDocument: AnnotationDocument | undefined) => {
     if (!row.revisionId || !row.originalTaskId) {
       throw new Error(t('review_bulk_error_no_revision'));
     }
@@ -268,7 +268,7 @@ export function useReviewTasksController() {
   // dat de resource nergens meer als "al gecontribueerd" meetelt (resourceTaskCountsAsContribution
   // in madoc-ts sluit status -1 expliciet uit) -- de opdracht komt dus vrij voor eender welke
   // gebruiker om opnieuw te claimen, met een leeg formulier (zie AnnotatePage.tsx).
-  const handleRelease = async (row: ReviewTaskRow) => {
+  const handleRelease = async (row: ReviewTaskDto) => {
     if (!row.originalTaskId) return;
     setReleaseError(null);
     setReleasing(row.id);
@@ -318,14 +318,14 @@ export function useReviewTasksController() {
     setSendingFeedback(true);
     setFeedbackError(null);
     try {
-      await reviewFeedbackApi.createThread({
+      await feedbackApi.createThread({
         recipientUserId: feedbackTarget.submitterId,
         recipientName: feedbackTarget.submitterName,
         subject,
         body,
       });
       setFeedbackTarget(null);
-      window.dispatchEvent(new Event('review_feedback_updated'));
+      window.dispatchEvent(new Event('feedback_updated'));
     } catch (err) {
       setFeedbackError(err instanceof Error ? err.message : t('review_bulk_error_generic'));
     } finally {

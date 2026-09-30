@@ -3,9 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "main": "./types/index.ts",
-  "types": "./types/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
   "dependencies": {
     "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
   }
 }

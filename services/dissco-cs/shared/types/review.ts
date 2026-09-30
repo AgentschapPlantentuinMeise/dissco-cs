@@ -1,6 +1,6 @@
 import { InternationalString } from './madoc-project.js';
 
-export type ReviewTaskRow = {
+export type ReviewTaskDto = {
   id: string;
   project: { id?: number; slug?: string; label?: InternationalString | string };
   subject: { id?: number; label?: InternationalString | string };

@@ -10,7 +10,7 @@ import { useUser } from '../../hooks/use-current-user';
 import { LuUser, LuSearch, LuX } from 'react-icons/lu';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { getSiteSlug } from '../../api/slug';
-import { forumApi, reviewApi, reviewFeedbackApi } from '../../api/cs-api';
+import { forumApi, reviewApi, feedbackApi } from '../../api/cs-api';
 import { useSitePages } from '../../contexts/SitePagesContext';
 import { SITE_PAGE_NAV } from '../../site-pages-nav-config';
 
@@ -88,15 +88,15 @@ export const Navbar: React.FC = () => {
     if (!user) return;
 
     const refreshFeedbackUnreadCount = () => {
-      reviewFeedbackApi.listThreads().then(res => {
+      feedbackApi.listThreads().then(res => {
         const count = res.threads.reduce((sum, thread) => sum + thread.unread_count, 0);
         setFeedbackUnreadCount(count);
       }).catch(() => {});
     };
 
     refreshFeedbackUnreadCount();
-    window.addEventListener('review_feedback_updated', refreshFeedbackUnreadCount);
-    return () => window.removeEventListener('review_feedback_updated', refreshFeedbackUnreadCount);
+    window.addEventListener('feedback_updated', refreshFeedbackUnreadCount);
+    return () => window.removeEventListener('feedback_updated', refreshFeedbackUnreadCount);
   }, [user?.id]);
 
   useEffect(() => {

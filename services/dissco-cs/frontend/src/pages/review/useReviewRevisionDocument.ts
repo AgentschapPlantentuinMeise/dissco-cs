@@ -1,13 +1,13 @@
 import { useQuery } from 'react-query';
 import { getCaptureModelRevision, getCaptureModel } from '../../api/madoc-client/crowdsourcing';
-import { ReviewTaskRow, AnnotationDocument, CaptureModel } from '@dissco-cs/shared-types';
+import { ReviewTaskDto, AnnotationDocument, CaptureModel } from '@dissco-cs/shared-types';
 import { cloneModelDocument, setFieldValue, DocumentPath } from '../annotate/form/document';
 
 // Gebruikt door ReviewInlineExpansion: haalt de revisie + het capture model op en levert het
 // document dat getoond moet worden (lokale correctie indien aanwezig, anders een leeg document
 // op basis van het model).
 export function useReviewRevisionDocument(
-  row: ReviewTaskRow,
+  row: ReviewTaskDto,
   editedDocument: AnnotationDocument | undefined,
   onDocumentChange: (rowId: string, document: AnnotationDocument) => void
 ) {

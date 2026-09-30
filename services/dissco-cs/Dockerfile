@@ -1,7 +1,14 @@
+FROM node:22.22.3-alpine AS shared-build
+WORKDIR /build/shared
+RUN npm install -g pnpm@9.15.9
+COPY shared/ ./
+RUN pnpm install --frozen-lockfile
+RUN pnpm run build
+
 FROM node:22.22.3-alpine AS frontend-build
 WORKDIR /build
 RUN npm install -g pnpm@9.15.9
-COPY shared/ ./shared/
+COPY --from=shared-build /build/shared ./shared/
 COPY frontend/ ./frontend/
 WORKDIR /build/frontend
 RUN pnpm install --frozen-lockfile
@@ -10,7 +17,7 @@ RUN pnpm run build
 FROM node:22.22.3-alpine AS api-build
 WORKDIR /build
 RUN npm install -g pnpm@9.15.9
-COPY shared/ ./shared/
+COPY --from=shared-build /build/shared ./shared/
 COPY api/package.json api/pnpm-lock.yaml ./api/
 WORKDIR /build/api
 RUN pnpm install --frozen-lockfile

@@ -15,8 +15,8 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { LuTrash2 } from 'react-icons/lu';
 import { StatBanner } from '../../components/StatBanner';
 import { TaskTable, tabBtnClass } from '../../components/TaskTable';
-import { forumApi, reviewFeedbackApi } from '../../api/cs-api';
-import { CrowdsourcingTask, ForumTopicDto, FeedbackThreadWithMeta } from '@dissco-cs/shared-types';
+import { forumApi, feedbackApi } from '../../api/cs-api';
+import { CrowdsourcingTask, ForumTopicDto, FeedbackThreadDto } from '@dissco-cs/shared-types';
 import { useSiteStats } from '../../hooks/use-site-stats';
 
 
@@ -47,21 +47,21 @@ function FeedbackThreadDetail({ threadId }: { threadId: number }) {
   const { t, i18n } = useTranslation('dissco-cs');
   const [replyBody, setReplyBody] = useState('');
 
-  const { data, status } = useQuery(['feedback-thread', threadId], () => reviewFeedbackApi.getThread(threadId), {
+  const { data, status } = useQuery(['feedback-thread', threadId], () => feedbackApi.getThread(threadId), {
     onSuccess: () => {
       queryCache.invalidateQueries('feedback-threads');
-      window.dispatchEvent(new Event('review_feedback_updated'));
+      window.dispatchEvent(new Event('feedback_updated'));
     },
   });
 
   const [postReply, { status: replyStatus }] = useMutation(
-    (body: string) => reviewFeedbackApi.createReply(threadId, body),
+    (body: string) => feedbackApi.createReply(threadId, body),
     {
       onSuccess: () => {
         setReplyBody('');
         queryCache.invalidateQueries(['feedback-thread', threadId]);
         queryCache.invalidateQueries('feedback-threads');
-        window.dispatchEvent(new Event('review_feedback_updated'));
+        window.dispatchEvent(new Event('feedback_updated'));
       },
     }
   );
@@ -112,7 +112,7 @@ function FeedbackThreadRow({
   onToggle,
   language,
 }: {
-  thread: FeedbackThreadWithMeta;
+  thread: FeedbackThreadDto;
   isOpen: boolean;
   onToggle: () => void;
   language: string;
@@ -126,10 +126,10 @@ function FeedbackThreadRow({
       ? t('dashboard_feedback_from', { name: otherName })
       : t('dashboard_feedback_to', { name: otherName });
 
-  const [deleteThread] = useMutation(() => reviewFeedbackApi.deleteThread(thread.id), {
+  const [deleteThread] = useMutation(() => feedbackApi.deleteThread(thread.id), {
     onSuccess: () => {
       queryCache.invalidateQueries('feedback-threads');
-      window.dispatchEvent(new Event('review_feedback_updated'));
+      window.dispatchEvent(new Event('feedback_updated'));
     },
   });
 
@@ -232,7 +232,7 @@ export const UserDashboard: React.FC = () => {
 
   const { data: feedbackThreadsData, status: feedbackThreadsStatus } = useQuery(
     'feedback-threads',
-    () => reviewFeedbackApi.listThreads(),
+    () => feedbackApi.listThreads(),
     { enabled: !!user }
   );
   const feedbackThreads = feedbackThreadsData?.threads ?? [];

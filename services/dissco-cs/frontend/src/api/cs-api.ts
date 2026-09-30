@@ -8,9 +8,9 @@ import {
   SitePageKey,
   SitePageLang,
   SitePage,
-  FeedbackThread,
-  FeedbackThreadWithMeta,
-  FeedbackMessage,
+  FeedbackThreadDto,
+  FeedbackMessageDto,
+  FeedbackThreadInput,
   AnnouncementTargetType,
   AnnouncementDto,
   AnnouncementInput,
@@ -27,7 +27,7 @@ import {
   ProjectProgress,
   StuckManifestCounter,
   ProjectDebugResult,
-  ReviewTaskRow,
+  ReviewTaskDto,
 } from '@dissco-cs/shared-types';
 
 async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -129,28 +129,28 @@ export const stuckTasksApi = {
 };
 
 export const reviewApi = {
-  myTasks: () => csFetch<{ tasks: ReviewTaskRow[] }>('/review/my-tasks'),
+  myTasks: () => csFetch<{ tasks: ReviewTaskDto[] }>('/review/my-tasks'),
 
   isReviewer: () => csFetch<{ isReviewer: boolean }>('/review/is-reviewer'),
 };
 
-export const reviewFeedbackApi = {
-  listThreads: () => csFetch<{ threads: FeedbackThreadWithMeta[] }>('/review-feedback/threads'),
+export const feedbackApi = {
+  listThreads: () => csFetch<{ threads: FeedbackThreadDto[] }>('/feedback/threads'),
 
-  createThread: (data: { recipientUserId: number; recipientName: string; subject: string; body: string }) =>
-    csFetch<FeedbackThread>('/review-feedback/threads', { method: 'POST', body: JSON.stringify(data) }),
+  createThread: (data: FeedbackThreadInput) =>
+    csFetch<FeedbackThreadDto>('/feedback/threads', { method: 'POST', body: JSON.stringify(data) }),
 
   getThread: (threadId: number) =>
-    csFetch<{ thread: FeedbackThread; messages: FeedbackMessage[] }>(`/review-feedback/threads/${threadId}`),
+    csFetch<{ thread: FeedbackThreadDto; messages: FeedbackMessageDto[] }>(`/feedback/threads/${threadId}`),
 
   createReply: (threadId: number, body: string) =>
-    csFetch<FeedbackMessage>(`/review-feedback/threads/${threadId}/replies`, {
+    csFetch<FeedbackMessageDto>(`/feedback/threads/${threadId}/replies`, {
       method: 'POST',
       body: JSON.stringify({ body }),
     }),
 
   deleteThread: (threadId: number) =>
-    csFetch<void>(`/review-feedback/threads/${threadId}`, { method: 'DELETE' }),
+    csFetch<void>(`/feedback/threads/${threadId}`, { method: 'DELETE' }),
 };
 
 export const contactApi = {

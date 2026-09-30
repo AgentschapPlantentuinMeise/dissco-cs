@@ -2,7 +2,7 @@ import { Pool } from 'pg';
 
 export type FeedbackThreadRole = 'recipient' | 'reviewer';
 
-export type FeedbackThread = {
+export type FeedbackThreadRow = {
   id: number;
   site_id: number;
   reviewer_user_id: number;
@@ -16,13 +16,13 @@ export type FeedbackThread = {
   recipient_hidden_at: Date | null;
 };
 
-export type FeedbackThreadWithMeta = FeedbackThread & {
+export type FeedbackThreadWithMeta = FeedbackThreadRow & {
   role: FeedbackThreadRole;
   message_count: number;
   unread_count: number;
 };
 
-export type FeedbackMessage = {
+export type FeedbackMessageRow = {
   id: number;
   thread_id: number;
   author_user_id: number;
@@ -32,7 +32,7 @@ export type FeedbackMessage = {
   created_at: Date;
 };
 
-export class ReviewFeedbackRepository {
+export class FeedbackRepository {
   constructor(
     private readonly pool: Pool,
     private readonly schemaRef: string
@@ -49,8 +49,8 @@ export class ReviewFeedbackRepository {
         CASE WHEN t.recipient_user_id = $2 THEN 'recipient' ELSE 'reviewer' END AS role,
         COUNT(m.id)::int AS message_count,
         COUNT(m.id) FILTER (WHERE m.author_user_id != $2 AND m.read_at IS NULL)::int AS unread_count
-      FROM ${this.table('review_feedback_threads')} t
-      LEFT JOIN ${this.table('review_feedback_messages')} m ON m.thread_id = t.id
+      FROM ${this.table('feedback_threads')} t
+      LEFT JOIN ${this.table('feedback_messages')} m ON m.thread_id = t.id
       WHERE t.site_id = $1 AND (
         (t.recipient_user_id = $2 AND t.recipient_hidden_at IS NULL)
         OR (t.reviewer_user_id = $2 AND t.reviewer_hidden_at IS NULL)
@@ -72,15 +72,15 @@ export class ReviewFeedbackRepository {
     recipientName: string;
     subject: string;
     body: string;
-  }): Promise<FeedbackThread> {
+  }): Promise<FeedbackThreadRow> {
     const client = await this.pool.connect();
 
     try {
       await client.query('BEGIN');
 
-      const thread = await client.query<FeedbackThread>(
+      const thread = await client.query<FeedbackThreadRow>(
         `
-        INSERT INTO ${this.table('review_feedback_threads')} (
+        INSERT INTO ${this.table('feedback_threads')} (
           site_id, reviewer_user_id, reviewer_name, recipient_user_id, recipient_name, subject
         ) VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
@@ -97,7 +97,7 @@ export class ReviewFeedbackRepository {
 
       await client.query(
         `
-        INSERT INTO ${this.table('review_feedback_messages')} (
+        INSERT INTO ${this.table('feedback_messages')} (
           thread_id, author_user_id, author_name, body
         ) VALUES ($1, $2, $3, $4)
       `,
@@ -118,10 +118,10 @@ export class ReviewFeedbackRepository {
     siteId: number,
     threadId: number,
     userId: number
-  ): Promise<{ thread: FeedbackThread; messages: FeedbackMessage[] } | null> {
-    const threadResult = await this.pool.query<FeedbackThread>(
+  ): Promise<{ thread: FeedbackThreadRow; messages: FeedbackMessageRow[] } | null> {
+    const threadResult = await this.pool.query<FeedbackThreadRow>(
       `
-      SELECT * FROM ${this.table('review_feedback_threads')}
+      SELECT * FROM ${this.table('feedback_threads')}
       WHERE id = $1 AND site_id = $2 AND (recipient_user_id = $3 OR reviewer_user_id = $3)
     `,
       [threadId, siteId, userId]
@@ -132,9 +132,9 @@ export class ReviewFeedbackRepository {
       return null;
     }
 
-    const messages = await this.pool.query<FeedbackMessage>(
+    const messages = await this.pool.query<FeedbackMessageRow>(
       `
-      SELECT * FROM ${this.table('review_feedback_messages')}
+      SELECT * FROM ${this.table('feedback_messages')}
       WHERE thread_id = $1
       ORDER BY created_at ASC
     `,
@@ -150,7 +150,7 @@ export class ReviewFeedbackRepository {
     authorUserId: number;
     authorName: string;
     body: string;
-  }): Promise<FeedbackMessage | null> {
+  }): Promise<FeedbackMessageRow | null> {
     const client = await this.pool.connect();
 
     try {
@@ -158,7 +158,7 @@ export class ReviewFeedbackRepository {
 
       const thread = await client.query(
         `
-        SELECT id FROM ${this.table('review_feedback_threads')}
+        SELECT id FROM ${this.table('feedback_threads')}
         WHERE id = $1 AND site_id = $2 AND (recipient_user_id = $3 OR reviewer_user_id = $3)
       `,
         [input.threadId, input.siteId, input.authorUserId]
@@ -169,9 +169,9 @@ export class ReviewFeedbackRepository {
         return null;
       }
 
-      const message = await client.query<FeedbackMessage>(
+      const message = await client.query<FeedbackMessageRow>(
         `
-        INSERT INTO ${this.table('review_feedback_messages')} (
+        INSERT INTO ${this.table('feedback_messages')} (
           thread_id, author_user_id, author_name, body
         ) VALUES ($1, $2, $3, $4)
         RETURNING *
@@ -184,7 +184,7 @@ export class ReviewFeedbackRepository {
       // gereset, de eigen kolom van de auteur (die zou sowieso al leeg moeten zijn) blijft ongemoeid.
       await client.query(
         `
-        UPDATE ${this.table('review_feedback_threads')}
+        UPDATE ${this.table('feedback_threads')}
         SET last_activity = NOW(),
           reviewer_hidden_at = CASE WHEN reviewer_user_id != $2 THEN NULL ELSE reviewer_hidden_at END,
           recipient_hidden_at = CASE WHEN recipient_user_id != $2 THEN NULL ELSE recipient_hidden_at END
@@ -221,7 +221,7 @@ export class ReviewFeedbackRepository {
       }>(
         `
         SELECT reviewer_user_id, recipient_user_id, reviewer_hidden_at, recipient_hidden_at
-        FROM ${this.table('review_feedback_threads')}
+        FROM ${this.table('feedback_threads')}
         WHERE id = $1 AND site_id = $2 AND (recipient_user_id = $3 OR reviewer_user_id = $3)
         FOR UPDATE
       `,
@@ -238,13 +238,13 @@ export class ReviewFeedbackRepository {
       const otherAlreadyHidden = isReviewer ? thread.recipient_hidden_at !== null : thread.reviewer_hidden_at !== null;
 
       if (otherAlreadyHidden) {
-        await client.query(`DELETE FROM ${this.table('review_feedback_threads')} WHERE id = $1`, [threadId]);
+        await client.query(`DELETE FROM ${this.table('feedback_threads')} WHERE id = $1`, [threadId]);
         await client.query('COMMIT');
         return 'deleted';
       }
 
       const column = isReviewer ? 'reviewer_hidden_at' : 'recipient_hidden_at';
-      await client.query(`UPDATE ${this.table('review_feedback_threads')} SET ${column} = NOW() WHERE id = $1`, [threadId]);
+      await client.query(`UPDATE ${this.table('feedback_threads')} SET ${column} = NOW() WHERE id = $1`, [threadId]);
       await client.query('COMMIT');
       return 'hidden';
     } catch (error) {
@@ -258,7 +258,7 @@ export class ReviewFeedbackRepository {
   async markThreadSeen(userId: number, threadId: number): Promise<void> {
     await this.pool.query(
       `
-      UPDATE ${this.table('review_feedback_messages')}
+      UPDATE ${this.table('feedback_messages')}
       SET read_at = NOW()
       WHERE thread_id = $1 AND author_user_id != $2 AND read_at IS NULL
     `,

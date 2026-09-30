@@ -7,7 +7,7 @@ export * from './honour-board.js';
 export * from './stats.js';
 export * from './forum.js';
 export * from './project-manual.js';
-export * from './review-feedback.js';
+export * from './feedback.js';
 export * from './project-debug.js';
 export * from './project-progress.js';
 export * from './review.js';

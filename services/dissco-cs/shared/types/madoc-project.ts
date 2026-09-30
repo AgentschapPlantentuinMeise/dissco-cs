@@ -32,6 +32,7 @@ export type MadocProjectConfig = {
   maxContributionsPerResource?: number;
   contributionMode?: string;
   claimGranularity?: 'canvas' | 'manifest';
+  modelPageOptions?: { enableAutoSave?: boolean };
 } & Record<string, unknown>;
 
 // Payload shape of Madoc's single-project endpoint (GET /api/madoc/projects/:id), used by

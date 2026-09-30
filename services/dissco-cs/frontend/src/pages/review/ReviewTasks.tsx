@@ -6,7 +6,7 @@ import { LuMail } from 'react-icons/lu';
 import { localeText } from '../../utility/locale-text';
 import { ImagePreviewPopup } from '../../components/ImagePreviewPopup';
 import { ReviewCountSummary } from './ReviewCountSummary';
-import { ReviewFeedbackModal } from './ReviewFeedbackModal';
+import { FeedbackModal } from '../../components/FeedbackModal';
 import { ReviewInlineExpansion } from './ReviewInlineExpansion';
 import { ReviewSearchInput } from './ReviewSearchInput';
 import { ReviewTable } from './ReviewTable';
@@ -57,11 +57,11 @@ export const ReviewTasks: React.FC = () => {
                   <button
                     onClick={c.openFeedbackForSelection}
                     disabled={!c.canSendBulkFeedback}
-                    title={c.canSendBulkFeedback ? undefined : t('review_feedback_multi_submitter_hint')}
+                    title={c.canSendBulkFeedback ? undefined : t('feedback_multi_submitter_hint')}
                     className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-none bg-transparent text-[var(--cs-tertiary)] cursor-pointer hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <LuMail aria-hidden="true" />
-                    {t('review_feedback_button')}
+                    {t('feedback_button')}
                   </button>
                   <button
                     onClick={() => c.setConfirmingAccept(true)}
@@ -89,7 +89,7 @@ export const ReviewTasks: React.FC = () => {
                         className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border border-[var(--cs-tertiary)] bg-white text-[var(--cs-tertiary)] cursor-pointer hover:bg-gray-50"
                       >
                         <LuMail aria-hidden="true" />
-                        {t('review_feedback_button')}
+                        {t('feedback_button')}
                       </button>
                     )}
                     <button
@@ -116,7 +116,7 @@ export const ReviewTasks: React.FC = () => {
                 <div className="flex items-center gap-1 p-1.5 bg-[var(--cs-light,#f3f8f8)] rounded-full border-2 border-[rgba(19,155,148,0.35)]">
                   <span className="flex items-center gap-2 px-3 text-sm text-gray-700 whitespace-nowrap">
                     <span className="w-2 h-2 rounded-full bg-[var(--cs-secondary)]" />
-                    {t('review_feedback_last_batch_summary', { count: c.lastBatchTasks.length })}
+                    {t('feedback_last_batch_summary', { count: c.lastBatchTasks.length })}
                   </span>
                   {c.canSendLastBatchFeedback && (
                     <button
@@ -124,7 +124,7 @@ export const ReviewTasks: React.FC = () => {
                       className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-none bg-transparent text-[var(--cs-tertiary)] cursor-pointer hover:bg-gray-50"
                     >
                       <LuMail aria-hidden="true" />
-                      {t('review_feedback_button')}
+                      {t('feedback_button')}
                     </button>
                   )}
                   <button
@@ -209,7 +209,7 @@ export const ReviewTasks: React.FC = () => {
       )}
 
       {c.feedbackTarget && (
-        <ReviewFeedbackModal
+        <FeedbackModal
           target={c.feedbackTarget}
           onSend={(subject, body) => void c.sendFeedback(subject, body)}
           onClose={c.closeFeedbackTarget}

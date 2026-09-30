@@ -10,7 +10,6 @@ import {
   SitePageLang,
 } from '@dissco-cs/shared-types';
 import {
-  CreateFeedbackThreadBody,
   PruneProjectLinksBody,
   SetInstitutionLinkBody,
   SetManualContentBody,
@@ -139,26 +138,4 @@ export function parsePruneProjectLinksBody(payload: PruneProjectLinksBody | null
   }
 
   return { liveSlugs: payload.liveSlugs as string[] };
-}
-
-export function parseCreateFeedbackThreadBody(
-  payload: CreateFeedbackThreadBody | null
-): { recipientUserId: number; recipientName: string; subject: string; body: string } | null {
-  if (
-    !payload ||
-    typeof payload.recipientUserId !== 'number' ||
-    !Number.isInteger(payload.recipientUserId) ||
-    !isNonEmptyString(payload.recipientName) ||
-    !isNonEmptyString(payload.subject) ||
-    !isNonEmptyString(payload.body)
-  ) {
-    return null;
-  }
-
-  return {
-    recipientUserId: payload.recipientUserId,
-    recipientName: payload.recipientName,
-    subject: payload.subject,
-    body: payload.body,
-  };
 }

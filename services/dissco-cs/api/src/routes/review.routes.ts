@@ -5,7 +5,7 @@ import { getMadocProjectByRootTaskId } from '../madoc-client/projects.js';
 import { getMadocTaskDetail } from '../madoc-client/tasks.js';
 import { getMadocReviewTasks, ReviewTask } from '../madoc-client/reviews.js';
 import { getMadocSiteUserRole } from '../madoc-client/users.js';
-import { InternationalString, MadocProjectListItem, ReviewTaskRow } from '@dissco-cs/shared-types';
+import { InternationalString, MadocProjectListItem, ReviewTaskDto } from '@dissco-cs/shared-types';
 
 function parseUserId(urn: string | undefined): number | undefined {
   const match = urn?.match(/^urn:madoc:user:(\d+)$/);
@@ -56,7 +56,7 @@ export function reviewRoutes(): Hono {
 
     const projectByRootTask = new Map<string, MadocProjectListItem | null>();
 
-    const rows: ReviewTaskRow[] = [];
+    const rows: ReviewTaskDto[] = [];
     for (const task of tasks) {
       let submitter: string | undefined;
       let submitterId: number | undefined;
