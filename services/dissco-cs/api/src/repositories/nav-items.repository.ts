@@ -1,11 +1,11 @@
 import { Pool, PoolClient } from 'pg';
-import { SITE_PAGE_KEYS, SitePageContentKey, SitePageKey, SitePageLang } from '@dissco-cs/shared-types';
+import { NAV_ITEM_KEYS, NavItemContentKey, NavItemKey, SitePageLang } from '@dissco-cs/shared-types';
 
-// Local row shape (`updated_at: Date`, from `pg`) -- the shared `SitePage` DTO type describes
+// Local row shape (`updated_at: Date`, from `pg`) -- the shared `NavItemDto` type describes
 // the wire shape (`updated_at: string`) route handlers actually send.
-export type SitePage = {
+export type NavItemRow = {
   site_id: number;
-  page_key: SitePageKey;
+  page_key: NavItemKey;
   is_active: boolean;
   content: Partial<Record<SitePageLang, string>>;
   contact_email: string | null;
@@ -14,7 +14,7 @@ export type SitePage = {
   updated_at: Date;
 };
 
-export class SitePagesRepository {
+export class NavItemsRepository {
   constructor(
     private readonly pool: Pool,
     private readonly schemaRef: string
@@ -24,9 +24,9 @@ export class SitePagesRepository {
     return `${this.schemaRef}.${name}`;
   }
 
-  async getSitePages(siteId: number): Promise<SitePage[]> {
-    const result = await this.pool.query<SitePage>(
-      `SELECT * FROM ${this.table('site_pages')} WHERE site_id = $1`,
+  async getNavItems(siteId: number): Promise<NavItemRow[]> {
+    const result = await this.pool.query<NavItemRow>(
+      `SELECT * FROM ${this.table('nav_items')} WHERE site_id = $1`,
       [siteId]
     );
 
@@ -35,7 +35,7 @@ export class SitePagesRepository {
     // Always return every known page key, even ones that have never been toggled/edited
     // (and so have no row yet), so navbar and page management always see the full set —
     // defaulting to active with the configured default display order.
-    const pages: SitePage[] = SITE_PAGE_KEYS.map((key, defaultIndex) => {
+    const items: NavItemRow[] = NAV_ITEM_KEYS.map((key, defaultIndex) => {
       const existing = byKey.get(key);
       if (existing) {
         return existing;
@@ -52,19 +52,19 @@ export class SitePagesRepository {
       };
     });
 
-    return pages.sort((a, b) => {
+    return items.sort((a, b) => {
       if (a.sort_order !== b.sort_order) {
         return a.sort_order - b.sort_order;
       }
-      return SITE_PAGE_KEYS.indexOf(a.page_key) - SITE_PAGE_KEYS.indexOf(b.page_key);
+      return NAV_ITEM_KEYS.indexOf(a.page_key) - NAV_ITEM_KEYS.indexOf(b.page_key);
     });
   }
 
-  async setPagesOrder(siteId: number, orderedKeys: SitePageKey[]): Promise<void> {
+  async setNavItemsOrder(siteId: number, orderedKeys: NavItemKey[]): Promise<void> {
     await this.runOrderedUpdate(orderedKeys, (client, pageKey, sortOrder) =>
       client.query(
         `
-        INSERT INTO ${this.table('site_pages')} (site_id, page_key, sort_order)
+        INSERT INTO ${this.table('nav_items')} (site_id, page_key, sort_order)
         VALUES ($1, $2, $3)
         ON CONFLICT (site_id, page_key) DO UPDATE
         SET sort_order = EXCLUDED.sort_order, updated_at = NOW()
@@ -74,10 +74,10 @@ export class SitePagesRepository {
     );
   }
 
-  async setPageActive(siteId: number, pageKey: SitePageKey, isActive: boolean): Promise<void> {
+  async setNavItemActive(siteId: number, pageKey: NavItemKey, isActive: boolean): Promise<void> {
     await this.pool.query(
       `
-      INSERT INTO ${this.table('site_pages')} (site_id, page_key, is_active)
+      INSERT INTO ${this.table('nav_items')} (site_id, page_key, is_active)
       VALUES ($1, $2, $3)
       ON CONFLICT (site_id, page_key) DO UPDATE
       SET is_active = EXCLUDED.is_active, updated_at = NOW()
@@ -86,18 +86,18 @@ export class SitePagesRepository {
     );
   }
 
-  async upsertPageContent(
+  async upsertNavItemContent(
     siteId: number,
-    pageKey: SitePageContentKey,
+    pageKey: NavItemContentKey,
     lang: SitePageLang,
     contentMd: string
   ): Promise<void> {
     await this.pool.query(
       `
-      INSERT INTO ${this.table('site_pages')} (site_id, page_key, content)
+      INSERT INTO ${this.table('nav_items')} (site_id, page_key, content)
       VALUES ($1, $2, jsonb_build_object($3::text, $4::text))
       ON CONFLICT (site_id, page_key) DO UPDATE
-      SET content = jsonb_set(${this.table('site_pages')}.content, ARRAY[$3::text], to_jsonb($4::text)),
+      SET content = jsonb_set(${this.table('nav_items')}.content, ARRAY[$3::text], to_jsonb($4::text)),
           updated_at = NOW()
     `,
       [siteId, pageKey, lang, contentMd]
@@ -107,7 +107,7 @@ export class SitePagesRepository {
   async setContactEmail(siteId: number, email: string): Promise<void> {
     await this.pool.query(
       `
-      INSERT INTO ${this.table('site_pages')} (site_id, page_key, contact_email)
+      INSERT INTO ${this.table('nav_items')} (site_id, page_key, contact_email)
       VALUES ($1, 'contact', $2)
       ON CONFLICT (site_id, page_key) DO UPDATE
       SET contact_email = EXCLUDED.contact_email, updated_at = NOW()
@@ -119,7 +119,7 @@ export class SitePagesRepository {
   async setShowContactForm(siteId: number, showForm: boolean): Promise<void> {
     await this.pool.query(
       `
-      INSERT INTO ${this.table('site_pages')} (site_id, page_key, show_contact_form)
+      INSERT INTO ${this.table('nav_items')} (site_id, page_key, show_contact_form)
       VALUES ($1, 'contact', $2)
       ON CONFLICT (site_id, page_key) DO UPDATE
       SET show_contact_form = EXCLUDED.show_contact_form, updated_at = NOW()
@@ -130,7 +130,7 @@ export class SitePagesRepository {
 
   async getContactEmail(siteId: number): Promise<string | null> {
     const result = await this.pool.query<{ contact_email: string | null; is_active: boolean }>(
-      `SELECT contact_email, is_active FROM ${this.table('site_pages')} WHERE site_id = $1 AND page_key = 'contact'`,
+      `SELECT contact_email, is_active FROM ${this.table('nav_items')} WHERE site_id = $1 AND page_key = 'contact'`,
       [siteId]
     );
 

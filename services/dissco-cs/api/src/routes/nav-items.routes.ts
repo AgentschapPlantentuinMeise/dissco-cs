@@ -2,21 +2,16 @@ import { Hono } from 'hono';
 import { DisscoCSRepository } from '../db.js';
 import { requireSiteAdmin, resolveSiteId } from '../jwt.js';
 import {
-  isEmailLike,
-  isSitePageContentKey,
-  isSitePageKey,
-  isSitePageKeyPermutation,
-  isSitePageLang,
+  isNavItemContentKey,
+  isNavItemKey,
+  setNavItemActiveSchema,
+  setNavItemContentSchema,
+  setNavItemsOrderSchema,
+  setShowContactFormSchema,
 } from '../validators.js';
-import {
-  SetContactEmailBody,
-  SetPageActiveBody,
-  SetPageContentBody,
-  SetPagesOrderBody,
-  SetShowContactFormBody,
-} from '../types/request-bodies.js';
+import { setContactEmailSchema } from '@dissco-cs/shared-types';
 
-export function sitePagesRoutes(repository: DisscoCSRepository): Hono {
+export function navItemsRoutes(repository: DisscoCSRepository): Hono {
   const app = new Hono();
 
   app.get('/', async c => {
@@ -25,8 +20,8 @@ export function sitePagesRoutes(repository: DisscoCSRepository): Hono {
       return c.text('Could not resolve site', 400);
     }
 
-    const pages = await repository.sitePages.getSitePages(siteId);
-    return c.json({ pages });
+    const navItems = await repository.navItems.getNavItems(siteId);
+    return c.json({ navItems });
   });
 
   app.put('/order', async c => {
@@ -35,12 +30,12 @@ export function sitePagesRoutes(repository: DisscoCSRepository): Hono {
       return identity;
     }
 
-    const payload = (await c.req.json().catch(() => null)) as SetPagesOrderBody | null;
-    if (!payload || !isSitePageKeyPermutation(payload.order)) {
+    const result = setNavItemsOrderSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('order must contain every page key exactly once', 400);
     }
 
-    await repository.sitePages.setPagesOrder(identity.siteId, payload.order);
+    await repository.navItems.setNavItemsOrder(identity.siteId, result.data.order);
     return c.body(null, 204);
   });
 
@@ -50,12 +45,12 @@ export function sitePagesRoutes(repository: DisscoCSRepository): Hono {
       return identity;
     }
 
-    const payload = (await c.req.json().catch(() => null)) as SetContactEmailBody | null;
-    if (!payload || !isEmailLike(payload.email)) {
+    const result = setContactEmailSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('A valid email is required', 400);
     }
 
-    await repository.sitePages.setContactEmail(identity.siteId, payload.email);
+    await repository.navItems.setContactEmail(identity.siteId, result.data.email);
     return c.body(null, 204);
   });
 
@@ -65,12 +60,12 @@ export function sitePagesRoutes(repository: DisscoCSRepository): Hono {
       return identity;
     }
 
-    const payload = (await c.req.json().catch(() => null)) as SetShowContactFormBody | null;
-    if (!payload || typeof payload.showForm !== 'boolean') {
+    const result = setShowContactFormSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('showForm must be a boolean', 400);
     }
 
-    await repository.sitePages.setShowContactForm(identity.siteId, payload.showForm);
+    await repository.navItems.setShowContactForm(identity.siteId, result.data.showForm);
     return c.body(null, 204);
   });
 
@@ -81,16 +76,16 @@ export function sitePagesRoutes(repository: DisscoCSRepository): Hono {
     }
 
     const pageKey = c.req.param('key');
-    if (!isSitePageContentKey(pageKey)) {
+    if (!isNavItemContentKey(pageKey)) {
       return c.notFound();
     }
 
-    const payload = (await c.req.json().catch(() => null)) as SetPageContentBody | null;
-    if (!payload || !isSitePageLang(payload.lang) || typeof payload.contentMd !== 'string') {
+    const result = setNavItemContentSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('lang and contentMd are required', 400);
     }
 
-    await repository.sitePages.upsertPageContent(identity.siteId, pageKey, payload.lang, payload.contentMd);
+    await repository.navItems.upsertNavItemContent(identity.siteId, pageKey, result.data.lang, result.data.contentMd);
     return c.body(null, 204);
   });
 
@@ -101,16 +96,16 @@ export function sitePagesRoutes(repository: DisscoCSRepository): Hono {
     }
 
     const pageKey = c.req.param('key');
-    if (!isSitePageKey(pageKey)) {
+    if (!isNavItemKey(pageKey)) {
       return c.notFound();
     }
 
-    const payload = (await c.req.json().catch(() => null)) as SetPageActiveBody | null;
-    if (!payload || typeof payload.isActive !== 'boolean') {
+    const result = setNavItemActiveSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('isActive must be a boolean', 400);
     }
 
-    await repository.sitePages.setPageActive(identity.siteId, pageKey, payload.isActive);
+    await repository.navItems.setNavItemActive(identity.siteId, pageKey, result.data.isActive);
     return c.body(null, 204);
   });
 

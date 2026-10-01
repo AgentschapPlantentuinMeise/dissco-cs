@@ -18,7 +18,7 @@ import { manualsRoutes } from './routes/manuals.routes.js';
 import { projectProgressRoutes } from './routes/project-progress.routes.js';
 import { feedbackRoutes } from './routes/feedback.routes.js';
 import { reviewRoutes } from './routes/review.routes.js';
-import { sitePagesRoutes } from './routes/site-pages.routes.js';
+import { navItemsRoutes } from './routes/nav-items.routes.js';
 import { statsRoutes } from './routes/stats.routes.js';
 import { stuckTasksRoutes } from './routes/stuck-tasks.routes.js';
 import { SiteTaskTotalsRepository } from './repositories/site-task-totals.repository.js';
@@ -34,7 +34,7 @@ export function createDisscoCSApp(
 
   app.get('/api/dissco-cs/health', c => c.text('ok'));
   app.route('/api/dissco-cs/forum', forumRoutes(repository));
-  app.route('/api/dissco-cs/site-pages', sitePagesRoutes(repository));
+  app.route('/api/dissco-cs/nav-items', navItemsRoutes(repository));
   app.route('/api/dissco-cs/contact', contactRoutes(repository));
   app.route('/api/dissco-cs/announcements', announcementsRoutes(repository));
   app.route('/api/dissco-cs/institutions', institutionsRoutes(repository, institutionStatsRepository, honourBoardRepository));

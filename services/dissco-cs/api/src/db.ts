@@ -6,11 +6,11 @@ import { ForumRepository } from './repositories/forum.repository.js';
 import { InstitutionsRepository } from './repositories/institutions.repository.js';
 import { ManualsRepository } from './repositories/manuals.repository.js';
 import { FeedbackRepository } from './repositories/feedback.repository.js';
-import { SitePagesRepository } from './repositories/site-pages.repository.js';
+import { NavItemsRepository } from './repositories/nav-items.repository.js';
 
 export class DisscoCSRepository {
   readonly forum: ForumRepository;
-  readonly sitePages: SitePagesRepository;
+  readonly navItems: NavItemsRepository;
   readonly announcements: AnnouncementsRepository;
   readonly institutions: InstitutionsRepository;
   readonly manuals: ManualsRepository;
@@ -38,7 +38,7 @@ export class DisscoCSRepository {
     });
 
     this.forum = new ForumRepository(this.pool, this.schemaRef);
-    this.sitePages = new SitePagesRepository(this.pool, this.schemaRef);
+    this.navItems = new NavItemsRepository(this.pool, this.schemaRef);
     this.manuals = new ManualsRepository(this.pool, this.schemaRef);
     this.announcements = new AnnouncementsRepository(this.pool, this.schemaRef);
     this.institutions = new InstitutionsRepository(this.pool, this.schemaRef);
@@ -122,7 +122,7 @@ export class DisscoCSRepository {
       `);
 
       await client.query(`
-        CREATE TABLE IF NOT EXISTS ${this.schemaRef}.site_pages (
+        CREATE TABLE IF NOT EXISTS ${this.schemaRef}.nav_items (
           site_id INTEGER NOT NULL,
           page_key TEXT NOT NULL,
           is_active BOOLEAN NOT NULL DEFAULT TRUE,

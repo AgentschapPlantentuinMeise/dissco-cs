@@ -6,33 +6,31 @@ import { ToggleSwitch } from '../../components/ToggleSwitch';
 import { SaveButton } from '../../components/SaveButton';
 import { ActiveStatusToggle } from '../../components/ActiveStatusToggle';
 import { LuPencil, LuArrowUp, LuArrowDown, LuArrowLeft } from 'react-icons/lu';
-import { sitePagesApi } from '../../api/cs-api';
-import { SitePage, SitePageKey, SitePageLang } from '@dissco-cs/shared-types';
+import { navItemsApi } from '../../api/cs-api';
+import { setContactEmailSchema, NavItemDto, NavItemKey, SitePageLang } from '@dissco-cs/shared-types';
 import { LANGUAGES, defaultLang } from '../../utility/site-lang-text';
-import { useSitePages } from '../../contexts/SitePagesContext';
+import { useNavItems } from '../../contexts/NavItemsContext';
 import { MarkdownToolbar } from '../../components/MarkdownToolbar';
 
-const CONTENT_PAGE_KEYS: SitePageKey[] = ['about', 'help', 'contact', 'welcome'];
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const CONTENT_PAGE_KEYS: NavItemKey[] = ['about', 'help', 'contact', 'welcome'];
 
 // contact/help/forum/institutions share their title with the navbar and public page,
 // so they resolve to that single translation key; about/welcome keep their own
 // (shorter / distinct) label here, hence the fallback.
-const MERGED_PAGE_TITLE_KEY: Partial<Record<SitePageKey, string>> = {
+const MERGED_PAGE_TITLE_KEY: Partial<Record<NavItemKey, string>> = {
   contact: 'nav_contact',
   help: 'nav_help',
   forum: 'nav_messageboard',
   institutions: 'nav_institutions',
 };
-const pageLabelKey = (key: SitePageKey) => MERGED_PAGE_TITLE_KEY[key] ?? `sm_pages_page_${key}`;
+const pageLabelKey = (key: NavItemKey) => MERGED_PAGE_TITLE_KEY[key] ?? `sm_pages_page_${key}`;
 
 export const PageManagement: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { pages, loading, refresh } = useSitePages();
-  const [selectedKey, setSelectedKey] = useState<SitePageKey | null>(null);
+  const { navItems: pages, loading, refresh } = useNavItems();
+  const [selectedKey, setSelectedKey] = useState<NavItemKey | null>(null);
   const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
-  const [draftContent, setDraftContent] = useState<SitePage['content']>({});
+  const [draftContent, setDraftContent] = useState<NavItemDto['content']>({});
   const [draftContactEmail, setDraftContactEmail] = useState('');
   const [draftShowContactForm, setDraftShowContactForm] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -56,10 +54,10 @@ export const PageManagement: React.FC = () => {
     setSaved(false);
   }, [selectedKey, loading]);
 
-  const isActive = (key: SitePageKey) => pages.find(p => p.page_key === key)?.is_active ?? true;
+  const isActive = (key: NavItemKey) => pages.find(p => p.page_key === key)?.is_active ?? true;
 
-  const toggleActive = async (key: SitePageKey) => {
-    await sitePagesApi.setActive(key, !isActive(key));
+  const toggleActive = async (key: NavItemKey) => {
+    await navItemsApi.setActive(key, !isActive(key));
     refresh();
   };
 
@@ -67,7 +65,7 @@ export const PageManagement: React.FC = () => {
     const next = !draftShowContactForm;
     setDraftShowContactForm(next);
     setSaved(false);
-    await sitePagesApi.setShowContactForm(next);
+    await navItemsApi.setShowContactForm(next);
     refresh();
   };
 
@@ -77,20 +75,21 @@ export const PageManagement: React.FC = () => {
 
     const reordered = [...pages];
     [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
-    await sitePagesApi.setOrder(reordered.map(p => p.page_key));
+    await navItemsApi.setOrder(reordered.map(p => p.page_key));
     refresh();
   };
 
   const allLangsFilled = LANGUAGES.every(lang => (draftContent[lang.code] ?? '').trim().length > 0);
   const isContact = selectedKey === 'contact';
-  const emailValid = !isContact || !draftShowContactForm || EMAIL_PATTERN.test(draftContactEmail.trim());
+  const emailValid =
+    !isContact || !draftShowContactForm || setContactEmailSchema.safeParse({ email: draftContactEmail.trim() }).success;
   const canSave = allLangsFilled && emailValid;
 
   const saveContent = async () => {
     if (!selectedKey || !canSave) return;
     await Promise.all([
-      ...LANGUAGES.map(lang => sitePagesApi.setContent(selectedKey, lang.code, draftContent[lang.code] ?? '')),
-      ...(isContact && draftShowContactForm ? [sitePagesApi.setContactEmail(draftContactEmail.trim())] : []),
+      ...LANGUAGES.map(lang => navItemsApi.setContent(selectedKey, lang.code, draftContent[lang.code] ?? '')),
+      ...(isContact && draftShowContactForm ? [navItemsApi.setContactEmail(draftContactEmail.trim())] : []),
     ]);
     refresh();
     setSaved(true);

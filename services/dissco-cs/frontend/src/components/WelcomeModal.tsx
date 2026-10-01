@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CsMarkdown } from './CsMarkdown';
 import { Modal } from './Modal';
-import { useSitePages } from '../contexts/SitePagesContext';
+import { useNavItems } from '../contexts/NavItemsContext';
 import { useUser } from '../hooks/use-current-user';
 
 // Shown once, right after a new account is activated — see the redirect to
@@ -12,7 +12,7 @@ import { useUser } from '../hooks/use-current-user';
 export const WelcomeModal: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const [searchParams, setSearchParams] = useSearchParams();
-  const { loading, isActive, getContent } = useSitePages();
+  const { loading, isActive, getContent } = useNavItems();
   const user = useUser();
 
   const show = searchParams.get('welcome') === '1';

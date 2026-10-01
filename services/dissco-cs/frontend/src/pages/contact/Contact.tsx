@@ -2,15 +2,15 @@
 import { useTranslation } from 'react-i18next';
 import { CsPage } from '../../components/CsPage';
 import { CsMarkdown } from '../../components/CsMarkdown';
-import { useSitePages } from '../../contexts/SitePagesContext';
+import { useNavItems } from '../../contexts/NavItemsContext';
 import { contactApi } from '../../api/cs-api';
 
 export const Contact: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { getContent, pages } = useSitePages();
+  const { getContent, navItems } = useNavItems();
 
   const dbContent = getContent('contact', i18n.language);
-  const showForm = pages.find(p => p.page_key === 'contact')?.show_contact_form ?? true;
+  const showForm = navItems.find(p => p.page_key === 'contact')?.show_contact_form ?? true;
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

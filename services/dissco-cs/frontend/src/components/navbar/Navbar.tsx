@@ -11,8 +11,8 @@ import { LuUser, LuSearch, LuX } from 'react-icons/lu';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { getSiteSlug } from '../../api/slug';
 import { forumApi, reviewApi, feedbackApi } from '../../api/cs-api';
-import { useSitePages } from '../../contexts/SitePagesContext';
-import { SITE_PAGE_NAV } from '../../site-pages-nav-config';
+import { useNavItems } from '../../contexts/NavItemsContext';
+import { NAV_ITEMS } from '../../nav-config';
 
 const LANGUAGES = disscoCSConfig.supportedLanguages;
 
@@ -37,7 +37,7 @@ export const Navbar: React.FC = () => {
   const siteSlug = getSiteSlug();
   const location = useLocation();
   const navigate = useNavigate();
-  const { pages } = useSitePages();
+  const { navItems } = useNavItems();
   const showAdmin = !!user && user.scope.includes('site.admin');
   // Reviewer-rol zit niet in het JWT (enkel scope), dus navraag via een lichte backend-call;
   // admins hoeven deze niet te doen, want die zien de link toch al.
@@ -149,21 +149,21 @@ export const Navbar: React.FC = () => {
             </HrefLink>
           </li>
 
-          {pages.map(page => {
-            const nav = SITE_PAGE_NAV[page.page_key];
-            if (!nav || !page.is_active || (nav.requiresLogin && !user)) {
+          {navItems.map(navItem => {
+            const nav = NAV_ITEMS[navItem.page_key];
+            if (!nav || !navItem.is_active || (nav.requiresLogin && !user)) {
               return null;
             }
 
             return (
-              <li key={page.page_key}>
+              <li key={navItem.page_key}>
                 <HrefLink
                   href={nav.href}
                   className={navLinkClass(location.pathname.startsWith(nav.href))}
                   onClick={() => setMenuOpen(false)}
                 >
                   {t(nav.labelKey)}
-                  {page.page_key === 'forum' && newMsgCount > 0 && (
+                  {navItem.page_key === 'forum' && newMsgCount > 0 && (
                     <span className="inline-block bg-[var(--cs-accent)] text-white rounded-[10px] px-[6px] py-[1px] text-[0.7rem] font-bold ml-[5px] align-middle leading-[1.4]">
                       {newMsgCount}
                     </span>

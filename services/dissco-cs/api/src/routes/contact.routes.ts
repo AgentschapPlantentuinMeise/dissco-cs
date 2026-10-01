@@ -30,7 +30,7 @@ export function contactRoutes(repository: DisscoCSRepository): Hono {
       return c.text('Too many requests, please try again later', 429);
     }
 
-    const contactEmail = await repository.sitePages.getContactEmail(siteId);
+    const contactEmail = await repository.navItems.getContactEmail(siteId);
     if (!contactEmail) {
       return c.text('Contact form is not configured for this site', 503);
     }

@@ -1,15 +1,15 @@
-import { SitePageKey } from '@dissco-cs/shared-types';
+import { NavItemKey } from '@dissco-cs/shared-types';
 
-type SitePageNavEntry = {
+type NavItemEntry = {
   labelKey: string;
   href: string;
-  /** Only shown to logged-in users, regardless of the page's active toggle. */
+  /** Only shown to logged-in users, regardless of the item's active toggle. */
   requiresLogin?: boolean;
 };
 
-// Partial: not every page key (e.g. 'welcome', which is a one-off modal, not a page)
+// Partial: not every item key (e.g. 'welcome', which is a one-off modal, not a navbar entry)
 // has a navbar entry.
-export const SITE_PAGE_NAV: Partial<Record<SitePageKey, SitePageNavEntry>> = {
+export const NAV_ITEMS: Partial<Record<NavItemKey, NavItemEntry>> = {
   institutions: { labelKey: 'nav_institutions', href: '/institutions' },
   forum: { labelKey: 'nav_messageboard', href: '/messageboard', requiresLogin: true },
   about: { labelKey: 'nav_about', href: '/about' },

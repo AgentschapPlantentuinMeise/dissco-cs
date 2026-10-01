@@ -5,9 +5,9 @@ import {
   ForumTopicDto,
   ForumReplyDto,
   ForumTopicInput,
-  SitePageKey,
+  NavItemKey,
   SitePageLang,
-  SitePage,
+  NavItemDto,
   FeedbackThreadDto,
   FeedbackMessageDto,
   FeedbackThreadInput,
@@ -81,23 +81,23 @@ export const forumApi = {
     csFetch<void>(`/forum/topics/${topicId}/replies/${replyId}`, { method: 'DELETE' }),
 };
 
-export const sitePagesApi = {
-  list: () => csFetch<{ pages: SitePage[] }>(`/site-pages?slug=${getSiteSlug()}`),
+export const navItemsApi = {
+  list: () => csFetch<{ navItems: NavItemDto[] }>(`/nav-items?slug=${getSiteSlug()}`),
 
-  setActive: (key: SitePageKey, isActive: boolean) =>
-    csFetch<void>(`/site-pages/${key}`, { method: 'PUT', body: JSON.stringify({ isActive }) }),
+  setActive: (key: NavItemKey, isActive: boolean) =>
+    csFetch<void>(`/nav-items/${key}`, { method: 'PUT', body: JSON.stringify({ isActive }) }),
 
-  setContent: (key: SitePageKey, lang: SitePageLang, contentMd: string) =>
-    csFetch<void>(`/site-pages/${key}/content`, { method: 'PUT', body: JSON.stringify({ lang, contentMd }) }),
+  setContent: (key: NavItemKey, lang: SitePageLang, contentMd: string) =>
+    csFetch<void>(`/nav-items/${key}/content`, { method: 'PUT', body: JSON.stringify({ lang, contentMd }) }),
 
   setContactEmail: (email: string) =>
-    csFetch<void>('/site-pages/contact/email', { method: 'PUT', body: JSON.stringify({ email }) }),
+    csFetch<void>('/nav-items/contact/email', { method: 'PUT', body: JSON.stringify({ email }) }),
 
   setShowContactForm: (showForm: boolean) =>
-    csFetch<void>('/site-pages/contact/show-form', { method: 'PUT', body: JSON.stringify({ showForm }) }),
+    csFetch<void>('/nav-items/contact/show-form', { method: 'PUT', body: JSON.stringify({ showForm }) }),
 
-  setOrder: (order: SitePageKey[]) =>
-    csFetch<void>('/site-pages/order', { method: 'PUT', body: JSON.stringify({ order }) }),
+  setOrder: (order: NavItemKey[]) =>
+    csFetch<void>('/nav-items/order', { method: 'PUT', body: JSON.stringify({ order }) }),
 };
 
 export const projectProgressApi = {

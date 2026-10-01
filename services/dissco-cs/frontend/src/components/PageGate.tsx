@@ -1,10 +1,10 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useSitePages } from '../contexts/SitePagesContext';
-import { SitePageKey } from '@dissco-cs/shared-types';
+import { useNavItems } from '../contexts/NavItemsContext';
+import { NavItemKey } from '@dissco-cs/shared-types';
 
-export const PageGate: React.FC<{ pageKey: SitePageKey; children: React.ReactNode }> = ({ pageKey, children }) => {
-  const { loading, isActive } = useSitePages();
+export const PageGate: React.FC<{ pageKey: NavItemKey; children: React.ReactNode }> = ({ pageKey, children }) => {
+  const { loading, isActive } = useNavItems();
 
   if (loading) {
     return null;

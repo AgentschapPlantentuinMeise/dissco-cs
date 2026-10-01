@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { getSiteSlug } from './api/slug';
 import { disscoCSConfig } from './dissco-cs-config';
-import { SitePagesProvider } from './contexts/SitePagesContext';
+import { NavItemsProvider } from './contexts/NavItemsContext';
 import { PageGate } from './components/PageGate';
 import { AuthGate } from './components/AuthGate';
 import { Homepage } from './pages/homepage/Homepage';
@@ -37,7 +37,7 @@ export const App: React.FC = () => {
 
   return (
     <BrowserRouter basename={basename}>
-      <SitePagesProvider>
+      <NavItemsProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -66,7 +66,7 @@ export const App: React.FC = () => {
           <Route path="/explore/:slug"element={<ProjectDetail />} />
           <Route path="/explore/:slug/manifests/:manifestId/annotate" element={<AuthGate><AnnotatePage /></AuthGate>} />
         </Routes>
-      </SitePagesProvider>
+      </NavItemsProvider>
     </BrowserRouter>
   );
 };

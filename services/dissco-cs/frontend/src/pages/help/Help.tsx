@@ -2,11 +2,11 @@
 import { useTranslation } from 'react-i18next';
 import { CsPage } from '../../components/CsPage';
 import { CsMarkdown } from '../../components/CsMarkdown';
-import { useSitePages } from '../../contexts/SitePagesContext';
+import { useNavItems } from '../../contexts/NavItemsContext';
 
 export const Help: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { getContent } = useSitePages();
+  const { getContent } = useNavItems();
 
   const dbContent = getContent('help', i18n.language);
 
