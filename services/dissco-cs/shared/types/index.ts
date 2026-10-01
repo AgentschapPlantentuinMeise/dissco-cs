@@ -8,6 +8,7 @@ export * from './stats.js';
 export * from './forum.js';
 export * from './manual.js';
 export * from './feedback.js';
+export * from './contact.js';
 export * from './project-debug.js';
 export * from './project-progress.js';
 export * from './review.js';

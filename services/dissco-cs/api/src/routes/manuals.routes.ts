@@ -8,8 +8,7 @@ import {
   setManualContentSchema,
   setManualTitleSchema,
 } from '@dissco-cs/shared-types';
-import { isSitePageLang, parsePruneProjectLinksBody, parseSetManualLinkBody } from '../validators.js';
-import { PruneProjectLinksBody, SetManualLinkBody } from '../types/request-bodies.js';
+import { isSitePageLang, pruneProjectLinksSchema, setManualLinkSchema } from '../validators.js';
 
 export function manualsRoutes(repository: DisscoCSRepository): Hono {
   const app = new Hono();
@@ -70,19 +69,19 @@ export function manualsRoutes(repository: DisscoCSRepository): Hono {
       return identity;
     }
 
-    const payload = parseSetManualLinkBody((await c.req.json().catch(() => null)) as SetManualLinkBody | null);
-    if (!payload) {
+    const result = setManualLinkSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('Invalid payload', 400);
     }
 
-    if (payload.manualId !== null) {
-      const manual = await repository.manuals.getManualById(identity.siteId, payload.manualId);
+    if (result.data.manualId !== null) {
+      const manual = await repository.manuals.getManualById(identity.siteId, result.data.manualId);
       if (!manual) {
         return c.text('Manual not found', 404);
       }
     }
 
-    await repository.manuals.setProjectLink(identity.siteId, c.req.param('projectId'), payload.manualId);
+    await repository.manuals.setProjectLink(identity.siteId, c.req.param('projectId'), result.data.manualId);
     return c.body(null, 204);
   });
 
@@ -95,12 +94,12 @@ export function manualsRoutes(repository: DisscoCSRepository): Hono {
       return identity;
     }
 
-    const payload = parsePruneProjectLinksBody((await c.req.json().catch(() => null)) as PruneProjectLinksBody | null);
-    if (!payload) {
+    const result = pruneProjectLinksSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('Invalid payload', 400);
     }
 
-    const removed = await repository.manuals.pruneOrphanedProjectLinks(identity.siteId, payload.liveSlugs);
+    const removed = await repository.manuals.pruneOrphanedProjectLinks(identity.siteId, result.data.liveSlugs);
     return c.json({ removed });
   });
 

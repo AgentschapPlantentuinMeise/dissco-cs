@@ -10,16 +10,14 @@ import {
   SitePageLang,
   sitePageLangSchema,
 } from '@dissco-cs/shared-types';
-import {
-  PruneProjectLinksBody,
-  SetInstitutionLinkBody,
-  SetManualLinkBody,
-} from './types/request-bodies.js';
 
 export const CONTACT_RATE_LIMIT = { maxAttempts: 5, windowMs: 10 * 60 * 1000 };
 
 const idOrNull = z.union([z.number().int(), z.string().regex(/^\d+$/).transform(Number)]).nullable();
 export const pruneProjectLinksSchema = z.object({ liveSlugs: z.array(z.string().trim().min(1)).min(1) });
+export const setManualLinkSchema = z.object({ manualId: idOrNull });
+export const setInstitutionLinkSchema = z.object({ institutionId: idOrNull });
+export const setInstitutionsOrderSchema = z.object({ order: z.array(z.number().int()) });
 
 export const setNavItemActiveSchema = z.object({ isActive: z.boolean() });
 export const setShowContactFormSchema = z.object({ showForm: z.boolean() });
@@ -31,10 +29,6 @@ export function getClientIp(c: { req: { header: (name: string) => string | undef
 
 export function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
-}
-
-export function isEmailLike(value: unknown): value is string {
-  return typeof value === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 export function isNavItemKey(value: unknown): value is NavItemKey {
@@ -64,56 +58,3 @@ export function isNavItemKeyPermutation(value: unknown): value is NavItemKey[] {
 export const setNavItemContentSchema = z.object({ lang: sitePageLangSchema, contentMd: z.string() });
 export const setNavItemsOrderSchema = z.object({ order: z.custom<NavItemKey[]>(isNavItemKeyPermutation) });
 
-export function parseSetManualLinkBody(payload: SetManualLinkBody | null): { manualId: number | null } | null {
-  if (!payload) {
-    return null;
-  }
-
-  if (payload.manualId === null) {
-    return { manualId: null };
-  }
-
-  // BIGSERIAL-kolommen komen via pg als string terug (bigint-precisie), dus manual.id reist
-  // als JSON-string mee via createManual() -> setLink(); numerieke strings hier ook aanvaarden.
-  const manualId = typeof payload.manualId === 'string' ? Number(payload.manualId) : payload.manualId;
-
-  if (typeof manualId === 'number' && Number.isInteger(manualId)) {
-    return { manualId };
-  }
-
-  return null;
-}
-
-export function parseSetInstitutionLinkBody(payload: SetInstitutionLinkBody | null): { institutionId: number | null } | null {
-  if (!payload) {
-    return null;
-  }
-
-  if (payload.institutionId === null) {
-    return { institutionId: null };
-  }
-
-  // BIGSERIAL-kolommen komen via pg als string terug; institution.id kan zo als JSON-string
-  // meereizen -- numerieke strings hier ook aanvaarden (zie parseSetManualLinkBody).
-  const institutionId = typeof payload.institutionId === 'string' ? Number(payload.institutionId) : payload.institutionId;
-
-  if (typeof institutionId === 'number' && Number.isInteger(institutionId)) {
-    return { institutionId };
-  }
-
-  return null;
-}
-
-// Lege array wordt geweigerd (null) -- zonder deze guard zou een lege lijst (bv. door een
-// tijdelijk falende Madoc-call) via pruneOrphanedProjectLinks() alle links van de site wissen.
-export function parsePruneProjectLinksBody(payload: PruneProjectLinksBody | null): { liveSlugs: string[] } | null {
-  if (!payload || !Array.isArray(payload.liveSlugs) || payload.liveSlugs.length === 0) {
-    return null;
-  }
-
-  if (!payload.liveSlugs.every(isNonEmptyString)) {
-    return null;
-  }
-
-  return { liveSlugs: payload.liveSlugs as string[] };
-}

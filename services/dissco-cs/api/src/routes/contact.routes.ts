@@ -3,8 +3,8 @@ import { DisscoCSRepository } from '../db.js';
 import { resolveSiteId } from '../jwt.js';
 import { mailer } from '../mailer.js';
 import { isRateLimited } from '../rate-limit.js';
-import { CONTACT_RATE_LIMIT, getClientIp, isEmailLike, isNonEmptyString } from '../validators.js';
-import { ContactSubmissionBody } from '../types/request-bodies.js';
+import { CONTACT_RATE_LIMIT, getClientIp, isNonEmptyString } from '../validators.js';
+import { contactSubmissionSchema } from '@dissco-cs/shared-types';
 
 export function contactRoutes(repository: DisscoCSRepository): Hono {
   const app = new Hono();
@@ -15,10 +15,12 @@ export function contactRoutes(repository: DisscoCSRepository): Hono {
       return c.text('Could not resolve site', 400);
     }
 
-    const payload = (await c.req.json().catch(() => null)) as ContactSubmissionBody | null;
-    if (!payload || !isNonEmptyString(payload.name) || !isEmailLike(payload.email) || !isNonEmptyString(payload.message)) {
+    const result = contactSubmissionSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('name, a valid email and message are required', 400);
     }
+
+    const payload = result.data;
 
     // Honeypot: a hidden field real visitors never fill in. If a bot fills it, pretend
     // success without sending anything — no hint that this is what's happening.

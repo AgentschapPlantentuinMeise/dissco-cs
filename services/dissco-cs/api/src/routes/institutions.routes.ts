@@ -4,8 +4,7 @@ import { requireSiteAdmin, requestMadocUserIdentity, resolveSiteId } from '../jw
 import { HonourBoardRepository, isHonourBoardPeriod } from '../repositories/honour-board.repository.js';
 import { InstitutionStatsRepository } from '../repositories/institution-stats.repository.js';
 import { InstitutionRow } from '../repositories/institutions.repository.js';
-import { parsePruneProjectLinksBody, parseSetInstitutionLinkBody } from '../validators.js';
-import { PruneProjectLinksBody, SetInstitutionLinkBody, SetInstitutionsOrderBody } from '../types/request-bodies.js';
+import { pruneProjectLinksSchema, setInstitutionLinkSchema, setInstitutionsOrderSchema } from '../validators.js';
 import { InstitutionDto, institutionInputSchema } from '@dissco-cs/shared-types';
 
 // created_at/updated_at are DB bookkeeping (see InstitutionRow), never part of the wire DTO.
@@ -206,12 +205,12 @@ export function institutionsRoutes(
       return identity;
     }
 
-    const payload = (await c.req.json().catch(() => null)) as SetInstitutionsOrderBody | null;
-    if (!payload || !Array.isArray(payload.order) || !payload.order.every(id => Number.isInteger(id))) {
+    const result = setInstitutionsOrderSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('order must be an array of institution ids', 400);
     }
 
-    await repository.institutions.setInstitutionsOrder(identity.siteId, payload.order as number[]);
+    await repository.institutions.setInstitutionsOrder(identity.siteId, result.data.order);
     return c.body(null, 204);
   });
 
@@ -231,19 +230,19 @@ export function institutionsRoutes(
       return identity;
     }
 
-    const payload = parseSetInstitutionLinkBody((await c.req.json().catch(() => null)) as SetInstitutionLinkBody | null);
-    if (!payload) {
+    const result = setInstitutionLinkSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('Invalid payload', 400);
     }
 
-    if (payload.institutionId !== null) {
-      const institution = await repository.institutions.getInstitutionById(identity.siteId, payload.institutionId);
+    if (result.data.institutionId !== null) {
+      const institution = await repository.institutions.getInstitutionById(identity.siteId, result.data.institutionId);
       if (!institution) {
         return c.text('Institution not found', 404);
       }
     }
 
-    await repository.institutions.setProjectLink(identity.siteId, c.req.param('projectId'), payload.institutionId);
+    await repository.institutions.setProjectLink(identity.siteId, c.req.param('projectId'), result.data.institutionId);
     return c.body(null, 204);
   });
 
@@ -256,12 +255,12 @@ export function institutionsRoutes(
       return identity;
     }
 
-    const payload = parsePruneProjectLinksBody((await c.req.json().catch(() => null)) as PruneProjectLinksBody | null);
-    if (!payload) {
+    const result = pruneProjectLinksSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('Invalid payload', 400);
     }
 
-    const removed = await repository.institutions.pruneOrphanedProjectLinks(identity.siteId, payload.liveSlugs);
+    const removed = await repository.institutions.pruneOrphanedProjectLinks(identity.siteId, result.data.liveSlugs);
     return c.json({ removed });
   });
 

@@ -27,6 +27,7 @@ import {
   StuckManifestCounter,
   ProjectDebugResult,
   ReviewTaskDto,
+  ContactSubmissionInput,
 } from '@dissco-cs/shared-types';
 
 async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -153,7 +154,7 @@ export const feedbackApi = {
 };
 
 export const contactApi = {
-  send: (data: { name: string; email: string; message: string; website: string }) =>
+  send: (data: ContactSubmissionInput) =>
     csFetch<void>(`/contact?slug=${getSiteSlug()}`, { method: 'POST', body: JSON.stringify(data) }),
 };
 
