@@ -1,7 +1,7 @@
 import { Pool } from 'pg';
 import { SitePageLang } from '@dissco-cs/shared-types';
 
-export type ProjectManualRow = {
+export type ManualRow = {
   id: number;
   site_id: number;
   title: Partial<Record<SitePageLang, string>>;
@@ -9,9 +9,9 @@ export type ProjectManualRow = {
   updated_at: Date;
 };
 
-export type ProjectManualSummary = ProjectManualRow & { linkedProjectSlugs: string[]; attachmentLangs: SitePageLang[] };
+export type ManualSummary = ManualRow & { linkedProjectSlugs: string[]; attachmentLangs: SitePageLang[] };
 
-export type ProjectManualAttachmentMeta = {
+export type ManualAttachmentMeta = {
   lang: SitePageLang;
   filename: string;
   mime_type: string;
@@ -19,13 +19,13 @@ export type ProjectManualAttachmentMeta = {
   updated_at: Date;
 };
 
-export type ProjectManualAttachmentFile = {
+export type ManualAttachmentFile = {
   filename: string;
   mimeType: string;
   buffer: Buffer;
 };
 
-export class ProjectManualsRepository {
+export class ManualsRepository {
   constructor(
     private readonly pool: Pool,
     private readonly schemaRef: string
@@ -35,9 +35,9 @@ export class ProjectManualsRepository {
     return `${this.schemaRef}.${name}`;
   }
 
-  async listManuals(siteId: number): Promise<ProjectManualSummary[]> {
-    const manuals = await this.pool.query<ProjectManualRow>(
-      `SELECT * FROM ${this.table('project_manuals')} WHERE site_id = $1 ORDER BY updated_at DESC`,
+  async listManuals(siteId: number): Promise<ManualSummary[]> {
+    const manuals = await this.pool.query<ManualRow>(
+      `SELECT * FROM ${this.table('manuals')} WHERE site_id = $1 ORDER BY updated_at DESC`,
       [siteId]
     );
 
@@ -57,7 +57,7 @@ export class ProjectManualsRepository {
     const attachments =
       manualIds.length > 0
         ? await this.pool.query<{ manual_id: number; lang: SitePageLang }>(
-            `SELECT manual_id, lang FROM ${this.table('project_manual_attachments')} WHERE manual_id = ANY($1::bigint[])`,
+            `SELECT manual_id, lang FROM ${this.table('manual_attachments')} WHERE manual_id = ANY($1::bigint[])`,
             [manualIds]
           )
         : { rows: [] };
@@ -76,10 +76,10 @@ export class ProjectManualsRepository {
     }));
   }
 
-  async getManualForProject(siteId: number, projectSlug: string): Promise<ProjectManualRow | null> {
-    const result = await this.pool.query<ProjectManualRow>(
+  async getManualForProject(siteId: number, projectSlug: string): Promise<ManualRow | null> {
+    const result = await this.pool.query<ManualRow>(
       `
-      SELECT m.* FROM ${this.table('project_manuals')} m
+      SELECT m.* FROM ${this.table('manuals')} m
       JOIN ${this.table('project_manual_links')} l ON l.manual_id = m.id
       WHERE l.site_id = $1 AND l.project_slug = $2
     `,
@@ -89,18 +89,18 @@ export class ProjectManualsRepository {
     return result.rows[0] ?? null;
   }
 
-  async getManualById(siteId: number, manualId: number): Promise<ProjectManualRow | null> {
-    const result = await this.pool.query<ProjectManualRow>(
-      `SELECT * FROM ${this.table('project_manuals')} WHERE id = $1 AND site_id = $2`,
+  async getManualById(siteId: number, manualId: number): Promise<ManualRow | null> {
+    const result = await this.pool.query<ManualRow>(
+      `SELECT * FROM ${this.table('manuals')} WHERE id = $1 AND site_id = $2`,
       [manualId, siteId]
     );
 
     return result.rows[0] ?? null;
   }
 
-  async createManual(siteId: number, title: Partial<Record<SitePageLang, string>>): Promise<ProjectManualRow> {
-    const result = await this.pool.query<ProjectManualRow>(
-      `INSERT INTO ${this.table('project_manuals')} (site_id, title) VALUES ($1, $2) RETURNING *`,
+  async createManual(siteId: number, title: Partial<Record<SitePageLang, string>>): Promise<ManualRow> {
+    const result = await this.pool.query<ManualRow>(
+      `INSERT INTO ${this.table('manuals')} (site_id, title) VALUES ($1, $2) RETURNING *`,
       [siteId, JSON.stringify(title)]
     );
 
@@ -112,10 +112,10 @@ export class ProjectManualsRepository {
     manualId: number,
     lang: SitePageLang,
     title: string
-  ): Promise<ProjectManualRow | null> {
-    const result = await this.pool.query<ProjectManualRow>(
+  ): Promise<ManualRow | null> {
+    const result = await this.pool.query<ManualRow>(
       `
-      UPDATE ${this.table('project_manuals')}
+      UPDATE ${this.table('manuals')}
       SET title = jsonb_set(title, ARRAY[$3::text], to_jsonb($4::text)), updated_at = NOW()
       WHERE id = $1 AND site_id = $2
       RETURNING *
@@ -129,7 +129,7 @@ export class ProjectManualsRepository {
   async updateManualContent(siteId: number, manualId: number, lang: SitePageLang, contentMd: string): Promise<boolean> {
     const result = await this.pool.query(
       `
-      UPDATE ${this.table('project_manuals')}
+      UPDATE ${this.table('manuals')}
       SET content = jsonb_set(content, ARRAY[$3::text], to_jsonb($4::text)), updated_at = NOW()
       WHERE id = $1 AND site_id = $2
     `,
@@ -141,7 +141,7 @@ export class ProjectManualsRepository {
 
   async deleteManual(siteId: number, manualId: number): Promise<boolean> {
     const result = await this.pool.query(
-      `DELETE FROM ${this.table('project_manuals')} WHERE id = $1 AND site_id = $2`,
+      `DELETE FROM ${this.table('manuals')} WHERE id = $1 AND site_id = $2`,
       [manualId, siteId]
     );
 
@@ -177,11 +177,11 @@ export class ProjectManualsRepository {
     return result.rowCount ?? 0;
   }
 
-  async listAttachmentMeta(manualId: number): Promise<ProjectManualAttachmentMeta[]> {
-    const result = await this.pool.query<ProjectManualAttachmentMeta>(
+  async listAttachmentMeta(manualId: number): Promise<ManualAttachmentMeta[]> {
+    const result = await this.pool.query<ManualAttachmentMeta>(
       `
       SELECT lang, filename, mime_type, file_size, updated_at
-      FROM ${this.table('project_manual_attachments')}
+      FROM ${this.table('manual_attachments')}
       WHERE manual_id = $1
     `,
       [manualId]
@@ -190,9 +190,9 @@ export class ProjectManualsRepository {
     return result.rows;
   }
 
-  async getAttachmentFile(manualId: number, lang: SitePageLang): Promise<ProjectManualAttachmentFile | null> {
+  async getAttachmentFile(manualId: number, lang: SitePageLang): Promise<ManualAttachmentFile | null> {
     const result = await this.pool.query<{ filename: string; mime_type: string; file_data: Buffer }>(
-      `SELECT filename, mime_type, file_data FROM ${this.table('project_manual_attachments')} WHERE manual_id = $1 AND lang = $2`,
+      `SELECT filename, mime_type, file_data FROM ${this.table('manual_attachments')} WHERE manual_id = $1 AND lang = $2`,
       [manualId, lang]
     );
 
@@ -204,10 +204,10 @@ export class ProjectManualsRepository {
     return { filename: row.filename, mimeType: row.mime_type, buffer: row.file_data };
   }
 
-  async upsertAttachment(manualId: number, lang: SitePageLang, input: ProjectManualAttachmentFile): Promise<void> {
+  async upsertAttachment(manualId: number, lang: SitePageLang, input: ManualAttachmentFile): Promise<void> {
     await this.pool.query(
       `
-      INSERT INTO ${this.table('project_manual_attachments')} (manual_id, lang, filename, mime_type, file_size, file_data)
+      INSERT INTO ${this.table('manual_attachments')} (manual_id, lang, filename, mime_type, file_size, file_data)
       VALUES ($1, $2, $3, $4, $5, $6)
       ON CONFLICT (manual_id, lang) DO UPDATE
       SET filename = EXCLUDED.filename, mime_type = EXCLUDED.mime_type, file_size = EXCLUDED.file_size,
@@ -219,7 +219,7 @@ export class ProjectManualsRepository {
 
   async deleteAttachment(manualId: number, lang: SitePageLang): Promise<boolean> {
     const result = await this.pool.query(
-      `DELETE FROM ${this.table('project_manual_attachments')} WHERE manual_id = $1 AND lang = $2`,
+      `DELETE FROM ${this.table('manual_attachments')} WHERE manual_id = $1 AND lang = $2`,
       [manualId, lang]
     );
 

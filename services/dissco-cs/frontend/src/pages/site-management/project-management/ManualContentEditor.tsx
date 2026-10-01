@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, queryCache } from 'react-query';
-import { projectManualsApi } from '../../../api/cs-api';
-import { SitePageLang } from '@dissco-cs/shared-types';
+import { manualsApi } from '../../../api/cs-api';
+import { MAX_MANUAL_ATTACHMENT_LENGTH, SitePageLang } from '@dissco-cs/shared-types';
 import { SaveButton } from '../../../components/SaveButton';
 import { DeleteIconButton } from '../../../components/DeleteIconButton';
 import { MarkdownToolbar } from '../../../components/MarkdownToolbar';
 import { LuCheck } from 'react-icons/lu';
-import { MAX_ATTACHMENT_BYTES } from './manual-content';
 import { LANGUAGES, defaultLang } from '../../../utility/site-lang-text';
 
 // Shared editor for a manual's content (language tabs + markdown toolbar/textarea +
@@ -15,7 +14,7 @@ import { LANGUAGES, defaultLang } from '../../../utility/site-lang-text';
 // so editing behaves identically no matter where it's opened from.
 export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }) => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data: manual, refetch } = useQuery(['admin-manual', manualId], () => projectManualsApi.getAdmin(manualId));
+  const { data: manual, refetch } = useQuery(['admin-manual', manualId], () => manualsApi.getAdmin(manualId));
   const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
   const [draftContent, setDraftContent] = useState<Partial<Record<SitePageLang, string>>>({});
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -53,7 +52,7 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
     setSaveState('saving');
     try {
       await Promise.all(
-        LANGUAGES.map(lang => projectManualsApi.setContent(manual.id, lang.code, draftContent[lang.code] ?? ''))
+        LANGUAGES.map(lang => manualsApi.setContent(manual.id, lang.code, draftContent[lang.code] ?? ''))
       );
       await refetch();
       // De publieke handleiding-popup leest een eigen, apart gecachete query ('project-manual')
@@ -66,14 +65,14 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
   };
 
   const onPickFile = async (file: File) => {
-    if (file.size > MAX_ATTACHMENT_BYTES) {
+    if (file.size > MAX_MANUAL_ATTACHMENT_LENGTH) {
       window.alert(t('sm_manuals_attachment_too_large'));
       return;
     }
     setUploading(true);
     setAttachmentSaved(false);
     try {
-      await projectManualsApi.uploadAttachment(manual.id, selectedLang, file);
+      await manualsApi.uploadAttachment(manual.id, selectedLang, file);
       await refetch();
       queryCache.invalidateQueries('project-manual');
       setAttachmentSaved(true);
@@ -83,13 +82,13 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
   };
 
   const removeAttachment = async () => {
-    await projectManualsApi.deleteAttachment(manual.id, selectedLang);
+    await manualsApi.deleteAttachment(manual.id, selectedLang);
     await refetch();
     queryCache.invalidateQueries('project-manual');
     setAttachmentSaved(false);
   };
 
-  // Voegt {{attachment}} in op de cursorpositie -- ProjectManualModal bedt de bijlage-galerij
+  // Voegt {{attachment}} in op de cursorpositie -- ManualModal bedt de bijlage-galerij
   // daar exact in i.p.v. steeds achteraan alle secties te tonen.
   const insertAttachmentMarker = () => {
     const textarea = textareaRef.current;

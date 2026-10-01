@@ -5,11 +5,11 @@ import { useQuery } from 'react-query';
 import ReactMarkdown from 'react-markdown';
 import { Modal } from './Modal';
 import { LuChevronDown, LuX, LuArrowLeft, LuArrowRight } from 'react-icons/lu';
-import { projectManualsApi } from '../api/cs-api';
+import { manualsApi } from '../api/cs-api';
 import { SitePageLang } from '@dissco-cs/shared-types';
 import { siteLangText } from '../utility/site-lang-text';
 
-type ProjectManualModalProps = {
+type ManualModalProps = {
   projectSlug: string;
   projectLabel?: string;
   open: boolean;
@@ -169,7 +169,7 @@ const PdfGallery: React.FC<{ url: string; filename: string; openDirectly?: boole
           setPages(prev => [...prev, dataUrl]);
         }
       } catch (err) {
-        console.error('[ProjectManualModal] PDF-galerij kon niet geladen worden', err);
+        console.error('[ManualModal] PDF-galerij kon niet geladen worden', err);
         if (!cancelled) {
           setFailed(true);
         }
@@ -441,7 +441,7 @@ const PdfGallery: React.FC<{ url: string; filename: string; openDirectly?: boole
   );
 };
 
-export const ProjectManualModal: React.FC<ProjectManualModalProps> = ({
+export const ManualModal: React.FC<ManualModalProps> = ({
   projectSlug,
   projectLabel,
   open,
@@ -451,7 +451,7 @@ export const ProjectManualModal: React.FC<ProjectManualModalProps> = ({
   const { t, i18n } = useTranslation('dissco-cs');
   const { data: manual } = useQuery(
     ['project-manual', projectSlug],
-    () => projectManualsApi.getForProject(projectSlug),
+    () => manualsApi.getForProject(projectSlug),
     { enabled: open, retry: false, staleTime: 5 * 60 * 1000 }
   );
 
@@ -474,7 +474,7 @@ export const ProjectManualModal: React.FC<ProjectManualModalProps> = ({
 
   const lang = (manual?.attachments?.[i18n.language as SitePageLang] ? i18n.language : 'nl') as SitePageLang;
   const attachment = manual?.attachments?.[lang];
-  const attachmentUrl = attachment ? projectManualsApi.attachmentUrl(projectSlug, lang) : null;
+  const attachmentUrl = attachment ? manualsApi.attachmentUrl(projectSlug, lang) : null;
   const isPdf = attachment?.mimeType === 'application/pdf';
 
   // Geen tekst, enkel een PDF -- de tussenpop voegt dan niets toe, dus meteen de galerij tonen.

@@ -15,7 +15,7 @@ import { HrefLink } from '../../utility/href-link';
 import { LocaleString } from '../../components/LocaleString';
 import { CsPage } from '../../components/CsPage';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
-import { ProjectManualModal } from '../../components/ProjectManualModal';
+import { ManualModal } from '../../components/ManualModal';
 import { disscoCSConfig } from '../../dissco-cs-config';
 
 function manualSeenKey(projectSlug: string): string {
@@ -30,7 +30,7 @@ export const ProjectDetail: React.FC = () => {
   const [manualOpen, setManualOpen] = useState(false);
 
   // Auto-opens once per project per browser (AC2/AC3): only actually shows if the project
-  // has a manual linked — ProjectManualModal renders nothing otherwise, and markManualSeen
+  // has a manual linked — ManualModal renders nothing otherwise, and markManualSeen
   // is only called from its onShown callback, so a project without a manual (yet) keeps
   // trying next visit instead of silently marking itself "seen".
   useEffect(() => {
@@ -242,7 +242,7 @@ export const ProjectDetail: React.FC = () => {
         </div>
       </div>
 
-      <ProjectManualModal
+      <ManualModal
         projectSlug={project.slug}
         open={manualOpen}
         onClose={() => setManualOpen(false)}

@@ -3,6 +3,9 @@ import { z } from 'zod';
 export const SITE_PAGE_LANGS = ['nl', 'en', 'fr', 'de'] as const;
 export type SitePageLang = (typeof SITE_PAGE_LANGS)[number];
 
+export type PerLanguage<T> = Partial<Record<SitePageLang, T>>;
+export type MultilingualText = PerLanguage<string>;
+
 // Zod's eigen ingebouwde e-mailvalidator i.p.v. een handgeschreven regex -- geen eigen regex meer
 // om te onderhouden. Iets strenger dan de oude losse regex (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`), bewust
 // aanvaard: niemand kon een concreet geval noemen waarbij de oude regex iets doorliet dat de

@@ -1,4 +1,4 @@
-import { SitePageLang } from './common.js';
+import { MultilingualText } from './common.js';
 
 // Order here is the default display order (navbar + page management) for sites that
 // haven't customized it yet — see `sort_order` on the `site_pages` table.
@@ -14,7 +14,7 @@ export type SitePage = {
   site_id: number;
   page_key: SitePageKey;
   is_active: boolean;
-  content: Partial<Record<SitePageLang, string>>;
+  content: MultilingualText;
   contact_email: string | null;
   show_contact_form: boolean;
   sort_order: number;

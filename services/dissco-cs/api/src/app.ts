@@ -14,7 +14,7 @@ import { InstitutionStatsRepository } from './repositories/institution-stats.rep
 import { institutionsRoutes } from './routes/institutions.routes.js';
 import { manifestClaimRoutes } from './routes/manifest-claim.routes.js';
 import { projectDebugRoutes } from './routes/project-debug.routes.js';
-import { projectManualsRoutes } from './routes/project-manuals.routes.js';
+import { manualsRoutes } from './routes/manuals.routes.js';
 import { projectProgressRoutes } from './routes/project-progress.routes.js';
 import { feedbackRoutes } from './routes/feedback.routes.js';
 import { reviewRoutes } from './routes/review.routes.js';
@@ -46,7 +46,7 @@ export function createDisscoCSApp(
   app.route('/api/dissco-cs/projects', projectDebugRoutes());
   app.route('/api/dissco-cs/review', reviewRoutes());
   app.route('/api/dissco-cs/feedback', feedbackRoutes(repository));
-  app.route('/api/dissco-cs', projectManualsRoutes(repository));
+  app.route('/api/dissco-cs', manualsRoutes(repository));
 
   // Frontend static serving — only active in Docker where frontend-dist is bundled in.
   if (existsSync('./frontend-dist/index.html')) {

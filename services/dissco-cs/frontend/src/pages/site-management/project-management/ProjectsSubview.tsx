@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { institutionsApi, projectManualsApi } from '../../../api/cs-api';
+import { institutionsApi, manualsApi } from '../../../api/cs-api';
 import { SaveButton } from '../../../components/SaveButton';
 import { Select } from '../../../components/Select';
 import { manualHasContent } from './manual-content';
 import { localeText } from '../../../utility/locale-text';
 import { siteLangText } from '../../../utility/site-lang-text';
-import { MadocProjectListItem, InstitutionDto, ProjectManualSummary } from '@dissco-cs/shared-types';
+import { MadocProjectListItem, InstitutionDto, ManualSummaryDto } from '@dissco-cs/shared-types';
 
 export const ProjectsSubview: React.FC<{
   projects: MadocProjectListItem[];
-  manuals: ProjectManualSummary[];
+  manuals: ManualSummaryDto[];
   refetchManuals: () => void;
   institutions: InstitutionDto[];
   institutionLinks: Record<string, number>;
@@ -71,7 +71,7 @@ export const ProjectsSubview: React.FC<{
     setSaveError(false);
     try {
       await institutionsApi.setProjectLink(editingProject.slug, Number(pickedInstitutionId));
-      await projectManualsApi.setLink(editingProject.slug, Number(pickedManualId));
+      await manualsApi.setLink(editingProject.slug, Number(pickedManualId));
 
       refetchInstitutionLinks();
       refetchManuals();

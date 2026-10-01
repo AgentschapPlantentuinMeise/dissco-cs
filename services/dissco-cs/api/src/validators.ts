@@ -12,14 +12,9 @@ import {
 import {
   PruneProjectLinksBody,
   SetInstitutionLinkBody,
-  SetManualContentBody,
   SetManualLinkBody,
-  SetManualTitleBody,
 } from './types/request-bodies.js';
 
-export const MAX_MANUAL_TITLE_LENGTH = 200;
-export const MAX_MANUAL_CONTENT_LENGTH = 200_000;
-export const MAX_MANUAL_ATTACHMENT_LENGTH = 8_000_000;
 export const CONTACT_RATE_LIMIT = { maxAttempts: 5, windowMs: 10 * 60 * 1000 };
 
 const idOrNull = z.union([z.number().int(), z.string().regex(/^\d+$/).transform(Number)]).nullable();
@@ -60,30 +55,6 @@ export function isSitePageKeyPermutation(value: unknown): value is SitePageKey[]
   }
   const seen = new Set(value);
   return seen.size === SITE_PAGE_KEYS.length && SITE_PAGE_KEYS.every(key => seen.has(key));
-}
-
-export function isValidManualTitle(value: unknown): value is string {
-  return typeof value === 'string' && value.trim().length > 0 && value.length <= MAX_MANUAL_TITLE_LENGTH;
-}
-
-export function isValidManualContent(value: unknown): value is string {
-  return typeof value === 'string' && value.length <= MAX_MANUAL_CONTENT_LENGTH;
-}
-
-export function parseSetManualTitleBody(payload: SetManualTitleBody | null): { lang: SitePageLang; title: string } | null {
-  if (!payload || !isSitePageLang(payload.lang) || !isValidManualTitle(payload.title)) {
-    return null;
-  }
-
-  return { lang: payload.lang, title: (payload.title as string).trim() };
-}
-
-export function parseSetManualContentBody(payload: SetManualContentBody | null): { content: string } | null {
-  if (!payload || !isValidManualContent(payload.content)) {
-    return null;
-  }
-
-  return { content: payload.content as string };
 }
 
 export function parseSetManualLinkBody(payload: SetManualLinkBody | null): { manualId: number | null } | null {

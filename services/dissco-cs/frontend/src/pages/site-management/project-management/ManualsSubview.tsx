@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { projectManualsApi } from '../../../api/cs-api';
+import { manualsApi } from '../../../api/cs-api';
 import { SaveButton } from '../../../components/SaveButton';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { ManualContentEditor } from './ManualContentEditor';
 import { manualHasContent } from './manual-content';
 import { localeText } from '../../../utility/locale-text';
 import { defaultLang, siteLangText } from '../../../utility/site-lang-text';
-import { MadocProjectListItem, ProjectManualSummary } from '@dissco-cs/shared-types';
+import { MadocProjectListItem, MAX_MANUAL_TITLE_LENGTH, ManualSummaryDto, setManualTitleSchema } from '@dissco-cs/shared-types';
 
 export const ManualsSubview: React.FC<{
   projects: MadocProjectListItem[];
-  manuals: ProjectManualSummary[];
+  manuals: ManualSummaryDto[];
   refetchManuals: () => void;
 }> = ({ projects, manuals, refetchManuals }) => {
   const { t, i18n } = useTranslation('dissco-cs');
@@ -25,7 +25,7 @@ export const ManualsSubview: React.FC<{
   };
 
   const remove = async (id: number) => {
-    await projectManualsApi.remove(id);
+    await manualsApi.remove(id);
     setPendingDeleteId(null);
     if (editingId === id) {
       setEditingId(null);
@@ -33,9 +33,11 @@ export const ManualsSubview: React.FC<{
     refetchManuals();
   };
 
+  const canCreate = setManualTitleSchema.safeParse({ lang: defaultLang(i18n.language), title: newTitle.trim() }).success;
+
   const create = async () => {
-    if (!newTitle.trim()) return;
-    const manual = await projectManualsApi.create(defaultLang(i18n.language), newTitle.trim());
+    if (!canCreate) return;
+    const manual = await manualsApi.create(defaultLang(i18n.language), newTitle.trim());
     setNewTitle('');
     setEditingId(manual.id);
     refetchManuals();
@@ -49,9 +51,10 @@ export const ManualsSubview: React.FC<{
           value={newTitle}
           onChange={e => setNewTitle(e.target.value)}
           placeholder={t('sm_manuals_new_title_placeholder')}
+          maxLength={MAX_MANUAL_TITLE_LENGTH}
           className="border border-gray-300 rounded-lg p-2 flex-1 max-w-sm"
         />
-        <SaveButton onClick={() => void create()} disabled={!newTitle.trim()} />
+        <SaveButton onClick={() => void create()} disabled={!canCreate} />
       </div>
 
       {manuals.length === 0 ? (

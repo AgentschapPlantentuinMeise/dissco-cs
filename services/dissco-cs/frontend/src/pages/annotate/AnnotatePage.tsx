@@ -19,7 +19,7 @@ import { useDisscoCSNavigation } from '../../hooks/use-dissco-cs-navigation';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { CsPage } from '../../components/CsPage';
 import { LocaleString, useLocaleString } from '../../components/LocaleString';
-import { ProjectManualModal } from '../../components/ProjectManualModal';
+import { ManualModal } from '../../components/ManualModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Modal } from '../../components/Modal';
 import { MessageForm } from '../../components/messageform/MessageForm';
@@ -575,7 +575,7 @@ export function AnnotatePage() {
         />
       </div>
 
-      <ProjectManualModal projectSlug={project.slug} open={manualOpen} onClose={() => setManualOpen(false)} />
+      <ManualModal projectSlug={project.slug} open={manualOpen} onClose={() => setManualOpen(false)} />
 
       <Modal open={forumOpen} onClose={() => setForumOpen(false)} eyebrow={t('nav_messageboard')} size="lg">
         <MessageForm

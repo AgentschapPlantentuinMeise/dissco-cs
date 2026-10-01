@@ -1,19 +1,17 @@
 import { Hono } from 'hono';
 import { DisscoCSRepository } from '../db.js';
 import { requireSiteAdmin, resolveSiteId } from '../jwt.js';
-import { SitePageLang } from '@dissco-cs/shared-types';
-import { ProjectManualAttachmentMeta } from '@dissco-cs/shared-types';
 import {
-  isSitePageLang,
-  MAX_MANUAL_ATTACHMENT_LENGTH,
-  parsePruneProjectLinksBody,
-  parseSetManualContentBody,
-  parseSetManualLinkBody,
-  parseSetManualTitleBody,
-} from '../validators.js';
-import { PruneProjectLinksBody, SetManualContentBody, SetManualLinkBody, SetManualTitleBody } from '../types/request-bodies.js';
+  attachmentFileSchema,
+  PerLanguage,
+  ManualAttachmentDto,
+  setManualContentSchema,
+  setManualTitleSchema,
+} from '@dissco-cs/shared-types';
+import { isSitePageLang, parsePruneProjectLinksBody, parseSetManualLinkBody } from '../validators.js';
+import { PruneProjectLinksBody, SetManualLinkBody } from '../types/request-bodies.js';
 
-export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
+export function manualsRoutes(repository: DisscoCSRepository): Hono {
   const app = new Hono();
 
   // ---- volunteer-facing (public, JWT-optional via resolveSiteId) ----
@@ -24,13 +22,13 @@ export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
       return c.text('Could not resolve site', 400);
     }
 
-    const manual = await repository.projectManuals.getManualForProject(siteId, c.req.param('projectId'));
+    const manual = await repository.manuals.getManualForProject(siteId, c.req.param('projectId'));
     if (!manual) {
       return c.notFound();
     }
 
-    const attachmentMeta = await repository.projectManuals.listAttachmentMeta(manual.id);
-    const attachments: Partial<Record<SitePageLang, ProjectManualAttachmentMeta>> = {};
+    const attachmentMeta = await repository.manuals.listAttachmentMeta(manual.id);
+    const attachments: PerLanguage<ManualAttachmentDto> = {};
     for (const meta of attachmentMeta) {
       attachments[meta.lang] = { filename: meta.filename, mimeType: meta.mime_type, size: meta.file_size };
     }
@@ -49,12 +47,12 @@ export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const manual = await repository.projectManuals.getManualForProject(siteId, c.req.param('projectId'));
+    const manual = await repository.manuals.getManualForProject(siteId, c.req.param('projectId'));
     if (!manual) {
       return c.notFound();
     }
 
-    const file = await repository.projectManuals.getAttachmentFile(manual.id, lang);
+    const file = await repository.manuals.getAttachmentFile(manual.id, lang);
     if (!file) {
       return c.notFound();
     }
@@ -78,13 +76,13 @@ export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
     }
 
     if (payload.manualId !== null) {
-      const manual = await repository.projectManuals.getManualById(identity.siteId, payload.manualId);
+      const manual = await repository.manuals.getManualById(identity.siteId, payload.manualId);
       if (!manual) {
         return c.text('Manual not found', 404);
       }
     }
 
-    await repository.projectManuals.setProjectLink(identity.siteId, c.req.param('projectId'), payload.manualId);
+    await repository.manuals.setProjectLink(identity.siteId, c.req.param('projectId'), payload.manualId);
     return c.body(null, 204);
   });
 
@@ -102,7 +100,7 @@ export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
       return c.text('Invalid payload', 400);
     }
 
-    const removed = await repository.projectManuals.pruneOrphanedProjectLinks(identity.siteId, payload.liveSlugs);
+    const removed = await repository.manuals.pruneOrphanedProjectLinks(identity.siteId, payload.liveSlugs);
     return c.json({ removed });
   });
 
@@ -114,7 +112,7 @@ export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
       return identity;
     }
 
-    const manuals = await repository.projectManuals.listManuals(identity.siteId);
+    const manuals = await repository.manuals.listManuals(identity.siteId);
     return c.json({ manuals });
   });
 
@@ -124,12 +122,12 @@ export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
       return identity;
     }
 
-    const payload = parseSetManualTitleBody((await c.req.json().catch(() => null)) as SetManualTitleBody | null);
-    if (!payload) {
+    const result = setManualTitleSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('Invalid payload', 400);
     }
 
-    const manual = await repository.projectManuals.createManual(identity.siteId, { [payload.lang]: payload.title });
+    const manual = await repository.manuals.createManual(identity.siteId, { [result.data.lang]: result.data.title });
     return c.json(manual, 201);
   });
 
@@ -144,13 +142,13 @@ export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const manual = await repository.projectManuals.getManualById(identity.siteId, manualId);
+    const manual = await repository.manuals.getManualById(identity.siteId, manualId);
     if (!manual) {
       return c.notFound();
     }
 
-    const attachmentMeta = await repository.projectManuals.listAttachmentMeta(manual.id);
-    const attachments: Partial<Record<SitePageLang, ProjectManualAttachmentMeta>> = {};
+    const attachmentMeta = await repository.manuals.listAttachmentMeta(manual.id);
+    const attachments: PerLanguage<ManualAttachmentDto> = {};
     for (const meta of attachmentMeta) {
       attachments[meta.lang] = { filename: meta.filename, mimeType: meta.mime_type, size: meta.file_size };
     }
@@ -169,7 +167,7 @@ export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const deleted = await repository.projectManuals.deleteManual(identity.siteId, manualId);
+    const deleted = await repository.manuals.deleteManual(identity.siteId, manualId);
     if (!deleted) {
       return c.notFound();
     }
@@ -188,12 +186,12 @@ export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const payload = parseSetManualTitleBody((await c.req.json().catch(() => null)) as SetManualTitleBody | null);
-    if (!payload) {
+    const result = setManualTitleSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('Invalid payload', 400);
     }
 
-    const manual = await repository.projectManuals.updateManualTitle(identity.siteId, manualId, payload.lang, payload.title);
+    const manual = await repository.manuals.updateManualTitle(identity.siteId, manualId, result.data.lang, result.data.title);
     if (!manual) {
       return c.notFound();
     }
@@ -213,12 +211,12 @@ export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const payload = parseSetManualContentBody((await c.req.json().catch(() => null)) as SetManualContentBody | null);
-    if (!payload) {
+    const result = setManualContentSchema.safeParse(await c.req.json().catch(() => null));
+    if (!result.success) {
       return c.text('Invalid payload', 400);
     }
 
-    const updated = await repository.projectManuals.updateManualContent(identity.siteId, manualId, lang, payload.content);
+    const updated = await repository.manuals.updateManualContent(identity.siteId, manualId, lang, result.data.content);
     if (!updated) {
       return c.notFound();
     }
@@ -238,7 +236,7 @@ export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const manual = await repository.projectManuals.getManualById(identity.siteId, manualId);
+    const manual = await repository.manuals.getManualById(identity.siteId, manualId);
     if (!manual) {
       return c.notFound();
     }
@@ -249,12 +247,12 @@ export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
       return c.text('Missing file', 400);
     }
 
-    if (file.size > MAX_MANUAL_ATTACHMENT_LENGTH) {
+    if (!attachmentFileSchema.safeParse(file).success) {
       return c.text('File too large', 413);
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    await repository.projectManuals.upsertAttachment(manualId, lang, {
+    await repository.manuals.upsertAttachment(manualId, lang, {
       filename: file.name,
       mimeType: file.type || 'application/octet-stream',
       buffer,
@@ -275,12 +273,12 @@ export function projectManualsRoutes(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const manual = await repository.projectManuals.getManualById(identity.siteId, manualId);
+    const manual = await repository.manuals.getManualById(identity.siteId, manualId);
     if (!manual) {
       return c.notFound();
     }
 
-    await repository.projectManuals.deleteAttachment(manualId, lang);
+    await repository.manuals.deleteAttachment(manualId, lang);
     return c.body(null, 204);
   });
 

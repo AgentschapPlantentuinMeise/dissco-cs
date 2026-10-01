@@ -24,7 +24,7 @@ const SIZE_CLASS: Record<NonNullable<ModalProps['size']>, string> = {
 
 // Generic modal shell (overlay + card) — modeled after WelcomeModal.tsx's original
 // overlay/transition pattern but made reusable across content types. Shared by
-// ProjectManualModal, ConfirmDialog, TermsModal and WelcomeModal.
+// ManualModal, ConfirmDialog, TermsModal and WelcomeModal.
 export const Modal: React.FC<ModalProps> = ({
   open,
   onClose,

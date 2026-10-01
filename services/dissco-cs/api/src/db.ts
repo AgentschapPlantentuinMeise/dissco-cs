@@ -4,7 +4,7 @@ import { appConfig } from './config.js';
 import { AnnouncementsRepository } from './repositories/announcements.repository.js';
 import { ForumRepository } from './repositories/forum.repository.js';
 import { InstitutionsRepository } from './repositories/institutions.repository.js';
-import { ProjectManualsRepository } from './repositories/project-manuals.repository.js';
+import { ManualsRepository } from './repositories/manuals.repository.js';
 import { FeedbackRepository } from './repositories/feedback.repository.js';
 import { SitePagesRepository } from './repositories/site-pages.repository.js';
 
@@ -13,7 +13,7 @@ export class DisscoCSRepository {
   readonly sitePages: SitePagesRepository;
   readonly announcements: AnnouncementsRepository;
   readonly institutions: InstitutionsRepository;
-  readonly projectManuals: ProjectManualsRepository;
+  readonly manuals: ManualsRepository;
   readonly feedback: FeedbackRepository;
 
   private readonly pool: Pool;
@@ -39,7 +39,7 @@ export class DisscoCSRepository {
 
     this.forum = new ForumRepository(this.pool, this.schemaRef);
     this.sitePages = new SitePagesRepository(this.pool, this.schemaRef);
-    this.projectManuals = new ProjectManualsRepository(this.pool, this.schemaRef);
+    this.manuals = new ManualsRepository(this.pool, this.schemaRef);
     this.announcements = new AnnouncementsRepository(this.pool, this.schemaRef);
     this.institutions = new InstitutionsRepository(this.pool, this.schemaRef);
     this.feedback = new FeedbackRepository(this.pool, this.schemaRef);
@@ -214,7 +214,7 @@ export class DisscoCSRepository {
       `);
 
       await client.query(`
-        CREATE TABLE IF NOT EXISTS ${this.schemaRef}.project_manuals (
+        CREATE TABLE IF NOT EXISTS ${this.schemaRef}.manuals (
           id BIGSERIAL PRIMARY KEY,
           site_id INTEGER NOT NULL,
           title JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -224,15 +224,15 @@ export class DisscoCSRepository {
       `);
 
       await client.query(`
-        CREATE INDEX IF NOT EXISTS project_manuals_site_idx
-        ON ${this.schemaRef}.project_manuals (site_id)
+        CREATE INDEX IF NOT EXISTS manuals_site_idx
+        ON ${this.schemaRef}.manuals (site_id)
       `);
 
       await client.query(`
         CREATE TABLE IF NOT EXISTS ${this.schemaRef}.project_manual_links (
           site_id INTEGER NOT NULL,
           project_slug TEXT NOT NULL,
-          manual_id BIGINT NOT NULL REFERENCES ${this.schemaRef}.project_manuals (id) ON DELETE CASCADE,
+          manual_id BIGINT NOT NULL REFERENCES ${this.schemaRef}.manuals (id) ON DELETE CASCADE,
           PRIMARY KEY (site_id, project_slug)
         )
       `);
@@ -243,9 +243,9 @@ export class DisscoCSRepository {
       `);
 
       await client.query(`
-        CREATE TABLE IF NOT EXISTS ${this.schemaRef}.project_manual_attachments (
+        CREATE TABLE IF NOT EXISTS ${this.schemaRef}.manual_attachments (
           id BIGSERIAL PRIMARY KEY,
-          manual_id BIGINT NOT NULL REFERENCES ${this.schemaRef}.project_manuals (id) ON DELETE CASCADE,
+          manual_id BIGINT NOT NULL REFERENCES ${this.schemaRef}.manuals (id) ON DELETE CASCADE,
           lang TEXT NOT NULL,
           filename TEXT NOT NULL,
           mime_type TEXT NOT NULL,

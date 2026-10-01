@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SitePageLang, multilingualTextSchema, emailSchema } from './common.js';
+import { MultilingualText, multilingualTextSchema, emailSchema } from './common.js';
 
 // Wire shape -- created_at/updated_at are DB bookkeeping only (see InstitutionRow in the API
 // repository) and never sent to the frontend; routes strip them via toInstitutionDto().
@@ -7,8 +7,8 @@ export type InstitutionDto = {
   id: number;
   site_id: number;
   slug: string;
-  name: Partial<Record<SitePageLang, string>>;
-  description: Partial<Record<SitePageLang, string>>;
+  name: MultilingualText;
+  description: MultilingualText;
   email: string | null;
   phone: string | null;
   website: string | null;

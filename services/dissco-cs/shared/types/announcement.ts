@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SitePageLang, multilingualTextSchema } from './common.js';
+import { MultilingualText, multilingualTextSchema } from './common.js';
 
 export const ANNOUNCEMENT_TARGET_TYPES = ['homepage', 'projects', 'project'] as const;
 export type AnnouncementTargetType = (typeof ANNOUNCEMENT_TARGET_TYPES)[number];
@@ -9,8 +9,8 @@ export type AnnouncementTargetType = (typeof ANNOUNCEMENT_TARGET_TYPES)[number];
 export type AnnouncementDto = {
   id: string;
   site_id: number;
-  title: Partial<Record<SitePageLang, string>>;
-  description: Partial<Record<SitePageLang, string>>;
+  title: MultilingualText;
+  description: MultilingualText;
   target_type: AnnouncementTargetType;
   target_project_slug: string | null;
   is_active: boolean;

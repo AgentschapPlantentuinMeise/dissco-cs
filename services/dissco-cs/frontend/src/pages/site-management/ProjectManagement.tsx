@@ -5,7 +5,7 @@ import { getAllSiteProjects } from '../../api/madoc-client/projects';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/CsPage';
 import { LuArrowLeft } from 'react-icons/lu';
-import { projectManualsApi, institutionsApi } from '../../api/cs-api';
+import { manualsApi, institutionsApi } from '../../api/cs-api';
 import { ProjectsSubview } from './project-management/ProjectsSubview';
 import { ManualsSubview } from './project-management/ManualsSubview';
 import { StuckTasksSubview } from './project-management/StuckTasksSubview';
@@ -28,7 +28,7 @@ export const ProjectManagement: React.FC = () => {
     data: manualsResponse,
     refetch: refetchManuals,
     status: manualsStatus,
-  } = useQuery('admin-project-manuals', () => projectManualsApi.list());
+  } = useQuery('admin-manuals', () => manualsApi.list());
   const manuals = manualsResponse?.manuals ?? [];
 
   const { data: institutionsResponse } = useQuery('admin-institutions', () => institutionsApi.listAdmin());
@@ -65,7 +65,7 @@ export const ProjectManagement: React.FC = () => {
 
         const [institutionResult, manualResult] = await Promise.all([
           institutionsApi.pruneProjectLinks(liveSlugs),
-          projectManualsApi.pruneProjectLinks(liveSlugs),
+          manualsApi.pruneProjectLinks(liveSlugs),
         ]);
 
         if (cancelled) return;

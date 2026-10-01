@@ -20,10 +20,9 @@ import {
   InstitutionDto,
   InstitutionInput,
   InstitutionStatsDto,
-  ProjectManual,
-  ProjectManualSummary,
-  ProjectManualForVolunteer,
-  ProjectManualDetail,
+  ManualDto,
+  ManualSummaryDto,
+  ManualDetailDto,
   ProjectProgress,
   StuckManifestCounter,
   ProjectDebugResult,
@@ -241,11 +240,11 @@ export const institutionsApi = {
     }),
 };
 
-export const projectManualsApi = {
+export const manualsApi = {
   getForProject: (projectSlug: string) =>
-    csFetch<ProjectManualForVolunteer>(`/projects/${encodeURIComponent(projectSlug)}/manual?slug=${getSiteSlug()}`),
+    csFetch<ManualDetailDto>(`/projects/${encodeURIComponent(projectSlug)}/manual?slug=${getSiteSlug()}`),
 
-  getAdmin: (manualId: number) => csFetch<ProjectManualDetail>(`/manuals/${manualId}`),
+  getAdmin: (manualId: number) => csFetch<ManualDetailDto>(`/manuals/${manualId}`),
 
   attachmentUrl: (projectSlug: string, lang: SitePageLang) =>
     `/api/dissco-cs/projects/${encodeURIComponent(projectSlug)}/manual/attachment/${lang}?slug=${getSiteSlug()}`,
@@ -256,15 +255,15 @@ export const projectManualsApi = {
       body: JSON.stringify({ manualId }),
     }),
 
-  list: () => csFetch<{ manuals: ProjectManualSummary[] }>('/manuals'),
+  list: () => csFetch<{ manuals: ManualSummaryDto[] }>('/manuals'),
 
   create: (lang: SitePageLang, title: string) =>
-    csFetch<ProjectManual>('/manuals', { method: 'POST', body: JSON.stringify({ lang, title }) }),
+    csFetch<ManualDto>('/manuals', { method: 'POST', body: JSON.stringify({ lang, title }) }),
 
   remove: (manualId: number) => csFetch<void>(`/manuals/${manualId}`, { method: 'DELETE' }),
 
   setTitle: (manualId: number, lang: SitePageLang, title: string) =>
-    csFetch<ProjectManual>(`/manuals/${manualId}/title`, { method: 'PUT', body: JSON.stringify({ lang, title }) }),
+    csFetch<ManualDto>(`/manuals/${manualId}/title`, { method: 'PUT', body: JSON.stringify({ lang, title }) }),
 
   setContent: (manualId: number, lang: SitePageLang, content: string) =>
     csFetch<void>(`/manuals/${manualId}/${lang}`, { method: 'PUT', body: JSON.stringify({ content }) }),
