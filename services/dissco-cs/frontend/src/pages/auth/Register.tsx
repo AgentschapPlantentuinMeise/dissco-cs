@@ -5,7 +5,7 @@ import { CsPage } from '../../components/CsPage';
 import { TermsModal } from '../../components/TermsModal';
 import { HrefLink } from '../../utility/href-link';
 import { register, getInvitation, getTerms } from '../../api/madoc-client/auth';
-import { SiteTerms, InvitationResponse } from '@dissco-cs/shared-types';
+import { MadocSiteTermsDto, InvitationDto } from '@dissco-cs/shared-types';
 import { useUser } from '../../hooks/use-current-user';
 import { getSiteSlug } from '../../api/slug';
 
@@ -22,9 +22,9 @@ export const Register: React.FC = () => {
     code ? 'loading-invitation' : 'idle'
   );
   const [error, setError] = useState('');
-  const [invitation, setInvitation] = useState<InvitationResponse | null>(null);
+  const [invitation, setInvitation] = useState<InvitationDto | null>(null);
   const [emailSent, setEmailSent] = useState(true);
-  const [terms, setTerms] = useState<SiteTerms | null | undefined>(undefined);
+  const [terms, setTerms] = useState<MadocSiteTermsDto | null | undefined>(undefined);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsPopup, setShowTermsPopup] = useState(false);
 

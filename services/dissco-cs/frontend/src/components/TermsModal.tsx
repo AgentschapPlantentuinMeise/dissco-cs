@@ -1,12 +1,12 @@
 import React from 'react';
 import { CsMarkdown } from './CsMarkdown';
 import { Modal } from './Modal';
-import { SiteTerms } from '@dissco-cs/shared-types';
+import { MadocSiteTermsDto } from '@dissco-cs/shared-types';
 
 type TermsModalProps = {
   title: string;
   intro?: React.ReactNode;
-  terms: SiteTerms;
+  terms: MadocSiteTermsDto;
   acceptLabel: string;
   cancelLabel: string;
   onAccept: () => void;

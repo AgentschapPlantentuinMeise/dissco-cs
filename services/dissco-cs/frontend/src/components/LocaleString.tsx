@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import React, { useMemo } from 'react';
 
-export type InternationalString = { [lang: string]: string[] };
+export type MadocInternationalString = { [lang: string]: string[] };
 
 export const LanguageString: React.FC<{ [key: string]: any } & { as?: string | React.FC<any>; language: string }> = ({
   as: Component,
@@ -96,7 +96,7 @@ export const useClosestLanguage = (getLanguages: () => string[], deps: any[] = [
   }, [i18nLanguages, i18nLanguage, ...deps]);
 };
 
-export function useLocaleString(inputText: InternationalString | string | null | undefined, defaultText?: string) {
+export function useLocaleString(inputText: MadocInternationalString | string | null | undefined, defaultText?: string) {
   const language = useClosestLanguage(() => Object.keys(inputText || {}), [inputText]);
   return [
     useMemo(() => {
@@ -125,7 +125,7 @@ export const LocaleString: React.FC<{
   as?: string | React.FC<any>;
   defaultText?: string;
   enableDangerouslySetInnerHTML?: boolean;
-  children: InternationalString | string | null | undefined;
+  children: MadocInternationalString | string | null | undefined;
   style?: React.CSSProperties;
 } & Record<string, any>> = ({ as: Component, defaultText, enableDangerouslySetInnerHTML, children, ...props }) => {
   const [text, language] = useLocaleString(children, defaultText);

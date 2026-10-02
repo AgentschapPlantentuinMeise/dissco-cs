@@ -1,24 +1,24 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { CaptureModel, ModelFields, NestedModelFields, StructureNode, AnnotationDocument, BaseField } from '@dissco-cs/shared-types';
+import { MadocCaptureModelDto, MadocModelFields, MadocNestedModelFields, MadocStructureNodeDto, MadocAnnotationDocumentDto, MadocBaseFieldDto } from '@dissco-cs/shared-types';
 import { DocumentPath } from '../pages/annotate/form/document';
 
 export interface ReviewFieldFormProps {
-  model: CaptureModel;
-  document: AnnotationDocument;
+  model: MadocCaptureModelDto;
+  document: MadocAnnotationDocumentDto;
   onChange?: (path: DocumentPath, value: unknown) => void;
   /** Toont de velden als niet-bewerkbare tekst i.p.v. invulbare tekstvakken. */
   readOnly?: boolean;
 }
 
-function isEntityList(entry: Array<BaseField> | Array<AnnotationDocument>): entry is Array<AnnotationDocument> {
-  return entry.length > 0 && (entry[0] as AnnotationDocument).type === 'entity';
+function isEntityList(entry: Array<MadocBaseFieldDto> | Array<MadocAnnotationDocumentDto>): entry is Array<MadocAnnotationDocumentDto> {
+  return entry.length > 0 && (entry[0] as MadocAnnotationDocumentDto).type === 'entity';
 }
 
 // Review-context heeft geen interactieve keuzeschermen nodig -- een reviewer wil zien wat er
 // effectief werd ingediend, niet zelf een model-variant kiezen. Bij een echte keuze (>1 item)
 // tonen we gewoon de eerste tak.
-function resolveDisplayStructure(node: StructureNode): StructureNode {
+function resolveDisplayStructure(node: MadocStructureNodeDto): MadocStructureNodeDto {
   while (node.type === 'choice' && node.items.length > 0) {
     node = node.items[0];
   }
@@ -28,11 +28,11 @@ function resolveDisplayStructure(node: StructureNode): StructureNode {
 // Mirrors CaptureModelForm.tsx's resolveSectionModels: a choice opted into 'tabs' via its own
 // `profile` isn't a real either/or (see resolveDisplayStructure above) -- it's a set of sections
 // that were all filled in together, so the reviewer needs to see all of them, not just the first.
-function resolveDisplayModels(node: StructureNode): Array<StructureNode & { type: 'model' }> {
+function resolveDisplayModels(node: MadocStructureNodeDto): Array<MadocStructureNodeDto & { type: 'model' }> {
   if (node.type === 'choice' && node.profile?.includes('tabs')) {
     return node.items
       .map(resolveDisplayStructure)
-      .filter((item): item is StructureNode & { type: 'model' } => item.type === 'model');
+      .filter((item): item is MadocStructureNodeDto & { type: 'model' } => item.type === 'model');
   }
   const resolved = resolveDisplayStructure(node);
   return resolved.type === 'model' ? [resolved] : [];
@@ -56,7 +56,7 @@ function textToFieldValue(text: string, original: unknown): unknown {
   }
 }
 
-function FieldRow({ field, path, onChange, readOnly }: { field: BaseField; path: DocumentPath; onChange: ReviewFieldFormProps['onChange']; readOnly?: boolean }) {
+function FieldRow({ field, path, onChange, readOnly }: { field: MadocBaseFieldDto; path: DocumentPath; onChange: ReviewFieldFormProps['onChange']; readOnly?: boolean }) {
   const { t } = useTranslation('dissco-cs');
   return (
     <div className="mb-3">
@@ -101,17 +101,17 @@ function chunkForGrid(blocks: Block[]): Block[] {
   return result;
 }
 
-function collectBlocks(fields: ModelFields, doc: AnnotationDocument, pathPrefix: DocumentPath, onChange: ReviewFieldFormProps['onChange'], readOnly?: boolean): Block[] {
+function collectBlocks(fields: MadocModelFields, doc: MadocAnnotationDocumentDto, pathPrefix: DocumentPath, onChange: ReviewFieldFormProps['onChange'], readOnly?: boolean): Block[] {
   const blocks: Block[] = [];
   const ungrouped: React.ReactNode[] = [];
 
   fields.forEach(entry => {
     const isNested = Array.isArray(entry);
-    const term = isNested ? (entry as NestedModelFields)[0] : (entry as string);
+    const term = isNested ? (entry as MadocNestedModelFields)[0] : (entry as string);
     const list = doc.properties[term] ?? [];
 
     if (isNested) {
-      const [, nestedFields] = entry as NestedModelFields;
+      const [, nestedFields] = entry as MadocNestedModelFields;
       const entities = isEntityList(list) ? list : [];
       if (entities.length === 0) return;
       blocks.push({

@@ -7,10 +7,10 @@ import { ManualContentEditor } from './ManualContentEditor';
 import { manualHasContent } from './manual-content';
 import { localeText } from '../../../utility/locale-text';
 import { defaultLang, siteLangText } from '../../../utility/site-lang-text';
-import { MadocProjectListItem, MAX_MANUAL_TITLE_LENGTH, ManualSummaryDto, setManualTitleSchema } from '@dissco-cs/shared-types';
+import { MadocProjectDto, MAX_MANUAL_TITLE_LENGTH, ManualSummaryDto, setManualTitleSchema } from '@dissco-cs/shared-types';
 
 export const ManualsSubview: React.FC<{
-  projects: MadocProjectListItem[];
+  projects: MadocProjectDto[];
   manuals: ManualSummaryDto[];
   refetchManuals: () => void;
 }> = ({ projects, manuals, refetchManuals }) => {

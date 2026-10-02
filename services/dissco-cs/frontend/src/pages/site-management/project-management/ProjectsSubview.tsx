@@ -6,10 +6,10 @@ import { Select } from '../../../components/Select';
 import { manualHasContent } from './manual-content';
 import { localeText } from '../../../utility/locale-text';
 import { siteLangText } from '../../../utility/site-lang-text';
-import { MadocProjectListItem, InstitutionDto, ManualSummaryDto } from '@dissco-cs/shared-types';
+import { MadocProjectDto, InstitutionDto, ManualSummaryDto } from '@dissco-cs/shared-types';
 
 export const ProjectsSubview: React.FC<{
-  projects: MadocProjectListItem[];
+  projects: MadocProjectDto[];
   manuals: ManualSummaryDto[];
   refetchManuals: () => void;
   institutions: InstitutionDto[];
@@ -17,7 +17,7 @@ export const ProjectsSubview: React.FC<{
   refetchInstitutionLinks: () => void;
 }> = ({ projects, manuals, refetchManuals, institutions, institutionLinks, refetchInstitutionLinks }) => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const projectLabel = (project: MadocProjectListItem) => localeText(project.label, i18n.language) || project.slug;
+  const projectLabel = (project: MadocProjectDto) => localeText(project.label, i18n.language) || project.slug;
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterInstitutionId, setFilterInstitutionId] = useState<'all' | 'none' | string>('all');

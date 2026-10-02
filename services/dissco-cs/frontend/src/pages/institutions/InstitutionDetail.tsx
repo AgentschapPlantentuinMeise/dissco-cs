@@ -14,7 +14,7 @@ import { useInstitutionHonourBoard } from '../../hooks/use-institution-honour-bo
 import { ProjectCard } from '../../components/projectcard/ProjectCard';
 import { siteLangText } from '../../utility/site-lang-text';
 import { formatNumber as formatCount } from '../../utility/format-number';
-import { MadocProjectListItem } from '@dissco-cs/shared-types';
+import { MadocProjectDto } from '@dissco-cs/shared-types';
 
 export const InstitutionDetail: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
@@ -40,7 +40,7 @@ export const InstitutionDetail: React.FC = () => {
     () => getAllSiteProjects({ published: true }),
     { staleTime: 5 * 60 * 1000 }
   );
-  const linkedProjects = (allProjects ?? []).filter((p: MadocProjectListItem) => projectSlugs.includes(p.slug));
+  const linkedProjects = (allProjects ?? []).filter((p: MadocProjectDto) => projectSlugs.includes(p.slug));
 
   const { data: overview } = useInstitutionStats(slug);
   const { today, week, month, legend } = useInstitutionHonourBoard(slug);
@@ -153,7 +153,7 @@ export const InstitutionDetail: React.FC = () => {
                       <p className="text-sm text-gray-500">{t('institution_projects_empty')}</p>
                     ) : (
                       <div className="cs-projects-grid cs-projects-grid--compact">
-                        {linkedProjects.map((project: MadocProjectListItem) => (
+                        {linkedProjects.map((project: MadocProjectDto) => (
                           <ProjectCard key={project.id} projectSummaryData={project} />
                         ))}
                       </div>

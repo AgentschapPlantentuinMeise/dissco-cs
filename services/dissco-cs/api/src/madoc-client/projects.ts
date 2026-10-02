@@ -1,8 +1,8 @@
 import { appConfig } from '../config.js';
 import { getServiceJwt } from './client.js';
-import { MadocProject, MadocProjectListItem } from '@dissco-cs/shared-types';
+import { MadocProjectDto } from '@dissco-cs/shared-types';
 
-export async function getMadocProject(siteId: number, projectId: string): Promise<MadocProject> {
+export async function getMadocProject(siteId: number, projectId: string): Promise<MadocProjectDto> {
   const response = await fetch(`${appConfig.madocGatewayUrl}/api/madoc/projects/${projectId}`, {
     headers: {
       Authorization: `Bearer ${getServiceJwt()}`,
@@ -20,7 +20,7 @@ export async function getMadocProject(siteId: number, projectId: string): Promis
 // task.metadata.project turns out to be empty for crowdsourcing-review tasks (unlike
 // crowdsourcing-task), so the project is looked up via root_task_id instead -- the same
 // filter list-projects.ts already supports server-side.
-export async function getMadocProjectByRootTaskId(siteId: number, rootTaskId: string): Promise<MadocProjectListItem | null> {
+export async function getMadocProjectByRootTaskId(siteId: number, rootTaskId: string): Promise<MadocProjectDto | null> {
   const query = new URLSearchParams({ root_task_id: rootTaskId });
   const response = await fetch(`${appConfig.madocGatewayUrl}/api/madoc/projects?${query}`, {
     headers: {
@@ -33,7 +33,7 @@ export async function getMadocProjectByRootTaskId(siteId: number, rootTaskId: st
     throw new Error(`Madoc project-by-root-task request failed with status ${response.status}`);
   }
 
-  const data = (await response.json()) as { projects: MadocProjectListItem[] };
+  const data = (await response.json()) as { projects: MadocProjectDto[] };
   return data.projects[0] ?? null;
 }
 
@@ -41,8 +41,8 @@ export async function getMadocProjectByRootTaskId(siteId: number, rootTaskId: st
 // public listProjects route in madoc-ts only shows status 1/2 unless the caller has site.admin
 // scope AND sends no `published` query param (see listProjects.ts), which is the case here
 // thanks to the service JWT.
-export async function listAllMadocProjects(siteId: number): Promise<MadocProjectListItem[]> {
-  const projects: MadocProjectListItem[] = [];
+export async function listAllMadocProjects(siteId: number): Promise<MadocProjectDto[]> {
+  const projects: MadocProjectDto[] = [];
   let page = 1;
   let totalPages = 1;
 
@@ -60,7 +60,7 @@ export async function listAllMadocProjects(siteId: number): Promise<MadocProject
     }
 
     const data = (await response.json()) as {
-      projects: MadocProjectListItem[];
+      projects: MadocProjectDto[];
       pagination?: { totalPages?: number };
     };
     projects.push(...data.projects);

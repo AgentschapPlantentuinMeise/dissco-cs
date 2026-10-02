@@ -3,8 +3,8 @@ import { Hono } from 'hono';
 import { requireSiteAdmin } from '../jwt.js';
 import { getMadocProject } from '../madoc-client/projects.js';
 import { getMadocCollectionStructure } from '../madoc-client/collections.js';
-import { getMadocProjectTasks, ProjectDebugTask } from '../madoc-client/tasks.js';
-import { InternationalString, MadocProject, ProjectDebugResult } from '@dissco-cs/shared-types';
+import { getMadocProjectTasks } from '../madoc-client/tasks.js';
+import { MadocCrowdsourcingTaskDto, MadocInternationalString, MadocProjectDto, ProjectDebugDto } from '@dissco-cs/shared-types';
 
 type CollectionStructureItem = { id: number; label?: unknown };
 
@@ -21,7 +21,7 @@ export function projectDebugRoutes(): Hono {
 
     const projectId = c.req.param('projectId');
 
-    let project: MadocProject;
+    let project: MadocProjectDto;
     try {
       project = await getMadocProject(identity.siteId, projectId);
     } catch (err) {
@@ -30,7 +30,7 @@ export function projectDebugRoutes(): Hono {
     }
 
     let structure: { items: CollectionStructureItem[] };
-    let tasks: ProjectDebugTask[];
+    let tasks: MadocCrowdsourcingTaskDto[];
     try {
       [structure, tasks] = await Promise.all([
         getMadocCollectionStructure(identity.siteId, project.collection_id) as Promise<{ items: CollectionStructureItem[] }>,
@@ -43,13 +43,14 @@ export function projectDebugRoutes(): Hono {
 
     // Subject is een manifest- of canvas-urn afhankelijk van de claimGranularity van het
     // project -- bij canvas-granulariteit groeperen we via subject_parent (de manifest-urn).
-    const tasksByManifestId = new Map<string, ProjectDebugTask[]>();
+    const tasksByManifestId = new Map<string, MadocCrowdsourcingTaskDto[]>();
     for (const task of tasks) {
-      const manifestUrn = task.subject.startsWith('urn:madoc:manifest:')
-        ? task.subject
-        : task.subject_parent?.startsWith('urn:madoc:manifest:')
-          ? task.subject_parent
-          : null;
+      const manifestUrn =
+        task.subject && task.subject.startsWith('urn:madoc:manifest:')
+          ? task.subject
+          : task.subject_parent?.startsWith('urn:madoc:manifest:')
+            ? task.subject_parent
+            : null;
       if (!manifestUrn) continue;
 
       const manifestId = manifestUrn.replace('urn:madoc:manifest:', '');
@@ -65,14 +66,16 @@ export function projectDebugRoutes(): Hono {
       const manifestTasks = tasksByManifestId.get(String(item.id)) ?? [];
       return {
         manifestId: item.id,
-        label: item.label as InternationalString | string | undefined,
+        label: item.label as MadocInternationalString | string | undefined,
         countsAsTranscribed: manifestTasks.some(t => t.status === 2 || t.status === 3),
         tasks: manifestTasks.map(t => ({
           id: t.id,
           status: t.status,
           status_text: t.status_text,
           assignee: t.assignee?.name,
-          modified_at: t.modified_at,
+          // tasks-api always returns this for a real task (see MadocCrowdsourcingTaskDto's comment) --
+          // the field is only optional in the shared type for other call sites.
+          modified_at: t.modified_at ?? 0,
         })),
       };
     });
@@ -80,7 +83,7 @@ export function projectDebugRoutes(): Hono {
     const transcribedCount = manifests.filter(m => m.countsAsTranscribed).length;
     const transcribedPercentage = manifests.length === 0 ? 0 : Math.round((transcribedCount / manifests.length) * 100);
 
-    const result: ProjectDebugResult = { totalManifests: manifests.length, transcribedPercentage, manifests };
+    const result: ProjectDebugDto = { totalManifests: manifests.length, transcribedPercentage, manifests };
     return c.json(result);
   });
 

@@ -6,7 +6,7 @@ import { TermsModal } from '../../components/TermsModal';
 import { HrefLink } from '../../utility/href-link';
 import { login, getTerms } from '../../api/madoc-client/auth';
 import { acceptTerms } from '../../api/madoc-client/crowdsourcing';
-import { SiteTerms } from '@dissco-cs/shared-types';
+import { MadocSiteTermsDto } from '@dissco-cs/shared-types';
 import { clearJwt } from '../../api/jwt';
 
 export const Login: React.FC = () => {
@@ -17,7 +17,7 @@ export const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'error'>('idle');
   const [error, setError] = useState('');
-  const [pendingTerms, setPendingTerms] = useState<SiteTerms | null>(null);
+  const [pendingTerms, setPendingTerms] = useState<MadocSiteTermsDto | null>(null);
 
   const sessionExpired = searchParams.get('expired') === '1';
 
@@ -32,13 +32,13 @@ export const Login: React.FC = () => {
     try {
       const loginResult = await login({ email, password });
 
-      if (!loginResult.terms) {
+      if (typeof loginResult.user.hasTerms !== 'boolean') {
         // Fail closed: if we can't determine terms status, don't let the user through -
         // silently skipping the check would defeat the point of the gate.
         throw new Error(t('login_form_error'));
       }
 
-      if (loginResult.terms.hasTerms && !loginResult.terms.hasAccepted) {
+      if (loginResult.user.hasTerms && !loginResult.user.hasAccepted) {
         const { latest } = await getTerms();
         if (latest) {
           setPendingTerms(latest);

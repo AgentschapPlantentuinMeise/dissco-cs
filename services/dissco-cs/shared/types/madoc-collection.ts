@@ -1,9 +1,9 @@
-import { InternationalString } from './madoc-project.js';
+import { MadocInternationalString } from './common.js';
 
 // Payload shape of Madoc's admin collections-list endpoint (GET /api/madoc/iiif/collections).
-export type MadocCollectionSummary = {
+export type MadocCollectionSummaryDto = {
   id: number;
   slug: string;
-  label?: InternationalString | string;
+  label?: MadocInternationalString | string;
   itemCount?: number;
 };

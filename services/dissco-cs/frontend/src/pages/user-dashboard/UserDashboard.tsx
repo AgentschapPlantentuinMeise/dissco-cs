@@ -16,7 +16,7 @@ import { LuTrash2 } from 'react-icons/lu';
 import { StatBanner } from '../../components/StatBanner';
 import { TaskTable, tabBtnClass } from '../../components/TaskTable';
 import { forumApi, feedbackApi } from '../../api/cs-api';
-import { CrowdsourcingTask, ForumTopicDto, FeedbackThreadDto } from '@dissco-cs/shared-types';
+import { MadocCrowdsourcingTaskDto, ForumTopicDto, FeedbackThreadDto } from '@dissco-cs/shared-types';
 import { useSiteStats } from '../../hooks/use-site-stats';
 
 
@@ -179,11 +179,11 @@ export const UserDashboard: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useUser();
   const [activeTab, setActiveTab] = useState<'saved' | 'done' | 'feedback'>('saved');
-  const [releaseTarget, setReleaseTarget] = useState<CrowdsourcingTask | null>(null);
+  const [releaseTarget, setReleaseTarget] = useState<MadocCrowdsourcingTaskDto | null>(null);
   const [openThreadId, setOpenThreadId] = useState<number | null>(null);
 
   const [releaseTask] = useMutation(
-    (task: CrowdsourcingTask) => updateTask(task.id, { status: -1, status_text: 'abandoned' }),
+    (task: MadocCrowdsourcingTaskDto) => updateTask(task.id, { status: -1, status_text: 'abandoned' }),
     {
       onSuccess: () => {
         queryCache.invalidateQueries('dashboard-tasks');
@@ -203,10 +203,10 @@ export const UserDashboard: React.FC = () => {
         sort_by: 'newest',
         detail: true,
       };
-      const first = await getTasks<CrowdsourcingTask>(1, query);
+      const first = await getTasks<MadocCrowdsourcingTaskDto>(1, query);
       const totalPages = first.pagination?.totalPages ?? 1;
       const rest = await Promise.all(
-        Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => getTasks<CrowdsourcingTask>(i + 2, query))
+        Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => getTasks<MadocCrowdsourcingTaskDto>(i + 2, query))
       );
       return { ...first, tasks: [...first.tasks, ...rest.flatMap(r => r.tasks)] };
     },
@@ -242,7 +242,7 @@ export const UserDashboard: React.FC = () => {
     return null;
   }
 
-  const tasks: CrowdsourcingTask[] = tasksData?.tasks ?? [];
+  const tasks: MadocCrowdsourcingTaskDto[] = tasksData?.tasks ?? [];
 
   const seen = new Set<string>();
   const uniqueTasks = tasks.filter(task => {
@@ -251,9 +251,9 @@ export const UserDashboard: React.FC = () => {
     seen.add(id);
     return true;
   });
-  const s = (task: CrowdsourcingTask) => task.status as number;
+  const s = (task: MadocCrowdsourcingTaskDto) => task.status as number;
   const realTasks = uniqueTasks.filter(task => task.status !== 0 && task.status !== -1);
-  const latestPerSubject = new Map<string, CrowdsourcingTask>();
+  const latestPerSubject = new Map<string, MadocCrowdsourcingTaskDto>();
   for (const task of realTasks) {
     const key = `${task.subject ?? task.id}|${task.root_task ?? ''}`;
     const existing = latestPerSubject.get(key);

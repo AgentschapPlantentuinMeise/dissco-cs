@@ -1,16 +1,8 @@
 import { Hono } from 'hono';
 
 import { MadocUserIdentity, requireUser } from '../jwt.js';
-import { getMadocProjectByRootTaskId } from '../madoc-client/projects.js';
-import { getMadocTaskDetail } from '../madoc-client/tasks.js';
-import { getMadocReviewTasks, ReviewTask } from '../madoc-client/reviews.js';
+import { getMadocReviewTasks } from '../madoc-client/reviews.js';
 import { getMadocSiteUserRole } from '../madoc-client/users.js';
-import { InternationalString, MadocProjectListItem, ReviewTaskDto } from '@dissco-cs/shared-types';
-
-function parseUserId(urn: string | undefined): number | undefined {
-  const match = urn?.match(/^urn:madoc:user:(\d+)$/);
-  return match ? Number(match[1]) : undefined;
-}
 
 // Zelfde voorwaarde als de frontend's is-reviewer-check: site-admins mogen altijd, anderen
 // enkel als hun site-rol effectief 'reviewer' is.
@@ -38,7 +30,7 @@ export function reviewRoutes(): Hono {
     }
   });
 
-  app.get('/my-tasks', async c => {
+  app.get('/tasks', async c => {
     const identity = requireUser(c);
     if (identity instanceof Response) return identity;
 
@@ -46,81 +38,13 @@ export function reviewRoutes(): Hono {
       return c.text('Forbidden', 403);
     }
 
-    let tasks: ReviewTask[];
     try {
-      tasks = await getMadocReviewTasks(identity.siteId);
+      const tasks = await getMadocReviewTasks(identity.siteId);
+      return c.json({ tasks });
     } catch (err) {
       console.error('[review] getMadocReviewTasks failed', { siteId: identity.siteId }, err);
       return c.text('Internal Server Error', 500);
     }
-
-    const projectByRootTask = new Map<string, MadocProjectListItem | null>();
-
-    const rows: ReviewTaskDto[] = [];
-    for (const task of tasks) {
-      let submitter: string | undefined;
-      let submitterId: number | undefined;
-      let revisionId: string | undefined;
-      const originalTaskId = typeof task.parameters?.[0] === 'string' ? (task.parameters[0] as string) : undefined;
-      if (originalTaskId) {
-        try {
-          const originalTask = await getMadocTaskDetail(identity.siteId, originalTaskId);
-          submitter = originalTask.assignee?.name;
-          submitterId = parseUserId(originalTask.assignee?.id);
-          revisionId = originalTask.state?.revisionId;
-          if (!revisionId) {
-            console.warn('[review] geen state.revisionId op originele taak', {
-              reviewTaskId: task.id,
-              originalTaskId,
-              status: originalTask.status,
-              state: originalTask.state,
-            });
-          }
-        } catch (err) {
-          console.error(
-            '[review] getMadocTaskDetail (submitter) failed',
-            { siteId: identity.siteId, originalTaskId },
-            err
-          );
-        }
-      }
-
-      // task.metadata.project is niet gevuld voor crowdsourcing-review-taken (in
-      // tegenstelling tot crowdsourcing-task) -- opzoeken via root_task_id, één keer per
-      // uniek project.
-      let project: MadocProjectListItem | null = null;
-      if (task.root_task) {
-        if (projectByRootTask.has(task.root_task)) {
-          project = projectByRootTask.get(task.root_task) ?? null;
-        } else {
-          try {
-            project = await getMadocProjectByRootTaskId(identity.siteId, task.root_task);
-          } catch (err) {
-            console.error('[review] getMadocProjectByRootTaskId failed', { siteId: identity.siteId, rootTask: task.root_task }, err);
-          }
-          projectByRootTask.set(task.root_task, project);
-        }
-      }
-
-      rows.push({
-        id: task.id,
-        project: { id: project?.id, slug: project?.slug, label: project?.label },
-        subject: { id: task.metadata?.subject?.id, label: task.metadata?.subject?.label as InternationalString | string | undefined },
-        subject_raw: task.subject,
-        subject_parent_raw: task.subject_parent,
-        status: task.status,
-        status_text: task.status_text,
-        submitter,
-        submitterId,
-        reviewer: task.assignee?.name,
-        reviewerId: parseUserId(task.assignee?.id),
-        originalTaskId,
-        revisionId,
-        modified_at: task.modified_at,
-      });
-    }
-
-    return c.json({ tasks: rows });
   });
 
   return app;

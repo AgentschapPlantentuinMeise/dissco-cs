@@ -1,4 +1,4 @@
-export type ProjectProgress = {
+export type ProjectProgressDto = {
   transcribedPercentage: number;
   totalTasks: number;
   allTasksTaken: boolean;

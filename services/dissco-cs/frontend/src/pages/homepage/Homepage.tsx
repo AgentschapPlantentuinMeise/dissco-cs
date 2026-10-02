@@ -12,7 +12,7 @@ import { disscoCSConfig } from '../../dissco-cs-config';
 import { useSiteStats } from '../../hooks/use-site-stats';
 import { HrefLink } from '../../utility/href-link';
 import { formatNumber } from '../../utility/format-number';
-import { MadocProjectListItem } from '@dissco-cs/shared-types';
+import { MadocProjectDto } from '@dissco-cs/shared-types';
 
 export const Homepage: React.FC = () => {
   const [isClient, setIsClient] = useState(false);
@@ -31,7 +31,7 @@ export const Homepage: React.FC = () => {
   const projects = projectsResponse?.projects || [];
   const isLoadingList = status === 'loading';
 
-  const latestProjects = projects.filter((p: MadocProjectListItem) => p.status === 1).slice(0, 6);
+  const latestProjects = projects.filter((p: MadocProjectDto) => p.status === 1).slice(0, 6);
 
   return (
     <CsPage>
@@ -84,7 +84,7 @@ export const Homepage: React.FC = () => {
                   <p className="text-center py-5">{t('no_projects')}</p>
                 )}
                 <div className="cs-projects-grid cs-projects-grid--compact">
-                  {latestProjects.map((project: MadocProjectListItem) => (
+                  {latestProjects.map((project: MadocProjectDto) => (
                     <ProjectCard key={project.id} projectSummaryData={project} />
                   ))}
                 </div>

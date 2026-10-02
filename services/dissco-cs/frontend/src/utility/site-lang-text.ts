@@ -8,7 +8,7 @@ export function defaultLang(currentLanguage: string): SitePageLang {
 }
 
 // Fallback chain for dissco-cs' own per-language string fields (SitePageLang -> string), as
-// opposed to Madoc's array-based InternationalString (see utility/locale-text.ts for that).
+// opposed to Madoc's array-based MadocInternationalString (see utility/locale-text.ts for that).
 export function siteLangText(field: Partial<Record<SitePageLang, string>> | undefined, lang: string, fallback: string): string {
   if (!field) return fallback;
   return field[lang as SitePageLang] || field.nl || field.en || field.fr || field.de || fallback;

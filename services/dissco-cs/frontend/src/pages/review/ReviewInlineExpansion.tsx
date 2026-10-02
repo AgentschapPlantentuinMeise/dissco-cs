@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ReviewTaskDto, AnnotationDocument } from '@dissco-cs/shared-types';
+import { ReviewTaskDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
 import { ReviewFieldForm } from '../../components/ReviewFieldForm';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useReviewRevisionDocument } from './useReviewRevisionDocument';
@@ -9,8 +9,8 @@ import { LuTrash2 } from 'react-icons/lu';
 
 interface ReviewInlineExpansionProps {
   row: ReviewTaskDto;
-  editedDocument: AnnotationDocument | undefined;
-  onDocumentChange: (rowId: string, document: AnnotationDocument) => void;
+  editedDocument: MadocAnnotationDocumentDto | undefined;
+  onDocumentChange: (rowId: string, document: MadocAnnotationDocumentDto) => void;
   onRelease: () => void;
   releasing: boolean;
   releaseError: string | null;

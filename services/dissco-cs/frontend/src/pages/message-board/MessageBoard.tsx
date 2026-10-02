@@ -8,7 +8,7 @@ import { useUser } from '../../hooks/use-current-user';
 import { useTranslation } from 'react-i18next';
 import { forumApi } from '../../api/cs-api';
 import { getAllSiteProjects } from '../../api/madoc-client/projects';
-import { MadocProjectListItem, ForumTopicDto, ForumReplyDto, ForumTopicInput } from '@dissco-cs/shared-types';
+import { MadocProjectDto, ForumTopicDto, ForumReplyDto, ForumTopicInput } from '@dissco-cs/shared-types';
 import { DeleteIconButton } from '../../components/DeleteIconButton';
 import { localeText } from '../../utility/locale-text';
 import { formatDate } from '../../utility/format-date';
@@ -34,7 +34,7 @@ export const MessageBoard: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
   const projectOptions = useMemo(
-    () => (allProjects || []).map((p: MadocProjectListItem) => ({ slug: p.slug, label: localeText(p.label, i18n.language) })),
+    () => (allProjects || []).map((p: MadocProjectDto) => ({ slug: p.slug, label: localeText(p.label, i18n.language) })),
     [allProjects, i18n.language]
   );
 

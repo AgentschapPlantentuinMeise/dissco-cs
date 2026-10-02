@@ -1,6 +1,6 @@
-import { InternationalString } from '../components/LocaleString';
+import { MadocInternationalString } from '../components/LocaleString';
 
-export function localeText(label: InternationalString | string | undefined, language: string): string {
+export function localeText(label: MadocInternationalString | string | undefined, language: string): string {
   if (!label) return '';
   if (typeof label === 'string') return label;
   const candidate = label[language] || Object.values(label)[0];

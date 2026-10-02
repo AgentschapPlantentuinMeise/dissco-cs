@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CaptureModel, ModelFields, NestedModelFields, StructureNode, AnnotationDocument, BaseField } from '@dissco-cs/shared-types';
+import { MadocCaptureModelDto, MadocModelFields, MadocNestedModelFields, MadocStructureNodeDto, MadocAnnotationDocumentDto, MadocBaseFieldDto } from '@dissco-cs/shared-types';
 import { fieldRegistry } from './fields/registry';
 import { DocumentPath, pathsEqual } from './document';
 
 export interface CaptureModelFormProps {
-  model: CaptureModel;
-  document: AnnotationDocument;
+  model: MadocCaptureModelDto;
+  document: MadocAnnotationDocumentDto;
   onChange: (path: DocumentPath, value: unknown) => void;
   onSaveDraft: () => void;
   onSubmit: () => void;
@@ -14,7 +14,7 @@ export interface CaptureModelFormProps {
   /** Brief success message shown next to the save/submit buttons after a successful save. */
   confirmation?: string | null;
   /** Fires whenever the resolved 'model' node changes (immediately if structure has no choice step) — the caller needs this node's `fields`/`id` to submit a revision. */
-  onActiveStructureChange?: (node: StructureNode & { type: 'model' }) => void;
+  onActiveStructureChange?: (node: MadocStructureNodeDto & { type: 'model' }) => void;
   /** Path of the field currently being drawn on the image, if any — drives the "draw"/"cancel" control on that field's row. */
   drawingPath?: DocumentPath | null;
   /** User clicked "Teken op het beeld" for a field that has a selector configured. */
@@ -72,30 +72,30 @@ function SelectorControl({ path, hasRegion, isDrawing, controls }: {
   );
 }
 
-function isEntityList(entry: Array<BaseField> | Array<AnnotationDocument>): entry is Array<AnnotationDocument> {
-  return entry.length > 0 && (entry[0] as AnnotationDocument).type === 'entity';
+function isEntityList(entry: Array<MadocBaseFieldDto> | Array<MadocAnnotationDocumentDto>): entry is Array<MadocAnnotationDocumentDto> {
+  return entry.length > 0 && (entry[0] as MadocAnnotationDocumentDto).type === 'entity';
 }
 
-function isEntityEmpty(entity: AnnotationDocument): boolean {
+function isEntityEmpty(entity: MadocAnnotationDocumentDto): boolean {
   return Object.values(entity.properties).every(list =>
     list.every(entry =>
-      (entry as AnnotationDocument).type === 'entity' ? isEntityEmpty(entry as AnnotationDocument) : !(entry as BaseField).value
+      (entry as MadocAnnotationDocumentDto).type === 'entity' ? isEntityEmpty(entry as MadocAnnotationDocumentDto) : !(entry as MadocBaseFieldDto).value
     )
   );
 }
 
 // Mirrors madoc-ts's useResolvedDependant: a field/entity with `dependent: '<term>'` only shows
 // once the sibling property named `<term>` (at the same document level) has a value.
-function isDependentSatisfied(dependent: string | undefined, document: AnnotationDocument): boolean {
+function isDependentSatisfied(dependent: string | undefined, document: MadocAnnotationDocumentDto): boolean {
   if (!dependent) return true;
 
   const dependentEntry = document.properties[dependent]?.[0];
   if (!dependentEntry) return true;
 
-  if ((dependentEntry as AnnotationDocument).type === 'entity') {
-    return !isEntityEmpty(dependentEntry as AnnotationDocument);
+  if ((dependentEntry as MadocAnnotationDocumentDto).type === 'entity') {
+    return !isEntityEmpty(dependentEntry as MadocAnnotationDocumentDto);
   }
-  const field = dependentEntry as BaseField;
+  const field = dependentEntry as MadocBaseFieldDto;
   return !(!field.value || field.value === '') || !!field.selector?.state;
 }
 
@@ -105,7 +105,7 @@ function isRequired(required: boolean | string[] | undefined): boolean {
   return Array.isArray(required) ? required.length > 0 : !!required;
 }
 
-function isFieldEmpty(field: BaseField): boolean {
+function isFieldEmpty(field: MadocBaseFieldDto): boolean {
   if (field.selector?.state) return false;
   const { value } = field;
   if (!value || value === '') return true;
@@ -120,14 +120,14 @@ function isFieldEmpty(field: BaseField): boolean {
 // Walks the same fields/document the renderer walks (skipping fields hidden by a
 // dependent-on condition) to find whether any visible field/entity is required — used to
 // decide whether the "* verplicht veld" legend is shown at all.
-function hasVisibleRequiredField(fields: ModelFields, document: AnnotationDocument): boolean {
+function hasVisibleRequiredField(fields: MadocModelFields, document: MadocAnnotationDocumentDto): boolean {
   return fields.some(entry => {
     const isNested = Array.isArray(entry);
-    const term = isNested ? (entry as NestedModelFields)[0] : (entry as string);
+    const term = isNested ? (entry as MadocNestedModelFields)[0] : (entry as string);
     const list = document.properties[term] ?? [];
 
     if (isNested) {
-      const [, nestedFields] = entry as NestedModelFields;
+      const [, nestedFields] = entry as MadocNestedModelFields;
       const entities = isEntityList(list) ? list : [];
       if (!isDependentSatisfied(entities[0]?.dependent, document)) return false;
       return isRequired(entities[0]?.required) || entities.some(entity => hasVisibleRequiredField(nestedFields, entity));
@@ -140,15 +140,15 @@ function hasVisibleRequiredField(fields: ModelFields, document: AnnotationDocume
 
 // Same walk, but collects the labels of required fields/entities that are still empty —
 // used to block "Indienen" until they're filled in.
-function collectMissingRequiredLabels(fields: ModelFields, document: AnnotationDocument): string[] {
+function collectMissingRequiredLabels(fields: MadocModelFields, document: MadocAnnotationDocumentDto): string[] {
   const labels: string[] = [];
   for (const entry of fields) {
     const isNested = Array.isArray(entry);
-    const term = isNested ? (entry as NestedModelFields)[0] : (entry as string);
+    const term = isNested ? (entry as MadocNestedModelFields)[0] : (entry as string);
     const list = document.properties[term] ?? [];
 
     if (isNested) {
-      const [, nestedFields] = entry as NestedModelFields;
+      const [, nestedFields] = entry as MadocNestedModelFields;
       const entities = isEntityList(list) ? list : [];
       if (!isDependentSatisfied(entities[0]?.dependent, document)) continue;
       if (isRequired(entities[0]?.required) && entities.every(isEntityEmpty)) {
@@ -172,7 +172,7 @@ function collectMissingRequiredLabels(fields: ModelFields, document: AnnotationD
 // wraps it that way), even when there's only one "Default" model and no real branching — the admin
 // UI hides this single-item case from editors, so we skip it here too instead of showing the user
 // a "pick one" screen with exactly one button.
-function resolveSingleChoice(node: StructureNode): StructureNode {
+function resolveSingleChoice(node: MadocStructureNodeDto): MadocStructureNodeDto {
   while (node.type === 'choice' && node.items.length === 1) {
     node = node.items[0];
   }
@@ -242,8 +242,8 @@ function EntityFieldset({
 }: {
   label: string;
   required: boolean;
-  nestedFields: ModelFields;
-  entities: AnnotationDocument[];
+  nestedFields: MadocModelFields;
+  entities: MadocAnnotationDocumentDto[];
   pathPrefix: DocumentPath;
   term: string;
   onChange: CaptureModelFormProps['onChange'];
@@ -265,27 +265,27 @@ function EntityFieldset({
 // here as the "these are not real alternatives, show them together" signal instead of introducing
 // a separate custom flag. Each item is unwrapped through resolveSingleChoice first so an
 // accidental single-item nested choice still resolves to its model instead of being skipped.
-function resolveSectionModels(node: StructureNode): Array<StructureNode & { type: 'model' }> | null {
+function resolveSectionModels(node: MadocStructureNodeDto): Array<MadocStructureNodeDto & { type: 'model' }> | null {
   if (node.type !== 'choice' || !node.profile?.includes('tabs')) return null;
   return node.items
     .map(resolveSingleChoice)
-    .filter((item): item is StructureNode & { type: 'model' } => item.type === 'model');
+    .filter((item): item is MadocStructureNodeDto & { type: 'model' } => item.type === 'model');
 }
 
 function renderFields(
-  fields: ModelFields,
-  document: AnnotationDocument,
+  fields: MadocModelFields,
+  document: MadocAnnotationDocumentDto,
   pathPrefix: DocumentPath,
   onChange: CaptureModelFormProps['onChange'],
   selectorControls: SelectorControls
 ) {
   return fields.map(entry => {
     const isNested = Array.isArray(entry);
-    const term = isNested ? (entry as NestedModelFields)[0] : (entry as string);
+    const term = isNested ? (entry as MadocNestedModelFields)[0] : (entry as string);
     const list = document.properties[term] ?? [];
 
     if (isNested) {
-      const [, nestedFields] = entry as NestedModelFields;
+      const [, nestedFields] = entry as MadocNestedModelFields;
       const entities = isEntityList(list) ? list : [];
       if (!isDependentSatisfied(entities[0]?.dependent, document)) return null;
       return (
@@ -353,7 +353,7 @@ export function CaptureModelForm({
   const selectorControls: SelectorControls = { drawingPath, onRequestDraw, onCancelDraw, onClearSelector };
   // A choice node just picks between alternative 'model' nodes — this stack lets the user
   // step back through nested choices instead of re-rendering a separate "choice screen".
-  const [stack, setStack] = useState<StructureNode[]>([resolveSingleChoice(model.structure)]);
+  const [stack, setStack] = useState<MadocStructureNodeDto[]>([resolveSingleChoice(model.structure)]);
 
   useEffect(() => {
     setStack([resolveSingleChoice(model.structure)]);
@@ -372,7 +372,7 @@ export function CaptureModelForm({
   // Sections mode has no single 'model' node to report/submit against, so its models' fields are
   // combined into one synthetic model — memoized so the object stays stable across renders (it
   // only depends on `current`), matching how `current` itself is already stable per stack entry.
-  const combinedSectionsModel = useMemo<(StructureNode & { type: 'model' }) | null>(() => {
+  const combinedSectionsModel = useMemo<(MadocStructureNodeDto & { type: 'model' }) | null>(() => {
     if (!sectionModels) return null;
     return { id: current.id, label: current.label, type: 'model', fields: sectionModels.flatMap(m => m.fields) };
   }, [sectionModels, current]);

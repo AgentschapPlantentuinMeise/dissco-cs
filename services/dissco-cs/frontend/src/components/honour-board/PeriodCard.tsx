@@ -1,17 +1,17 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { HonourBoardEntry, HonourBoardPeriod } from '@dissco-cs/shared-types';
+import { HonourBoardEntryDto, HonourBoardPeriodDto } from '@dissco-cs/shared-types';
 
 export const PeriodCard: React.FC<{
   titleKey: string;
   icon: React.ReactNode;
-  period: HonourBoardPeriod | undefined;
+  period: HonourBoardPeriodDto | undefined;
   formatNumber: (n: number) => string;
   dark?: boolean;
   loading?: boolean;
 }> = ({ titleKey, icon, period, formatNumber, dark = false, loading = false }) => {
   const { t } = useTranslation('dissco-cs');
-  const rows: Array<{ entry: HonourBoardEntry; isYou: boolean }> = period
+  const rows: Array<{ entry: HonourBoardEntryDto; isYou: boolean }> = period
     ? period.top.map(entry => ({ entry, isYou: entry.userUrn === period.you?.userUrn }))
     : [];
   if (period?.you && !rows.some(row => row.isYou)) {

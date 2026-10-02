@@ -1,19 +1,19 @@
-import { CaptureModel, AnnotationDocument, BaseField, BoxSelectorState } from '@dissco-cs/shared-types';
+import { MadocCaptureModelDto, MadocAnnotationDocumentDto, MadocBaseFieldDto, MadocBoxSelectorState } from '@dissco-cs/shared-types';
 
 /** A path into the document tree: alternating property name and instance index, e.g. ['author', 0, 'name', 0]. */
 export type DocumentPath = Array<string | number>;
 
-function isField(entry: BaseField | AnnotationDocument): entry is BaseField {
-  return (entry as AnnotationDocument).type !== 'entity';
+function isField(entry: MadocBaseFieldDto | MadocAnnotationDocumentDto): entry is MadocBaseFieldDto {
+  return (entry as MadocAnnotationDocumentDto).type !== 'entity';
 }
 
 /** Starting point for a new revision: a deep clone of the model's own document, so editing it never mutates the model. */
-export function cloneModelDocument(model: CaptureModel): AnnotationDocument {
+export function cloneModelDocument(model: MadocCaptureModelDto): MadocAnnotationDocumentDto {
   return JSON.parse(JSON.stringify(model.document));
 }
 
 /** Clears every field's value/selector state and revision tags on a cloned document tree, in place. */
-function blankEntity(entity: AnnotationDocument): void {
+function blankEntity(entity: MadocAnnotationDocumentDto): void {
   for (const list of Object.values(entity.properties)) {
     for (const item of list) {
       if (isField(item)) {
@@ -37,18 +37,18 @@ function blankEntity(entity: AnnotationDocument): void {
  * values from a previous, possibly abandoned, contribution (capture models are shared per manifest,
  * not per user — see docs/MANIFEST-CLAIMS.md).
  */
-export function createBlankDocument(model: CaptureModel): AnnotationDocument {
-  const clone: AnnotationDocument = JSON.parse(JSON.stringify(model.document));
+export function createBlankDocument(model: MadocCaptureModelDto): MadocAnnotationDocumentDto {
+  const clone: MadocAnnotationDocumentDto = JSON.parse(JSON.stringify(model.document));
   blankEntity(clone);
   return clone;
 }
 
 /** Shared by setFieldValue/setFieldSelector: walks to the field at `path` and replaces it with `updateField`'s result. */
 function updateFieldAtPath(
-  document: AnnotationDocument,
+  document: MadocAnnotationDocumentDto,
   path: DocumentPath,
-  updateField: (field: BaseField) => BaseField
-): AnnotationDocument {
+  updateField: (field: MadocBaseFieldDto) => MadocBaseFieldDto
+): MadocAnnotationDocumentDto {
   if (path.length < 2) {
     throw new Error(`Invalid document path: ${JSON.stringify(path)}`);
   }
@@ -62,7 +62,7 @@ function updateFieldAtPath(
     throw new Error(`No entry at ${term}[${index}]`);
   }
 
-  let updatedEntry: BaseField | AnnotationDocument;
+  let updatedEntry: MadocBaseFieldDto | MadocAnnotationDocumentDto;
   if (rest.length === 0) {
     if (!isField(entry)) throw new Error(`Path ${JSON.stringify(path)} resolves to an entity, not a field`);
     updatedEntry = updateField(entry);
@@ -88,12 +88,12 @@ function updateFieldAtPath(
  * `revisionId` must be the same id used as `revision.id` when submitting, so the server's
  * merge logic (extract-valid-revision-changes.ts) recognises this field as part of that revision.
  */
-export function setFieldValue(document: AnnotationDocument, path: DocumentPath, value: unknown, revisionId: string): AnnotationDocument {
+export function setFieldValue(document: MadocAnnotationDocumentDto, path: DocumentPath, value: unknown, revisionId: string): MadocAnnotationDocumentDto {
   return updateFieldAtPath(document, path, field => ({ ...field, value, revision: revisionId }));
 }
 
 /** Returns a new document with the region drawn on the image stored on the field's selector at `path`. */
-export function setFieldSelector(document: AnnotationDocument, path: DocumentPath, state: BoxSelectorState, revisionId: string): AnnotationDocument {
+export function setFieldSelector(document: MadocAnnotationDocumentDto, path: DocumentPath, state: MadocBoxSelectorState, revisionId: string): MadocAnnotationDocumentDto {
   return updateFieldAtPath(document, path, field => {
     if (!field.selector) throw new Error(`Field at ${JSON.stringify(path)} has no selector configured`);
     return { ...field, selector: { ...field.selector, state }, revision: revisionId };
@@ -101,7 +101,7 @@ export function setFieldSelector(document: AnnotationDocument, path: DocumentPat
 }
 
 /** Reads the current value at `path`, or undefined if it doesn't resolve to a field. */
-export function getFieldValue(document: AnnotationDocument, path: DocumentPath): unknown {
+export function getFieldValue(document: MadocAnnotationDocumentDto, path: DocumentPath): unknown {
   const [term, indexRaw, ...rest] = path;
   const index = Number(indexRaw);
   const entry = document.properties[term]?.[index];
@@ -113,18 +113,18 @@ export function getFieldValue(document: AnnotationDocument, path: DocumentPath):
 export interface SelectorEntry {
   path: DocumentPath;
   id: string;
-  state: BoxSelectorState;
+  state: MadocBoxSelectorState;
 }
 
 /** Walks the whole document tree (regardless of dependent/visibility rules) collecting every field that has a region drawn — used to render saved regions as overlays on the image. */
-export function collectSelectorStates(document: AnnotationDocument, pathPrefix: DocumentPath = []): SelectorEntry[] {
+export function collectSelectorStates(document: MadocAnnotationDocumentDto, pathPrefix: DocumentPath = []): SelectorEntry[] {
   const results: SelectorEntry[] = [];
   for (const [term, list] of Object.entries(document.properties)) {
     list.forEach((entry, index) => {
       const path = [...pathPrefix, term, index];
       if (isField(entry)) {
         if (entry.selector?.state) {
-          results.push({ path, id: entry.id, state: entry.selector.state as BoxSelectorState });
+          results.push({ path, id: entry.id, state: entry.selector.state as MadocBoxSelectorState });
         }
       } else {
         results.push(...collectSelectorStates(entry, path));

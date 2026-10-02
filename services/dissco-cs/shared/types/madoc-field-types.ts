@@ -1,14 +1,14 @@
-import { BaseSelector } from './selector-types.js';
+import { MadocBaseSelectorDto } from './madoc-selector-types.js';
 
-// Plain data shapes copied from madoc-ts's BaseProperty/BaseField
+// Plain data shapes copied from madoc-ts's MadocBasePropertyDto/MadocBaseFieldDto
 // (services/madoc-ts/src/frontend/shared/capture-models/types/base-property.ts, field-types.ts).
 // Only the parts needed to read/write field values are kept; madoc-ts's React Component/Editor
 // plumbing is intentionally left out.
-export interface BaseProperty {
+export interface MadocBasePropertyDto {
   label: string;
   description?: string;
   term?: string;
-  selector?: BaseSelector;
+  selector?: MadocBaseSelectorDto;
   allowMultiple?: boolean;
   // The admin model-editor's checkbox controls (required, clearable, ...) save their "checked"
   // state as the array ['on'] rather than a boolean true — confirmed by inspecting a real model.
@@ -27,9 +27,9 @@ export interface BaseProperty {
 // Option entry as used by dropdown/checkbox-list fields -- the two widgets read different subsets
 // (dropdown: value+text, checkbox-list: value+label+description), kept together since both live
 // under the same field.options key.
-export type FieldOption = { value: string; label?: string; text?: string; description?: string };
+export type MadocFieldOptionDto = { value: string; label?: string; text?: string; description?: string };
 
-export interface BaseField extends BaseProperty {
+export interface MadocBaseFieldDto extends MadocBasePropertyDto {
   id: string;
   type: string;
   // The field's actual runtime shape (string, boolean, string[], {uri,label}, ...) depends
@@ -40,6 +40,6 @@ export interface BaseField extends BaseProperty {
   // field config rather than through a discriminated union.
   dataSource?: string;
   placeholder?: string;
-  options?: FieldOption[];
+  options?: MadocFieldOptionDto[];
   multiline?: boolean;
 }

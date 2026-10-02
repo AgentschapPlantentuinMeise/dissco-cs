@@ -29,7 +29,7 @@ import { AnnotateLayout } from './AnnotateLayout';
 import { OpenSeadragonViewer } from './viewer/OpenSeadragonViewer';
 import { CaptureModelForm } from './form/CaptureModelForm';
 import { cloneModelDocument, createBlankDocument, setFieldValue, setFieldSelector, collectSelectorStates, pathsEqual, DocumentPath } from './form/document';
-import { AnnotationDocument, CaptureModel, StructureNode, BoxSelectorState, CreateResourceClaimResult } from '@dissco-cs/shared-types';
+import { MadocAnnotationDocumentDto, MadocCaptureModelDto, MadocStructureNodeDto, MadocBoxSelectorState, MadocCreateResourceClaimDto } from '@dissco-cs/shared-types';
 import { getImageServiceId } from '../../utility/get-image-service-id';
 
 // crypto.randomUUID() only exists in secure contexts (https/localhost); this dev
@@ -97,14 +97,14 @@ export function AnnotatePage() {
     }
   }, [prepared, manifestId]);
 
-  const { data: model, isError: modelError, error: modelErrorObj } = useQuery<CaptureModel>(
+  const { data: model, isError: modelError, error: modelErrorObj } = useQuery<MadocCaptureModelDto>(
     ['capture-model', prepared?.model?.id],
     () => getCaptureModel(prepared!.model!.id),
     { enabled: !!prepared?.model, retry: false }
   );
 
-  const [annotationDocument, setAnnotationDocument] = useState<AnnotationDocument | null>(null);
-  const [activeStructure, setActiveStructure] = useState<(StructureNode & { type: 'model' }) | null>(null);
+  const [annotationDocument, setAnnotationDocument] = useState<MadocAnnotationDocumentDto | null>(null);
+  const [activeStructure, setActiveStructure] = useState<(MadocStructureNodeDto & { type: 'model' }) | null>(null);
   // One id per editing session, reused across every edit AND every save of this document — the
   // server only merges a field's new value into the canonical document when that field carries
   // `revision === revision.id` of the submitted revision (extract-valid-revision-changes.ts), so
@@ -121,7 +121,7 @@ export function AnnotatePage() {
 
   const handleRequestDraw = (path: DocumentPath) => setDrawingPath(path);
   const handleCancelDraw = () => setDrawingPath(null);
-  const handleSelectorDrawn = (state: BoxSelectorState) => {
+  const handleSelectorDrawn = (state: MadocBoxSelectorState) => {
     if (!drawingPath) return;
     setAnnotationDocument(doc => (doc ? setFieldSelector(doc, drawingPath, state, revisionIdRef.current) : doc));
     setDrawingPath(null);
@@ -166,7 +166,7 @@ export function AnnotatePage() {
   // can leave faster than the claim POST round-trips. Without awaiting this, releaseClaim would
   // see claimIdRef.current still undefined, skip the abandon entirely, and the claim that finishes
   // arriving moments later (after this component already unmounted) would never get released.
-  const claimPromiseRef = useRef<Promise<CreateResourceClaimResult> | null>(null);
+  const claimPromiseRef = useRef<Promise<MadocCreateResourceClaimDto> | null>(null);
 
   // Resolves the claim's task id, waiting on the in-flight claim request if it hasn't landed yet
   // (a user can act faster than the claim POST round-trips) — shared by releaseClaim and save.
@@ -308,7 +308,7 @@ export function AnnotatePage() {
     await createCaptureModelRevision(
       {
         // A model fetched via getCaptureModel() always carries its own id back -- id is only
-        // optional on CaptureModel because a freshly-built local model (never seen here) wouldn't.
+        // optional on MadocCaptureModelDto because a freshly-built local model (never seen here) wouldn't.
         captureModelId: model.id!,
         document: annotationDocument,
         // Same id reused across saves (see revisionIdRef above) — the server upserts a revision

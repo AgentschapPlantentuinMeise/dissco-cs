@@ -17,7 +17,7 @@ import { announcementsApi } from '../../api/cs-api';
 import { useProjectList } from '../../hooks/use-project-list';
 import { MarkdownToolbar } from '../../components/MarkdownToolbar';
 import {
-  MadocProjectListItem,
+  MadocProjectDto,
   AnnouncementDto,
   AnnouncementInput,
   AnnouncementTargetType,
@@ -51,7 +51,7 @@ export const Announcements: React.FC = () => {
   const { data, isLoading, refetch } = useQuery('admin-announcements', () => announcementsApi.listAdmin());
   const { data: projectsResponse } = useProjectList();
   const announcements = data?.announcements ?? [];
-  const projects = (projectsResponse?.projects ?? []).filter((p: MadocProjectListItem) => p.status === 1);
+  const projects = (projectsResponse?.projects ?? []).filter((p: MadocProjectDto) => p.status === 1);
 
   const [editingId, setEditingId] = useState<AnnouncementDto['id'] | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -286,7 +286,7 @@ export const Announcements: React.FC = () => {
                         wrapperClassName="ml-6"
                       >
                         <option value="">{t('sm_announcements_select_project')}</option>
-                        {projects.map((project: MadocProjectListItem) => (
+                        {projects.map((project: MadocProjectDto) => (
                           <option key={project.id} value={project.slug}>
                             {localeText(project.label, i18n.language) || project.slug}
                           </option>

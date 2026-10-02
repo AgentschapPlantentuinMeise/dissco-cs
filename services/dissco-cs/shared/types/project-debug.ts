@@ -1,6 +1,6 @@
-import { InternationalString } from './madoc-project.js';
+import { MadocInternationalString } from './common.js';
 
-export type ProjectDebugTaskEntry = {
+export type ProjectDebugTaskEntryDto = {
   id: string;
   status: number;
   status_text?: string;
@@ -8,15 +8,15 @@ export type ProjectDebugTaskEntry = {
   modified_at: number;
 };
 
-export type ProjectDebugManifest = {
+export type ProjectDebugManifestDto = {
   manifestId: number;
-  label?: InternationalString | string;
+  label?: MadocInternationalString | string;
   countsAsTranscribed: boolean;
-  tasks: ProjectDebugTaskEntry[];
+  tasks: ProjectDebugTaskEntryDto[];
 };
 
-export type ProjectDebugResult = {
+export type ProjectDebugDto = {
   totalManifests: number;
   transcribedPercentage: number;
-  manifests: ProjectDebugManifest[];
+  manifests: ProjectDebugManifestDto[];
 };

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import OpenSeadragon from 'openseadragon';
-import { BoxSelectorState } from '@dissco-cs/shared-types';
+import { MadocBoxSelectorState } from '@dissco-cs/shared-types';
 
 export interface OpenSeadragonViewerProps {
   imageServiceId?: string;
@@ -12,10 +12,10 @@ export interface OpenSeadragonViewerProps {
   onNextCanvas?: () => void;
   /** When set, the viewer enters "draw a box" mode and reports the drawn region once. */
   drawingSelector?: boolean;
-  onSelectorDrawn?: (state: BoxSelectorState) => void;
+  onSelectorDrawn?: (state: MadocBoxSelectorState) => void;
   onCancelDrawing?: () => void;
   /** Regions already saved on other fields, drawn as persistent (non-interactive) overlays. */
-  savedSelectors?: Array<{ id: string; state: BoxSelectorState }>;
+  savedSelectors?: Array<{ id: string; state: MadocBoxSelectorState }>;
 }
 
 const btnClass =
@@ -103,7 +103,7 @@ export function OpenSeadragonViewer({
       releaseHandler: evt => {
         if (!start || !overlayEl) return;
         const end = viewer.viewport.viewerElementToImageCoordinates(evt.position);
-        const state: BoxSelectorState = {
+        const state: MadocBoxSelectorState = {
           x: Math.round(Math.min(start.x, end.x)),
           y: Math.round(Math.min(start.y, end.y)),
           width: Math.round(Math.abs(end.x - start.x)),

@@ -1,6 +1,6 @@
 import { useQuery } from 'react-query';
 import { getCaptureModelRevision, getCaptureModel } from '../../api/madoc-client/crowdsourcing';
-import { ReviewTaskDto, AnnotationDocument, CaptureModel } from '@dissco-cs/shared-types';
+import { ReviewTaskDto, MadocAnnotationDocumentDto, MadocCaptureModelDto } from '@dissco-cs/shared-types';
 import { cloneModelDocument, setFieldValue, DocumentPath } from '../annotate/form/document';
 
 // Gebruikt door ReviewInlineExpansion: haalt de revisie + het capture model op en levert het
@@ -8,21 +8,21 @@ import { cloneModelDocument, setFieldValue, DocumentPath } from '../annotate/for
 // op basis van het model).
 export function useReviewRevisionDocument(
   row: ReviewTaskDto,
-  editedDocument: AnnotationDocument | undefined,
-  onDocumentChange: (rowId: string, document: AnnotationDocument) => void
+  editedDocument: MadocAnnotationDocumentDto | undefined,
+  onDocumentChange: (rowId: string, document: MadocAnnotationDocumentDto) => void
 ) {
   const revisionQuery = useQuery(
     ['review-revision', row.revisionId],
     () => getCaptureModelRevision(row.revisionId as string),
     { enabled: !!row.revisionId }
   );
-  const modelQuery = useQuery<CaptureModel>(
+  const modelQuery = useQuery<MadocCaptureModelDto>(
     ['capture-model', revisionQuery.data?.captureModelId],
     () => getCaptureModel(revisionQuery.data!.captureModelId),
     { enabled: !!revisionQuery.data?.captureModelId }
   );
 
-  const currentDocument: AnnotationDocument | undefined = modelQuery.data
+  const currentDocument: MadocAnnotationDocumentDto | undefined = modelQuery.data
     ? editedDocument ?? cloneModelDocument(modelQuery.data)
     : undefined;
 

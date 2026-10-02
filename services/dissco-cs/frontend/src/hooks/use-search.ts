@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { getAllSiteProjects } from '../api/madoc-client/projects';
 import { institutionsApi } from '../api/cs-api';
-import { InstitutionDto, MadocProjectListItem } from '@dissco-cs/shared-types';
+import { InstitutionDto, MadocProjectDto } from '@dissco-cs/shared-types';
 
 const MIN_QUERY_LENGTH = 2;
 
@@ -37,7 +37,7 @@ export function useSearch(query: string) {
       return [];
     }
     return (projectsQuery.data || []).filter(
-      (project: MadocProjectListItem) =>
+      (project: MadocProjectDto) =>
         project.status === 1 &&
         (matchesInternationalString(project.label, trimmed) || matchesInternationalString(project.summary, trimmed))
     );

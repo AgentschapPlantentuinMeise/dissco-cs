@@ -1,7 +1,7 @@
 import { getJwt, redirectToExpiredLogin } from './jwt';
 import { getSiteSlug } from './slug';
 import {
-  CrowdsourcingTask,
+  MadocCrowdsourcingTaskDto,
   ForumTopicDto,
   ForumReplyDto,
   ForumTopicInput,
@@ -14,8 +14,8 @@ import {
   AnnouncementTargetType,
   AnnouncementDto,
   AnnouncementInput,
-  SiteStats,
-  HonourBoardPeriod,
+  SiteStatsDto,
+  HonourBoardPeriodDto,
   HonourBoardPeriodKey,
   InstitutionDto,
   InstitutionInput,
@@ -23,9 +23,8 @@ import {
   ManualDto,
   ManualSummaryDto,
   ManualDetailDto,
-  ProjectProgress,
-  StuckManifestCounter,
-  ProjectDebugResult,
+  ProjectProgressDto,
+  ProjectDebugDto,
   ReviewTaskDto,
   ContactSubmissionInput,
 } from '@dissco-cs/shared-types';
@@ -103,7 +102,7 @@ export const navItemsApi = {
 
 export const projectProgressApi = {
   get: (projectId: string | number, signal?: AbortSignal) =>
-    csFetch<ProjectProgress>(`/projects/${projectId}/progress?slug=${getSiteSlug()}`, { signal }),
+    csFetch<ProjectProgressDto>(`/projects/${projectId}/progress?slug=${getSiteSlug()}`, { signal }),
 };
 
 export const manifestClaimApi = {
@@ -116,11 +115,11 @@ export const manifestClaimApi = {
 };
 
 export const projectDebugApi = {
-  getTaskStatus: (projectId: string | number) => csFetch<ProjectDebugResult>(`/projects/${projectId}/task-debug`),
+  getTaskStatus: (projectId: string | number) => csFetch<ProjectDebugDto>(`/projects/${projectId}/task-debug`),
 };
 
 export const stuckTasksApi = {
-  list: () => csFetch<{ tasks: CrowdsourcingTask[]; manifestCounters: StuckManifestCounter[] }>('/projects/stuck-tasks'),
+  list: () => csFetch<{ tasks: MadocCrowdsourcingTaskDto[]; manifestCounters: MadocCrowdsourcingTaskDto[] }>('/projects/stuck-tasks'),
 
   release: (taskId: string) => csFetch<{ released: boolean }>(`/projects/stuck-tasks/${taskId}/release`, { method: 'POST' }),
 
@@ -129,7 +128,7 @@ export const stuckTasksApi = {
 };
 
 export const reviewApi = {
-  myTasks: () => csFetch<{ tasks: ReviewTaskDto[] }>('/review/my-tasks'),
+  getReviewTasks: () => csFetch<{ tasks: ReviewTaskDto[] }>('/review/tasks'),
 
   isReviewer: () => csFetch<{ isReviewer: boolean }>('/review/is-reviewer'),
 };
@@ -178,16 +177,16 @@ export const announcementsApi = {
 };
 
 export const statsApi = {
-  get: () => csFetch<SiteStats>(`/stats?slug=${getSiteSlug()}`),
+  get: () => csFetch<SiteStatsDto>(`/stats?slug=${getSiteSlug()}`),
   // Pure cache read, never triggers a recompute -- for periodic polling.
-  getCurrent: () => csFetch<SiteStats>(`/stats/current?slug=${getSiteSlug()}`),
+  getCurrent: () => csFetch<SiteStatsDto>(`/stats/current?slug=${getSiteSlug()}`),
 };
 
 export const honourBoardApi = {
-  get: (period: HonourBoardPeriodKey) => csFetch<HonourBoardPeriod>(`/honour-board/${period}?slug=${getSiteSlug()}`),
+  get: (period: HonourBoardPeriodKey) => csFetch<HonourBoardPeriodDto>(`/honour-board/${period}?slug=${getSiteSlug()}`),
   // Pure cache read, never triggers a recompute -- for periodic polling.
   getCurrent: (period: HonourBoardPeriodKey) =>
-    csFetch<HonourBoardPeriod>(`/honour-board/${period}/current?slug=${getSiteSlug()}`),
+    csFetch<HonourBoardPeriodDto>(`/honour-board/${period}/current?slug=${getSiteSlug()}`),
 };
 
 export const institutionsApi = {
@@ -208,10 +207,10 @@ export const institutionsApi = {
     csFetch<InstitutionStatsDto>(`/institutions/active/${slug}/stats/current?slug=${getSiteSlug()}`),
 
   getHonourBoard: (slug: string, period: HonourBoardPeriodKey) =>
-    csFetch<HonourBoardPeriod>(`/institutions/active/${slug}/honour-board/${period}?slug=${getSiteSlug()}`),
+    csFetch<HonourBoardPeriodDto>(`/institutions/active/${slug}/honour-board/${period}?slug=${getSiteSlug()}`),
   // Pure cache read, never triggers a recompute -- for periodic polling.
   getHonourBoardCurrent: (slug: string, period: HonourBoardPeriodKey) =>
-    csFetch<HonourBoardPeriod>(`/institutions/active/${slug}/honour-board/${period}/current?slug=${getSiteSlug()}`),
+    csFetch<HonourBoardPeriodDto>(`/institutions/active/${slug}/honour-board/${period}/current?slug=${getSiteSlug()}`),
 
   listAdmin: () => csFetch<{ institutions: InstitutionDto[] }>('/institutions'),
 

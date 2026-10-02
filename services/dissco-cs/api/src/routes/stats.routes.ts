@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { resolveSiteId } from '../jwt.js';
 import { MadocUsersRepository } from '../repositories/madoc-users.repository.js';
 import { SiteTaskTotalsRepository } from '../repositories/site-task-totals.repository.js';
-import { SiteStats } from '@dissco-cs/shared-types';
+import { SiteStatsDto } from '@dissco-cs/shared-types';
 
 export function statsRoutes(madocUsersRepository: MadocUsersRepository, siteTaskTotalsRepository: SiteTaskTotalsRepository): Hono {
   const app = new Hono();
@@ -19,7 +19,7 @@ export function statsRoutes(madocUsersRepository: MadocUsersRepository, siteTask
       siteTaskTotalsRepository.getTotals(siteId),
     ]);
 
-    const stats: SiteStats = { volunteers, tasksCompleted: taskTotals.completed, tasksTotal: taskTotals.total };
+    const stats: SiteStatsDto = { volunteers, tasksCompleted: taskTotals.completed, tasksTotal: taskTotals.total };
     return c.json(stats);
   });
 
@@ -36,7 +36,7 @@ export function statsRoutes(madocUsersRepository: MadocUsersRepository, siteTask
       siteTaskTotalsRepository.peekTotals(siteId) ?? (await siteTaskTotalsRepository.getTotals(siteId)),
     ]);
 
-    const stats: SiteStats = { volunteers, tasksCompleted: taskTotals.completed, tasksTotal: taskTotals.total };
+    const stats: SiteStatsDto = { volunteers, tasksCompleted: taskTotals.completed, tasksTotal: taskTotals.total };
     return c.json(stats);
   });
 

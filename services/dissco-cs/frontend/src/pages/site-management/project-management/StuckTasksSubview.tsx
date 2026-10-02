@@ -6,17 +6,10 @@ import { HrefLink } from '../../../utility/href-link';
 import { buildTaskLink } from '../../../utility/build-task-link';
 import { localeText } from '../../../utility/locale-text';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
-import { StuckManifestCounter, CrowdsourcingTask } from '@dissco-cs/shared-types';
+import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
 
 function statusLabelKey(status: number): string {
   return status === 0 ? 'sm_stuck_tasks_status_not_started' : 'sm_stuck_tasks_status_in_progress';
-}
-
-// buildTaskLink() only reads id/subject/subject_parent/metadata.project.slug, all of which a
-// manifest-task counter also has — the cast just papers over the unrelated fields (status,
-// assignee, ...) that a full CrowdsourcingTask carries but a counter row doesn't need.
-function counterTaskLink(counter: StuckManifestCounter): string {
-  return buildTaskLink({ id: counter.id, subject: counter.subject, metadata: counter.metadata } as CrowdsourcingTask);
 }
 
 export const StuckTasksSubview: React.FC = () => {
@@ -24,12 +17,12 @@ export const StuckTasksSubview: React.FC = () => {
   const { data, refetch, status: queryStatus } = useQuery('stuck-tasks', () => stuckTasksApi.list());
   const [releasingId, setReleasingId] = useState<string | null>(null);
   const [resyncingId, setResyncingId] = useState<string | null>(null);
-  const [confirmTask, setConfirmTask] = useState<CrowdsourcingTask | null>(null);
+  const [confirmTask, setConfirmTask] = useState<MadocCrowdsourcingTaskDto | null>(null);
 
   const tasks = (data?.tasks ?? []).slice().sort((a, b) => (a.modified_at ?? 0) - (b.modified_at ?? 0));
-  const manifestCounters = (data?.manifestCounters ?? []).slice().sort((a, b) => a.modified_at - b.modified_at);
+  const manifestCounters = (data?.manifestCounters ?? []).slice().sort((a, b) => (a.modified_at ?? 0) - (b.modified_at ?? 0));
 
-  const release = async (task: CrowdsourcingTask) => {
+  const release = async (task: MadocCrowdsourcingTaskDto) => {
     setConfirmTask(null);
     setReleasingId(task.id);
     try {
@@ -48,7 +41,7 @@ export const StuckTasksSubview: React.FC = () => {
     }
   };
 
-  const resyncCounter = async (counter: StuckManifestCounter) => {
+  const resyncCounter = async (counter: MadocCrowdsourcingTaskDto) => {
     setResyncingId(counter.id);
     try {
       await stuckTasksApi.resyncManifest(counter.id);
@@ -138,11 +131,11 @@ export const StuckTasksSubview: React.FC = () => {
                 {manifestCounters.map(counter => {
                   const manifestLabel = counter.name || counter.subject || counter.id;
                   const projectLabel = localeText(counter.metadata?.project?.label, i18n.language) || counter.metadata?.project?.slug || '—';
-                  const modified = new Date(counter.modified_at).toLocaleString(i18n.language);
+                  const modified = counter.modified_at ? new Date(counter.modified_at).toLocaleString(i18n.language) : '—';
                   return (
                     <tr key={counter.id}>
                       <td className="px-4 py-3 border-t border-gray-100">
-                        <HrefLink href={counterTaskLink(counter)} className="text-[var(--cs-primary)] no-underline font-medium hover:underline">
+                        <HrefLink href={buildTaskLink(counter)} className="text-[var(--cs-primary)] no-underline font-medium hover:underline">
                           {manifestLabel}
                         </HrefLink>
                       </td>

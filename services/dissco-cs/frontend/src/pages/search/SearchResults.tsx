@@ -5,7 +5,7 @@ import { CsPage } from '../../components/CsPage';
 import { ProjectCard } from '../../components/projectcard/ProjectCard';
 import { InstitutionCard } from '../../components/institutioncard/InstitutionCard';
 import { useSearch } from '../../hooks/use-search';
-import { MadocProjectListItem } from '@dissco-cs/shared-types';
+import { MadocProjectDto } from '@dissco-cs/shared-types';
 
 export const SearchResults: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
@@ -48,7 +48,7 @@ export const SearchResults: React.FC = () => {
                 </span>
               </h2>
               <div className="cs-projects-grid">
-                {projects.map((project: MadocProjectListItem) => (
+                {projects.map((project: MadocProjectDto) => (
                   <ProjectCard key={project.id} projectSummaryData={project} />
                 ))}
               </div>

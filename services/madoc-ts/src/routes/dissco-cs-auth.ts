@@ -248,12 +248,10 @@ export const loginJson: RouteMiddleware<{ slug: string }, { email: string; passw
   const site = await context.siteManager.getSiteBySlug(context.params.slug);
   const latestTerms = await context.siteManager.getLatestTermsId(site.id);
   const siteUser = await context.siteManager.getSiteUserById(user.id, site.id);
-  const terms = {
-    hasTerms: !!latestTerms,
-    hasAccepted: !latestTerms || !!siteUser.terms_accepted?.includes(latestTerms.id),
-  };
+  const hasTerms = !!latestTerms;
+  const hasAccepted = !latestTerms || !!siteUser.terms_accepted?.includes(latestTerms.id);
 
-  context.response.body = { user: { id: user.id, name: user.name }, terms };
+  context.response.body = { user: { id: user.id, name: user.name, hasTerms, hasAccepted } };
 };
 
 export const forgotPasswordJson: RouteMiddleware<{ slug: string }, { email: string }> = async context => {

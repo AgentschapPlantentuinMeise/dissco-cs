@@ -10,7 +10,7 @@ import { HonourBoardSpotlight } from '../../components/honour-board/HonourBoardS
 import { useSiteStats } from '../../hooks/use-site-stats';
 import { useGridColumnCount } from '../../hooks/use-grid-column-count';
 import { formatNumber } from '../../utility/format-number';
-import { MadocProjectListItem } from '@dissco-cs/shared-types';
+import { MadocProjectDto } from '@dissco-cs/shared-types';
 
 // Rijen i.p.v. een vast aantal kaarten, zodat elke pagina een volledig gevulde grid toont ongeacht
 // hoeveel kolommen er op het scherm passen (zie useGridColumnCount).
@@ -27,7 +27,7 @@ export const Projects: React.FC = () => {
   );
   const { data: siteStats } = useSiteStats();
   const { t, i18n } = useTranslation('dissco-cs');
-  const projects = (allProjects ?? []).filter((p: MadocProjectListItem) => p.status === 1);
+  const projects = (allProjects ?? []).filter((p: MadocProjectDto) => p.status === 1);
   const isLoadingList = status === 'loading';
 
   const [gridRef, columns] = useGridColumnCount<HTMLDivElement>();
@@ -76,7 +76,7 @@ export const Projects: React.FC = () => {
               )}
 
               <div ref={gridRef} className="cs-projects-grid cs-projects-grid--compact">
-                {pagedProjects.map((project: MadocProjectListItem) => (
+                {pagedProjects.map((project: MadocProjectDto) => (
                   <ProjectCard key={project.id} projectSummaryData={project} />
                 ))}
               </div>

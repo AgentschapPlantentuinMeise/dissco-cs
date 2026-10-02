@@ -9,7 +9,7 @@ import { useUser } from '../../hooks/use-current-user';
 import { getTasks } from '../../api/madoc-client/tasks';
 import { randomlyAssignedManifest } from '../../api/madoc-client/crowdsourcing';
 import { institutionsApi } from '../../api/cs-api';
-import { CrowdsourcingTask, InternationalString } from '@dissco-cs/shared-types';
+import { MadocCrowdsourcingTaskDto, MadocInternationalString } from '@dissco-cs/shared-types';
 import { buildTaskLink } from '../../utility/build-task-link';
 import { HrefLink } from '../../utility/href-link';
 import { LocaleString } from '../../components/LocaleString';
@@ -54,7 +54,7 @@ export const ProjectDetail: React.FC = () => {
   const { data: ownTasksData } = useQuery(
     ['project-own-saved-tasks', project?.id, user?.id],
     () =>
-      getTasks<CrowdsourcingTask>(1, {
+      getTasks<MadocCrowdsourcingTaskDto>(1, {
         type: 'crowdsourcing-task',
         all_tasks: true,
         assignee: `urn:madoc:user:${user!.id}`,
@@ -209,7 +209,7 @@ export const ProjectDetail: React.FC = () => {
                       style={manifest.thumbnail ? { backgroundImage: `url(${manifest.thumbnail})` } : undefined}
                     />
                     <LocaleString className="py-[7px] px-[9px] text-[0.78rem] text-[#343a40] leading-[1.35] m-0 line-clamp-2">
-                      {(manifest.label as string | InternationalString | undefined) || 'Naamloos'}
+                      {(manifest.label as string | MadocInternationalString | undefined) || 'Naamloos'}
                     </LocaleString>
                   </button>
                 ))}

@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { BaseField } from '@dissco-cs/shared-types';
+import { MadocBaseFieldDto } from '@dissco-cs/shared-types';
 import { DocumentPath } from '../document';
 import { TextField } from './TextField';
 import { HtmlField } from './HtmlField';
@@ -10,7 +10,7 @@ import { AutocompleteField } from './AutocompleteField';
 import { CheckboxListField } from './CheckboxListField';
 
 export type FieldProps = {
-  field: BaseField;
+  field: MadocBaseFieldDto;
   path: DocumentPath;
   onChange: (path: DocumentPath, value: unknown) => void;
 };

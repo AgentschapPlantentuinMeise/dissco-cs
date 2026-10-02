@@ -4,7 +4,7 @@ import { resolveSiteId } from '../jwt.js';
 import { getMadocProject } from '../madoc-client/projects.js';
 import { getMadocCollectionManifestThumbnails, getMadocProjectManifestsAndTaskStats } from '../madoc-client/collections.js';
 import { getMadocProjectTasks } from '../madoc-client/tasks.js';
-import { MadocProject, ProjectProgress } from '@dissco-cs/shared-types';
+import { MadocProjectDto, ProjectProgressDto } from '@dissco-cs/shared-types';
 
 export function projectProgressRoutes(): Hono {
   const app = new Hono();
@@ -17,7 +17,7 @@ export function projectProgressRoutes(): Hono {
 
     const projectId = c.req.param('projectId');
 
-    let project: MadocProject;
+    let project: MadocProjectDto;
     try {
       project = await getMadocProject(siteId, projectId);
     } catch (err) {
@@ -97,7 +97,7 @@ export function projectProgressRoutes(): Hono {
       return true;
     });
 
-    const result: ProjectProgress = {
+    const result: ProjectProgressDto = {
       transcribedPercentage,
       totalTasks: manifestCount,
       allTasksTaken: manifestCount > 0 && availableManifests.length === 0,

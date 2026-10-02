@@ -1,7 +1,7 @@
-import { CrowdsourcingTask } from '@dissco-cs/shared-types';
+import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
 import { parseUrn } from './parse-urn';
 
-export function buildTaskLink(task: CrowdsourcingTask): string {
+export function buildTaskLink(task: MadocCrowdsourcingTaskDto): string {
   const projectSlug = task.metadata?.project?.slug;
   if (!projectSlug || !task.subject) return `/tasks/${task.id}`;
   const parsedSubject = parseUrn(task.subject);

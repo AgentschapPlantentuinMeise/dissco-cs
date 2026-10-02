@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { reviewApi, feedbackApi } from '../../api/cs-api';
-import { ReviewTaskDto, AnnotationDocument } from '@dissco-cs/shared-types';
+import { ReviewTaskDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
 import { ApiError } from '../../api/madoc-client/request';
 import { getCaptureModelRevision, updateCaptureModelRevision, updateRevisionTask } from '../../api/madoc-client/crowdsourcing';
 import { localeText } from '../../utility/locale-text';
@@ -40,7 +40,7 @@ function singleSubmitter(refs: BatchSubmitterRef[]): { id: number; name: string 
 export function useReviewTasksController() {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useUser();
-  const { data, status: queryStatus, refetch } = useQuery('review-my-tasks', () => reviewApi.myTasks(), { staleTime: 0 });
+  const { data, status: queryStatus, refetch } = useQuery('review-tasks', () => reviewApi.getReviewTasks(), { staleTime: 0 });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'' | '0' | '1' | '2'>('');
@@ -57,7 +57,7 @@ export function useReviewTasksController() {
   // rij -- bewust NIET auto-saved, blijft lokale state tot de taak (los of in bulk) geaccepteerd
   // wordt.
   const [openRowId, setOpenRowId] = useState<string | null>(null);
-  const [editedDocuments, setEditedDocuments] = useState<Record<string, AnnotationDocument>>({});
+  const [editedDocuments, setEditedDocuments] = useState<Record<string, MadocAnnotationDocumentDto>>({});
   const [releasing, setReleasing] = useState<string | null>(null);
   const [releaseError, setReleaseError] = useState<string | null>(null);
 
@@ -191,7 +191,7 @@ export function useReviewTasksController() {
   // Gedeeld door bulk-accept en de losse "Accepteer taak"-actie: haalt de revisie vers op (zoals
   // voorheen), maar overschrijft het document met de lokale correctie indien de reviewer die
   // gemaakt heeft -- structureId/fields komen ongewijzigd mee via revisionRequest.revision.
-  const acceptOneRow = async (row: ReviewTaskDto, editedDocument: AnnotationDocument | undefined) => {
+  const acceptOneRow = async (row: ReviewTaskDto, editedDocument: MadocAnnotationDocumentDto | undefined) => {
     if (!row.revisionId || !row.originalTaskId) {
       throw new Error(t('review_bulk_error_no_revision'));
     }
@@ -260,7 +260,7 @@ export function useReviewTasksController() {
   const successCount = bulkResults?.filter(r => r.success).length ?? 0;
   const failedResults = bulkResults?.filter(r => !r.success) ?? [];
 
-  const handleDocumentChange = (rowId: string, document: AnnotationDocument) => {
+  const handleDocumentChange = (rowId: string, document: MadocAnnotationDocumentDto) => {
     setEditedDocuments(prev => ({ ...prev, [rowId]: document }));
   };
 

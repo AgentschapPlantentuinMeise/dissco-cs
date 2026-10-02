@@ -1,9 +1,9 @@
 import { Pool } from 'pg';
 
 import { appConfig } from '../config.js';
-import { HONOUR_BOARD_PERIODS, HonourBoardEntry, HonourBoardPeriod, HonourBoardPeriodKey } from '@dissco-cs/shared-types';
+import { HONOUR_BOARD_PERIODS, HonourBoardEntryDto, HonourBoardPeriodDto, HonourBoardPeriodKey } from '@dissco-cs/shared-types';
 
-type RankedHonourBoardEntry = HonourBoardEntry;
+type RankedHonourBoardEntry = HonourBoardEntryDto;
 
 const TOP_N = 3;
 
@@ -165,7 +165,7 @@ export class HonourBoardRepository {
     return ranking;
   }
 
-  private toPeriod(ranking: RankedHonourBoardEntry[], userUrn: string | null): HonourBoardPeriod {
+  private toPeriod(ranking: RankedHonourBoardEntry[], userUrn: string | null): HonourBoardPeriodDto {
     const top = ranking.filter(entry => entry.rank <= TOP_N);
     const you = userUrn ? (ranking.find(entry => entry.userUrn === userUrn) ?? null) : null;
     return { top, you };
@@ -174,25 +174,25 @@ export class HonourBoardRepository {
   // Pure cache read, no side effects: never triggers a recompute, unlike getPeriod. For the
   // frontend's frequent "did it change yet?" poll, which must never itself cause work. Returns
   // null only if this period has never been cached yet for this scope.
-  private peekPeriod(scope: LeaderboardScope, period: HonourBoardPeriodKey, userUrn: string | null): HonourBoardPeriod | null {
+  private peekPeriod(scope: LeaderboardScope, period: HonourBoardPeriodKey, userUrn: string | null): HonourBoardPeriodDto | null {
     const cached = this.cache.get(`${scopeCacheKey(scope)}:${period}`);
     return cached ? this.toPeriod(cached.ranking, userUrn) : null;
   }
 
-  private async getPeriod(scope: LeaderboardScope, period: HonourBoardPeriodKey, userUrn: string | null): Promise<HonourBoardPeriod> {
+  private async getPeriod(scope: LeaderboardScope, period: HonourBoardPeriodKey, userUrn: string | null): Promise<HonourBoardPeriodDto> {
     const ranking = await this.getPeriodRanking(scope, period, sinceForPeriod(period, new Date()));
     return this.toPeriod(ranking, userUrn);
   }
 
-  peekSitePeriod(siteId: number, period: HonourBoardPeriodKey, userUrn: string | null): HonourBoardPeriod | null {
+  peekSitePeriod(siteId: number, period: HonourBoardPeriodKey, userUrn: string | null): HonourBoardPeriodDto | null {
     return this.peekPeriod({ kind: 'site', siteId }, period, userUrn);
   }
 
-  async getSitePeriod(siteId: number, period: HonourBoardPeriodKey, userUrn: string | null): Promise<HonourBoardPeriod> {
+  async getSitePeriod(siteId: number, period: HonourBoardPeriodKey, userUrn: string | null): Promise<HonourBoardPeriodDto> {
     return this.getPeriod({ kind: 'site', siteId }, period, userUrn);
   }
 
-  peekInstitutionPeriod(siteId: number, institutionId: number, period: HonourBoardPeriodKey, userUrn: string | null): HonourBoardPeriod | null {
+  peekInstitutionPeriod(siteId: number, institutionId: number, period: HonourBoardPeriodKey, userUrn: string | null): HonourBoardPeriodDto | null {
     return this.peekPeriod({ kind: 'institution', siteId, institutionId, taskIds: [] }, period, userUrn);
   }
 
@@ -202,7 +202,7 @@ export class HonourBoardRepository {
     taskIds: string[],
     period: HonourBoardPeriodKey,
     userUrn: string | null
-  ): Promise<HonourBoardPeriod> {
+  ): Promise<HonourBoardPeriodDto> {
     return this.getPeriod({ kind: 'institution', siteId, institutionId, taskIds }, period, userUrn);
   }
 }

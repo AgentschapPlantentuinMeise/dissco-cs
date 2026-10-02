@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+// Madoc's own wire format for internationalized strings -- used across many Madoc-doorgeeftypes
+// (project, manifest, collection, task metadata, ...), not specific to any one of them.
+export type MadocInternationalString = { [lang: string]: string[] };
+
 export const SITE_PAGE_LANGS = ['nl', 'en', 'fr', 'de'] as const;
 export type SitePageLang = (typeof SITE_PAGE_LANGS)[number];
 

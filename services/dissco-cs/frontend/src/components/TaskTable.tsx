@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CrowdsourcingTask } from '@dissco-cs/shared-types';
+import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
 import { HrefLink } from '../utility/href-link';
 import { buildTaskLink } from '../utility/build-task-link';
 import { localeText } from '../utility/locale-text';
@@ -30,21 +30,21 @@ export const tabBtnClass = (isActive: boolean) =>
   (isActive ? 'font-semibold text-[var(--cs-primary)] border-b-[var(--cs-primary)]' : 'font-medium text-gray-500 border-b-transparent');
 
 interface TaskTableProps {
-  tasks: CrowdsourcingTask[];
+  tasks: MadocCrowdsourcingTaskDto[];
   userName: string;
   language: string;
   t: (key: string) => string;
   linkable?: boolean;
   /** Taaknaam klapt in plaats van te navigeren een rij open met de ingediende data (alleen-lezen). */
   expandable?: boolean;
-  onRelease?: (task: CrowdsourcingTask) => void;
+  onRelease?: (task: MadocCrowdsourcingTaskDto) => void;
   /** Na opslaan/indienen op AnnotatePage terug naar dit pad i.p.v. door te gaan naar de volgende taak. */
   returnPath?: string;
 }
 
 export function TaskTable({ tasks, userName, language, t, linkable = true, expandable = false, onRelease, returnPath }: TaskTableProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [previewTask, setPreviewTask] = useState<CrowdsourcingTask | null>(null);
+  const [previewTask, setPreviewTask] = useState<MadocCrowdsourcingTaskDto | null>(null);
   const columnCount = 3 + (onRelease ? 1 : 0) + (expandable ? 1 : 0);
 
   return (

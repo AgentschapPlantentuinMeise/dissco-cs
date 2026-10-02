@@ -7,14 +7,14 @@ import { Select } from '../../../components/Select';
 import { slugify } from '../../../utility/slugify';
 import { localeText } from '../../../utility/locale-text';
 import { defaultLang } from '../../../utility/site-lang-text';
-import { MadocProjectListItem } from '@dissco-cs/shared-types';
+import { MadocProjectDto } from '@dissco-cs/shared-types';
 
 // Creates `count` real Madoc projects sequentially, via the exact same route the "New project" /
 // "Duplicate" admin UI uses (createProject) -- so each one gets a proper collection, capture
 // model and root task, unlike hand-rolled SQL seeding. Sequential (not Promise.all): each
 // createProject call already does several steps server-side, and firing many at once is what
 // caused a prior outage when load-testing with raw SQL-seeded projects instead.
-export const BulkCreateProjectsSubview: React.FC<{ projects: MadocProjectListItem[] }> = ({ projects }) => {
+export const BulkCreateProjectsSubview: React.FC<{ projects: MadocProjectDto[] }> = ({ projects }) => {
   const { t, i18n } = useTranslation('dissco-cs');
   const [count, setCount] = useState(5);
   const [title, setTitle] = useState('');

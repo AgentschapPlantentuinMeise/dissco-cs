@@ -1,18 +1,18 @@
 import { publicRequest, request } from './request';
-import { MadocCollectionSummary, MadocPagination, ManifestStructure } from '@dissco-cs/shared-types';
+import { MadocCollectionSummaryDto, MadocPagination, MadocManifestStructureDto } from '@dissco-cs/shared-types';
 
 // -- Collections/canvases/manifests (site-scoped public API) --
 // IIIF collection/canvas JSON isn't modeled here -- nothing besides getImageServiceId() reaches
 // into a canvas's structure, and that does its own narrow, defensive traversal.
 export const getSiteCanvas = (id: number, query?: Record<string, unknown>) =>
   publicRequest<{ canvas: unknown }>(`/canvases/${id}`, query);
-export const getManifestStructure = (id: number) => publicRequest<ManifestStructure>(`/manifests/${id}/structure`);
+export const getManifestStructure = (id: number) => publicRequest<MadocManifestStructureDto>(`/manifests/${id}/structure`);
 
 // All top-level IIIF collections on the site, for the bulk-create manifest/collection picker --
 // same gated route the admin "browse collections" page uses, so unpublished ones show up too.
 // Empty collections (itemCount 0) are filtered out since linking them would be pointless.
-export async function getAllAdminCollections(): Promise<MadocCollectionSummary[]> {
-  const first = await request<{ collections: MadocCollectionSummary[]; pagination?: MadocPagination }>(
+export async function getAllAdminCollections(): Promise<MadocCollectionSummaryDto[]> {
+  const first = await request<{ collections: MadocCollectionSummaryDto[]; pagination?: MadocPagination }>(
     '/api/madoc/iiif/collections?page=0'
   );
   const totalPages = first?.pagination?.totalPages || 1;
@@ -32,7 +32,7 @@ export async function getAllAdminCollections(): Promise<MadocCollectionSummary[]
     const batch = remainingPages.slice(i, i + BATCH_SIZE);
     const results = await Promise.all(
       batch.map(page =>
-        request<{ collections: MadocCollectionSummary[] }>(`/api/madoc/iiif/collections?page=${page}`)
+        request<{ collections: MadocCollectionSummaryDto[] }>(`/api/madoc/iiif/collections?page=${page}`)
       )
     );
     collections.push(...results.flatMap(page => page?.collections || []));
