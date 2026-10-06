@@ -95,7 +95,7 @@ export function ReviewInlineExpansion({
     );
   }
 
-  if (revisionQuery.status === 'loading' || modelQuery.status === 'loading') {
+  if (revisionQuery.status === 'pending' || modelQuery.status === 'pending') {
     return (
       <ExpansionChrome title={title} subtitle={subtitle} onClose={onClose}>
         <p className="text-sm text-gray-500">{t('review_detail_loading')}</p>

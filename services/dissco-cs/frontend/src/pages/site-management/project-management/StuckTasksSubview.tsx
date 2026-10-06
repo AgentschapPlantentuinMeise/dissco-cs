@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery, queryCache } from 'react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { stuckTasksApi, manifestClaimApi } from '../../../api/cs-api';
 import { HrefLink } from '../../../utility/href-link';
 import { buildTaskLink } from '../../../utility/build-task-link';
@@ -14,7 +14,8 @@ function statusLabelKey(status: number): string {
 
 export const StuckTasksSubview: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data, refetch, status: queryStatus } = useQuery('stuck-tasks', () => stuckTasksApi.list());
+  const queryClient = useQueryClient();
+  const { data, refetch, status: queryStatus } = useQuery({ queryKey: ['stuck-tasks'], queryFn: () => stuckTasksApi.list() });
   const [releasingId, setReleasingId] = useState<string | null>(null);
   const [resyncingId, setResyncingId] = useState<string | null>(null);
   const [confirmTask, setConfirmTask] = useState<MadocCrowdsourcingTaskDto | null>(null);
@@ -34,7 +35,7 @@ export const StuckTasksSubview: React.FC = () => {
         // claim is created, never on a release — same reason AnnotatePage does this after abandon.
         await manifestClaimApi.resync(projectId, manifestId).catch(err => console.error('[StuckTasks] resync failed', err));
       }
-      queryCache.invalidateQueries('collection');
+      queryClient.invalidateQueries({ queryKey: ['collection'] });
       await refetch();
     } finally {
       setReleasingId(null);
@@ -45,7 +46,7 @@ export const StuckTasksSubview: React.FC = () => {
     setResyncingId(counter.id);
     try {
       await stuckTasksApi.resyncManifest(counter.id);
-      queryCache.invalidateQueries('collection');
+      queryClient.invalidateQueries({ queryKey: ['collection'] });
       await refetch();
     } finally {
       setResyncingId(null);
@@ -56,7 +57,7 @@ export const StuckTasksSubview: React.FC = () => {
     <div>
       <p className="text-sm text-gray-600 mb-6">{t('sm_stuck_tasks_intro')}</p>
 
-      {queryStatus === 'loading' && <p className="text-sm text-gray-500">{t('sm_stuck_tasks_loading')}</p>}
+      {queryStatus === 'pending' && <p className="text-sm text-gray-500">{t('sm_stuck_tasks_loading')}</p>}
 
       {queryStatus === 'success' && tasks.length === 0 && manifestCounters.length === 0 && (
         <p className="text-sm text-gray-500">{t('sm_stuck_tasks_empty')}</p>

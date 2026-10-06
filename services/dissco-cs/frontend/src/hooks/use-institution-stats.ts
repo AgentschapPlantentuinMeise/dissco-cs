@@ -1,4 +1,4 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { institutionsApi } from '../api/cs-api';
 import { usePollingWindow } from './use-polling-window';
 
@@ -8,12 +8,16 @@ import { usePollingWindow } from './use-polling-window';
 // different, pure-read endpoint. refetchOnWindowFocus is off on the triggering query so
 // tab-switching doesn't also trigger SQL.
 export function useInstitutionStats(slug: string | undefined) {
-  const initial = useQuery(['institution-stats', slug], () => institutionsApi.getStats(slug!), {
+  const initial = useQuery({
+    queryKey: ['institution-stats', slug],
+    queryFn: () => institutionsApi.getStats(slug!),
     enabled: !!slug,
     refetchOnWindowFocus: false,
   });
   const refetchInterval = usePollingWindow();
-  const peek = useQuery(['institution-stats-current', slug], () => institutionsApi.getStatsCurrent(slug!), {
+  const peek = useQuery({
+    queryKey: ['institution-stats-current', slug],
+    queryFn: () => institutionsApi.getStatsCurrent(slug!),
     enabled: !!slug,
     refetchInterval,
   });

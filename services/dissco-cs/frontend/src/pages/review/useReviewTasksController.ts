@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { reviewApi, feedbackApi } from '../../api/cs-api';
 import { ReviewTaskDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
 import { ApiError } from '../../api/madoc-client/request';
@@ -40,7 +40,7 @@ function singleSubmitter(refs: BatchSubmitterRef[]): { id: number; name: string 
 export function useReviewTasksController() {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useUser();
-  const { data, status: queryStatus, refetch } = useQuery('review-tasks', () => reviewApi.getReviewTasks(), { staleTime: 0 });
+  const { data, status: queryStatus, refetch } = useQuery({ queryKey: ['review-tasks'], queryFn: () => reviewApi.getReviewTasks(), staleTime: 0 });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'' | '0' | '1' | '2'>('');

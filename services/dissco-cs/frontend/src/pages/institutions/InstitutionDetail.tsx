@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { CsPage } from '../../components/CsPage';
 import { HrefLink } from '../../utility/href-link';
 import { LuArrowLeft, LuMail, LuPhone, LuGlobe, LuMedal, LuClock, LuCalendar } from 'react-icons/lu';
@@ -19,27 +19,27 @@ import { MadocProjectDto } from '@dissco-cs/shared-types';
 export const InstitutionDetail: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const { slug } = useParams<{ slug: string }>();
-  const { data: institution, isLoading } = useQuery(
-    ['institution', slug],
-    () => institutionsApi.getActive(slug!),
-    { enabled: !!slug }
-  );
+  const { data: institution, isLoading } = useQuery({
+    queryKey: ['institution', slug],
+    queryFn: () => institutionsApi.getActive(slug!),
+    enabled: !!slug,
+  });
 
-  const { data: projectSlugsResponse } = useQuery(
-    ['institution-projects', slug],
-    () => institutionsApi.getActiveProjectSlugs(slug!),
-    { enabled: !!slug }
-  );
+  const { data: projectSlugsResponse } = useQuery({
+    queryKey: ['institution-projects', slug],
+    queryFn: () => institutionsApi.getActiveProjectSlugs(slug!),
+    enabled: !!slug,
+  });
   const projectSlugs = projectSlugsResponse?.projectSlugs ?? [];
 
   // All pages, published-only -- same reasoning as Homepage/Projects.tsx: a site-admin viewer
   // otherwise gets every status unfiltered from page 1 only, which can miss this institution's
   // linked projects entirely if enough other/older projects exist.
-  const { data: allProjects } = useQuery(
-    ['all-site-projects', { published: true }],
-    () => getAllSiteProjects({ published: true }),
-    { staleTime: 5 * 60 * 1000 }
-  );
+  const { data: allProjects } = useQuery({
+    queryKey: ['all-site-projects', { published: true }],
+    queryFn: () => getAllSiteProjects({ published: true }),
+    staleTime: 5 * 60 * 1000,
+  });
   const linkedProjects = (allProjects ?? []).filter((p: MadocProjectDto) => projectSlugs.includes(p.slug));
 
   const { data: overview } = useInstitutionStats(slug);
@@ -167,7 +167,7 @@ export const InstitutionDetail: React.FC = () => {
                     titleKey="honour_board_period_today"
                     icon={<LuClock className="w-4 h-4" />}
                     period={today.data}
-                    loading={today.status === 'loading'}
+                    loading={today.status === 'pending'}
                     formatNumber={formatNumber}
                     dark
                   />
@@ -175,7 +175,7 @@ export const InstitutionDetail: React.FC = () => {
                     titleKey="honour_board_period_week"
                     icon={<LuCalendar className="w-4 h-4" />}
                     period={week.data}
-                    loading={week.status === 'loading'}
+                    loading={week.status === 'pending'}
                     formatNumber={formatNumber}
                     dark
                   />
@@ -183,7 +183,7 @@ export const InstitutionDetail: React.FC = () => {
                     titleKey="honour_board_period_month"
                     icon={<LuCalendar className="w-4 h-4" />}
                     period={month.data}
-                    loading={month.status === 'loading'}
+                    loading={month.status === 'pending'}
                     formatNumber={formatNumber}
                     dark
                   />

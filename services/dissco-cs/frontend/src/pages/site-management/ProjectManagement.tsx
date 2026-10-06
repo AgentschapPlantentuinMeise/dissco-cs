@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getAllSiteProjects } from '../../api/madoc-client/projects';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/CsPage';
@@ -19,26 +19,27 @@ export const ProjectManagement: React.FC = () => {
   // All projects, every status, every page -- unlike the public Homepage/Projects pages (which
   // deliberately only show published/active ones), project management needs to see drafts and
   // paused projects too, e.g. to link them to an institution before they go live.
-  const { data: allProjects, status: allProjectsStatus } = useQuery('admin-all-site-projects', () =>
-    getAllSiteProjects()
-  );
+  const { data: allProjects, status: allProjectsStatus } = useQuery({
+    queryKey: ['admin-all-site-projects'],
+    queryFn: () => getAllSiteProjects(),
+  });
   const projects = allProjects ?? [];
 
   const {
     data: manualsResponse,
     refetch: refetchManuals,
     status: manualsStatus,
-  } = useQuery('admin-manuals', () => manualsApi.list());
+  } = useQuery({ queryKey: ['admin-manuals'], queryFn: () => manualsApi.list() });
   const manuals = manualsResponse?.manuals ?? [];
 
-  const { data: institutionsResponse } = useQuery('admin-institutions', () => institutionsApi.listAdmin());
+  const { data: institutionsResponse } = useQuery({ queryKey: ['admin-institutions'], queryFn: () => institutionsApi.listAdmin() });
   const institutions = institutionsResponse?.institutions ?? [];
 
   const {
     data: institutionLinksResponse,
     refetch: refetchInstitutionLinks,
     status: institutionLinksStatus,
-  } = useQuery('admin-institution-project-links', () => institutionsApi.listProjectLinks());
+  } = useQuery({ queryKey: ['admin-institution-project-links'], queryFn: () => institutionsApi.listProjectLinks() });
   const institutionLinks = institutionLinksResponse?.links ?? {};
 
   // Achtergrondvergelijking: Madoc weet niets van dissco-cs, dus als een project in Madoc

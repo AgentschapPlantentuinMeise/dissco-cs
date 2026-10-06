@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
 import { Modal } from './Modal';
 import { LuChevronDown, LuX, LuArrowLeft, LuArrowRight } from 'react-icons/lu';
@@ -449,11 +449,13 @@ export const ManualModal: React.FC<ManualModalProps> = ({
   onShown,
 }) => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data: manual } = useQuery(
-    ['project-manual', projectSlug],
-    () => manualsApi.getForProject(projectSlug),
-    { enabled: open, retry: false, staleTime: 5 * 60 * 1000 }
-  );
+  const { data: manual } = useQuery({
+    queryKey: ['project-manual', projectSlug],
+    queryFn: () => manualsApi.getForProject(projectSlug),
+    enabled: open,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const [openSectionIndex, setOpenSectionIndex] = useState(0);
   const shownRef = useRef(false);

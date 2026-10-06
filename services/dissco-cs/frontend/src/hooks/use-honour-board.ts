@@ -1,4 +1,5 @@
-import { useQuery } from 'react-query';
+import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { honourBoardApi } from '../api/cs-api';
 import { HonourBoardPeriodKey } from '@dissco-cs/shared-types';
 import { usePollingWindow } from './use-polling-window';
@@ -11,14 +12,23 @@ import { usePollingWindow } from './use-polling-window';
 // cause a recompute, so it hits a different, pure-read endpoint. refetchOnWindowFocus is off on
 // the triggering query so tab-switching doesn't also trigger SQL.
 function usePeriod(period: HonourBoardPeriodKey, refetchInterval: number | false) {
-  const initial = useQuery(['honour-board', period], () => honourBoardApi.get(period), {
+  const initial = useQuery({
+    queryKey: ['honour-board', period],
+    queryFn: () => honourBoardApi.get(period),
     refetchOnWindowFocus: false,
-    onError: err => console.error('[honour-board] initial fetch failed', period, err),
   });
-  const peek = useQuery(['honour-board-current', period], () => honourBoardApi.getCurrent(period), {
+  useEffect(() => {
+    if (initial.error) console.error('[honour-board] initial fetch failed', period, initial.error);
+  }, [initial.error]);
+
+  const peek = useQuery({
+    queryKey: ['honour-board-current', period],
+    queryFn: () => honourBoardApi.getCurrent(period),
     refetchInterval,
-    onError: err => console.error('[honour-board] peek fetch failed', period, err),
   });
+  useEffect(() => {
+    if (peek.error) console.error('[honour-board] peek fetch failed', period, peek.error);
+  }, [peek.error]);
 
   return { ...initial, data: peek.data ?? initial.data };
 }

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery, queryCache } from 'react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createProject, exportProject, getProjectStructure, updateProjectStatus } from '../../../api/madoc-client/projects';
 import { getAllAdminCollections, updateCollectionStructure } from '../../../api/madoc-client/collections';
 import { Select } from '../../../components/Select';
@@ -21,7 +21,8 @@ export const BulkCreateProjectsSubview: React.FC<{ projects: MadocProjectDto[] }
   const [description, setDescription] = useState('');
   const [sourceSlug, setSourceSlug] = useState('');
   const [manifestCollectionIds, setManifestCollectionIds] = useState<string[]>([]);
-  const { data: collections = [] } = useQuery('admin-collections', getAllAdminCollections);
+  const queryClient = useQueryClient();
+  const { data: collections = [] } = useQuery({ queryKey: ['admin-collections'], queryFn: getAllAdminCollections });
   const [running, setRunning] = useState(false);
   const [finished, setFinished] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0, failed: 0 });
@@ -75,7 +76,7 @@ export const BulkCreateProjectsSubview: React.FC<{ projects: MadocProjectDto[] }
     setErrors(collectedErrors);
     setRunning(false);
     setFinished(true);
-    queryCache.invalidateQueries('site-projects');
+    queryClient.invalidateQueries({ queryKey: ['site-projects'] });
   };
 
   return (

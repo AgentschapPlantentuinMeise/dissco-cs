@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useMutation, queryCache } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useUser } from '../../hooks/use-current-user';
 import { getSiteSlug } from '../../api/slug';
@@ -47,26 +47,29 @@ function FeedbackThreadDetail({ threadId }: { threadId: number }) {
   const { t, i18n } = useTranslation('dissco-cs');
   const [replyBody, setReplyBody] = useState('');
 
-  const { data, status } = useQuery(['feedback-thread', threadId], () => feedbackApi.getThread(threadId), {
+  const queryClient = useQueryClient();
+  const { data, status, dataUpdatedAt } = useQuery({
+    queryKey: ['feedback-thread', threadId],
+    queryFn: () => feedbackApi.getThread(threadId),
+  });
+  useEffect(() => {
+    if (dataUpdatedAt) {
+      queryClient.invalidateQueries({ queryKey: ['feedback-threads'] });
+      window.dispatchEvent(new Event('feedback_updated'));
+    }
+  }, [dataUpdatedAt]);
+
+  const { mutate: postReply, status: replyStatus } = useMutation({
+    mutationFn: (body: string) => feedbackApi.createReply(threadId, body),
     onSuccess: () => {
-      queryCache.invalidateQueries('feedback-threads');
+      setReplyBody('');
+      queryClient.invalidateQueries({ queryKey: ['feedback-thread', threadId] });
+      queryClient.invalidateQueries({ queryKey: ['feedback-threads'] });
       window.dispatchEvent(new Event('feedback_updated'));
     },
   });
 
-  const [postReply, { status: replyStatus }] = useMutation(
-    (body: string) => feedbackApi.createReply(threadId, body),
-    {
-      onSuccess: () => {
-        setReplyBody('');
-        queryCache.invalidateQueries(['feedback-thread', threadId]);
-        queryCache.invalidateQueries('feedback-threads');
-        window.dispatchEvent(new Event('feedback_updated'));
-      },
-    }
-  );
-
-  if (status === 'loading') {
+  if (status === 'pending') {
     return <p className="text-sm text-gray-500 mt-3">{t('review_detail_loading')}</p>;
   }
   if (status === 'error' || !data) {
@@ -96,7 +99,7 @@ function FeedbackThreadDetail({ threadId }: { threadId: number }) {
         />
         <button
           onClick={() => replyBody.trim() && postReply(replyBody.trim())}
-          disabled={!replyBody.trim() || replyStatus === 'loading'}
+          disabled={!replyBody.trim() || replyStatus === 'pending'}
           className="px-4 py-2 rounded-full text-sm font-semibold border-none bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
         >
           {t('dashboard_feedback_reply_send')}
@@ -126,9 +129,11 @@ function FeedbackThreadRow({
       ? t('dashboard_feedback_from', { name: otherName })
       : t('dashboard_feedback_to', { name: otherName });
 
-  const [deleteThread] = useMutation(() => feedbackApi.deleteThread(thread.id), {
+  const queryClient = useQueryClient();
+  const { mutate: deleteThread } = useMutation({
+    mutationFn: () => feedbackApi.deleteThread(thread.id),
     onSuccess: () => {
-      queryCache.invalidateQueries('feedback-threads');
+      queryClient.invalidateQueries({ queryKey: ['feedback-threads'] });
       window.dispatchEvent(new Event('feedback_updated'));
     },
   });
@@ -182,19 +187,18 @@ export const UserDashboard: React.FC = () => {
   const [releaseTarget, setReleaseTarget] = useState<MadocCrowdsourcingTaskDto | null>(null);
   const [openThreadId, setOpenThreadId] = useState<number | null>(null);
 
-  const [releaseTask] = useMutation(
-    (task: MadocCrowdsourcingTaskDto) => updateTask(task.id, { status: -1, status_text: 'abandoned' }),
-    {
-      onSuccess: () => {
-        queryCache.invalidateQueries('dashboard-tasks');
-        queryCache.invalidateQueries('collection');
-      },
-    }
-  );
+  const queryClient = useQueryClient();
+  const { mutate: releaseTask } = useMutation({
+    mutationFn: (task: MadocCrowdsourcingTaskDto) => updateTask(task.id, { status: -1, status_text: 'abandoned' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['collection'] });
+    },
+  });
 
-  const { data: tasksData, status: tasksStatus } = useQuery(
-    ['dashboard-tasks', { userId: user?.id }],
-    async () => {
+  const { data: tasksData, status: tasksStatus } = useQuery({
+    queryKey: ['dashboard-tasks', { userId: user?.id }],
+    queryFn: async () => {
       const query = {
         type: 'crowdsourcing-task',
         all_tasks: true,
@@ -210,31 +214,31 @@ export const UserDashboard: React.FC = () => {
       );
       return { ...first, tasks: [...first.tasks, ...rest.flatMap(r => r.tasks)] };
     },
-    { enabled: !!user }
-  );
+    enabled: !!user,
+  });
 
   // getTasks({ all_tasks: true }) called straight from the browser only ever returns the calling
   // user's own tasks for a non-admin contributor (see docs/MANIFEST-CLAIMS.md) — so the site-wide
   // total has to come from the backend-computed stats instead, same as the homepage banner.
   const { data: siteStats } = useSiteStats();
 
-  const { data: unansweredTopics } = useQuery(
-    ['dashboard-unanswered-topics'],
-    async () => {
+  const { data: unansweredTopics } = useQuery({
+    queryKey: ['dashboard-unanswered-topics'],
+    queryFn: async () => {
       const res = await forumApi.listTopics();
       return res.topics
         .filter(topic => topic.reply_count === 0)
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 3);
     },
-    { enabled: !!user }
-  );
+    enabled: !!user,
+  });
 
-  const { data: feedbackThreadsData, status: feedbackThreadsStatus } = useQuery(
-    'feedback-threads',
-    () => feedbackApi.listThreads(),
-    { enabled: !!user }
-  );
+  const { data: feedbackThreadsData, status: feedbackThreadsStatus } = useQuery({
+    queryKey: ['feedback-threads'],
+    queryFn: () => feedbackApi.listThreads(),
+    enabled: !!user,
+  });
   const feedbackThreads = feedbackThreadsData?.threads ?? [];
 
   if (!user) {
@@ -278,7 +282,7 @@ export const UserDashboard: React.FC = () => {
   const projectCount = new Set(projectIds).size;
   const siteTotal = siteStats?.tasksCompleted ?? 0;
   const percentage = siteTotal > 0 ? ((userDoneCount / siteTotal) * 100).toFixed(2) : null;
-  const isLoading = tasksStatus === 'loading';
+  const isLoading = tasksStatus === 'pending';
 
   const projectTaskCounts: Record<string, { value: number; name: string }> = {};
   for (const task of contributedTasks) {
@@ -344,7 +348,7 @@ export const UserDashboard: React.FC = () => {
               </div>
 
               {activeTab === 'feedback' ? (
-                feedbackThreadsStatus === 'loading' ? (
+                feedbackThreadsStatus === 'pending' ? (
                   <div className="text-center py-16 text-gray-500">{t('my_tasks_loading')}</div>
                 ) : feedbackThreads.length === 0 ? (
                   <div className="px-1 py-10 text-center text-gray-500">{t('dashboard_feedback_empty')}</div>

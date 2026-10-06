@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/CsPage';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -48,7 +48,7 @@ const emptyDraft: AnnouncementInput = {
 
 export const Announcements: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data, isLoading, refetch } = useQuery('admin-announcements', () => announcementsApi.listAdmin());
+  const { data, isLoading, refetch } = useQuery({ queryKey: ['admin-announcements'], queryFn: () => announcementsApi.listAdmin() });
   const { data: projectsResponse } = useProjectList();
   const announcements = data?.announcements ?? [];
   const projects = (projectsResponse?.projects ?? []).filter((p: MadocProjectDto) => p.status === 1);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useUser } from '../hooks/use-current-user';
 import { reviewApi } from '../api/cs-api';
 
@@ -14,7 +14,9 @@ export const AuthGate: React.FC<{ requireAdmin?: boolean; requireReviewer?: bool
 
   // Zelfde query-key als Navbar's eigen is-reviewer-check, zodat react-query de call deelt
   // i.p.v. een tweede keer op te vragen.
-  const { data: reviewerCheck, isLoading: reviewerLoading } = useQuery('nav-is-reviewer', () => reviewApi.isReviewer(), {
+  const { data: reviewerCheck, isLoading: reviewerLoading } = useQuery({
+    queryKey: ['nav-is-reviewer'],
+    queryFn: () => reviewApi.isReviewer(),
     enabled: !!requireReviewer && !!user && !isAdmin,
     staleTime: 5 * 60 * 1000,
   });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { getTaskById } from '../api/madoc-client/tasks';
 import { getCaptureModelRevision, getCaptureModel } from '../api/madoc-client/crowdsourcing';
@@ -19,21 +19,21 @@ interface TaskRevisionViewProps {
 export function TaskRevisionView({ taskId }: TaskRevisionViewProps) {
   const { t } = useTranslation('dissco-cs');
 
-  const taskQuery = useQuery(['task-detail', taskId], () => getTaskById(taskId), { enabled: !!taskId });
+  const taskQuery = useQuery({ queryKey: ['task-detail', taskId], queryFn: () => getTaskById(taskId), enabled: !!taskId });
   const revisionId = taskQuery.data?.state?.revisionId;
 
-  const revisionQuery = useQuery(
-    ['review-revision', revisionId],
-    () => getCaptureModelRevision(revisionId as string),
-    { enabled: !!revisionId }
-  );
-  const modelQuery = useQuery<MadocCaptureModelDto>(
-    ['capture-model', revisionQuery.data?.captureModelId],
-    () => getCaptureModel(revisionQuery.data!.captureModelId),
-    { enabled: !!revisionQuery.data?.captureModelId }
-  );
+  const revisionQuery = useQuery({
+    queryKey: ['review-revision', revisionId],
+    queryFn: () => getCaptureModelRevision(revisionId as string),
+    enabled: !!revisionId,
+  });
+  const modelQuery = useQuery<MadocCaptureModelDto>({
+    queryKey: ['capture-model', revisionQuery.data?.captureModelId],
+    queryFn: () => getCaptureModel(revisionQuery.data!.captureModelId),
+    enabled: !!revisionQuery.data?.captureModelId,
+  });
 
-  const isLoading = taskQuery.status === 'loading' || (!!revisionId && (revisionQuery.status === 'loading' || modelQuery.status === 'loading'));
+  const isLoading = taskQuery.status === 'pending' || (!!revisionId && (revisionQuery.status === 'pending' || modelQuery.status === 'pending'));
   if (isLoading) {
     return <p className="text-sm text-gray-500 px-1 py-3">{t('review_detail_loading')}</p>;
   }

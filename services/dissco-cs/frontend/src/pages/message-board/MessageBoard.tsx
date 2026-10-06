@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { CsPage } from '../../components/CsPage';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { MessageForm } from '../../components/messageform/MessageForm';
@@ -30,7 +30,9 @@ export const MessageBoard: React.FC = () => {
   const user = useUser();
   const authorName = user?.name || t('forum_meta_author');
 
-  const { data: allProjects } = useQuery('forum-project-options', () => getAllSiteProjects({ published: true }), {
+  const { data: allProjects } = useQuery({
+    queryKey: ['forum-project-options'],
+    queryFn: () => getAllSiteProjects({ published: true }),
     staleTime: 5 * 60 * 1000,
   });
   const projectOptions = useMemo(

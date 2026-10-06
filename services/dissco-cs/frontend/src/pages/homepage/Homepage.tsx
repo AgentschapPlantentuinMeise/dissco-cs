@@ -29,7 +29,7 @@ export const Homepage: React.FC = () => {
   }
 
   const projects = projectsResponse?.projects || [];
-  const isLoadingList = status === 'loading';
+  const isLoadingList = status === 'pending';
 
   const latestProjects = projects.filter((p: MadocProjectDto) => p.status === 1).slice(0, 6);
 

@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import { announcementsApi } from '../../api/cs-api';
@@ -54,11 +54,12 @@ export const AnnouncementBanner: React.FC<{ target: AnnouncementTargetType; proj
 }) => {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useUser();
-  const { data } = useQuery(
-    ['active-announcements', target, projectSlug],
-    () => announcementsApi.listActive(target, projectSlug),
-    { staleTime: 0, enabled: !!user }
-  );
+  const { data } = useQuery({
+    queryKey: ['active-announcements', target, projectSlug],
+    queryFn: () => announcementsApi.listActive(target, projectSlug),
+    staleTime: 0,
+    enabled: !!user,
+  });
   const announcements = data?.announcements ?? [];
   const signatures = announcements.map(signatureOf);
   const key = storageKey(target, projectSlug);

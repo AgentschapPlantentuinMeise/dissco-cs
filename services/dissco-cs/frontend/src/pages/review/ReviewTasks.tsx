@@ -140,7 +140,7 @@ export const ReviewTasks: React.FC = () => {
             </div>
           )}
 
-          {c.queryStatus === 'loading' && <p className="text-sm text-gray-500">{t('review_loading')}</p>}
+          {c.queryStatus === 'pending' && <p className="text-sm text-gray-500">{t('review_loading')}</p>}
 
           {c.queryStatus === 'success' && c.rows.length === 0 && (
             <p className="text-sm text-gray-500">{t('review_empty')}</p>

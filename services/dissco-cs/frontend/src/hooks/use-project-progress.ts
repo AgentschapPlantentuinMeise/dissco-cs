@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { projectProgressApi } from '../api/cs-api';
 import { ProjectProgressDto } from '@dissco-cs/shared-types';
 
@@ -61,12 +61,15 @@ export function useProjectProgress(projectId: number | string | undefined) {
     return () => controllerRef.current?.abort();
   }, [projectId]);
 
-  return useQuery<ProjectProgressDto>(
-    ['project-progress', projectId],
-    () => {
+  return useQuery<ProjectProgressDto>({
+    queryKey: ['project-progress', projectId],
+    queryFn: () => {
       controllerRef.current = new AbortController();
       return runQueued(signal => projectProgressApi.get(projectId!, signal), controllerRef.current.signal);
     },
-    { enabled: !!projectId, staleTime: 0, refetchOnWindowFocus: false, retry: 1 }
-  );
+    enabled: !!projectId,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
 }

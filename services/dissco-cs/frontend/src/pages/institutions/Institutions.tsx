@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { CsPage } from '../../components/CsPage';
 import { InstitutionCard } from '../../components/institutioncard/InstitutionCard';
 import { institutionsApi } from '../../api/cs-api';
@@ -11,7 +11,7 @@ import { formatNumber } from '../../utility/format-number';
 
 export const Institutions: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data } = useQuery('institutions-active', () => institutionsApi.listActive());
+  const { data } = useQuery({ queryKey: ['institutions-active'], queryFn: () => institutionsApi.listActive() });
   const { data: siteStats } = useSiteStats();
 
   const institutions = data?.institutions ?? [];

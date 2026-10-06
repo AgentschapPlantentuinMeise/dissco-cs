@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { projectDebugApi } from '../../../api/cs-api';
 import { Select } from '../../../components/Select';
 import { useAutoSelectFirstSlug } from '../../../hooks/use-auto-select-first-slug';
@@ -31,11 +31,12 @@ export const TaskDebugSubview: React.FC<{ projects: MadocProjectDto[] }> = ({ pr
 
   const selectedProject = projects.find(p => p.slug === selectedSlug) ?? null;
 
-  const { data, status: queryStatus } = useQuery(
-    ['project-task-debug', selectedProject?.id],
-    () => projectDebugApi.getTaskStatus(selectedProject!.id),
-    { enabled: !!selectedProject, staleTime: 0 }
-  );
+  const { data, status: queryStatus } = useQuery({
+    queryKey: ['project-task-debug', selectedProject?.id],
+    queryFn: () => projectDebugApi.getTaskStatus(selectedProject!.id),
+    enabled: !!selectedProject,
+    staleTime: 0,
+  });
 
   return (
     <div>
@@ -59,7 +60,7 @@ export const TaskDebugSubview: React.FC<{ projects: MadocProjectDto[] }> = ({ pr
         </Select>
       </div>
 
-      {queryStatus === 'loading' && <p className="text-sm text-gray-500">Loading…</p>}
+      {queryStatus === 'pending' && <p className="text-sm text-gray-500">Loading…</p>}
 
       {data && (
         <>

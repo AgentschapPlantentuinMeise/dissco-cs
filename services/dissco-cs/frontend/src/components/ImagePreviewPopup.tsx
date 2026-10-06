@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getManifestStructure, getSiteCanvas } from '../api/madoc-client/collections';
 import { parseUrn } from '../utility/parse-urn';
 import { getImageServiceId } from '../utility/get-image-service-id';
@@ -23,21 +23,23 @@ export const ImagePreviewPopup: React.FC<ImagePreviewPopupProps> = ({ subject, l
   // eerst de structuur ophalen zodat er iets te tonen valt -- default op de eerste canvas, met
   // vorige/volgende via OpenSeadragonViewer's eigen ingebouwde navigatie (zelfde patroon als
   // AnnotatePage.tsx bij manifest-granulariteit-projecten).
-  const { data: structure } = useQuery(
-    ['review-preview-structure', parsed?.id],
-    () => getManifestStructure(parsed!.id),
-    { enabled: isManifest, retry: false }
-  );
+  const { data: structure } = useQuery({
+    queryKey: ['review-preview-structure', parsed?.id],
+    queryFn: () => getManifestStructure(parsed!.id),
+    enabled: isManifest,
+    retry: false,
+  });
   const canvases = structure?.items ?? [];
   const [canvasIndex, setCanvasIndex] = useState(0);
 
   const canvasId = isManifest ? canvases[canvasIndex]?.id : parsed?.type === 'canvas' ? parsed.id : undefined;
 
-  const { data: canvasJson, isError: canvasError } = useQuery(
-    ['review-preview-canvas', canvasId],
-    () => getSiteCanvas(canvasId as number),
-    { enabled: !!canvasId, retry: false }
-  );
+  const { data: canvasJson, isError: canvasError } = useQuery({
+    queryKey: ['review-preview-canvas', canvasId],
+    queryFn: () => getSiteCanvas(canvasId as number),
+    enabled: !!canvasId,
+    retry: false,
+  });
 
   const imageServiceId = canvasJson ? getImageServiceId(canvasJson.canvas) : undefined;
   const structureEmpty = isManifest && !!structure && canvases.length === 0;

@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useRef, useState } from 'react';
-import { useMutation, useQuery, queryCache } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../../api/madoc-client/request';
@@ -50,6 +50,7 @@ export function AnnotatePage() {
   const { data: project } = useProject();
   const [projectLabel] = useLocaleString(project?.label);
   const { requestNextUrl, isLoadingNext } = useDisscoCSNavigation();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
   const returnTo = (location.state as { returnTo?: string } | null)?.returnTo;
@@ -66,25 +67,27 @@ export function AnnotatePage() {
     if (navbar) setNavBottom(navbar.getBoundingClientRect().bottom);
   }, []);
 
-  const { data: structure, isError: structureError, error: structureErrorObj } = useQuery(
-    ['manifest-structure', manifestId],
-    () => getManifestStructure(manifestId!),
-    { enabled: !!manifestId, retry: false }
-  );
+  const { data: structure, isError: structureError, error: structureErrorObj } = useQuery({
+    queryKey: ['manifest-structure', manifestId],
+    queryFn: () => getManifestStructure(manifestId!),
+    enabled: !!manifestId,
+    retry: false,
+  });
   const canvases = structure?.items ?? [];
   const [canvasIndex, setCanvasIndex] = useState(0);
 
-  const { data: canvasData } = useQuery(
-    ['canvas', canvases[canvasIndex]?.id],
-    () => getSiteCanvas(canvases[canvasIndex].id),
-    { enabled: !!canvases[canvasIndex] }
-  );
+  const { data: canvasData } = useQuery({
+    queryKey: ['canvas', canvases[canvasIndex]?.id],
+    queryFn: () => getSiteCanvas(canvases[canvasIndex].id),
+    enabled: !!canvases[canvasIndex],
+  });
 
-  const { data: prepared, isError: preparedError, error: preparedErrorObj } = useQuery(
-    ['prepare-claim', project?.id, manifestId],
-    () => prepareClaim(project!.id, { manifestId }),
-    { enabled: !!project?.id && !!manifestId, retry: false }
-  );
+  const { data: prepared, isError: preparedError, error: preparedErrorObj } = useQuery({
+    queryKey: ['prepare-claim', project?.id, manifestId],
+    queryFn: () => prepareClaim(project!.id, { manifestId }),
+    enabled: !!project?.id && !!manifestId,
+    retry: false,
+  });
   useEffect(() => {
     if (prepared) {
       console.log('[CS] prepareClaim resultaat', {
@@ -97,11 +100,12 @@ export function AnnotatePage() {
     }
   }, [prepared, manifestId]);
 
-  const { data: model, isError: modelError, error: modelErrorObj } = useQuery<MadocCaptureModelDto>(
-    ['capture-model', prepared?.model?.id],
-    () => getCaptureModel(prepared!.model!.id),
-    { enabled: !!prepared?.model, retry: false }
-  );
+  const { data: model, isError: modelError, error: modelErrorObj } = useQuery<MadocCaptureModelDto>({
+    queryKey: ['capture-model', prepared?.model?.id],
+    queryFn: () => getCaptureModel(prepared!.model!.id),
+    enabled: !!prepared?.model,
+    retry: false,
+  });
 
   const [annotationDocument, setAnnotationDocument] = useState<MadocAnnotationDocumentDto | null>(null);
   const [activeStructure, setActiveStructure] = useState<(MadocStructureNodeDto & { type: 'model' }) | null>(null);
@@ -198,7 +202,7 @@ export function AnnotatePage() {
       await revokeResourceClaim(project.id, { manifestId });
       // ProjectDetail.tsx's manifest list is cached under ['collection', collectionId] — invalidate by
       // prefix so the "Choose where to start" grid re-fetches and shows the manifest as available again.
-      queryCache.invalidateQueries('collection');
+      queryClient.invalidateQueries({ queryKey: ['collection'] });
       // Best-effort: madoc-ts only re-syncs the shared max-contributors counter when a NEW claim
       // is created, never on an abandon — without this, a manifest that hit its contributor
       // limit stays blocked for everyone (incl. this user) once its only active claim is released.
@@ -289,8 +293,8 @@ export function AnnotatePage() {
     if (project?.id && manifestId) {
       try {
         await revokeResourceClaim(project.id, { manifestId });
-        queryCache.invalidateQueries('collection');
-        queryCache.invalidateQueries('my-tasks');
+        queryClient.invalidateQueries({ queryKey: ['collection'] });
+        queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
         await manifestClaimApi.resync(project.id, manifestId).catch(err => console.error('[CS] resync failed', err));
       } catch (err) {
         console.error('[CS] release failed', err);
@@ -299,38 +303,40 @@ export function AnnotatePage() {
     navigate(`/explore/${project?.slug}`);
   };
 
-  const [save, { isLoading: saving }] = useMutation(async (status: 'draft' | 'submitted') => {
-    if (!model || !annotationDocument || !activeStructure) return;
-    // Set before the network call (not after) so that a user who navigates away while this save
-    // is still in flight can never race releaseClaim into sending an abandon for a task that's
-    // actually being saved.
-    hasSaved.current = true;
-    await createCaptureModelRevision(
-      {
-        // A model fetched via getCaptureModel() always carries its own id back -- id is only
-        // optional on MadocCaptureModelDto because a freshly-built local model (never seen here) wouldn't.
-        captureModelId: model.id!,
-        document: annotationDocument,
-        // Same id reused across saves (see revisionIdRef above) — the server upserts a revision
-        // row by id, so re-submitting with this id updates the same draft instead of creating a
-        // new one each time.
-        revision: { id: revisionIdRef.current, structureId: activeStructure.id, fields: activeStructure.fields, status },
-      },
-      status
-    );
-    isDirty.current = false;
+  const { mutateAsync: save, isPending: saving } = useMutation({
+    mutationFn: async (status: 'draft' | 'submitted') => {
+      if (!model || !annotationDocument || !activeStructure) return;
+      // Set before the network call (not after) so that a user who navigates away while this save
+      // is still in flight can never race releaseClaim into sending an abandon for a task that's
+      // actually being saved.
+      hasSaved.current = true;
+      await createCaptureModelRevision(
+        {
+          // A model fetched via getCaptureModel() always carries its own id back -- id is only
+          // optional on MadocCaptureModelDto because a freshly-built local model (never seen here) wouldn't.
+          captureModelId: model.id!,
+          document: annotationDocument,
+          // Same id reused across saves (see revisionIdRef above) — the server upserts a revision
+          // row by id, so re-submitting with this id updates the same draft instead of creating a
+          // new one each time.
+          revision: { id: revisionIdRef.current, structureId: activeStructure.id, fields: activeStructure.fields, status },
+        },
+        status
+      );
+      isDirty.current = false;
 
-    // createCaptureModelRevision only writes the model-api revision — the task itself (what the
-    // dashboard's task list queries) stays at its initial "assigned" status (0) unless we update
-    // it here too, same as releaseClaim does for abandoned claims.
-    const claimId = await getClaimId();
-    if (claimId) {
-      await updateTask(claimId, {
-        status: status === 'draft' ? 1 : 2,
-        status_text: status === 'draft' ? 'in progress' : 'submitted',
-      });
-      queryCache.invalidateQueries('my-tasks');
-    }
+      // createCaptureModelRevision only writes the model-api revision — the task itself (what the
+      // dashboard's task list queries) stays at its initial "assigned" status (0) unless we update
+      // it here too, same as releaseClaim does for abandoned claims.
+      const claimId = await getClaimId();
+      if (claimId) {
+        await updateTask(claimId, {
+          status: status === 'draft' ? 1 : 2,
+          status_text: status === 'draft' ? 'in progress' : 'submitted',
+        });
+        queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
+      }
+    },
   });
 
   const [firstSaveDone, setFirstSaveDone] = useState(false);

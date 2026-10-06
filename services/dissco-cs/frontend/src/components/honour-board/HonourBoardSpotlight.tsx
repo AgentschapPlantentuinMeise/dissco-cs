@@ -38,7 +38,7 @@ export const HonourBoardSpotlight: React.FC<{ className?: string }> = ({ classNa
     (c): c is { period: SpotlightPeriod; entry: NonNullable<(typeof c)['entry']> } => !!c.entry
   );
 
-  const allSettled = PERIODS.every(period => board[period].status !== 'loading');
+  const allSettled = PERIODS.every(period => board[period].status !== 'pending');
   const featured = featuredCandidates.length > 0 ? featuredCandidates[new Date().getHours() % featuredCandidates.length] : null;
 
   // Shell (title, hero slot, all 4 rows, link) always renders immediately -- no more blank space
@@ -80,7 +80,7 @@ export const HonourBoardSpotlight: React.FC<{ className?: string }> = ({ classNa
               <span className="whitespace-nowrap flex-shrink-0 w-[68px] text-[0.68rem] font-medium uppercase tracking-wide text-[#82a19c]">
                 {t(PERIOD_LABEL_KEY[period])}
               </span>
-              {result.status === 'loading' ? (
+              {result.status === 'pending' ? (
                 <span className="flex-1 text-sm text-[#82a19c]">{t('card_loading')}</span>
               ) : entry ? (
                 <>

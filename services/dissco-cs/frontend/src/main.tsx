@@ -1,5 +1,6 @@
 ﻿import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './i18n';
 import './global.css';
 import { App } from './App';
@@ -12,4 +13,10 @@ if (!root) {
   throw new Error('Could not find #app root element');
 }
 
-createRoot(root).render(<App />);
+const queryClient = new QueryClient();
+
+createRoot(root).render(
+  <QueryClientProvider client={queryClient}>
+    <App />
+  </QueryClientProvider>
+);

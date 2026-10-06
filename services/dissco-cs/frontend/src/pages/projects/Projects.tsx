@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getAllSiteProjects } from '../../api/madoc-client/projects';
 import { CsPage } from '../../components/CsPage';
 import { ProjectCard } from '../../components/projectcard/ProjectCard';
@@ -20,15 +20,15 @@ export const Projects: React.FC = () => {
   // All pages, published-only, so every active project shows regardless of how many draft/paused
   // projects exist (and regardless of whether the viewer is a site-admin, who would otherwise see
   // every status unfiltered -- see useProjectList's `published` option).
-  const { data: allProjects, status } = useQuery(
-    ['all-site-projects', { published: true }],
-    () => getAllSiteProjects({ published: true }),
-    { staleTime: 5 * 60 * 1000 }
-  );
+  const { data: allProjects, status } = useQuery({
+    queryKey: ['all-site-projects', { published: true }],
+    queryFn: () => getAllSiteProjects({ published: true }),
+    staleTime: 5 * 60 * 1000,
+  });
   const { data: siteStats } = useSiteStats();
   const { t, i18n } = useTranslation('dissco-cs');
   const projects = (allProjects ?? []).filter((p: MadocProjectDto) => p.status === 1);
-  const isLoadingList = status === 'loading';
+  const isLoadingList = status === 'pending';
 
   const [gridRef, columns] = useGridColumnCount<HTMLDivElement>();
   const pageSize = columns * ROWS_PER_PAGE;

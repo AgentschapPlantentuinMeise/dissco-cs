@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import useDropdownMenu from 'react-accessible-dropdown-menu-hook';
 import { stringify } from 'query-string';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import Cookies from 'js-cookie';
 import { HrefLink } from '../../utility/href-link';
 import { useUser } from '../../hooks/use-current-user';
@@ -41,11 +41,15 @@ export const Navbar: React.FC = () => {
   const showAdmin = !!user && user.scope.includes('site.admin');
   // Reviewer-rol zit niet in het JWT (enkel scope), dus navraag via een lichte backend-call;
   // admins hoeven deze niet te doen, want die zien de link toch al.
-  const { data: reviewerCheck } = useQuery('nav-is-reviewer', () => reviewApi.isReviewer(), {
+  const { data: reviewerCheck, error: reviewerError } = useQuery({
+    queryKey: ['nav-is-reviewer'],
+    queryFn: () => reviewApi.isReviewer(),
     enabled: !!user && !showAdmin,
     staleTime: 5 * 60 * 1000,
-    onError: err => console.error('[nav] is-reviewer check failed', err),
   });
+  useEffect(() => {
+    if (reviewerError) console.error('[nav] is-reviewer check failed', reviewerError);
+  }, [reviewerError]);
   const showReview = showAdmin || !!reviewerCheck?.isReviewer;
   const dropdownCount = 3 + (showReview ? 1 : 0) + (showAdmin ? 1 : 0);
 

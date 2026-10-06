@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQuery } from 'react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useProject } from '../../hooks/use-project';
 import { useProjectProgress } from '../../hooks/use-project-progress';
@@ -51,9 +51,9 @@ export const ProjectDetail: React.FC = () => {
   // gebruikers hetzelfde manifest niet tegelijk kunnen claimen (zie docs/MANIFEST-CLAIMS.md) —
   // maar dat verbergt ook de eigen opgeslagen taken (status 1) van de ingelogde gebruiker voor
   // zichzelf. Aparte query zodat die apart getoond kunnen worden i.p.v. te verdwijnen.
-  const { data: ownTasksData } = useQuery(
-    ['project-own-saved-tasks', project?.id, user?.id],
-    () =>
+  const { data: ownTasksData } = useQuery({
+    queryKey: ['project-own-saved-tasks', project?.id, user?.id],
+    queryFn: () =>
       getTasks<MadocCrowdsourcingTaskDto>(1, {
         type: 'crowdsourcing-task',
         all_tasks: true,
@@ -62,8 +62,8 @@ export const ProjectDetail: React.FC = () => {
         status: 1,
         detail: true,
       }),
-    { enabled: !!project && !!user }
-  );
+    enabled: !!project && !!user,
+  });
   const ownSavedTasks = (ownTasksData?.tasks ?? []).filter(task => task.metadata?.project?.slug === project?.slug);
   console.log('[ProjectDetail] eigen opgeslagen taken in dit project (status 1):', ownSavedTasks.length, ownSavedTasks.map(task => ({
     id: task.id, name: task.name, subject: task.subject,
@@ -71,33 +71,35 @@ export const ProjectDetail: React.FC = () => {
 
   const { data: progress } = useProjectProgress(project?.id);
 
-  const { data: institution } = useQuery(
-    ['project-institution', project?.slug],
-    () => institutionsApi.getForProject(project!.slug),
-    { enabled: !!project }
-  );
+  const { data: institution } = useQuery({
+    queryKey: ['project-institution', project?.slug],
+    queryFn: () => institutionsApi.getForProject(project!.slug),
+    enabled: !!project,
+  });
 
   const navigateToFirstCanvas = async (manifestId: number) => {
     navigate(`/explore/${project!.slug}/manifests/${manifestId}/annotate`);
   };
 
-  const [startRandom, { isLoading: isStarting }] = useMutation(async () => {
-    if (!project) return;
-    if (!user) {
-      // Same clean login redirect as AuthGate (no expired=1) - this is a plain "you need to
-      // log in to start", not a session that actually expired.
-      const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
-      navigate(`/login?redirect=${redirect}`);
-      return;
-    }
-    try {
-      const result = await randomlyAssignedManifest(project.slug, {});
-      if (result?.manifest) {
-        await navigateToFirstCanvas(result.manifest);
+  const { mutate: startRandom, isPending: isStarting } = useMutation({
+    mutationFn: async () => {
+      if (!project) return;
+      if (!user) {
+        // Same clean login redirect as AuthGate (no expired=1) - this is a plain "you need to
+        // log in to start", not a session that actually expired.
+        const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+        navigate(`/login?redirect=${redirect}`);
+        return;
       }
-    } catch {
-      navigate(`/explore/${project.slug}/manifests`);
-    }
+      try {
+        const result = await randomlyAssignedManifest(project.slug, {});
+        if (result?.manifest) {
+          await navigateToFirstCanvas(result.manifest);
+        }
+      } catch {
+        navigate(`/explore/${project.slug}/manifests`);
+      }
+    },
   });
 
   if (!project) {

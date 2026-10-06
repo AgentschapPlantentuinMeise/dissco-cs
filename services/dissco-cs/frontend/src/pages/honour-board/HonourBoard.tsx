@@ -46,21 +46,21 @@ export const HonourBoard: React.FC = () => {
               titleKey="honour_board_period_today"
               icon={<LuClock className="w-4 h-4" />}
               period={today.data}
-              loading={today.status === 'loading'}
+              loading={today.status === 'pending'}
               formatNumber={formatNumber}
             />
             <PeriodCard
               titleKey="honour_board_period_week"
               icon={<LuCalendar className="w-4 h-4" />}
               period={week.data}
-              loading={week.status === 'loading'}
+              loading={week.status === 'pending'}
               formatNumber={formatNumber}
             />
             <PeriodCard
               titleKey="honour_board_period_month"
               icon={<LuCalendar className="w-4 h-4" />}
               period={month.data}
-              loading={month.status === 'loading'}
+              loading={month.status === 'pending'}
               formatNumber={formatNumber}
             />
           </div>
