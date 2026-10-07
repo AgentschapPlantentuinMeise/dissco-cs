@@ -18,7 +18,7 @@ import { SearchResults } from './pages/search/SearchResults';
 import { Contact } from './pages/contact/Contact';
 import { UserDashboard } from './pages/user-dashboard/UserDashboard';
 import { ReviewTasks } from './pages/review/ReviewTasks';
-import { MessageBoard } from './pages/message-board/MessageBoard';
+import { Forum } from './pages/forum/Forum';
 import { SiteManagement } from './pages/site-management/SiteManagement';
 import { ProjectManagement } from './pages/site-management/ProjectManagement';
 import { Announcements } from './pages/site-management/Announcements';
@@ -51,7 +51,7 @@ export const App: React.FC = () => {
           <Route path="/institutions" element={<PageGate pageKey="institutions"><Institutions /></PageGate>} />
           <Route path="/institutions/:slug" element={<PageGate pageKey="institutions"><InstitutionDetail /></PageGate>} />
           <Route path="/honour-board" element={<HonourBoard />} />
-          <Route path="/messageboard" element={<PageGate pageKey="forum"><AuthGate><MessageBoard /></AuthGate></PageGate>} />
+          <Route path="/forum" element={<PageGate pageKey="forum"><AuthGate><Forum /></AuthGate></PageGate>} />
           <Route path="/contact" element={<PageGate pageKey="contact"><Contact /></PageGate>} />
           <Route path="/my-dashboard" element={<AuthGate><UserDashboard /></AuthGate>} />
           <Route path="/review" element={<AuthGate requireReviewer><ReviewTasks /></AuthGate>} />

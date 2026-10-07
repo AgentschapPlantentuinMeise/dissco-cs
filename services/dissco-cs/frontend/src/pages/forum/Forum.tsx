@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { CsPage } from '../../components/CsPage';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { MessageForm } from '../../components/messageform/MessageForm';
+import { ForumTopicForm } from '../../components/forum/ForumTopicForm';
 import { useUser } from '../../hooks/use-current-user';
 import { useTranslation } from 'react-i18next';
 import { forumApi } from '../../api/cs-api';
@@ -25,7 +25,7 @@ const filterRowClass = (isActive: boolean) =>
 
 const inputClass = 'py-[9px] px-3 border border-gray-300 rounded text-[0.95rem] font-[inherit] resize-y transition-colors duration-200 focus:outline-none focus:border-[var(--cs-primary)]';
 
-export const MessageBoard: React.FC = () => {
+export const Forum: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useUser();
   const authorName = user?.name || t('forum_meta_author');
@@ -199,7 +199,7 @@ export const MessageBoard: React.FC = () => {
     <CsPage>
       <div className="cs-container cs-container--wide pt-10 pb-16">
         <header className="flex justify-between items-center mb-4">
-          <h1 className="text-4xl text-[var(--cs-primary)] m-0">{t('nav_messageboard')}</h1>
+          <h1 className="text-4xl text-[var(--cs-primary)] m-0">{t('nav_forum')}</h1>
           <button className={btnPrimary} onClick={() => setShowNewForm(v => !v)}>
             {showNewForm ? t('common_cancel') : t('forum_btn_new_message')}
           </button>
@@ -209,7 +209,7 @@ export const MessageBoard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 items-start">
           <div className="order-2 lg:order-1 min-w-0">
             {showNewForm && (
-              <MessageForm
+              <ForumTopicForm
                 onSubmit={handleSubmitMessage}
                 onCancel={() => setShowNewForm(false)}
                 projectOptions={projectOptions}
@@ -270,14 +270,30 @@ export const MessageBoard: React.FC = () => {
                           {(isAdmin || isTopicOwner) && (
                             <DeleteIconButton onClick={() => setPendingDeleteTopicId(msg.id)} />
                           )}
-                          <button className={`${btnGhost} flex items-center gap-1`} onClick={() => handleToggleExpand(msg.id)}>
-                            {msg.reply_count > 0
-                              ? msg.reply_count === 1
-                                ? `${msg.reply_count} ${t('forum_btn_replies_one')}`
-                                : `${msg.reply_count} ${t('forum_btn_replies_many')}`
-                              : t('forum_btn_reply')}
-                            <LuChevronDown className={`transition-transform duration-200 ${expandedId === msg.id ? 'rotate-180' : ''}`} />
-                          </button>
+                          {/* A closed topic allows no further action, so it gets no button: just a
+                              muted reply count (clickable like the title/body), or nothing at all
+                              when there are no replies. */}
+                          {closed ? (
+                            msg.reply_count > 0 && (
+                              <span
+                                className="text-xs text-gray-400 cursor-pointer whitespace-nowrap"
+                                onClick={() => handleToggleExpand(msg.id)}
+                              >
+                                {msg.reply_count === 1
+                                  ? `${msg.reply_count} ${t('forum_btn_replies_one')}`
+                                  : `${msg.reply_count} ${t('forum_btn_replies_many')}`}
+                              </span>
+                            )
+                          ) : (
+                            <button className={`${btnGhost} flex items-center gap-1`} onClick={() => handleToggleExpand(msg.id)}>
+                              {msg.reply_count > 0
+                                ? msg.reply_count === 1
+                                  ? `${msg.reply_count} ${t('forum_btn_replies_one')}`
+                                  : `${msg.reply_count} ${t('forum_btn_replies_many')}`
+                                : t('forum_btn_reply')}
+                              <LuChevronDown className={`transition-transform duration-200 ${expandedId === msg.id ? 'rotate-180' : ''}`} />
+                            </button>
+                          )}
                         </div>
                       </div>
 

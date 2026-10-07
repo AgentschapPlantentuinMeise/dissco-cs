@@ -27,7 +27,7 @@ op dit plan verder bouwt.
 | Site management: pagina's aan/uit + content (about/help/instituten) | Uitvoeringsstatus onbekend |
 | Welkomstbericht nieuwe gebruikers | Plan volledig uitgewerkt, bouwt voort op site-pages-systeem hierboven |
 | Meldingen-systeem (announcements) homepage/projecten | Uitvoeringsstatus onbekend; ontworpen vóór de migratie naar `services/dissco-cs`, paden moeten herbekeken worden |
-| Leesstatus message board (forum) | Uitvoeringsstatus onbekend |
+| Leesstatus forum | Uitvoeringsstatus onbekend |
 | Talen-configuratie centraliseren | Geparkeerd — vermoedelijk **ingehaald** door het databank-gedreven talen-plan hieronder |
 | Databank-gedreven talen (volledige i18n via DB) | Volledig uitgewerkt plan, uitvoeringsstatus onbekend |
 | Eigen auth-formulieren (login/register/wachtwoord) | Plan volledig uitgewerkt |
@@ -182,7 +182,7 @@ dit plan (`services/madoc-ts/src/frontend/site/citizen-science/...`) horen bij d
 ingebedde architectuur — bij hervatten eerst nagaan of dit ondertussen in
 `services/dissco-cs` hoort te landen.
 
-### Leesstatus message board: naar de databank + correcte 0-replies indicator
+### Leesstatus forum: naar de databank + correcte 0-replies indicator
 **Status onbekend.** Verhuist de "ongelezen"-indicator van het forum van `localStorage`
 (per browser) naar een nieuwe tabel `forum_read_state` (per account, `user_id + topic_id →
 last_seen_reply_count`). Lost meteen een logicabug op: een topic met 0 replies gold voordien

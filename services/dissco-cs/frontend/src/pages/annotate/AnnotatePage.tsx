@@ -22,7 +22,7 @@ import { LocaleString, useLocaleString } from '../../components/LocaleString';
 import { ManualModal } from '../../components/ManualModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Modal } from '../../components/Modal';
-import { MessageForm } from '../../components/messageform/MessageForm';
+import { ForumTopicForm } from '../../components/forum/ForumTopicForm';
 import { ForumTopicInput } from '@dissco-cs/shared-types';
 import { LuBookOpen, LuMail } from 'react-icons/lu';
 import { AnnotateLayout } from './AnnotateLayout';
@@ -583,8 +583,8 @@ export function AnnotatePage() {
 
       <ManualModal projectSlug={project.slug} open={manualOpen} onClose={() => setManualOpen(false)} />
 
-      <Modal open={forumOpen} onClose={() => setForumOpen(false)} eyebrow={t('nav_messageboard')} size="lg">
-        <MessageForm
+      <Modal open={forumOpen} onClose={() => setForumOpen(false)} eyebrow={t('nav_forum')} size="lg">
+        <ForumTopicForm
           initialTaskUrl={window.location.href}
           taskUrlReadOnly
           fixedProjectLabel={projectLabel}

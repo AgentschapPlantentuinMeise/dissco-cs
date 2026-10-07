@@ -46,7 +46,7 @@ Volledig stappenplan + architectuuroverwegingen: zie
 
 ## Forum (volledig binnen citizen-science gebouwd)
 
-Het forum (`pages/message-board/MessageBoard.tsx`) was tot nu toe `localStorage`-only. Dit is als
+Het forum (`pages/forum/Forum.tsx`) was tot nu toe `localStorage`-only. Dit is als
 eerste feature volledig op de nieuwe CS-API aangesloten, omdat het forum **geen** Madoc-data nodig
 heeft (de `taskUrl` is een vrije link-string, geen op te zoeken Madoc-id) — dus geen
 Madoc-verrijking nodig, puur CS-eigen data.
@@ -61,7 +61,7 @@ Madoc-verrijking nodig, puur CS-eigen data.
 - **Endpoints**: `GET/POST /api/citizen-science/forum/topics`,
   `GET /api/citizen-science/forum/topics/:id`, `POST .../topics/:id/replies`.
 - **Frontend**: nieuwe `utils/cs-api.ts` (los bestand, geen upstream wijziging) met een kleine
-  fetch-wrapper; `MessageBoard.tsx` haalt nu topics/replies op via deze API i.p.v. `localStorage`.
+  fetch-wrapper; `Forum.tsx` haalt nu topics/replies op via deze API i.p.v. `localStorage`.
   De "gezien"-status (ongelezen-badge) blijft bewust client-only in `localStorage` — dat is
   UI-voorkeur, geen data die gedeeld moet worden.
 
@@ -71,7 +71,7 @@ toevoegen, detail ophalen, 401 zonder geldig token.
 ## Open punt: SSR "Page not found" op niet-homepage CS-routes
 
 Bij het testen van de forum-pagina in de browser bleek dat **alle** citizen-science-routes behalve
-de homepage (`/s/{slug}/about`, `/my-tasks`, `/messageboard`) "Page not found" teruggeven bij
+de homepage (`/s/{slug}/about`, `/my-tasks`, `/forum`) "Page not found" teruggeven bij
 server-side rendering via de gateway in deze testomgeving — ook routes die niet door dit werk zijn
 aangeraakt. Dit is dus een **pre-existing omgevingsprobleem** (waarschijnlijk een verouderde/niet
 herbouwde SSR-bundel), geen regressie door de forum-wijzigingen. Nog te onderzoeken/bevestigen door

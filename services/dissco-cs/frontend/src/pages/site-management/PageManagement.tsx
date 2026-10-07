@@ -20,7 +20,7 @@ const CONTENT_PAGE_KEYS: NavItemKey[] = ['about', 'help', 'contact', 'welcome'];
 const MERGED_PAGE_TITLE_KEY: Partial<Record<NavItemKey, string>> = {
   contact: 'nav_contact',
   help: 'nav_help',
-  forum: 'nav_messageboard',
+  forum: 'nav_forum',
   institutions: 'nav_institutions',
 };
 const pageLabelKey = (key: NavItemKey) => MERGED_PAGE_TITLE_KEY[key] ?? `sm_pages_page_${key}`;

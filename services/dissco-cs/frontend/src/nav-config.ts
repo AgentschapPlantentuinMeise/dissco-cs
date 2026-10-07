@@ -11,7 +11,7 @@ type NavItemEntry = {
 // has a navbar entry.
 export const NAV_ITEMS: Partial<Record<NavItemKey, NavItemEntry>> = {
   institutions: { labelKey: 'nav_institutions', href: '/institutions' },
-  forum: { labelKey: 'nav_messageboard', href: '/messageboard', requiresLogin: true },
+  forum: { labelKey: 'nav_forum', href: '/forum', requiresLogin: true },
   about: { labelKey: 'nav_about', href: '/about' },
   help: { labelKey: 'nav_help', href: '/help' },
   contact: { labelKey: 'nav_contact', href: '/contact' },

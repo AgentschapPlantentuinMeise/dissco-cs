@@ -413,7 +413,7 @@ export const UserDashboard: React.FC = () => {
                     {unansweredTopics.map((topic: ForumTopicDto) => (
                       <li key={topic.id} className="border-b border-gray-200 last:border-b-0">
                         <HrefLink
-                          href={`/messageboard?topic=${topic.id}`}
+                          href={`/forum?topic=${topic.id}`}
                           className="flex flex-col gap-0.5 py-3 no-underline text-inherit hover:text-[var(--cs-primary)]"
                         >
                           <span className="text-sm font-semibold text-gray-800">{topic.title}</span>
@@ -426,7 +426,7 @@ export const UserDashboard: React.FC = () => {
                   </ul>
                 )}
                 <HrefLink
-                  href="/messageboard"
+                  href="/forum"
                   className="inline-block text-sm text-[var(--cs-primary)] font-semibold no-underline hover:underline mt-3"
                 >
                   {t('dashboard_widget_view_all')} <span aria-hidden="true">→</span>

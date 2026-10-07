@@ -82,9 +82,9 @@ Datamodel: `forum_topics` / `forum_replies` (zie `src/db.ts`), per site gescheid
 - Infra (schema, gateway-route, docker-compose, service-JWT) volledig opgezet en geverifieerd.
 - Forum-feature volledig gebouwd (backend + frontend) en backend end-to-end getest met een
   handmatig gegenereerd test-JWT.
-- Frontend-integratie (`MessageBoard.tsx`) kon niet visueel in een browser bevestigd worden: deze
+- Frontend-integratie (`Forum.tsx`) kon niet visueel in een browser bevestigd worden: deze
   testomgeving geeft "Page not found" bij SSR voor *alle* citizen-science-routes behalve de
-  homepage (`/about`, `/my-tasks`, `/messageboard` — ook zonder mijn wijzigingen), dus een
+  homepage (`/about`, `/my-tasks`, `/forum` — ook zonder mijn wijzigingen), dus een
   pre-existing omgevingsprobleem, geen regressie. Nog te verifiëren door zelf in te loggen en de
   pagina te bezoeken, of het SSR-probleem afzonderlijk uit te zoeken.
 - Dit werk staat momenteel als experiment op `main` zonder commit — de definitieve versie komt op

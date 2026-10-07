@@ -12,7 +12,7 @@ type Props = {
   // Set by AnnotatePage — the task link is already fixed by context there, same reasoning as
   // fixedProjectLabel below, so it's shown but not editable.
   taskUrlReadOnly?: boolean;
-  // Only offered when the parent supplies options — MessageBoard's standalone "new message" form
+  // Only offered when the parent supplies options — Forum's standalone "new message" form
   // passes the site's project list; AnnotatePage omits this because the project is already fixed
   // by the task the user is on (see fixedProjectLabel instead), so no dropdown is shown there.
   projectOptions?: ProjectOption[];
@@ -25,7 +25,7 @@ type Props = {
 const inputClass = 'py-[9px] px-3 border border-gray-300 rounded text-[0.95rem] font-[inherit] resize-y transition-colors duration-200 focus:outline-none focus:border-[var(--cs-primary)]';
 const labelClass = 'flex flex-col gap-[5px] text-[0.9rem] font-medium text-gray-800';
 
-export const MessageForm: React.FC<Props> = ({
+export const ForumTopicForm: React.FC<Props> = ({
   onSubmit,
   onCancel,
   initialTaskUrl = '',
