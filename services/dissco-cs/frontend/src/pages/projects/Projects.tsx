@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { getAllSiteProjects } from '../../api/madoc-client/projects';
+import { projectsApi } from '../../api/cs-client/projects';
 import { CsPage } from '../../components/CsPage';
 import { ProjectCard } from '../../components/projectcard/ProjectCard';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
@@ -22,7 +22,7 @@ export const Projects: React.FC = () => {
   // every status unfiltered -- see useProjectList's `published` option).
   const { data: allProjects, status } = useQuery({
     queryKey: ['all-site-projects', { published: true }],
-    queryFn: () => getAllSiteProjects({ published: true }),
+    queryFn: () => projectsApi.listAll({ published: true }),
     staleTime: 5 * 60 * 1000,
   });
   const { data: siteStats } = useSiteStats();

@@ -6,7 +6,7 @@ import { ToggleSwitch } from '../../components/ToggleSwitch';
 import { SaveButton } from '../../components/SaveButton';
 import { ActiveStatusToggle } from '../../components/ActiveStatusToggle';
 import { LuPencil, LuArrowUp, LuArrowDown, LuArrowLeft } from 'react-icons/lu';
-import { navItemsApi } from '../../api/cs-api';
+import { navItemsApi } from '../../api/cs-client/nav-items';
 import { setContactEmailSchema, NavItemDto, NavItemKey, SitePageLang } from '@dissco-cs/shared-types';
 import { LANGUAGES, defaultLang } from '../../utility/site-lang-text';
 import { useNavItems } from '../../contexts/NavItemsContext';

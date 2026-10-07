@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { getManifestStructure, getSiteCanvas } from '../api/madoc-client/collections';
+import { iiifApi } from '../api/cs-client/iiif';
 import { parseUrn } from '../utility/parse-urn';
 import { getImageServiceId } from '../utility/get-image-service-id';
 import { OpenSeadragonViewer } from '../pages/annotate/viewer/OpenSeadragonViewer';
@@ -25,7 +25,7 @@ export const ImagePreviewPopup: React.FC<ImagePreviewPopupProps> = ({ subject, l
   // AnnotatePage.tsx bij manifest-granulariteit-projecten).
   const { data: structure } = useQuery({
     queryKey: ['review-preview-structure', parsed?.id],
-    queryFn: () => getManifestStructure(parsed!.id),
+    queryFn: () => iiifApi.getManifestStructure(parsed!.id),
     enabled: isManifest,
     retry: false,
   });
@@ -36,7 +36,7 @@ export const ImagePreviewPopup: React.FC<ImagePreviewPopupProps> = ({ subject, l
 
   const { data: canvasJson, isError: canvasError } = useQuery({
     queryKey: ['review-preview-canvas', canvasId],
-    queryFn: () => getSiteCanvas(canvasId as number),
+    queryFn: () => iiifApi.getCanvas(canvasId as number),
     enabled: !!canvasId,
     retry: false,
   });

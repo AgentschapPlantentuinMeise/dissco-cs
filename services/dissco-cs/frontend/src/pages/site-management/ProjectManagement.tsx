@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { getAllSiteProjects } from '../../api/madoc-client/projects';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/CsPage';
 import { LuArrowLeft } from 'react-icons/lu';
-import { manualsApi, institutionsApi } from '../../api/cs-api';
+import { manualsApi } from '../../api/cs-client/manuals';
+import { institutionsApi } from '../../api/cs-client/institutions';
+import { projectsApi } from '../../api/cs-client/projects';
 import { ProjectsSubview } from './project-management/ProjectsSubview';
 import { ManualsSubview } from './project-management/ManualsSubview';
 import { StuckTasksSubview } from './project-management/StuckTasksSubview';
@@ -21,7 +22,7 @@ export const ProjectManagement: React.FC = () => {
   // paused projects too, e.g. to link them to an institution before they go live.
   const { data: allProjects, status: allProjectsStatus } = useQuery({
     queryKey: ['admin-all-site-projects'],
-    queryFn: () => getAllSiteProjects(),
+    queryFn: () => projectsApi.listAll(),
   });
   const projects = allProjects ?? [];
 
@@ -39,7 +40,7 @@ export const ProjectManagement: React.FC = () => {
     data: institutionLinksResponse,
     refetch: refetchInstitutionLinks,
     status: institutionLinksStatus,
-  } = useQuery({ queryKey: ['admin-institution-project-links'], queryFn: () => institutionsApi.listProjectLinks() });
+  } = useQuery({ queryKey: ['admin-institution-project-links'], queryFn: () => projectsApi.listInstitutionLinks() });
   const institutionLinks = institutionLinksResponse?.links ?? {};
 
   // Achtergrondvergelijking: Madoc weet niets van dissco-cs, dus als een project in Madoc
@@ -65,8 +66,8 @@ export const ProjectManagement: React.FC = () => {
         if (cancelled || liveSlugs.length === 0) return;
 
         const [institutionResult, manualResult] = await Promise.all([
-          institutionsApi.pruneProjectLinks(liveSlugs),
-          manualsApi.pruneProjectLinks(liveSlugs),
+          projectsApi.pruneInstitutionLinks(liveSlugs),
+          projectsApi.pruneManualLinks(liveSlugs),
         ]);
 
         if (cancelled) return;

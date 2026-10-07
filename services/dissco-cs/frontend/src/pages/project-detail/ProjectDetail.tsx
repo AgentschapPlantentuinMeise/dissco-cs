@@ -6,9 +6,8 @@ import { useProject } from '../../hooks/use-project';
 import { useProjectProgress } from '../../hooks/use-project-progress';
 import { useRouteContext } from '../../hooks/use-route-context';
 import { useUser } from '../../hooks/use-current-user';
-import { getTasks } from '../../api/madoc-client/tasks';
-import { randomlyAssignedManifest } from '../../api/madoc-client/crowdsourcing';
-import { institutionsApi } from '../../api/cs-api';
+import { tasksApi } from '../../api/cs-client/tasks';
+import { projectsApi } from '../../api/cs-client/projects';
 import { MadocCrowdsourcingTaskDto, MadocInternationalString } from '@dissco-cs/shared-types';
 import { buildTaskLink } from '../../utility/build-task-link';
 import { HrefLink } from '../../utility/href-link';
@@ -54,7 +53,7 @@ export const ProjectDetail: React.FC = () => {
   const { data: ownTasksData } = useQuery({
     queryKey: ['project-own-saved-tasks', project?.id, user?.id],
     queryFn: () =>
-      getTasks<MadocCrowdsourcingTaskDto>(1, {
+      tasksApi.list<MadocCrowdsourcingTaskDto>(1, {
         type: 'crowdsourcing-task',
         all_tasks: true,
         assignee: `urn:madoc:user:${user!.id}`,
@@ -73,7 +72,7 @@ export const ProjectDetail: React.FC = () => {
 
   const { data: institution } = useQuery({
     queryKey: ['project-institution', project?.slug],
-    queryFn: () => institutionsApi.getForProject(project!.slug),
+    queryFn: () => projectsApi.getInstitution(project!.slug),
     enabled: !!project,
   });
 
@@ -92,7 +91,7 @@ export const ProjectDetail: React.FC = () => {
         return;
       }
       try {
-        const result = await randomlyAssignedManifest(project.slug, {});
+        const result = await projectsApi.randomManifest(project.slug);
         if (result?.manifest) {
           await navigateToFirstCanvas(result.manifest);
         }

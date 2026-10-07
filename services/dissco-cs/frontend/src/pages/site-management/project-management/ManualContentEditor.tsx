@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { manualsApi } from '../../../api/cs-api';
+import { manualsApi } from '../../../api/cs-client/manuals';
 import { MAX_MANUAL_ATTACHMENT_LENGTH, SitePageLang } from '@dissco-cs/shared-types';
 import { SaveButton } from '../../../components/SaveButton';
 import { DeleteIconButton } from '../../../components/DeleteIconButton';

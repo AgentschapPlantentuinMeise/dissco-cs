@@ -1,8 +1,8 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { getTaskById } from '../api/madoc-client/tasks';
-import { getCaptureModelRevision, getCaptureModel } from '../api/madoc-client/crowdsourcing';
+import { tasksApi } from '../api/cs-client/tasks';
+import { captureModelsApi } from '../api/cs-client/capture-models';
 import { cloneModelDocument } from '../pages/annotate/form/document';
 import { MadocCaptureModelDto } from '@dissco-cs/shared-types';
 import { ReviewFieldForm } from './ReviewFieldForm';
@@ -19,17 +19,17 @@ interface TaskRevisionViewProps {
 export function TaskRevisionView({ taskId }: TaskRevisionViewProps) {
   const { t } = useTranslation('dissco-cs');
 
-  const taskQuery = useQuery({ queryKey: ['task-detail', taskId], queryFn: () => getTaskById(taskId), enabled: !!taskId });
+  const taskQuery = useQuery({ queryKey: ['task-detail', taskId], queryFn: () => tasksApi.get(taskId), enabled: !!taskId });
   const revisionId = taskQuery.data?.state?.revisionId;
 
   const revisionQuery = useQuery({
     queryKey: ['review-revision', revisionId],
-    queryFn: () => getCaptureModelRevision(revisionId as string),
+    queryFn: () => captureModelsApi.getRevision(revisionId as string),
     enabled: !!revisionId,
   });
   const modelQuery = useQuery<MadocCaptureModelDto>({
     queryKey: ['capture-model', revisionQuery.data?.captureModelId],
-    queryFn: () => getCaptureModel(revisionQuery.data!.captureModelId),
+    queryFn: () => captureModelsApi.get(revisionQuery.data!.captureModelId),
     enabled: !!revisionQuery.data?.captureModelId,
   });
 

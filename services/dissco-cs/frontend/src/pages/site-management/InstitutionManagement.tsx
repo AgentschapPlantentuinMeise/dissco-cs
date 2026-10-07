@@ -10,7 +10,7 @@ import { CancelButton } from '../../components/CancelButton';
 import { ActiveStatusToggle } from '../../components/ActiveStatusToggle';
 import { ActiveToggleField } from '../../components/ActiveToggleField';
 import { LuPencil, LuArrowLeft } from 'react-icons/lu';
-import { institutionsApi } from '../../api/cs-api';
+import { institutionsApi } from '../../api/cs-client/institutions';
 import { InstitutionDto, InstitutionInput, SitePageLang, SITE_PAGE_LANGS, institutionInputSchema } from '@dissco-cs/shared-types';
 import { LANGUAGES, defaultLang, siteLangText } from '../../utility/site-lang-text';
 

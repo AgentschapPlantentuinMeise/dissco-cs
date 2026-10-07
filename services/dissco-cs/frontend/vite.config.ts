@@ -20,18 +20,17 @@ export default defineConfig(({ command }) => ({
   },
   server: {
     proxy: {
-      // Our own dissco-cs-api, running locally via `pnpm dev` in api/ (see api/.env.local).
+      // Our own dissco-cs-api, running locally via `pnpm dev` in backend/ (see backend/.env.local).
       // Straight to localhost:8000, not through the gateway -- the gateway's own
       // dissco-cs-api:8000 route resolves to the Docker container (the deployed path), which
       // is a different, unrelated process from this local dev server.
       '/api/dissco-cs': 'http://localhost:8000',
-      // Gated madoc-ts/tasks-api routes (src/api/madoc-client/request.ts's `request()`), served
-      // by the gateway (nginx, see services/gateway/conf.d/services/madoc-api.conf and
-      // tasks-api.conf) at the same target as the /s proxy below. Without these, these fetches
-      // fall through to Vite's own SPA fallback and silently get index.html back.
+      // The only gated madoc-ts route the frontend still calls itself: acceptTerms
+      // (src/api/madoc-auth), served by the gateway (nginx, see
+      // services/gateway/conf.d/services/madoc-api.conf). Without this it would fall through to
+      // Vite's own SPA fallback and silently get index.html back.
       '/api/madoc': 'http://localhost:8888',
-      '/api/tasks': 'http://localhost:8888',
-      // Madoc API calls (src/api/madoc-client/request.ts) go through the gateway at
+      // madoc-ts's auth flows (src/api/madoc-auth/request.ts) go through the gateway at
       // /s/:slug/madoc/api/*. Page paths under /s/:slug/* (e.g. /s/:slug/manage) must stay
       // served by Vite itself so the SPA (and getSiteSlug()) still works when opening the app
       // directly at http://localhost:5173/s/:slug/... during local dev.

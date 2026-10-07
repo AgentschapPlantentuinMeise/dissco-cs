@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getAllSiteProjects } from '../api/madoc-client/projects';
-import { institutionsApi } from '../api/cs-api';
+import { projectsApi } from '../api/cs-client/projects';
+import { institutionsApi } from '../api/cs-client/institutions';
 import { InstitutionDto, MadocProjectDto } from '@dissco-cs/shared-types';
 
 const MIN_QUERY_LENGTH = 2;
@@ -22,7 +22,7 @@ function matchesInternationalString(value: unknown, needle: string): boolean {
 export function useSearch(query: string) {
   const projectsQuery = useQuery({
     queryKey: ['all-site-projects'],
-    queryFn: () => getAllSiteProjects(),
+    queryFn: () => projectsApi.listAll(),
     staleTime: 5 * 60 * 1000,
   });
   const institutionsQuery = useQuery({

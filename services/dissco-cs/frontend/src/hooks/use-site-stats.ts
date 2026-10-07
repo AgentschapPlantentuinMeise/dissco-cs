@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { statsApi } from '../api/cs-api';
+import { statsApi } from '../api/cs-client/stats';
 import { usePollingWindow } from './use-polling-window';
 
 // One triggering fetch on page load (starts a background recompute if the cache is stale) plus

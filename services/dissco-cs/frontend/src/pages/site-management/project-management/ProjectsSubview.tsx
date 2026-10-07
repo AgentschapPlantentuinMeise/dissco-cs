@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { institutionsApi, manualsApi } from '../../../api/cs-api';
+import { projectsApi } from '../../../api/cs-client/projects';
 import { SaveButton } from '../../../components/SaveButton';
 import { Select } from '../../../components/Select';
 import { manualHasContent } from './manual-content';
@@ -70,8 +70,8 @@ export const ProjectsSubview: React.FC<{
     setSaving(true);
     setSaveError(false);
     try {
-      await institutionsApi.setProjectLink(editingProject.slug, Number(pickedInstitutionId));
-      await manualsApi.setLink(editingProject.slug, Number(pickedManualId));
+      await projectsApi.setInstitutionLink(editingProject.slug, Number(pickedInstitutionId));
+      await projectsApi.setManualLink(editingProject.slug, Number(pickedManualId));
 
       refetchInstitutionLinks();
       refetchManuals();

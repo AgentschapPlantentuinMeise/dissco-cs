@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useUser } from '../hooks/use-current-user';
-import { reviewApi } from '../api/cs-api';
+import { reviewApi } from '../api/cs-client/review';
 
 export const AuthGate: React.FC<{ requireAdmin?: boolean; requireReviewer?: boolean; children: React.ReactNode }> = ({
   requireAdmin,

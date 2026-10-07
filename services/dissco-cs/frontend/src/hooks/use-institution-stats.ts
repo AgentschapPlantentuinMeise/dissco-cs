@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { institutionsApi } from '../api/cs-api';
+import { statsApi } from '../api/cs-client/stats';
 import { usePollingWindow } from './use-polling-window';
 
 // One triggering fetch on page load (starts a background recompute if the cache is stale) plus
@@ -10,14 +10,14 @@ import { usePollingWindow } from './use-polling-window';
 export function useInstitutionStats(slug: string | undefined) {
   const initial = useQuery({
     queryKey: ['institution-stats', slug],
-    queryFn: () => institutionsApi.getStats(slug!),
+    queryFn: () => statsApi.get(slug!),
     enabled: !!slug,
     refetchOnWindowFocus: false,
   });
   const refetchInterval = usePollingWindow();
   const peek = useQuery({
     queryKey: ['institution-stats-current', slug],
-    queryFn: () => institutionsApi.getStatsCurrent(slug!),
+    queryFn: () => statsApi.getCurrent(slug!),
     enabled: !!slug,
     refetchInterval,
   });

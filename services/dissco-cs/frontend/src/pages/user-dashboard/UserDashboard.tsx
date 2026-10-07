@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useUser } from '../../hooks/use-current-user';
 import { getSiteSlug } from '../../api/slug';
-import { getTasks, updateTask } from '../../api/madoc-client/tasks';
+import { tasksApi } from '../../api/cs-client/tasks';
 import { parseUrn } from '../../utility/parse-urn';
 import { HrefLink } from '../../utility/href-link';
 import { localeText } from '../../utility/locale-text';
@@ -15,7 +15,8 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { LuTrash2 } from 'react-icons/lu';
 import { StatBanner } from '../../components/StatBanner';
 import { TaskTable, tabBtnClass } from '../../components/TaskTable';
-import { forumApi, feedbackApi } from '../../api/cs-api';
+import { forumApi } from '../../api/cs-client/forum';
+import { feedbackApi } from '../../api/cs-client/feedback';
 import { MadocCrowdsourcingTaskDto, ForumTopicDto, FeedbackThreadDto } from '@dissco-cs/shared-types';
 import { useSiteStats } from '../../hooks/use-site-stats';
 
@@ -189,7 +190,7 @@ export const UserDashboard: React.FC = () => {
 
   const queryClient = useQueryClient();
   const { mutate: releaseTask } = useMutation({
-    mutationFn: (task: MadocCrowdsourcingTaskDto) => updateTask(task.id, { status: -1, status_text: 'abandoned' }),
+    mutationFn: (task: MadocCrowdsourcingTaskDto) => tasksApi.update(task.id, { status: -1, status_text: 'abandoned' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['collection'] });
@@ -207,17 +208,17 @@ export const UserDashboard: React.FC = () => {
         sort_by: 'newest',
         detail: true,
       };
-      const first = await getTasks<MadocCrowdsourcingTaskDto>(1, query);
+      const first = await tasksApi.list<MadocCrowdsourcingTaskDto>(1, query);
       const totalPages = first.pagination?.totalPages ?? 1;
       const rest = await Promise.all(
-        Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => getTasks<MadocCrowdsourcingTaskDto>(i + 2, query))
+        Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => tasksApi.list<MadocCrowdsourcingTaskDto>(i + 2, query))
       );
       return { ...first, tasks: [...first.tasks, ...rest.flatMap(r => r.tasks)] };
     },
     enabled: !!user,
   });
 
-  // getTasks({ all_tasks: true }) called straight from the browser only ever returns the calling
+  // tasksApi.list({ all_tasks: true }) is forwarded as the user, so it only ever returns the calling
   // user's own tasks for a non-admin contributor (see docs/MANIFEST-CLAIMS.md) — so the site-wide
   // total has to come from the backend-computed stats instead, same as the homepage banner.
   const { data: siteStats } = useSiteStats();

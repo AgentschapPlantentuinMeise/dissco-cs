@@ -17,7 +17,7 @@ export type InstitutionDto = {
   sort_order: number;
 };
 
-// Was api/src/validators.ts MAX_LOGO_LENGTH -- lives here now because the schema enforces the
+// Was backend/src/validators.ts MAX_LOGO_LENGTH -- lives here now because the schema enforces the
 // limit both client- and server-side.
 export const INSTITUTION_LOGO_MAX_LENGTH = 3_000_000;
 
@@ -45,11 +45,3 @@ export const institutionInputSchema = z.object({
 });
 
 export type InstitutionInput = z.infer<typeof institutionInputSchema>;
-
-export type InstitutionStatsDto = {
-  volunteers: number;
-  tasksCompleted: number;
-  tasksTotal: number;
-  projectsActive: number;
-  projectsCompleted: number;
-};

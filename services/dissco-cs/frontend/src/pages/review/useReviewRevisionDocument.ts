@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getCaptureModelRevision, getCaptureModel } from '../../api/madoc-client/crowdsourcing';
+import { captureModelsApi } from '../../api/cs-client/capture-models';
 import { ReviewTaskDto, MadocAnnotationDocumentDto, MadocCaptureModelDto } from '@dissco-cs/shared-types';
 import { cloneModelDocument, setFieldValue, DocumentPath } from '../annotate/form/document';
 
@@ -13,12 +13,12 @@ export function useReviewRevisionDocument(
 ) {
   const revisionQuery = useQuery({
     queryKey: ['review-revision', row.revisionId],
-    queryFn: () => getCaptureModelRevision(row.revisionId as string),
+    queryFn: () => captureModelsApi.getRevision(row.revisionId as string),
     enabled: !!row.revisionId,
   });
   const modelQuery = useQuery<MadocCaptureModelDto>({
     queryKey: ['capture-model', revisionQuery.data?.captureModelId],
-    queryFn: () => getCaptureModel(revisionQuery.data!.captureModelId),
+    queryFn: () => captureModelsApi.get(revisionQuery.data!.captureModelId),
     enabled: !!revisionQuery.data?.captureModelId,
   });
 

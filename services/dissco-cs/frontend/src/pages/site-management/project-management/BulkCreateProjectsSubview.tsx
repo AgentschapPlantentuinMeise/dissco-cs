@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createProject, exportProject, getProjectStructure, updateProjectStatus } from '../../../api/madoc-client/projects';
-import { getAllAdminCollections, updateCollectionStructure } from '../../../api/madoc-client/collections';
+import { projectsApi } from '../../../api/cs-client/projects';
+import { iiifApi } from '../../../api/cs-client/iiif';
 import { Select } from '../../../components/Select';
 import { slugify } from '../../../utility/slugify';
 import { localeText } from '../../../utility/locale-text';
@@ -22,7 +22,7 @@ export const BulkCreateProjectsSubview: React.FC<{ projects: MadocProjectDto[] }
   const [sourceSlug, setSourceSlug] = useState('');
   const [manifestCollectionIds, setManifestCollectionIds] = useState<string[]>([]);
   const queryClient = useQueryClient();
-  const { data: collections = [] } = useQuery({ queryKey: ['admin-collections'], queryFn: getAllAdminCollections });
+  const { data: collections = [] } = useQuery({ queryKey: ['admin-collections'], queryFn: iiifApi.listCollections });
   const [running, setRunning] = useState(false);
   const [finished, setFinished] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0, failed: 0 });
@@ -42,7 +42,7 @@ export const BulkCreateProjectsSubview: React.FC<{ projects: MadocProjectDto[] }
     const runSuffix = Date.now().toString(36);
 
     const sourceProject = sourceSlug ? projects.find(p => p.slug === sourceSlug) : null;
-    const remoteTemplate = sourceProject ? await exportProject(sourceProject.id) : null;
+    const remoteTemplate = sourceProject ? await projectsApi.exportTemplate(sourceProject.id) : null;
 
     let done = 0;
     let failed = 0;
@@ -51,7 +51,7 @@ export const BulkCreateProjectsSubview: React.FC<{ projects: MadocProjectDto[] }
     for (let i = 1; i <= count; i++) {
       if (stopRef.current) break;
       try {
-        const newProject = await createProject({
+        const newProject = await projectsApi.create({
           label: { [lang]: [`${title.trim()} ${i}`] },
           summary: { [lang]: [description.trim()] },
           slug: `${slugBase}-${runSuffix}-${i}`,
@@ -60,11 +60,11 @@ export const BulkCreateProjectsSubview: React.FC<{ projects: MadocProjectDto[] }
         });
 
         if (manifestCollectionIds.length > 0) {
-          const structure = await getProjectStructure(newProject.id);
-          await updateCollectionStructure(structure.collectionId, manifestCollectionIds.map(Number));
+          const structure = await projectsApi.getStructure(newProject.id);
+          await iiifApi.setCollectionStructure(structure.collectionId, manifestCollectionIds.map(Number));
         }
 
-        await updateProjectStatus(newProject.id, 1);
+        await projectsApi.setStatus(newProject.id, 1);
       } catch (err) {
         failed += 1;
         collectedErrors.push({ index: i, message: err instanceof Error ? err.message : String(err) });

@@ -13,7 +13,7 @@ import { Select } from '../../components/Select';
 import { LuPencil, LuArrowLeft } from 'react-icons/lu';
 import { LANGUAGES, defaultLang, siteLangText } from '../../utility/site-lang-text';
 import { localeText } from '../../utility/locale-text';
-import { announcementsApi } from '../../api/cs-api';
+import { announcementsApi } from '../../api/cs-client/announcements';
 import { useProjectList } from '../../hooks/use-project-list';
 import { MarkdownToolbar } from '../../components/MarkdownToolbar';
 import {

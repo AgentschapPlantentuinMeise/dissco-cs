@@ -10,7 +10,9 @@ import { useUser } from '../../hooks/use-current-user';
 import { LuUser, LuSearch, LuX } from 'react-icons/lu';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { getSiteSlug } from '../../api/slug';
-import { forumApi, reviewApi, feedbackApi } from '../../api/cs-api';
+import { forumApi } from '../../api/cs-client/forum';
+import { reviewApi } from '../../api/cs-client/review';
+import { feedbackApi } from '../../api/cs-client/feedback';
 import { useNavItems } from '../../contexts/NavItemsContext';
 import { NAV_ITEMS } from '../../nav-config';
 

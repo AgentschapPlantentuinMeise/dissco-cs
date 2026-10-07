@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { projectProgressApi } from '../api/cs-api';
+import { projectsApi } from '../api/cs-client/projects';
 import { ProjectProgressDto } from '@dissco-cs/shared-types';
 
 // Caps how many /progress requests are in flight at once -- each one triggers several downstream
@@ -65,7 +65,7 @@ export function useProjectProgress(projectId: number | string | undefined) {
     queryKey: ['project-progress', projectId],
     queryFn: () => {
       controllerRef.current = new AbortController();
-      return runQueued(signal => projectProgressApi.get(projectId!, signal), controllerRef.current.signal);
+      return runQueued(signal => projectsApi.getProgress(projectId!, signal), controllerRef.current.signal);
     },
     enabled: !!projectId,
     staleTime: 0,

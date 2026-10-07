@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { projectDebugApi } from '../../../api/cs-api';
+import { projectsApi } from '../../../api/cs-client/projects';
 import { Select } from '../../../components/Select';
 import { useAutoSelectFirstSlug } from '../../../hooks/use-auto-select-first-slug';
 import { localeText } from '../../../utility/locale-text';
@@ -33,7 +33,7 @@ export const TaskDebugSubview: React.FC<{ projects: MadocProjectDto[] }> = ({ pr
 
   const { data, status: queryStatus } = useQuery({
     queryKey: ['project-task-debug', selectedProject?.id],
-    queryFn: () => projectDebugApi.getTaskStatus(selectedProject!.id),
+    queryFn: () => projectsApi.getTaskDebug(selectedProject!.id),
     enabled: !!selectedProject,
     staleTime: 0,
   });

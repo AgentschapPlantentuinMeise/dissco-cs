@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CsPage } from '../../components/CsPage';
 import { HrefLink } from '../../utility/href-link';
-import { forgotPassword } from '../../api/madoc-client/auth';
+import { forgotPassword } from '../../api/madoc-auth/auth';
 
 export const ForgotPassword: React.FC = () => {
   const { t } = useTranslation('dissco-cs');

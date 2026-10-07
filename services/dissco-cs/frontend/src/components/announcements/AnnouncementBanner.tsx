@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
-import { announcementsApi } from '../../api/cs-api';
+import { announcementsApi } from '../../api/cs-client/announcements';
 import { AnnouncementDto, AnnouncementTargetType } from '@dissco-cs/shared-types';
 import { LuPin, LuChevronDown } from 'react-icons/lu';
 import { useUser } from '../../hooks/use-current-user';

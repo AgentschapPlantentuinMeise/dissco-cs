@@ -5,10 +5,10 @@ import { useQuery } from '@tanstack/react-query';
 import { CsPage } from '../../components/CsPage';
 import { HrefLink } from '../../utility/href-link';
 import { LuArrowLeft, LuMail, LuPhone, LuGlobe, LuMedal, LuClock, LuCalendar } from 'react-icons/lu';
-import { institutionsApi } from '../../api/cs-api';
+import { institutionsApi } from '../../api/cs-client/institutions';
 import { StatBanner } from '../../components/StatBanner';
 import { PeriodCard } from '../../components/honour-board/PeriodCard';
-import { getAllSiteProjects } from '../../api/madoc-client/projects';
+import { projectsApi } from '../../api/cs-client/projects';
 import { useInstitutionStats } from '../../hooks/use-institution-stats';
 import { useInstitutionHonourBoard } from '../../hooks/use-institution-honour-board';
 import { ProjectCard } from '../../components/projectcard/ProjectCard';
@@ -37,7 +37,7 @@ export const InstitutionDetail: React.FC = () => {
   // linked projects entirely if enough other/older projects exist.
   const { data: allProjects } = useQuery({
     queryKey: ['all-site-projects', { published: true }],
-    queryFn: () => getAllSiteProjects({ published: true }),
+    queryFn: () => projectsApi.listAll({ published: true }),
     staleTime: 5 * 60 * 1000,
   });
   const linkedProjects = (allProjects ?? []).filter((p: MadocProjectDto) => projectSlugs.includes(p.slug));

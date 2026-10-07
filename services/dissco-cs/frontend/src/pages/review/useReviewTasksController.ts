@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { reviewApi, feedbackApi } from '../../api/cs-api';
+import { reviewApi } from '../../api/cs-client/review';
+import { feedbackApi } from '../../api/cs-client/feedback';
 import { ReviewTaskDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
-import { ApiError } from '../../api/madoc-client/request';
-import { getCaptureModelRevision, updateCaptureModelRevision, updateRevisionTask } from '../../api/madoc-client/crowdsourcing';
+import { ApiError } from '../../api/cs-client/request';
+import { captureModelsApi } from '../../api/cs-client/capture-models';
 import { localeText } from '../../utility/locale-text';
 import { useUser } from '../../hooks/use-current-user';
 
@@ -75,7 +76,7 @@ export function useReviewTasksController() {
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
   // Enkel taken waarvan de ingelogde gebruiker zelf de toegewezen reviewer is -- de backend
-  // levert nog steeds alle site-brede review-taken aan (zie review.routes.ts), maar deze
+  // levert nog steeds alle site-brede review-taken aan (zie review.controller.ts), maar deze
   // pagina's tonen voortaan enkel de eigen wachtrij.
   const rows = (data?.tasks ?? []).filter(row => !!user && row.reviewerId === user.id && !dismissedIds.has(row.id));
 
@@ -195,8 +196,8 @@ export function useReviewTasksController() {
     if (!row.revisionId || !row.originalTaskId) {
       throw new Error(t('review_bulk_error_no_revision'));
     }
-    const revisionRequest = await getCaptureModelRevision(row.revisionId);
-    await updateCaptureModelRevision(
+    const revisionRequest = await captureModelsApi.getRevision(row.revisionId);
+    await captureModelsApi.updateRevision(
       {
         ...revisionRequest,
         document: editedDocument ?? revisionRequest.document,
@@ -205,7 +206,7 @@ export function useReviewTasksController() {
       },
       'accepted'
     );
-    await updateRevisionTask(row.originalTaskId, {
+    await reviewApi.updateTask(row.originalTaskId, {
       status: 3,
       status_text: 'Approved',
       state: { changesRequested: '' },
@@ -273,7 +274,7 @@ export function useReviewTasksController() {
     setReleaseError(null);
     setReleasing(row.id);
     try {
-      await updateRevisionTask(row.originalTaskId, { status: -1, status_text: 'Rejected' });
+      await reviewApi.updateTask(row.originalTaskId, { status: -1, status_text: 'Rejected' });
       setDismissedIds(prev => new Set(prev).add(row.id));
       setOpenRowId(current => {
         const idx = visibleRows.findIndex(r => r.id === current);

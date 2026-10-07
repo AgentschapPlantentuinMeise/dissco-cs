@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { stuckTasksApi, manifestClaimApi } from '../../../api/cs-api';
+import { tasksApi } from '../../../api/cs-client/tasks';
+import { projectsApi } from '../../../api/cs-client/projects';
 import { HrefLink } from '../../../utility/href-link';
 import { buildTaskLink } from '../../../utility/build-task-link';
 import { localeText } from '../../../utility/locale-text';
@@ -15,7 +16,7 @@ function statusLabelKey(status: number): string {
 export const StuckTasksSubview: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
-  const { data, refetch, status: queryStatus } = useQuery({ queryKey: ['stuck-tasks'], queryFn: () => stuckTasksApi.list() });
+  const { data, refetch, status: queryStatus } = useQuery({ queryKey: ['stuck-tasks'], queryFn: () => tasksApi.listStuck() });
   const [releasingId, setReleasingId] = useState<string | null>(null);
   const [resyncingId, setResyncingId] = useState<string | null>(null);
   const [confirmTask, setConfirmTask] = useState<MadocCrowdsourcingTaskDto | null>(null);
@@ -27,13 +28,13 @@ export const StuckTasksSubview: React.FC = () => {
     setConfirmTask(null);
     setReleasingId(task.id);
     try {
-      await stuckTasksApi.release(task.id);
+      await tasksApi.release(task.id);
       const projectId = task.metadata?.project?.id;
       const manifestId = task.metadata?.subject?.id;
       if (projectId && manifestId) {
         // Best-effort: madoc-ts only re-syncs the shared max-contributors counter when a NEW
         // claim is created, never on a release — same reason AnnotatePage does this after abandon.
-        await manifestClaimApi.resync(projectId, manifestId).catch(err => console.error('[StuckTasks] resync failed', err));
+        await projectsApi.resyncClaim(projectId, manifestId).catch(err => console.error('[StuckTasks] resync failed', err));
       }
       queryClient.invalidateQueries({ queryKey: ['collection'] });
       await refetch();
@@ -45,7 +46,7 @@ export const StuckTasksSubview: React.FC = () => {
   const resyncCounter = async (counter: MadocCrowdsourcingTaskDto) => {
     setResyncingId(counter.id);
     try {
-      await stuckTasksApi.resyncManifest(counter.id);
+      await tasksApi.resyncManifest(counter.id);
       queryClient.invalidateQueries({ queryKey: ['collection'] });
       await refetch();
     } finally {

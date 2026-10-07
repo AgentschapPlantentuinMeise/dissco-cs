@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { CsPage } from '../../components/CsPage';
 import { CsMarkdown } from '../../components/CsMarkdown';
 import { useNavItems } from '../../contexts/NavItemsContext';
-import { contactApi } from '../../api/cs-api';
+import { contactApi } from '../../api/cs-client/contact';
 
 export const Contact: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');

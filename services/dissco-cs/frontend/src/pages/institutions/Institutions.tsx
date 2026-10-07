@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { CsPage } from '../../components/CsPage';
 import { InstitutionCard } from '../../components/institutioncard/InstitutionCard';
-import { institutionsApi } from '../../api/cs-api';
+import { institutionsApi } from '../../api/cs-client/institutions';
 import { StatBanner } from '../../components/StatBanner';
 import { HonourBoardSpotlight } from '../../components/honour-board/HonourBoardSpotlight';
 import { useSiteStats } from '../../hooks/use-site-stats';

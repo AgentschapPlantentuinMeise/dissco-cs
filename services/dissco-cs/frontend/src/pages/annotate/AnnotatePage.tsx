@@ -2,17 +2,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ApiError } from '../../api/madoc-client/request';
-import { getManifestStructure, getSiteCanvas } from '../../api/madoc-client/collections';
-import {
-  prepareClaim,
-  getCaptureModel,
-  revokeResourceClaim,
-  createResourceClaim,
-  createCaptureModelRevision,
-} from '../../api/madoc-client/crowdsourcing';
-import { updateTask } from '../../api/madoc-client/tasks';
-import { manifestClaimApi, forumApi } from '../../api/cs-api';
+import { ApiError } from '../../api/cs-client/request';
+import { iiifApi } from '../../api/cs-client/iiif';
+import { captureModelsApi } from '../../api/cs-client/capture-models';
+import { tasksApi } from '../../api/cs-client/tasks';
+import { projectsApi } from '../../api/cs-client/projects';
+import { forumApi } from '../../api/cs-client/forum';
 import { useProject } from '../../hooks/use-project';
 import { useRouteContext } from '../../hooks/use-route-context';
 import { useDisscoCSNavigation } from '../../hooks/use-dissco-cs-navigation';
@@ -69,7 +64,7 @@ export function AnnotatePage() {
 
   const { data: structure, isError: structureError, error: structureErrorObj } = useQuery({
     queryKey: ['manifest-structure', manifestId],
-    queryFn: () => getManifestStructure(manifestId!),
+    queryFn: () => iiifApi.getManifestStructure(manifestId!),
     enabled: !!manifestId,
     retry: false,
   });
@@ -78,13 +73,13 @@ export function AnnotatePage() {
 
   const { data: canvasData } = useQuery({
     queryKey: ['canvas', canvases[canvasIndex]?.id],
-    queryFn: () => getSiteCanvas(canvases[canvasIndex].id),
+    queryFn: () => iiifApi.getCanvas(canvases[canvasIndex].id),
     enabled: !!canvases[canvasIndex],
   });
 
   const { data: prepared, isError: preparedError, error: preparedErrorObj } = useQuery({
     queryKey: ['prepare-claim', project?.id, manifestId],
-    queryFn: () => prepareClaim(project!.id, { manifestId }),
+    queryFn: () => projectsApi.prepareClaim(project!.id, { manifestId }),
     enabled: !!project?.id && !!manifestId,
     retry: false,
   });
@@ -102,7 +97,7 @@ export function AnnotatePage() {
 
   const { data: model, isError: modelError, error: modelErrorObj } = useQuery<MadocCaptureModelDto>({
     queryKey: ['capture-model', prepared?.model?.id],
-    queryFn: () => getCaptureModel(prepared!.model!.id),
+    queryFn: () => captureModelsApi.get(prepared!.model!.id),
     enabled: !!prepared?.model,
     retry: false,
   });
@@ -199,14 +194,14 @@ export function AnnotatePage() {
     try {
       // Deletes the claim task outright (upstream madoc-ts route), instead of leaving an
       // 'abandoned' row behind — see AnnotatePage/manifest-claims discussion.
-      await revokeResourceClaim(project.id, { manifestId });
+      await projectsApi.revokeClaim(project.id, { manifestId });
       // ProjectDetail.tsx's manifest list is cached under ['collection', collectionId] — invalidate by
       // prefix so the "Choose where to start" grid re-fetches and shows the manifest as available again.
       queryClient.invalidateQueries({ queryKey: ['collection'] });
       // Best-effort: madoc-ts only re-syncs the shared max-contributors counter when a NEW claim
       // is created, never on an abandon — without this, a manifest that hit its contributor
       // limit stays blocked for everyone (incl. this user) once its only active claim is released.
-      await manifestClaimApi.resync(project.id, manifestId).catch(err => console.error('[CS] resync failed', err));
+      await projectsApi.resyncClaim(project.id, manifestId).catch(err => console.error('[CS] resync failed', err));
     } catch (err) {
       console.error('[CS] abandon failed', err);
     }
@@ -255,7 +250,7 @@ export function AnnotatePage() {
     // 'm hierboven kunnen hergebruiken.
     revisionIdRef.current = generateUUID();
     console.log('[CS] claiming manifest', { projectId: project.id, manifestId, revisionId: revisionIdRef.current });
-    const promise = createResourceClaim(project.id, { manifestId, status: 0, revisionId: revisionIdRef.current });
+    const promise = projectsApi.claim(project.id, { manifestId, status: 0, revisionId: revisionIdRef.current });
     claimPromiseRef.current = promise;
     promise
       .then(result => {
@@ -292,10 +287,10 @@ export function AnnotatePage() {
     hasSaved.current = true;
     if (project?.id && manifestId) {
       try {
-        await revokeResourceClaim(project.id, { manifestId });
+        await projectsApi.revokeClaim(project.id, { manifestId });
         queryClient.invalidateQueries({ queryKey: ['collection'] });
         queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
-        await manifestClaimApi.resync(project.id, manifestId).catch(err => console.error('[CS] resync failed', err));
+        await projectsApi.resyncClaim(project.id, manifestId).catch(err => console.error('[CS] resync failed', err));
       } catch (err) {
         console.error('[CS] release failed', err);
       }
@@ -310,9 +305,9 @@ export function AnnotatePage() {
       // is still in flight can never race releaseClaim into sending an abandon for a task that's
       // actually being saved.
       hasSaved.current = true;
-      await createCaptureModelRevision(
+      await captureModelsApi.createRevision(
         {
-          // A model fetched via getCaptureModel() always carries its own id back -- id is only
+          // A model fetched via captureModelsApi.get() always carries its own id back -- id is only
           // optional on MadocCaptureModelDto because a freshly-built local model (never seen here) wouldn't.
           captureModelId: model.id!,
           document: annotationDocument,
@@ -330,7 +325,7 @@ export function AnnotatePage() {
       // it here too, same as releaseClaim does for abandoned claims.
       const claimId = await getClaimId();
       if (claimId) {
-        await updateTask(claimId, {
+        await tasksApi.update(claimId, {
           status: status === 'draft' ? 1 : 2,
           status_text: status === 'draft' ? 'in progress' : 'submitted',
         });

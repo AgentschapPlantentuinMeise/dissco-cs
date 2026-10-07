@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/CsPage';
 import { TermsModal } from '../../components/TermsModal';
 import { HrefLink } from '../../utility/href-link';
-import { register, getInvitation, getTerms } from '../../api/madoc-client/auth';
+import { register, getInvitation, getTerms } from '../../api/madoc-auth/auth';
 import { MadocSiteTermsDto, InvitationDto } from '@dissco-cs/shared-types';
 import { useUser } from '../../hooks/use-current-user';
 import { getSiteSlug } from '../../api/slug';

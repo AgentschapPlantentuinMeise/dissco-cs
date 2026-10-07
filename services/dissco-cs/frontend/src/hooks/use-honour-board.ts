@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { honourBoardApi } from '../api/cs-api';
+import { statsApi } from '../api/cs-client/stats';
 import { HonourBoardPeriodKey } from '@dissco-cs/shared-types';
 import { usePollingWindow } from './use-polling-window';
 
@@ -14,7 +14,7 @@ import { usePollingWindow } from './use-polling-window';
 function usePeriod(period: HonourBoardPeriodKey, refetchInterval: number | false) {
   const initial = useQuery({
     queryKey: ['honour-board', period],
-    queryFn: () => honourBoardApi.get(period),
+    queryFn: () => statsApi.getHonourBoard(period),
     refetchOnWindowFocus: false,
   });
   useEffect(() => {
@@ -23,7 +23,7 @@ function usePeriod(period: HonourBoardPeriodKey, refetchInterval: number | false
 
   const peek = useQuery({
     queryKey: ['honour-board-current', period],
-    queryFn: () => honourBoardApi.getCurrent(period),
+    queryFn: () => statsApi.getHonourBoardCurrent(period),
     refetchInterval,
   });
   useEffect(() => {

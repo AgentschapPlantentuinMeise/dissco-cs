@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { navItemsApi } from '../api/cs-api';
+import { navItemsApi } from '../api/cs-client/nav-items';
 import { NavItemDto, NavItemKey, NAV_ITEM_KEYS } from '@dissco-cs/shared-types';
 
 // Used before the first fetch resolves (or if it fails) — fail-open, in the default order,

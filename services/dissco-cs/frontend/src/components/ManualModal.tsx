@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
 import { Modal } from './Modal';
 import { LuChevronDown, LuX, LuArrowLeft, LuArrowRight } from 'react-icons/lu';
-import { manualsApi } from '../api/cs-api';
+import { projectsApi } from '../api/cs-client/projects';
 import { SitePageLang } from '@dissco-cs/shared-types';
 import { siteLangText } from '../utility/site-lang-text';
 
@@ -451,7 +451,7 @@ export const ManualModal: React.FC<ManualModalProps> = ({
   const { t, i18n } = useTranslation('dissco-cs');
   const { data: manual } = useQuery({
     queryKey: ['project-manual', projectSlug],
-    queryFn: () => manualsApi.getForProject(projectSlug),
+    queryFn: () => projectsApi.getManual(projectSlug),
     enabled: open,
     retry: false,
     staleTime: 5 * 60 * 1000,
@@ -476,7 +476,7 @@ export const ManualModal: React.FC<ManualModalProps> = ({
 
   const lang = (manual?.attachments?.[i18n.language as SitePageLang] ? i18n.language : 'nl') as SitePageLang;
   const attachment = manual?.attachments?.[lang];
-  const attachmentUrl = attachment ? manualsApi.attachmentUrl(projectSlug, lang) : null;
+  const attachmentUrl = attachment ? projectsApi.manualAttachmentUrl(projectSlug, lang) : null;
   const isPdf = attachment?.mimeType === 'application/pdf';
 
   // Geen tekst, enkel een PDF -- de tussenpop voegt dan niets toe, dus meteen de galerij tonen.
