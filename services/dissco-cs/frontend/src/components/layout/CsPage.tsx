@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navbar } from './navbar/Navbar';
+import { Navbar } from './Navbar';
 
 export function CsPage({ children }: { children: React.ReactNode }) {
   return (

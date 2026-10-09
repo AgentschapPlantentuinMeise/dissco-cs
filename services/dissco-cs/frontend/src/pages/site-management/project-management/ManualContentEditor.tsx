@@ -5,9 +5,9 @@ import { manualQueries } from '../../../api/queries/manuals';
 import { projectKeys } from '../../../api/queries/projects';
 import { manualsApi } from '../../../api/cs-client/manuals';
 import { MAX_MANUAL_ATTACHMENT_LENGTH, SitePageLang } from '@dissco-cs/shared-types';
-import { SaveButton } from '../../../components/SaveButton';
-import { DeleteIconButton } from '../../../components/DeleteIconButton';
-import { MarkdownToolbar } from '../../../components/MarkdownToolbar';
+import { SaveButton } from '../../../components/ui/SaveButton';
+import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
+import { MarkdownToolbar } from '../../../components/ui/MarkdownToolbar';
 import { LuCheck } from 'react-icons/lu';
 import { LANGUAGES, defaultLang } from '../../../utility/site-lang-text';
 

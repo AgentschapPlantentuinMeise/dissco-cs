@@ -1,7 +1,7 @@
 ﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { CsPage } from '../../components/CsPage';
-import { CsMarkdown } from '../../components/CsMarkdown';
+import { CsPage } from '../../components/layout/CsPage';
+import { CsMarkdown } from '../../components/ui/CsMarkdown';
 import { useNavItems } from '../../hooks/use-nav-items';
 
 export const About: React.FC = () => {

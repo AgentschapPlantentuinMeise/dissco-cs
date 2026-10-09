@@ -5,7 +5,7 @@ import { projectQueries } from '../../api/queries/projects';
 import { manualQueries } from '../../api/queries/manuals';
 import { institutionQueries } from '../../api/queries/institutions';
 import { HrefLink } from '../../utility/href-link';
-import { CsPage } from '../../components/CsPage';
+import { CsPage } from '../../components/layout/CsPage';
 import { LuArrowLeft } from 'react-icons/lu';
 import { projectsApi } from '../../api/cs-client/projects';
 import { ProjectsSubview } from './project-management/ProjectsSubview';

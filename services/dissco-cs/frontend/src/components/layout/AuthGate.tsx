@@ -1,8 +1,8 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { reviewQueries } from '../api/queries/review';
-import { useCurrentUser } from '../hooks/use-current-user';
+import { reviewQueries } from '../../api/queries/review';
+import { useCurrentUser } from '../../hooks/use-current-user';
 
 export const AuthGate: React.FC<{ requireAdmin?: boolean; requireReviewer?: boolean; children: React.ReactNode }> = ({
   requireAdmin,

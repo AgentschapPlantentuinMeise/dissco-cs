@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { manualsApi } from '../../../api/cs-client/manuals';
-import { SaveButton } from '../../../components/SaveButton';
-import { ConfirmDialog } from '../../../components/ConfirmDialog';
+import { SaveButton } from '../../../components/ui/SaveButton';
+import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { ManualContentEditor } from './ManualContentEditor';
 import { manualHasContent } from './manual-content';
 import { localeText } from '../../../utility/locale-text';

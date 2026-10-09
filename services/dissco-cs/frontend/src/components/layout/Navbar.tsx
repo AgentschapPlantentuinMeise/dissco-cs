@@ -14,7 +14,7 @@ import { LuUser, LuSearch, LuX } from 'react-icons/lu';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { getSiteSlug } from '../../api/slug';
 import { useNavItems } from '../../hooks/use-nav-items';
-import { NAV_ITEMS } from '../../nav-config';
+import { NAV_ITEMS } from './nav-config';
 
 const LANGUAGES = disscoCSConfig.supportedLanguages;
 

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { projectsApi } from '../../../api/cs-client/projects';
-import { SaveButton } from '../../../components/SaveButton';
-import { Select } from '../../../components/Select';
+import { SaveButton } from '../../../components/ui/SaveButton';
+import { Select } from '../../../components/ui/Select';
 import { manualHasContent } from './manual-content';
 import { localeText } from '../../../utility/locale-text';
 import { siteLangText } from '../../../utility/site-lang-text';

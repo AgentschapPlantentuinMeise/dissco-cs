@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { CsPage } from '../../components/CsPage';
-import { StatBanner } from '../../components/StatBanner';
-import { PeriodCard } from '../../components/honour-board/PeriodCard';
+import { CsPage } from '../../components/layout/CsPage';
+import { StatBanner } from '../../components/ui/StatBanner';
+import { PeriodCard } from '../../components/stats/PeriodCard';
 import { useSiteHonourBoard } from '../../hooks/use-site-honour-board';
 import { useSiteStats } from '../../hooks/use-site-stats';
 import { LuMedal, LuClock, LuCalendar } from 'react-icons/lu';

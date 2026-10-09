@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useProjectProgress } from '../../hooks/use-project-progress';
-import { LocaleString } from '../LocaleString';
+import { LocaleString } from '../ui/LocaleString';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { LuShapes } from 'react-icons/lu';
 import { MadocProjectDto } from '@dissco-cs/shared-types';

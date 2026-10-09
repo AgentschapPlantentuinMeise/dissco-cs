@@ -4,19 +4,19 @@ import { useQuery } from '@tanstack/react-query';
 import { announcementQueries } from '../../api/queries/announcements';
 import { projectQueries } from '../../api/queries/projects';
 import { HrefLink } from '../../utility/href-link';
-import { CsPage } from '../../components/CsPage';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { DeleteIconButton } from '../../components/DeleteIconButton';
-import { SaveButton } from '../../components/SaveButton';
-import { CancelButton } from '../../components/CancelButton';
-import { ActiveStatusToggle } from '../../components/ActiveStatusToggle';
-import { ActiveToggleField } from '../../components/ActiveToggleField';
-import { Select } from '../../components/Select';
+import { CsPage } from '../../components/layout/CsPage';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { DeleteIconButton } from '../../components/ui/DeleteIconButton';
+import { SaveButton } from '../../components/ui/SaveButton';
+import { CancelButton } from '../../components/ui/CancelButton';
+import { ActiveStatusToggle } from '../../components/ui/ActiveStatusToggle';
+import { ActiveToggleField } from '../../components/ui/ActiveToggleField';
+import { Select } from '../../components/ui/Select';
 import { LuPencil, LuArrowLeft } from 'react-icons/lu';
 import { LANGUAGES, defaultLang, siteLangText } from '../../utility/site-lang-text';
 import { localeText } from '../../utility/locale-text';
 import { announcementsApi } from '../../api/cs-client/announcements';
-import { MarkdownToolbar } from '../../components/MarkdownToolbar';
+import { MarkdownToolbar } from '../../components/ui/MarkdownToolbar';
 import {
   MadocProjectDto,
   AnnouncementDto,

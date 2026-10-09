@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useSearchParams } from 'react-router-dom';
-import { CsPage } from '../../components/CsPage';
+import { CsPage } from '../../components/layout/CsPage';
 import { setPassword as submitSetPassword, checkReset } from '../../api/madoc-auth/auth';
 import { getSiteSlug } from '../../api/slug';
 import { LuEye, LuEyeOff } from 'react-icons/lu';

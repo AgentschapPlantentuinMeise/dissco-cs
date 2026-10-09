@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { CsPage } from '../../components/CsPage';
-import { TermsModal } from '../../components/TermsModal';
+import { CsPage } from '../../components/layout/CsPage';
+import { TermsModal } from '../../components/auth/TermsModal';
 import { HrefLink } from '../../utility/href-link';
 import { login, getTerms, acceptTerms } from '../../api/madoc-auth/auth';
 import { MadocSiteTermsDto } from '@dissco-cs/shared-types';

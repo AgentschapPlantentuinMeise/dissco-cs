@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { projectQueries } from '../../../api/queries/projects';
-import { Select } from '../../../components/Select';
-import { useAutoSelectFirstSlug } from '../../../hooks/use-auto-select-first-slug';
+import { Select } from '../../../components/ui/Select';
+import { useAutoSelectFirstSlug } from './use-auto-select-first-slug';
 import { localeText } from '../../../utility/locale-text';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
 

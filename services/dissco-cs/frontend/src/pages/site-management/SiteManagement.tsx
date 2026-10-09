@@ -2,7 +2,7 @@
 import { useTranslation } from 'react-i18next';
 import { getSiteSlug } from '../../api/slug';
 import { HrefLink } from '../../utility/href-link';
-import { CsPage } from '../../components/CsPage';
+import { CsPage } from '../../components/layout/CsPage';
 
 interface Tile {
   href: string;

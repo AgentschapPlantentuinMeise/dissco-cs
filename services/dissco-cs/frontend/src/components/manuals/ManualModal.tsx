@@ -2,13 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { projectQueries } from '../api/queries/projects';
+import { projectQueries } from '../../api/queries/projects';
 import ReactMarkdown from 'react-markdown';
-import { Modal } from './Modal';
+import { Modal } from '../ui/Modal';
 import { LuChevronDown, LuX, LuArrowLeft, LuArrowRight } from 'react-icons/lu';
-import { projectsApi } from '../api/cs-client/projects';
+import { projectsApi } from '../../api/cs-client/projects';
 import { SitePageLang } from '@dissco-cs/shared-types';
-import { siteLangText } from '../utility/site-lang-text';
+import { siteLangText } from '../../utility/site-lang-text';
 
 type ManualModalProps = {
   projectSlug: string;

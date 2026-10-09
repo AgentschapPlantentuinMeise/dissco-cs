@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReviewTaskDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
-import { ReviewFieldForm } from '../../components/ReviewFieldForm';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { useReviewRevisionDocument } from '../../hooks/use-review-revision-document';
+import { ReviewFieldForm } from '../../components/capture-models/ReviewFieldForm';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { useReviewRevisionDocument } from './use-review-revision-document';
 import { localeText } from '../../utility/locale-text';
 import { LuTrash2 } from 'react-icons/lu';
 

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { captureModelQueries } from '../api/queries/capture-models';
+import { captureModelQueries } from '../../api/queries/capture-models';
 import { ReviewTaskDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
-import { cloneModelDocument, setFieldValue, DocumentPath } from '../utility/annotation-document';
+import { cloneModelDocument, setFieldValue, DocumentPath } from '../../utility/annotation-document';
 
 // Gebruikt door ReviewInlineExpansion: haalt de revisie + het capture model op en levert het
 // document dat getoond moet worden (lokale correctie indien aanwezig, anders een leeg document

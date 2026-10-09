@@ -2,13 +2,13 @@
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { projectQueries } from '../../api/queries/projects';
-import { CsPage } from '../../components/CsPage';
-import { ProjectCard } from '../../components/projectcard/ProjectCard';
+import { CsPage } from '../../components/layout/CsPage';
+import { ProjectCard } from '../../components/projects/ProjectCard';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
-import { WelcomeModal } from '../../components/WelcomeModal';
+import { WelcomeModal } from './WelcomeModal';
 import { LuArrowDown, LuArrowRight } from 'react-icons/lu';
-import { StatBanner } from '../../components/StatBanner';
-import { HonourBoardSpotlight } from '../../components/honour-board/HonourBoardSpotlight';
+import { StatBanner } from '../../components/ui/StatBanner';
+import { HonourBoardSpotlight } from '../../components/stats/HonourBoardSpotlight';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { useSiteStats } from '../../hooks/use-site-stats';
 import { HrefLink } from '../../utility/href-link';

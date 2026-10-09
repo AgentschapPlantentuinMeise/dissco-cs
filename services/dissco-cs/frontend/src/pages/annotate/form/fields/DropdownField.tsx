@@ -1,5 +1,5 @@
 import React from 'react';
-import { Select } from '../../../../components/Select';
+import { Select } from '../../../../components/ui/Select';
 import { FieldProps } from './registry';
 
 export function DropdownField({ field, path, onChange }: FieldProps) {

@@ -12,10 +12,10 @@ import { projectsApi } from '../../api/cs-client/projects';
 import { MadocInternationalString } from '@dissco-cs/shared-types';
 import { buildTaskLink } from '../../utility/build-task-link';
 import { HrefLink } from '../../utility/href-link';
-import { LocaleString } from '../../components/LocaleString';
-import { CsPage } from '../../components/CsPage';
+import { LocaleString } from '../../components/ui/LocaleString';
+import { CsPage } from '../../components/layout/CsPage';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
-import { ManualModal } from '../../components/ManualModal';
+import { ManualModal } from '../../components/manuals/ManualModal';
 import { disscoCSConfig } from '../../dissco-cs-config';
 
 function manualSeenKey(projectSlug: string): string {

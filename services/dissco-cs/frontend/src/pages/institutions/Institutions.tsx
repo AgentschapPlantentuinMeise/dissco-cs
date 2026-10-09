@@ -2,10 +2,10 @@
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { institutionQueries } from '../../api/queries/institutions';
-import { CsPage } from '../../components/CsPage';
-import { InstitutionCard } from '../../components/institutioncard/InstitutionCard';
-import { StatBanner } from '../../components/StatBanner';
-import { HonourBoardSpotlight } from '../../components/honour-board/HonourBoardSpotlight';
+import { CsPage } from '../../components/layout/CsPage';
+import { InstitutionCard } from '../../components/institutions/InstitutionCard';
+import { StatBanner } from '../../components/ui/StatBanner';
+import { HonourBoardSpotlight } from '../../components/stats/HonourBoardSpotlight';
 import { useSiteStats } from '../../hooks/use-site-stats';
 import { formatNumber } from '../../utility/format-number';
 

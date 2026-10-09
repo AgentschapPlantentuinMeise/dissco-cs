@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal } from './Modal';
+import { Modal } from '../../components/ui/Modal';
 import { LuMail } from 'react-icons/lu';
-import { FeedbackComposeTarget } from '../hooks/use-review-page';
+import { FeedbackComposeTarget } from './use-review-page';
 
 interface FeedbackModalProps {
   target: FeedbackComposeTarget;

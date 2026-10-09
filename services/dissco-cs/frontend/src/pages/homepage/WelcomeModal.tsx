@@ -1,10 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CsMarkdown } from './CsMarkdown';
-import { Modal } from './Modal';
-import { useNavItems } from '../hooks/use-nav-items';
-import { useCurrentUser } from '../hooks/use-current-user';
+import { CsMarkdown } from '../../components/ui/CsMarkdown';
+import { Modal } from '../../components/ui/Modal';
+import { useNavItems } from '../../hooks/use-nav-items';
+import { useCurrentUser } from '../../hooks/use-current-user';
 
 // Shown once, right after a new account is activated — see the redirect to
 // `/?welcome=1` in SetPassword.tsx. Not stored anywhere (no cookie/DB flag): closing

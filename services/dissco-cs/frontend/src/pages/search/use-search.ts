@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { projectQueries } from '../api/queries/projects';
-import { institutionQueries } from '../api/queries/institutions';
+import { projectQueries } from '../../api/queries/projects';
+import { institutionQueries } from '../../api/queries/institutions';
 import { InstitutionDto, MadocProjectDto } from '@dissco-cs/shared-types';
 
 const MIN_QUERY_LENGTH = 2;

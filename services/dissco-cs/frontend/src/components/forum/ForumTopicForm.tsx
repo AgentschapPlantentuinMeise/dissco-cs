@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Select } from '../Select';
+import { Select } from '../ui/Select';
 import { ForumTopicInput } from '@dissco-cs/shared-types';
 
 type ProjectOption = { slug: string; label: string };

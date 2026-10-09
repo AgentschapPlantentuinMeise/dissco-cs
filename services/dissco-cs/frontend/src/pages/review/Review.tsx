@@ -1,16 +1,16 @@
 import React from 'react';
-import { CsPage } from '../../components/CsPage';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { Select } from '../../components/Select';
+import { CsPage } from '../../components/layout/CsPage';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { Select } from '../../components/ui/Select';
 import { LuMail } from 'react-icons/lu';
 import { localeText } from '../../utility/locale-text';
-import { ImagePreviewPopup } from '../../components/ImagePreviewPopup';
+import { ImagePreviewPopup } from '../../components/iiif/ImagePreviewPopup';
 import { ReviewCountSummary } from './ReviewCountSummary';
-import { FeedbackModal } from '../../components/FeedbackModal';
+import { FeedbackModal } from './FeedbackModal';
 import { ReviewInlineExpansion } from './ReviewInlineExpansion';
 import { ReviewSearchInput } from './ReviewSearchInput';
 import { ReviewTable } from './ReviewTable';
-import { useReviewPage } from '../../hooks/use-review-page';
+import { useReviewPage } from './use-review-page';
 
 // De tabel verandert nooit van breedte of positie -- een aangeklikte rij klapt zelf open met de
 // velden in een responsieve grid (zie ReviewInlineExpansion).

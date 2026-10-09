@@ -1,16 +1,16 @@
 ﻿import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HrefLink } from '../../utility/href-link';
-import { CsPage } from '../../components/CsPage';
-import { ToggleSwitch } from '../../components/ToggleSwitch';
-import { SaveButton } from '../../components/SaveButton';
-import { ActiveStatusToggle } from '../../components/ActiveStatusToggle';
+import { CsPage } from '../../components/layout/CsPage';
+import { ToggleSwitch } from '../../components/ui/ToggleSwitch';
+import { SaveButton } from '../../components/ui/SaveButton';
+import { ActiveStatusToggle } from '../../components/ui/ActiveStatusToggle';
 import { LuPencil, LuArrowUp, LuArrowDown, LuArrowLeft } from 'react-icons/lu';
 import { navItemsApi } from '../../api/cs-client/nav-items';
 import { setContactEmailSchema, NavItemDto, NavItemKey, SitePageLang } from '@dissco-cs/shared-types';
 import { LANGUAGES, defaultLang } from '../../utility/site-lang-text';
 import { useNavItems } from '../../hooks/use-nav-items';
-import { MarkdownToolbar } from '../../components/MarkdownToolbar';
+import { MarkdownToolbar } from '../../components/ui/MarkdownToolbar';
 
 const CONTENT_PAGE_KEYS: NavItemKey[] = ['about', 'help', 'contact', 'welcome'];
 

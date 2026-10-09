@@ -1,10 +1,10 @@
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { iiifQueries } from '../api/queries/iiif';
-import { parseUrn } from '../utility/parse-urn';
-import { getImageServiceId } from '../utility/get-image-service-id';
-import { OpenSeadragonViewer } from '../pages/annotate/viewer/OpenSeadragonViewer';
+import { iiifQueries } from '../../api/queries/iiif';
+import { parseUrn } from '../../utility/parse-urn';
+import { getImageServiceId } from '../../utility/get-image-service-id';
+import { OpenSeadragonViewer } from './OpenSeadragonViewer';
 import { LuX } from 'react-icons/lu';
 
 export interface ImagePreviewPopupProps {

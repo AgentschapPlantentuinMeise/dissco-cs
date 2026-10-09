@@ -1,10 +1,10 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { taskQueries } from '../api/queries/tasks';
-import { captureModelQueries } from '../api/queries/capture-models';
+import { taskQueries } from '../../api/queries/tasks';
+import { captureModelQueries } from '../../api/queries/capture-models';
 import { useTranslation } from 'react-i18next';
-import { cloneModelDocument } from '../utility/annotation-document';
-import { ReviewFieldForm } from './ReviewFieldForm';
+import { cloneModelDocument } from '../../utility/annotation-document';
+import { ReviewFieldForm } from '../../components/capture-models/ReviewFieldForm';
 
 interface TaskRevisionViewProps {
   taskId: string;

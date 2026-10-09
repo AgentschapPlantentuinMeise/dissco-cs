@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { reviewQueries } from '../api/queries/review';
-import { feedbackKeys } from '../api/queries/feedback';
-import { reviewApi } from '../api/cs-client/review';
-import { feedbackApi } from '../api/cs-client/feedback';
+import { reviewQueries } from '../../api/queries/review';
+import { feedbackKeys } from '../../api/queries/feedback';
+import { reviewApi } from '../../api/cs-client/review';
+import { feedbackApi } from '../../api/cs-client/feedback';
 import { ReviewTaskDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
-import { ApiError } from '../api/cs-client/request';
-import { captureModelsApi } from '../api/cs-client/capture-models';
-import { localeText } from '../utility/locale-text';
-import { useCurrentUser } from './use-current-user';
+import { ApiError } from '../../api/cs-client/request';
+import { captureModelsApi } from '../../api/cs-client/capture-models';
+import { localeText } from '../../utility/locale-text';
+import { useCurrentUser } from '../../hooks/use-current-user';
 
 export type SortKey = 'project' | 'subject' | 'status' | 'submitter' | 'reviewer' | 'modified_at';
 export type SortDir = 'asc' | 'desc';

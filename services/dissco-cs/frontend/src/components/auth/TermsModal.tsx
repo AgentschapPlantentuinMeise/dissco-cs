@@ -1,6 +1,6 @@
 import React from 'react';
-import { CsMarkdown } from './CsMarkdown';
-import { Modal } from './Modal';
+import { CsMarkdown } from '../ui/CsMarkdown';
+import { Modal } from '../ui/Modal';
 import { MadocSiteTermsDto } from '@dissco-cs/shared-types';
 
 type TermsModalProps = {

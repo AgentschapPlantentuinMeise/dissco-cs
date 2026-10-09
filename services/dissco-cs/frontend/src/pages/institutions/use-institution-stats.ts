@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { statsQueries } from '../api/queries/stats';
-import { usePollingWindow } from './use-polling-window';
+import { statsQueries } from '../../api/queries/stats';
+import { usePollingWindow } from '../../hooks/use-polling-window';
 
 // One triggering fetch on page load (starts a background recompute if the cache is stale) plus
 // a separate, side-effect-free poll every 15s for 2 minutes after mount, then stopping -- that

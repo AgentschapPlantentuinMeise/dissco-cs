@@ -2,13 +2,13 @@
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { projectQueries } from '../../api/queries/projects';
-import { CsPage } from '../../components/CsPage';
-import { ProjectCard } from '../../components/projectcard/ProjectCard';
+import { CsPage } from '../../components/layout/CsPage';
+import { ProjectCard } from '../../components/projects/ProjectCard';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
-import { StatBanner } from '../../components/StatBanner';
-import { HonourBoardSpotlight } from '../../components/honour-board/HonourBoardSpotlight';
+import { StatBanner } from '../../components/ui/StatBanner';
+import { HonourBoardSpotlight } from '../../components/stats/HonourBoardSpotlight';
 import { useSiteStats } from '../../hooks/use-site-stats';
-import { useGridColumnCount } from '../../hooks/use-grid-column-count';
+import { useGridColumnCount } from './use-grid-column-count';
 import { formatNumber } from '../../utility/format-number';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
 

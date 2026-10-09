@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
-import { projectsApi } from '../api/cs-client/projects';
-import { useCurrentProject } from './use-current-project';
-import { disscoCSConfig } from '../dissco-cs-config';
+import { projectsApi } from '../../api/cs-client/projects';
+import { useCurrentProject } from '../../hooks/use-current-project';
+import { disscoCSConfig } from '../../dissco-cs-config';
 
 
 

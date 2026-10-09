@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CsPage } from '../../components/CsPage';
+import { CsPage } from '../../components/layout/CsPage';
 import { HrefLink } from '../../utility/href-link';
 import { forgotPassword } from '../../api/madoc-auth/auth';
 

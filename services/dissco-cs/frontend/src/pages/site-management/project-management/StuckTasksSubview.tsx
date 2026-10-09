@@ -8,7 +8,7 @@ import { projectsApi } from '../../../api/cs-client/projects';
 import { HrefLink } from '../../../utility/href-link';
 import { buildTaskLink } from '../../../utility/build-task-link';
 import { localeText } from '../../../utility/locale-text';
-import { ConfirmDialog } from '../../../components/ConfirmDialog';
+import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
 
 function statusLabelKey(status: number): string {
