@@ -108,7 +108,7 @@ export type MadocCaptureModelRevisionDto = {
 };
 
 // Body sent to (and shape returned by) the create/update/get-revision endpoints -- `status` at
-// the top level is only sent on accept (see useReviewTasksController's acceptOneRow), the actual
+// the top level is only sent on accept (see useReviewPage's acceptOneRow), the actual
 // draft/submitted/accepted status normally lives on `revision.status`.
 export type MadocCaptureModelRevisionRequestDto = {
   captureModelId: string;

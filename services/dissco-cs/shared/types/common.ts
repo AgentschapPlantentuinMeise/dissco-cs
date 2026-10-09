@@ -7,6 +7,10 @@ export type MadocInternationalString = { [lang: string]: string[] };
 export const SITE_PAGE_LANGS = ['nl', 'en', 'fr', 'de'] as const;
 export type SitePageLang = (typeof SITE_PAGE_LANGS)[number];
 
+export function isSitePageLang(value: unknown): value is SitePageLang {
+  return typeof value === 'string' && (SITE_PAGE_LANGS as readonly string[]).includes(value);
+}
+
 export type PerLanguage<T> = Partial<Record<SitePageLang, T>>;
 export type MultilingualText = PerLanguage<string>;
 

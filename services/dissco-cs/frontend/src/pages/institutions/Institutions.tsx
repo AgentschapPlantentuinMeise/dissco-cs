@@ -1,9 +1,9 @@
 ﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { institutionQueries } from '../../api/queries/institutions';
 import { CsPage } from '../../components/CsPage';
 import { InstitutionCard } from '../../components/institutioncard/InstitutionCard';
-import { institutionsApi } from '../../api/cs-client/institutions';
 import { StatBanner } from '../../components/StatBanner';
 import { HonourBoardSpotlight } from '../../components/honour-board/HonourBoardSpotlight';
 import { useSiteStats } from '../../hooks/use-site-stats';
@@ -11,7 +11,7 @@ import { formatNumber } from '../../utility/format-number';
 
 export const Institutions: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data } = useQuery({ queryKey: ['institutions-active'], queryFn: () => institutionsApi.listActive() });
+  const { data } = useQuery(institutionQueries.active());
   const { data: siteStats } = useSiteStats();
 
   const institutions = data?.institutions ?? [];

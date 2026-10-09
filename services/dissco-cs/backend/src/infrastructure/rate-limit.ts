@@ -1,5 +1,10 @@
 const attemptsByKey = new Map<string, number[]>();
 
+export function getClientIp(c: { req: { header: (name: string) => string | undefined } }): string {
+  const forwardedFor = c.req.header('x-forwarded-for');
+  return c.req.header('x-real-ip') ?? forwardedFor?.split(',')[0]?.trim() ?? 'unknown';
+}
+
 /**
  * Minimal in-memory rate limiter. Resets on restart and is per-instance only —
  * good enough to blunt basic spam/abuse, not a substitute for a shared store

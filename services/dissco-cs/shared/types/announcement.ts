@@ -4,6 +4,10 @@ import { MultilingualText, multilingualTextSchema } from './common.js';
 export const ANNOUNCEMENT_TARGET_TYPES = ['homepage', 'projects', 'project'] as const;
 export type AnnouncementTargetType = (typeof ANNOUNCEMENT_TARGET_TYPES)[number];
 
+export function isAnnouncementTargetType(value: unknown): value is AnnouncementTargetType {
+  return typeof value === 'string' && (ANNOUNCEMENT_TARGET_TYPES as readonly string[]).includes(value);
+}
+
 // Wire shape (dates as ISO strings). created_at is DB bookkeeping only (see AnnouncementRow in
 // the API repository) and never sent to the frontend; routes strip it via toAnnouncementDto().
 export type AnnouncementDto = {

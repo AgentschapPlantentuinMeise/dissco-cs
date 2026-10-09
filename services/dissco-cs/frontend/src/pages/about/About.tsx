@@ -2,7 +2,7 @@
 import { useTranslation } from 'react-i18next';
 import { CsPage } from '../../components/CsPage';
 import { CsMarkdown } from '../../components/CsMarkdown';
-import { useNavItems } from '../../contexts/NavItemsContext';
+import { useNavItems } from '../../hooks/use-nav-items';
 
 export const About: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');

@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { announcementQueries } from '../../api/queries/announcements';
+import { projectQueries } from '../../api/queries/projects';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/CsPage';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -14,7 +16,6 @@ import { LuPencil, LuArrowLeft } from 'react-icons/lu';
 import { LANGUAGES, defaultLang, siteLangText } from '../../utility/site-lang-text';
 import { localeText } from '../../utility/locale-text';
 import { announcementsApi } from '../../api/cs-client/announcements';
-import { useProjectList } from '../../hooks/use-project-list';
 import { MarkdownToolbar } from '../../components/MarkdownToolbar';
 import {
   MadocProjectDto,
@@ -48,8 +49,8 @@ const emptyDraft: AnnouncementInput = {
 
 export const Announcements: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data, isLoading, refetch } = useQuery({ queryKey: ['admin-announcements'], queryFn: () => announcementsApi.listAdmin() });
-  const { data: projectsResponse } = useProjectList();
+  const { data, isLoading, refetch } = useQuery(announcementQueries.admin());
+  const { data: projectsResponse } = useQuery(projectQueries.list({ page: 1 }));
   const announcements = data?.announcements ?? [];
   const projects = (projectsResponse?.projects ?? []).filter((p: MadocProjectDto) => p.status === 1);
 

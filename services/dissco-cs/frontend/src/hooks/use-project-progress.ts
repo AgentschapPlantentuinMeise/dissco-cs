@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { projectsApi } from '../api/cs-client/projects';
-import { ProjectProgressDto } from '@dissco-cs/shared-types';
+import { projectQueries } from '../api/queries/projects';
 
 // Caps how many /progress requests are in flight at once -- each one triggers several downstream
 // Madoc/DB calls, so a full page of ProjectCards firing them all simultaneously can exhaust
@@ -61,13 +61,14 @@ export function useProjectProgress(projectId: number | string | undefined) {
     return () => controllerRef.current?.abort();
   }, [projectId]);
 
-  return useQuery<ProjectProgressDto>({
-    queryKey: ['project-progress', projectId],
+  // Key from the shared factory (so invalidating projectKeys.progress/all reaches this card), but
+  // its own queryFn: the request goes through the module-level queue above.
+  return useQuery({
+    ...projectQueries.progress(projectId),
     queryFn: () => {
       controllerRef.current = new AbortController();
       return runQueued(signal => projectsApi.getProgress(projectId!, signal), controllerRef.current.signal);
     },
-    enabled: !!projectId,
     staleTime: 0,
     refetchOnWindowFocus: false,
     retry: 1,

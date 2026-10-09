@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 
-import { requestBearerToken, requireSiteAdmin } from '../jwt.js';
+import { requestBearerToken, requireSiteAdmin } from '../auth/auth.js';
 import { forwardJsonBody, forwardQuery, isSafeSegment, madocFetch, relayMadocResponse } from '../madoc-client/client.js';
 import { getStuckMadocTasks, getStuckManifestCounters, resyncManifestTaskCounter, updateMadocTask } from '../madoc-client/tasks.js';
 
@@ -15,7 +15,9 @@ export function tasksController(): Hono {
   // direct database query every time.
   app.get('/stuck', async c => {
     const identity = requireSiteAdmin(c);
-    if (identity instanceof Response) return identity;
+    if (identity instanceof Response) {
+      return identity;
+    }
 
     try {
       const [tasks, manifestCounters] = await Promise.all([
@@ -31,7 +33,9 @@ export function tasksController(): Hono {
 
   app.post('/manifests/:containerId/resync', async c => {
     const identity = requireSiteAdmin(c);
-    if (identity instanceof Response) return identity;
+    if (identity instanceof Response) {
+      return identity;
+    }
 
     const containerId = c.req.param('containerId');
     try {
@@ -45,7 +49,9 @@ export function tasksController(): Hono {
 
   app.post('/:taskId/release', async c => {
     const identity = requireSiteAdmin(c);
-    if (identity instanceof Response) return identity;
+    if (identity instanceof Response) {
+      return identity;
+    }
 
     const taskId = c.req.param('taskId');
     try {

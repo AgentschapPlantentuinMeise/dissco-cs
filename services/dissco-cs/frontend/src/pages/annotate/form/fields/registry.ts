@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
 import { MadocBaseFieldDto } from '@dissco-cs/shared-types';
-import { DocumentPath } from '../document';
+import { DocumentPath } from '../../../../utility/annotation-document';
 import { TextField } from './TextField';
 import { HtmlField } from './HtmlField';
 import { CheckboxField } from './CheckboxField';

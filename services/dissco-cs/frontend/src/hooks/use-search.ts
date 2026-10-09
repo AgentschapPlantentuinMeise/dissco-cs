@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { projectsApi } from '../api/cs-client/projects';
-import { institutionsApi } from '../api/cs-client/institutions';
+import { projectQueries } from '../api/queries/projects';
+import { institutionQueries } from '../api/queries/institutions';
 import { InstitutionDto, MadocProjectDto } from '@dissco-cs/shared-types';
 
 const MIN_QUERY_LENGTH = 2;
@@ -20,16 +20,8 @@ function matchesInternationalString(value: unknown, needle: string): boolean {
 }
 
 export function useSearch(query: string) {
-  const projectsQuery = useQuery({
-    queryKey: ['all-site-projects'],
-    queryFn: () => projectsApi.listAll(),
-    staleTime: 5 * 60 * 1000,
-  });
-  const institutionsQuery = useQuery({
-    queryKey: ['all-active-institutions'],
-    queryFn: () => institutionsApi.listActive(),
-    staleTime: 5 * 60 * 1000,
-  });
+  const projectsQuery = useQuery({ ...projectQueries.listAll(), staleTime: 5 * 60 * 1000 });
+  const institutionsQuery = useQuery({ ...institutionQueries.active(), staleTime: 5 * 60 * 1000 });
 
   const trimmed = query.trim().toLowerCase();
   const isActive = trimmed.length >= MIN_QUERY_LENGTH;

@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 
-import { requestBearerToken, requireSiteAdmin } from '../jwt.js';
+import { requestBearerToken, requireSiteAdmin } from '../auth/auth.js';
 import { forwardQuery, isSafeSegment, madocFetch, publicSitePath, relayMadocResponse } from '../madoc-client/client.js';
 import { MadocCollectionSummaryDto, MadocPagination } from '@dissco-cs/shared-types';
 

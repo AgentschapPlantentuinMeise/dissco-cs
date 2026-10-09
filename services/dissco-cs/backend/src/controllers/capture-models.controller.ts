@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 
-import { requestBearerToken } from '../jwt.js';
+import { requestBearerToken } from '../auth/auth.js';
 import { forwardJsonBody, isSafeSegment, madocFetch, relayMadocResponse } from '../madoc-client/client.js';
 
 // Capture models and their revisions (a volunteer's saved annotations), forwarded to Madoc as the

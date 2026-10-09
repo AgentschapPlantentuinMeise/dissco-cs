@@ -1,9 +1,7 @@
 import { Hono } from 'hono';
-import { DisscoCSRepository } from '../db.js';
-import { requireSiteAdmin, resolveSiteId } from '../jwt.js';
-import { isAnnouncementTargetType } from '../validators.js';
-import { AnnouncementRow } from '../repositories/announcements.repository.js';
-import { AnnouncementDto, announcementInputSchema } from '@dissco-cs/shared-types';
+import { requireSiteAdmin, resolveSiteId } from '../auth/auth.js';
+import { AnnouncementsRepository, AnnouncementRow } from '../repositories/announcements.repository.js';
+import { AnnouncementDto, announcementInputSchema, isAnnouncementTargetType } from '@dissco-cs/shared-types';
 
 // created_at is DB bookkeeping (see AnnouncementRow), never part of the wire DTO.
 function toAnnouncementDto(row: AnnouncementRow): AnnouncementDto {
@@ -15,7 +13,7 @@ function toAnnouncementDto(row: AnnouncementRow): AnnouncementDto {
   };
 }
 
-export function announcementsController(repository: DisscoCSRepository): Hono {
+export function announcementsController(announcementsRepository: AnnouncementsRepository): Hono {
   const app = new Hono();
 
   app.get('/active', async c => {
@@ -34,7 +32,7 @@ export function announcementsController(repository: DisscoCSRepository): Hono {
       return c.text('projectSlug is required when target is project', 400);
     }
 
-    const announcements = await repository.announcements.listActiveAnnouncements(
+    const announcements = await announcementsRepository.listActiveAnnouncements(
       siteId,
       targetType,
       targetType === 'project' ? targetProjectSlug : null
@@ -48,7 +46,7 @@ export function announcementsController(repository: DisscoCSRepository): Hono {
       return identity;
     }
 
-    const announcements = await repository.announcements.listAnnouncements(identity.siteId);
+    const announcements = await announcementsRepository.listAnnouncements(identity.siteId);
     return c.json({ announcements: announcements.map(toAnnouncementDto) });
   });
 
@@ -63,7 +61,7 @@ export function announcementsController(repository: DisscoCSRepository): Hono {
       return c.text('Invalid announcement payload', 400);
     }
 
-    const announcement = await repository.announcements.createAnnouncement({ siteId: identity.siteId, ...result.data });
+    const announcement = await announcementsRepository.createAnnouncement({ siteId: identity.siteId, ...result.data });
     return c.json(toAnnouncementDto(announcement), 201);
   });
 
@@ -83,7 +81,7 @@ export function announcementsController(repository: DisscoCSRepository): Hono {
       return c.text('Invalid announcement payload', 400);
     }
 
-    const announcement = await repository.announcements.updateAnnouncement(identity.siteId, id, result.data);
+    const announcement = await announcementsRepository.updateAnnouncement(identity.siteId, id, result.data);
     if (!announcement) {
       return c.notFound();
     }
@@ -102,7 +100,7 @@ export function announcementsController(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const deleted = await repository.announcements.deleteAnnouncement(identity.siteId, id);
+    const deleted = await announcementsRepository.deleteAnnouncement(identity.siteId, id);
     if (!deleted) {
       return c.notFound();
     }

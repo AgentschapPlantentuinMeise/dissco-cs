@@ -1,11 +1,11 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { announcementQueries } from '../../api/queries/announcements';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
-import { announcementsApi } from '../../api/cs-client/announcements';
 import { AnnouncementDto, AnnouncementTargetType } from '@dissco-cs/shared-types';
 import { LuPin, LuChevronDown } from 'react-icons/lu';
-import { useUser } from '../../hooks/use-current-user';
+import { useCurrentUser } from '../../hooks/use-current-user';
 import { siteLangText } from '../../utility/site-lang-text';
 
 // Compact overrides so markdown content fits the banner's small text-sm style instead of
@@ -53,10 +53,9 @@ export const AnnouncementBanner: React.FC<{ target: AnnouncementTargetType; proj
   projectSlug,
 }) => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const user = useUser();
+  const user = useCurrentUser();
   const { data } = useQuery({
-    queryKey: ['active-announcements', target, projectSlug],
-    queryFn: () => announcementsApi.listActive(target, projectSlug),
+    ...announcementQueries.active(target, projectSlug),
     staleTime: 0,
     enabled: !!user,
   });

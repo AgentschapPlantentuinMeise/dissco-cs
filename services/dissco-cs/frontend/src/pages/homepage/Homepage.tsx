@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useProjectList } from '../../hooks/use-project-list';
+import { useQuery } from '@tanstack/react-query';
+import { projectQueries } from '../../api/queries/projects';
 import { CsPage } from '../../components/CsPage';
 import { ProjectCard } from '../../components/projectcard/ProjectCard';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
@@ -16,7 +17,7 @@ import { MadocProjectDto } from '@dissco-cs/shared-types';
 
 export const Homepage: React.FC = () => {
   const [isClient, setIsClient] = useState(false);
-  const { data: projectsResponse, status } = useProjectList(1, { published: true });
+  const { data: projectsResponse, status } = useQuery(projectQueries.list({ page: 1, published: true }));
   const { data: siteStats } = useSiteStats();
   const { t, i18n } = useTranslation('dissco-cs');
 

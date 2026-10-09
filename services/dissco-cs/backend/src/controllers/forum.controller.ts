@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import { DisscoCSRepository } from '../db.js';
-import { MadocUserIdentity, requestMadocUserIdentity, requireUser } from '../jwt.js';
+import { ForumRepository } from '../repositories/forum.repository.js';
+import { MadocUserIdentity, requestMadocUserIdentity, requireUser } from '../auth/auth.js';
 import { forumReplyInputSchema, forumTopicInputSchema } from '@dissco-cs/shared-types';
 
 // A piece of forum content (topic or reply) can be removed/closed by whoever wrote it, or by
@@ -9,7 +9,7 @@ function isOwnerOrAdmin(identity: MadocUserIdentity, authorUserId: number): bool
   return identity.userId === authorUserId || identity.scope.includes('site.admin');
 }
 
-export function forumController(repository: DisscoCSRepository): Hono {
+export function forumController(forumRepository: ForumRepository): Hono {
   const app = new Hono();
 
   app.get('/topics', async c => {
@@ -18,7 +18,7 @@ export function forumController(repository: DisscoCSRepository): Hono {
       return c.text('Unauthorized', 401);
     }
 
-    const topics = await repository.forum.listTopics(identity.siteId, identity.userId);
+    const topics = await forumRepository.listTopics(identity.siteId, identity.userId);
     return c.json({ topics });
   });
 
@@ -28,7 +28,7 @@ export function forumController(repository: DisscoCSRepository): Hono {
       return c.text('Unauthorized', 401);
     }
 
-    await repository.forum.markAllEmptyTopicsSeen(identity.siteId, identity.userId);
+    await forumRepository.markAllEmptyTopicsSeen(identity.siteId, identity.userId);
     return c.body(null, 204);
   });
 
@@ -43,7 +43,7 @@ export function forumController(repository: DisscoCSRepository): Hono {
       return c.text('title and body are required', 400);
     }
 
-    const topic = await repository.forum.createTopic({
+    const topic = await forumRepository.createTopic({
       siteId: identity.siteId,
       authorUserId: identity.userId,
       authorName: identity.name,
@@ -54,7 +54,7 @@ export function forumController(repository: DisscoCSRepository): Hono {
       body: result.data.body,
     });
 
-    await repository.forum.markTopicSeen(identity.userId, topic.id, 0);
+    await forumRepository.markTopicSeen(identity.userId, topic.id, 0);
 
     // A freshly created topic trivially has no replies yet -- no extra query needed.
     return c.json({ ...topic, reply_count: 0, last_seen_reply_count: 0 }, 201);
@@ -71,13 +71,13 @@ export function forumController(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const topic = await repository.forum.getTopic(identity.siteId, topicId);
+    const topic = await forumRepository.getTopic(identity.siteId, topicId);
     if (!topic) {
       return c.notFound();
     }
 
-    const replies = await repository.forum.listReplies(identity.siteId, topicId);
-    await repository.forum.markTopicSeen(identity.userId, topicId, replies.length);
+    const replies = await forumRepository.listReplies(identity.siteId, topicId);
+    await forumRepository.markTopicSeen(identity.userId, topicId, replies.length);
     return c.json(replies);
   });
 
@@ -92,7 +92,7 @@ export function forumController(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const topic = await repository.forum.getTopic(identity.siteId, topicId);
+    const topic = await forumRepository.getTopic(identity.siteId, topicId);
     if (!topic) {
       return c.notFound();
     }
@@ -100,7 +100,7 @@ export function forumController(repository: DisscoCSRepository): Hono {
       return c.text('Forbidden', 403);
     }
 
-    const deleted = await repository.forum.deleteTopic(identity.siteId, topicId);
+    const deleted = await forumRepository.deleteTopic(identity.siteId, topicId);
     if (!deleted) {
       return c.notFound();
     }
@@ -119,7 +119,7 @@ export function forumController(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const topic = await repository.forum.getTopic(identity.siteId, topicId);
+    const topic = await forumRepository.getTopic(identity.siteId, topicId);
     if (!topic) {
       return c.notFound();
     }
@@ -127,8 +127,8 @@ export function forumController(repository: DisscoCSRepository): Hono {
       return c.text('Forbidden', 403);
     }
 
-    const closed = await repository.forum.closeTopic(identity.siteId, topicId);
-    const replies = await repository.forum.listReplies(identity.siteId, topicId);
+    const closed = await forumRepository.closeTopic(identity.siteId, topicId);
+    const replies = await forumRepository.listReplies(identity.siteId, topicId);
     return c.json({ ...(closed ?? topic), reply_count: replies.length, last_seen_reply_count: replies.length });
   });
 
@@ -143,7 +143,7 @@ export function forumController(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const reply = await repository.forum.getReply(identity.siteId, replyId);
+    const reply = await forumRepository.getReply(identity.siteId, replyId);
     if (!reply || Number(reply.topic_id) !== Number(c.req.param('id'))) {
       return c.notFound();
     }
@@ -151,7 +151,7 @@ export function forumController(repository: DisscoCSRepository): Hono {
       return c.text('Forbidden', 403);
     }
 
-    const deleted = await repository.forum.deleteReply(identity.siteId, replyId);
+    const deleted = await forumRepository.deleteReply(identity.siteId, replyId);
     if (!deleted) {
       return c.notFound();
     }
@@ -175,7 +175,7 @@ export function forumController(repository: DisscoCSRepository): Hono {
       return c.text('body is required', 400);
     }
 
-    const topic = await repository.forum.getTopic(identity.siteId, topicId);
+    const topic = await forumRepository.getTopic(identity.siteId, topicId);
     if (!topic) {
       return c.notFound();
     }
@@ -183,7 +183,7 @@ export function forumController(repository: DisscoCSRepository): Hono {
       return c.text('This topic is closed', 403);
     }
 
-    const reply = await repository.forum.createReply({
+    const reply = await forumRepository.createReply({
       siteId: identity.siteId,
       topicId,
       authorUserId: identity.userId,
@@ -195,8 +195,8 @@ export function forumController(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const replies = await repository.forum.listReplies(identity.siteId, topicId);
-    await repository.forum.markTopicSeen(identity.userId, topicId, replies.length);
+    const replies = await forumRepository.listReplies(identity.siteId, topicId);
+    await forumRepository.markTopicSeen(identity.userId, topicId, replies.length);
 
     return c.json(reply, 201);
   });

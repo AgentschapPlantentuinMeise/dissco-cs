@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { feedbackKeys, feedbackQueries } from '../../api/queries/feedback';
+import { projectKeys } from '../../api/queries/projects';
+import { taskKeys, taskQueries } from '../../api/queries/tasks';
+import { forumQueries } from '../../api/queries/forum';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { useUser } from '../../hooks/use-current-user';
+import { useCurrentUser } from '../../hooks/use-current-user';
 import { getSiteSlug } from '../../api/slug';
 import { tasksApi } from '../../api/cs-client/tasks';
 import { parseUrn } from '../../utility/parse-urn';
@@ -15,7 +19,6 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { LuTrash2 } from 'react-icons/lu';
 import { StatBanner } from '../../components/StatBanner';
 import { TaskTable, tabBtnClass } from '../../components/TaskTable';
-import { forumApi } from '../../api/cs-client/forum';
 import { feedbackApi } from '../../api/cs-client/feedback';
 import { MadocCrowdsourcingTaskDto, ForumTopicDto, FeedbackThreadDto } from '@dissco-cs/shared-types';
 import { useSiteStats } from '../../hooks/use-site-stats';
@@ -49,14 +52,12 @@ function FeedbackThreadDetail({ threadId }: { threadId: number }) {
   const [replyBody, setReplyBody] = useState('');
 
   const queryClient = useQueryClient();
-  const { data, status, dataUpdatedAt } = useQuery({
-    queryKey: ['feedback-thread', threadId],
-    queryFn: () => feedbackApi.getThread(threadId),
-  });
+  const { data, status, dataUpdatedAt } = useQuery(feedbackQueries.thread(threadId));
+  // Opening a thread marks it read on the server -- refresh only the thread list (and with it the
+  // navbar badge), never this thread itself, or each refetch would retrigger this effect.
   useEffect(() => {
     if (dataUpdatedAt) {
-      queryClient.invalidateQueries({ queryKey: ['feedback-threads'] });
-      window.dispatchEvent(new Event('feedback_updated'));
+      queryClient.invalidateQueries({ queryKey: feedbackKeys.threads() });
     }
   }, [dataUpdatedAt]);
 
@@ -64,9 +65,7 @@ function FeedbackThreadDetail({ threadId }: { threadId: number }) {
     mutationFn: (body: string) => feedbackApi.createReply(threadId, body),
     onSuccess: () => {
       setReplyBody('');
-      queryClient.invalidateQueries({ queryKey: ['feedback-thread', threadId] });
-      queryClient.invalidateQueries({ queryKey: ['feedback-threads'] });
-      window.dispatchEvent(new Event('feedback_updated'));
+      queryClient.invalidateQueries({ queryKey: feedbackKeys.all });
     },
   });
 
@@ -134,8 +133,7 @@ function FeedbackThreadRow({
   const { mutate: deleteThread } = useMutation({
     mutationFn: () => feedbackApi.deleteThread(thread.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['feedback-threads'] });
-      window.dispatchEvent(new Event('feedback_updated'));
+      queryClient.invalidateQueries({ queryKey: feedbackKeys.threads() });
     },
   });
 
@@ -183,7 +181,7 @@ function FeedbackThreadRow({
 
 export const UserDashboard: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const user = useUser();
+  const user = useCurrentUser();
   const [activeTab, setActiveTab] = useState<'saved' | 'done' | 'feedback'>('saved');
   const [releaseTarget, setReleaseTarget] = useState<MadocCrowdsourcingTaskDto | null>(null);
   const [openThreadId, setOpenThreadId] = useState<number | null>(null);
@@ -192,54 +190,29 @@ export const UserDashboard: React.FC = () => {
   const { mutate: releaseTask } = useMutation({
     mutationFn: (task: MadocCrowdsourcingTaskDto) => tasksApi.update(task.id, { status: -1, status_text: 'abandoned' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dashboard-tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['collection'] });
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
+      queryClient.invalidateQueries({ queryKey: projectKeys.all });
     },
   });
 
-  const { data: tasksData, status: tasksStatus } = useQuery({
-    queryKey: ['dashboard-tasks', { userId: user?.id }],
-    queryFn: async () => {
-      const query = {
-        type: 'crowdsourcing-task',
-        all_tasks: true,
-        assignee: `urn:madoc:user:${user!.id}`,
-        per_page: 100,
-        sort_by: 'newest',
-        detail: true,
-      };
-      const first = await tasksApi.list<MadocCrowdsourcingTaskDto>(1, query);
-      const totalPages = first.pagination?.totalPages ?? 1;
-      const rest = await Promise.all(
-        Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => tasksApi.list<MadocCrowdsourcingTaskDto>(i + 2, query))
-      );
-      return { ...first, tasks: [...first.tasks, ...rest.flatMap(r => r.tasks)] };
-    },
-    enabled: !!user,
-  });
+  const { data: tasksData, status: tasksStatus } = useQuery(taskQueries.mine(user?.id));
 
-  // tasksApi.list({ all_tasks: true }) is forwarded as the user, so it only ever returns the calling
+  // taskQueries.mine (all_tasks: true) is forwarded as the user, so it only ever returns the calling
   // user's own tasks for a non-admin contributor (see docs/MANIFEST-CLAIMS.md) — so the site-wide
   // total has to come from the backend-computed stats instead, same as the homepage banner.
   const { data: siteStats } = useSiteStats();
 
   const { data: unansweredTopics } = useQuery({
-    queryKey: ['dashboard-unanswered-topics'],
-    queryFn: async () => {
-      const res = await forumApi.listTopics();
-      return res.topics
+    ...forumQueries.topics(),
+    select: res =>
+      res.topics
         .filter(topic => topic.reply_count === 0)
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 3);
-    },
+        .slice(0, 3),
     enabled: !!user,
   });
 
-  const { data: feedbackThreadsData, status: feedbackThreadsStatus } = useQuery({
-    queryKey: ['feedback-threads'],
-    queryFn: () => feedbackApi.listThreads(),
-    enabled: !!user,
-  });
+  const { data: feedbackThreadsData, status: feedbackThreadsStatus } = useQuery({ ...feedbackQueries.threads(), enabled: !!user });
   const feedbackThreads = feedbackThreadsData?.threads ?? [];
 
   if (!user) {

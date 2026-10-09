@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 
-import { DisscoCSRepository } from '../db.js';
-import { requestBearerToken, requireSiteAdmin, requestMadocUserIdentity, resolveSiteId } from '../jwt.js';
+import { ManualsRepository } from '../repositories/manuals.repository.js';
+import { requestBearerToken, requireSiteAdmin, requestMadocUserIdentity, resolveSiteId } from '../auth/auth.js';
 import { forwardJsonBody, isSafeSegment, madocFetch, publicSitePath, relayMadocResponse } from '../madoc-client/client.js';
 import { getMadocProject } from '../madoc-client/projects.js';
 import {
@@ -10,9 +10,9 @@ import {
   getMadocProjectManifestsAndTaskStats,
 } from '../madoc-client/collections.js';
 import { getMadocProjectTasks, getMadocTasksBySubjectAndType, resyncManifestTaskCounter } from '../madoc-client/tasks.js';
-import { toInstitutionDto } from '../repositories/institutions.repository.js';
-import { isSitePageLang, pruneProjectLinksSchema, setInstitutionLinkSchema, setManualLinkSchema } from '../validators.js';
+import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
 import {
+  isSitePageLang,
   ManualAttachmentDto,
   MadocCrowdsourcingTaskDto,
   MadocInternationalString,
@@ -21,6 +21,9 @@ import {
   PerLanguage,
   ProjectDebugDto,
   ProjectProgressDto,
+  pruneProjectLinksSchema,
+  setInstitutionLinkSchema,
+  setManualLinkSchema,
 } from '@dissco-cs/shared-types';
 
 type CollectionStructureItem = { id: number; label?: unknown };
@@ -29,7 +32,7 @@ type CollectionStructureItem = { id: number; label?: unknown };
 // project's links to a manual and an institution. Static paths (`/institution-links`,
 // `/*-links/prune`) are registered before the `/:projectId/...` routes on purpose -- Hono matches
 // in registration order, so a param route registered first would swallow them.
-export function projectsController(repository: DisscoCSRepository): Hono {
+export function projectsController(institutionsRepository: InstitutionsRepository, manualsRepository: ManualsRepository): Hono {
   const app = new Hono();
 
   // ---- admin: project <-> institution / manual links, site-wide ----
@@ -40,7 +43,7 @@ export function projectsController(repository: DisscoCSRepository): Hono {
       return identity;
     }
 
-    const links = await repository.institutions.listProjectLinks(identity.siteId);
+    const links = await institutionsRepository.listProjectLinks(identity.siteId);
     return c.json({ links });
   });
 
@@ -58,7 +61,7 @@ export function projectsController(repository: DisscoCSRepository): Hono {
       return c.text('Invalid payload', 400);
     }
 
-    const removed = await repository.institutions.pruneOrphanedProjectLinks(identity.siteId, result.data.liveSlugs);
+    const removed = await institutionsRepository.pruneOrphanedProjectLinks(identity.siteId, result.data.liveSlugs);
     return c.json({ removed });
   });
 
@@ -74,7 +77,7 @@ export function projectsController(repository: DisscoCSRepository): Hono {
       return c.text('Invalid payload', 400);
     }
 
-    const removed = await repository.manuals.pruneOrphanedProjectLinks(identity.siteId, result.data.liveSlugs);
+    const removed = await manualsRepository.pruneOrphanedProjectLinks(identity.siteId, result.data.liveSlugs);
     return c.json({ removed });
   });
 
@@ -410,7 +413,9 @@ export function projectsController(repository: DisscoCSRepository): Hono {
   // -- so the percentage on the project page can be verified visually instead of trusted blindly.
   app.get('/:projectId/task-debug', async c => {
     const identity = requireSiteAdmin(c);
-    if (identity instanceof Response) return identity;
+    if (identity instanceof Response) {
+      return identity;
+    }
 
     const projectId = c.req.param('projectId');
 
@@ -488,12 +493,12 @@ export function projectsController(repository: DisscoCSRepository): Hono {
       return c.text('Could not resolve site', 400);
     }
 
-    const manual = await repository.manuals.getManualForProject(siteId, c.req.param('projectId'));
+    const manual = await manualsRepository.getManualForProject(siteId, c.req.param('projectId'));
     if (!manual) {
       return c.notFound();
     }
 
-    const attachmentMeta = await repository.manuals.listAttachmentMeta(manual.id);
+    const attachmentMeta = await manualsRepository.listAttachmentMeta(manual.id);
     const attachments: PerLanguage<ManualAttachmentDto> = {};
     for (const meta of attachmentMeta) {
       attachments[meta.lang] = { filename: meta.filename, mimeType: meta.mime_type, size: meta.file_size };
@@ -513,12 +518,12 @@ export function projectsController(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const manual = await repository.manuals.getManualForProject(siteId, c.req.param('projectId'));
+    const manual = await manualsRepository.getManualForProject(siteId, c.req.param('projectId'));
     if (!manual) {
       return c.notFound();
     }
 
-    const file = await repository.manuals.getAttachmentFile(manual.id, lang);
+    const file = await manualsRepository.getAttachmentFile(manual.id, lang);
     if (!file) {
       return c.notFound();
     }
@@ -541,13 +546,13 @@ export function projectsController(repository: DisscoCSRepository): Hono {
     }
 
     if (result.data.manualId !== null) {
-      const manual = await repository.manuals.getManualById(identity.siteId, result.data.manualId);
+      const manual = await manualsRepository.getManualById(identity.siteId, result.data.manualId);
       if (!manual) {
         return c.text('Manual not found', 404);
       }
     }
 
-    await repository.manuals.setProjectLink(identity.siteId, c.req.param('projectId'), result.data.manualId);
+    await manualsRepository.setProjectLink(identity.siteId, c.req.param('projectId'), result.data.manualId);
     return c.body(null, 204);
   });
 
@@ -559,7 +564,7 @@ export function projectsController(repository: DisscoCSRepository): Hono {
       return c.text('Could not resolve site', 400);
     }
 
-    const institution = await repository.institutions.getActiveInstitutionForProjectSlug(siteId, c.req.param('projectId'));
+    const institution = await institutionsRepository.getActiveInstitutionForProjectSlug(siteId, c.req.param('projectId'));
     if (!institution) {
       return c.notFound();
     }
@@ -580,13 +585,13 @@ export function projectsController(repository: DisscoCSRepository): Hono {
     }
 
     if (result.data.institutionId !== null) {
-      const institution = await repository.institutions.getInstitutionById(identity.siteId, result.data.institutionId);
+      const institution = await institutionsRepository.getInstitutionById(identity.siteId, result.data.institutionId);
       if (!institution) {
         return c.text('Institution not found', 404);
       }
     }
 
-    await repository.institutions.setProjectLink(identity.siteId, c.req.param('projectId'), result.data.institutionId);
+    await institutionsRepository.setProjectLink(identity.siteId, c.req.param('projectId'), result.data.institutionId);
     return c.body(null, 204);
   });
 

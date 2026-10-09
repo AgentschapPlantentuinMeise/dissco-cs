@@ -1,18 +1,18 @@
 import { Hono } from 'hono';
-import { DisscoCSRepository } from '../db.js';
-import { requireSiteAdmin } from '../jwt.js';
+import { ManualsRepository } from '../repositories/manuals.repository.js';
+import { requireSiteAdmin } from '../auth/auth.js';
 import {
   attachmentFileSchema,
+  isSitePageLang,
   PerLanguage,
   ManualAttachmentDto,
   setManualContentSchema,
   setManualTitleSchema,
 } from '@dissco-cs/shared-types';
-import { isSitePageLang } from '../validators.js';
 
 // The manual library (admin). Reading a project's manual and linking it to a project live in
 // projects.controller.ts (/projects/:projectId/manual).
-export function manualsController(repository: DisscoCSRepository): Hono {
+export function manualsController(manualsRepository: ManualsRepository): Hono {
   const app = new Hono();
 
   app.get('/', async c => {
@@ -21,7 +21,7 @@ export function manualsController(repository: DisscoCSRepository): Hono {
       return identity;
     }
 
-    const manuals = await repository.manuals.listManuals(identity.siteId);
+    const manuals = await manualsRepository.listManuals(identity.siteId);
     return c.json({ manuals });
   });
 
@@ -36,7 +36,7 @@ export function manualsController(repository: DisscoCSRepository): Hono {
       return c.text('Invalid payload', 400);
     }
 
-    const manual = await repository.manuals.createManual(identity.siteId, { [result.data.lang]: result.data.title });
+    const manual = await manualsRepository.createManual(identity.siteId, { [result.data.lang]: result.data.title });
     return c.json(manual, 201);
   });
 
@@ -51,12 +51,12 @@ export function manualsController(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const manual = await repository.manuals.getManualById(identity.siteId, manualId);
+    const manual = await manualsRepository.getManualById(identity.siteId, manualId);
     if (!manual) {
       return c.notFound();
     }
 
-    const attachmentMeta = await repository.manuals.listAttachmentMeta(manual.id);
+    const attachmentMeta = await manualsRepository.listAttachmentMeta(manual.id);
     const attachments: PerLanguage<ManualAttachmentDto> = {};
     for (const meta of attachmentMeta) {
       attachments[meta.lang] = { filename: meta.filename, mimeType: meta.mime_type, size: meta.file_size };
@@ -76,7 +76,7 @@ export function manualsController(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const deleted = await repository.manuals.deleteManual(identity.siteId, manualId);
+    const deleted = await manualsRepository.deleteManual(identity.siteId, manualId);
     if (!deleted) {
       return c.notFound();
     }
@@ -100,7 +100,7 @@ export function manualsController(repository: DisscoCSRepository): Hono {
       return c.text('Invalid payload', 400);
     }
 
-    const manual = await repository.manuals.updateManualTitle(identity.siteId, manualId, result.data.lang, result.data.title);
+    const manual = await manualsRepository.updateManualTitle(identity.siteId, manualId, result.data.lang, result.data.title);
     if (!manual) {
       return c.notFound();
     }
@@ -125,7 +125,7 @@ export function manualsController(repository: DisscoCSRepository): Hono {
       return c.text('Invalid payload', 400);
     }
 
-    const updated = await repository.manuals.updateManualContent(identity.siteId, manualId, lang, result.data.content);
+    const updated = await manualsRepository.updateManualContent(identity.siteId, manualId, lang, result.data.content);
     if (!updated) {
       return c.notFound();
     }
@@ -145,7 +145,7 @@ export function manualsController(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const manual = await repository.manuals.getManualById(identity.siteId, manualId);
+    const manual = await manualsRepository.getManualById(identity.siteId, manualId);
     if (!manual) {
       return c.notFound();
     }
@@ -161,7 +161,7 @@ export function manualsController(repository: DisscoCSRepository): Hono {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    await repository.manuals.upsertAttachment(manualId, lang, {
+    await manualsRepository.upsertAttachment(manualId, lang, {
       filename: file.name,
       mimeType: file.type || 'application/octet-stream',
       buffer,
@@ -182,12 +182,12 @@ export function manualsController(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const manual = await repository.manuals.getManualById(identity.siteId, manualId);
+    const manual = await manualsRepository.getManualById(identity.siteId, manualId);
     if (!manual) {
       return c.notFound();
     }
 
-    await repository.manuals.deleteAttachment(manualId, lang);
+    await manualsRepository.deleteAttachment(manualId, lang);
     return c.body(null, 204);
   });
 

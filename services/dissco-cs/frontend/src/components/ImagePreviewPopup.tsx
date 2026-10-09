@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { iiifApi } from '../api/cs-client/iiif';
+import { iiifQueries } from '../api/queries/iiif';
 import { parseUrn } from '../utility/parse-urn';
 import { getImageServiceId } from '../utility/get-image-service-id';
 import { OpenSeadragonViewer } from '../pages/annotate/viewer/OpenSeadragonViewer';
@@ -24,8 +24,7 @@ export const ImagePreviewPopup: React.FC<ImagePreviewPopupProps> = ({ subject, l
   // vorige/volgende via OpenSeadragonViewer's eigen ingebouwde navigatie (zelfde patroon als
   // AnnotatePage.tsx bij manifest-granulariteit-projecten).
   const { data: structure } = useQuery({
-    queryKey: ['review-preview-structure', parsed?.id],
-    queryFn: () => iiifApi.getManifestStructure(parsed!.id),
+    ...iiifQueries.manifestStructure(parsed?.id),
     enabled: isManifest,
     retry: false,
   });
@@ -35,9 +34,7 @@ export const ImagePreviewPopup: React.FC<ImagePreviewPopupProps> = ({ subject, l
   const canvasId = isManifest ? canvases[canvasIndex]?.id : parsed?.type === 'canvas' ? parsed.id : undefined;
 
   const { data: canvasJson, isError: canvasError } = useQuery({
-    queryKey: ['review-preview-canvas', canvasId],
-    queryFn: () => iiifApi.getCanvas(canvasId as number),
-    enabled: !!canvasId,
+    ...iiifQueries.canvas(canvasId),
     retry: false,
   });
 

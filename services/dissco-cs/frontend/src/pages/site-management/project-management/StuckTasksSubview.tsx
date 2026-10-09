@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { taskKeys, taskQueries } from '../../../api/queries/tasks';
+import { projectKeys } from '../../../api/queries/projects';
 import { tasksApi } from '../../../api/cs-client/tasks';
 import { projectsApi } from '../../../api/cs-client/projects';
 import { HrefLink } from '../../../utility/href-link';
@@ -16,7 +18,7 @@ function statusLabelKey(status: number): string {
 export const StuckTasksSubview: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
-  const { data, refetch, status: queryStatus } = useQuery({ queryKey: ['stuck-tasks'], queryFn: () => tasksApi.listStuck() });
+  const { data, status: queryStatus } = useQuery(taskQueries.stuck());
   const [releasingId, setReleasingId] = useState<string | null>(null);
   const [resyncingId, setResyncingId] = useState<string | null>(null);
   const [confirmTask, setConfirmTask] = useState<MadocCrowdsourcingTaskDto | null>(null);
@@ -36,8 +38,9 @@ export const StuckTasksSubview: React.FC = () => {
         // claim is created, never on a release — same reason AnnotatePage does this after abandon.
         await projectsApi.resyncClaim(projectId, manifestId).catch(err => console.error('[StuckTasks] resync failed', err));
       }
-      queryClient.invalidateQueries({ queryKey: ['collection'] });
-      await refetch();
+      // Progress (available manifests) and every task list, this stuck list included.
+      queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      await queryClient.invalidateQueries({ queryKey: taskKeys.all });
     } finally {
       setReleasingId(null);
     }
@@ -47,8 +50,9 @@ export const StuckTasksSubview: React.FC = () => {
     setResyncingId(counter.id);
     try {
       await tasksApi.resyncManifest(counter.id);
-      queryClient.invalidateQueries({ queryKey: ['collection'] });
-      await refetch();
+      // Progress (available manifests) and every task list, this stuck list included.
+      queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      await queryClient.invalidateQueries({ queryKey: taskKeys.all });
     } finally {
       setResyncingId(null);
     }

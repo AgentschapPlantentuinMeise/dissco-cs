@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CsMarkdown } from './CsMarkdown';
 import { Modal } from './Modal';
-import { useNavItems } from '../contexts/NavItemsContext';
-import { useUser } from '../hooks/use-current-user';
+import { useNavItems } from '../hooks/use-nav-items';
+import { useCurrentUser } from '../hooks/use-current-user';
 
 // Shown once, right after a new account is activated — see the redirect to
 // `/?welcome=1` in SetPassword.tsx. Not stored anywhere (no cookie/DB flag): closing
@@ -13,7 +13,7 @@ export const WelcomeModal: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const [searchParams, setSearchParams] = useSearchParams();
   const { loading, isActive, getContent } = useNavItems();
-  const user = useUser();
+  const user = useCurrentUser();
 
   const show = searchParams.get('welcome') === '1';
   const rawContent = getContent('welcome', i18n.language) || getContent('welcome', 'nl');

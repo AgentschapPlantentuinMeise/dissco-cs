@@ -1,10 +1,10 @@
 import { Hono } from 'hono';
-import { DisscoCSRepository } from '../db.js';
-import { requestMadocUserIdentity } from '../jwt.js';
+import { FeedbackRepository } from '../repositories/feedback.repository.js';
+import { requestMadocUserIdentity } from '../auth/auth.js';
 import { feedbackReplyInputSchema, feedbackThreadInputSchema } from '@dissco-cs/shared-types';
 import { isReviewerOrAdmin } from './review.controller.js';
 
-export function feedbackController(repository: DisscoCSRepository): Hono {
+export function feedbackController(feedbackRepository: FeedbackRepository): Hono {
   const app = new Hono();
 
   app.get('/threads', async c => {
@@ -13,7 +13,7 @@ export function feedbackController(repository: DisscoCSRepository): Hono {
       return c.text('Unauthorized', 401);
     }
 
-    const threads = await repository.feedback.listThreadsForUser(identity.siteId, identity.userId);
+    const threads = await feedbackRepository.listThreadsForUser(identity.siteId, identity.userId);
     return c.json({ threads });
   });
 
@@ -32,7 +32,7 @@ export function feedbackController(repository: DisscoCSRepository): Hono {
       return c.text('recipientUserId, recipientName, subject and body are required', 400);
     }
 
-    const thread = await repository.feedback.createThread({
+    const thread = await feedbackRepository.createThread({
       siteId: identity.siteId,
       reviewerUserId: identity.userId,
       reviewerName: identity.name,
@@ -58,12 +58,12 @@ export function feedbackController(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const result = await repository.feedback.getThread(identity.siteId, threadId, identity.userId);
+    const result = await feedbackRepository.getThread(identity.siteId, threadId, identity.userId);
     if (!result) {
       return c.notFound();
     }
 
-    await repository.feedback.markThreadSeen(identity.userId, threadId);
+    await feedbackRepository.markThreadSeen(identity.userId, threadId);
     // markThreadSeen above just cleared this user's unread messages, so unread_count is 0 here --
     // no extra query needed.
     const role = identity.userId === result.thread.recipient_user_id ? 'recipient' : 'reviewer';
@@ -89,7 +89,7 @@ export function feedbackController(repository: DisscoCSRepository): Hono {
       return c.text('body is required', 400);
     }
 
-    const reply = await repository.feedback.createReply({
+    const reply = await feedbackRepository.createReply({
       siteId: identity.siteId,
       threadId,
       authorUserId: identity.userId,
@@ -101,7 +101,7 @@ export function feedbackController(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    await repository.feedback.markThreadSeen(identity.userId, threadId);
+    await feedbackRepository.markThreadSeen(identity.userId, threadId);
     return c.json(reply, 201);
   });
 
@@ -116,7 +116,7 @@ export function feedbackController(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const result = await repository.feedback.deleteThreadForUser(identity.siteId, threadId, identity.userId);
+    const result = await feedbackRepository.deleteThreadForUser(identity.siteId, threadId, identity.userId);
     if (!result) {
       return c.notFound();
     }

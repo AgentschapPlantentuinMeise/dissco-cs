@@ -1,22 +1,22 @@
 import { serve } from '@hono/node-server';
 
 import { appConfig } from './config.js';
-import { DisscoCSRepository } from './db.js';
+import { DisscoCSDatabase } from './database/database.js';
 import { HonourBoardRepository } from './madoc-db/honour-board.repository.js';
 import { MadocDbPools } from './madoc-db/pools.js';
 import { StatsRepository } from './madoc-db/stats.repository.js';
 import { createDisscoCSApp } from './app.js';
 
 export async function bootstrap(): Promise<void> {
-  const repository = new DisscoCSRepository();
+  const database = new DisscoCSDatabase();
   const madocDbPools = new MadocDbPools();
-  const app = createDisscoCSApp(repository, new StatsRepository(madocDbPools), new HonourBoardRepository(madocDbPools));
+  const app = createDisscoCSApp(database, new StatsRepository(madocDbPools), new HonourBoardRepository(madocDbPools));
 
   try {
-    await repository.waitUntilReady(appConfig.startupRetryCount, appConfig.startupRetryMs);
+    await database.waitUntilReady(appConfig.startupRetryCount, appConfig.startupRetryMs);
 
     if (appConfig.migrate) {
-      await repository.migrate();
+      await database.migrate();
     }
 
     serve(
@@ -31,7 +31,7 @@ export async function bootstrap(): Promise<void> {
     );
 
     const shutdown = async () => {
-      await repository.close();
+      await database.close();
       await madocDbPools.close();
       process.exit(0);
     };
@@ -40,7 +40,7 @@ export async function bootstrap(): Promise<void> {
     process.on('SIGTERM', shutdown);
   } catch (error) {
     console.error('DiSSCo CS API failed to start', error);
-    await repository.close();
+    await database.close();
     await madocDbPools.close();
     process.exit(1);
   }

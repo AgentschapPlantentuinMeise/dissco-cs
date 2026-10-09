@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { projectQueries } from '../../api/queries/projects';
+import { manualQueries } from '../../api/queries/manuals';
+import { institutionQueries } from '../../api/queries/institutions';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/CsPage';
 import { LuArrowLeft } from 'react-icons/lu';
-import { manualsApi } from '../../api/cs-client/manuals';
-import { institutionsApi } from '../../api/cs-client/institutions';
 import { projectsApi } from '../../api/cs-client/projects';
 import { ProjectsSubview } from './project-management/ProjectsSubview';
 import { ManualsSubview } from './project-management/ManualsSubview';
@@ -20,27 +21,24 @@ export const ProjectManagement: React.FC = () => {
   // All projects, every status, every page -- unlike the public Homepage/Projects pages (which
   // deliberately only show published/active ones), project management needs to see drafts and
   // paused projects too, e.g. to link them to an institution before they go live.
-  const { data: allProjects, status: allProjectsStatus } = useQuery({
-    queryKey: ['admin-all-site-projects'],
-    queryFn: () => projectsApi.listAll(),
-  });
+  const { data: allProjects, status: allProjectsStatus } = useQuery(projectQueries.listAll());
   const projects = allProjects ?? [];
 
   const {
     data: manualsResponse,
     refetch: refetchManuals,
     status: manualsStatus,
-  } = useQuery({ queryKey: ['admin-manuals'], queryFn: () => manualsApi.list() });
+  } = useQuery(manualQueries.list());
   const manuals = manualsResponse?.manuals ?? [];
 
-  const { data: institutionsResponse } = useQuery({ queryKey: ['admin-institutions'], queryFn: () => institutionsApi.listAdmin() });
+  const { data: institutionsResponse } = useQuery(institutionQueries.admin());
   const institutions = institutionsResponse?.institutions ?? [];
 
   const {
     data: institutionLinksResponse,
     refetch: refetchInstitutionLinks,
     status: institutionLinksStatus,
-  } = useQuery({ queryKey: ['admin-institution-project-links'], queryFn: () => projectsApi.listInstitutionLinks() });
+  } = useQuery(projectQueries.institutionLinks());
   const institutionLinks = institutionLinksResponse?.links ?? {};
 
   // Achtergrondvergelijking: Madoc weet niets van dissco-cs, dus als een project in Madoc

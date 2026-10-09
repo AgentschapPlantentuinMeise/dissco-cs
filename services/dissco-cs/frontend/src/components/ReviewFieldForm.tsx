@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MadocCaptureModelDto, MadocModelFields, MadocNestedModelFields, MadocStructureNodeDto, MadocAnnotationDocumentDto, MadocBaseFieldDto } from '@dissco-cs/shared-types';
-import { DocumentPath } from '../pages/annotate/form/document';
+import { DocumentPath } from '../utility/annotation-document';
 
 export interface ReviewFieldFormProps {
   model: MadocCaptureModelDto;

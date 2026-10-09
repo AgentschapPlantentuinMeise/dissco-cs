@@ -4,16 +4,16 @@ import useDropdownMenu from 'react-accessible-dropdown-menu-hook';
 import { stringify } from 'query-string';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { reviewQueries } from '../../api/queries/review';
+import { forumQueries } from '../../api/queries/forum';
+import { feedbackQueries } from '../../api/queries/feedback';
 import Cookies from 'js-cookie';
 import { HrefLink } from '../../utility/href-link';
-import { useUser } from '../../hooks/use-current-user';
+import { useCurrentUser } from '../../hooks/use-current-user';
 import { LuUser, LuSearch, LuX } from 'react-icons/lu';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { getSiteSlug } from '../../api/slug';
-import { forumApi } from '../../api/cs-client/forum';
-import { reviewApi } from '../../api/cs-client/review';
-import { feedbackApi } from '../../api/cs-client/feedback';
-import { useNavItems } from '../../contexts/NavItemsContext';
+import { useNavItems } from '../../hooks/use-nav-items';
 import { NAV_ITEMS } from '../../nav-config';
 
 const LANGUAGES = disscoCSConfig.supportedLanguages;
@@ -30,12 +30,10 @@ const dropdownItemClass =
 export const Navbar: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [newMsgCount, setNewMsgCount] = useState(0);
-  const [feedbackUnreadCount, setFeedbackUnreadCount] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const user = useUser();
+  const user = useCurrentUser();
   const siteSlug = getSiteSlug();
   const location = useLocation();
   const navigate = useNavigate();
@@ -44,8 +42,7 @@ export const Navbar: React.FC = () => {
   // Reviewer-rol zit niet in het JWT (enkel scope), dus navraag via een lichte backend-call;
   // admins hoeven deze niet te doen, want die zien de link toch al.
   const { data: reviewerCheck, error: reviewerError } = useQuery({
-    queryKey: ['nav-is-reviewer'],
-    queryFn: () => reviewApi.isReviewer(),
+    ...reviewQueries.isReviewer(),
     enabled: !!user && !showAdmin,
     staleTime: 5 * 60 * 1000,
   });
@@ -72,38 +69,13 @@ export const Navbar: React.FC = () => {
     return () => document.body.classList.remove('cs-active');
   }, []);
 
-  useEffect(() => {
-    if (!user) return;
-
-    const refreshUnreadCount = () => {
-      forumApi.listTopics().then(res => {
-        const count = res.topics.filter(m => {
-          const seen = m.last_seen_reply_count;
-          return seen === null || m.reply_count > seen;
-        }).length;
-        setNewMsgCount(count);
-      }).catch(() => {});
-    };
-
-    refreshUnreadCount();
-    window.addEventListener('mb_updated', refreshUnreadCount);
-    return () => window.removeEventListener('mb_updated', refreshUnreadCount);
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const refreshFeedbackUnreadCount = () => {
-      feedbackApi.listThreads().then(res => {
-        const count = res.threads.reduce((sum, thread) => sum + thread.unread_count, 0);
-        setFeedbackUnreadCount(count);
-      }).catch(() => {});
-    };
-
-    refreshFeedbackUnreadCount();
-    window.addEventListener('feedback_updated', refreshFeedbackUnreadCount);
-    return () => window.removeEventListener('feedback_updated', refreshFeedbackUnreadCount);
-  }, [user?.id]);
+  // Unread badges: refreshed by invalidation from the forum page and the dashboard (no window events).
+  const { data: newMsgCount = 0 } = useQuery({ ...forumQueries.unreadCount(), enabled: !!user });
+  const { data: feedbackUnreadCount = 0 } = useQuery({
+    ...feedbackQueries.threads(),
+    enabled: !!user,
+    select: res => res.threads.reduce((sum, thread) => sum + thread.unread_count, 0),
+  });
 
   useEffect(() => {
     setIsOpen(false);

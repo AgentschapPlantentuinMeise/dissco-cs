@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { statsApi } from '../api/cs-client/stats';
+import { statsQueries } from '../api/queries/stats';
 import { usePollingWindow } from './use-polling-window';
 
 // One triggering fetch on page load (starts a background recompute if the cache is stale) plus
@@ -8,9 +8,9 @@ import { usePollingWindow } from './use-polling-window';
 // different, pure-read endpoint. refetchOnWindowFocus is off on the triggering query so
 // tab-switching doesn't also trigger SQL.
 export function useSiteStats() {
-  const initial = useQuery({ queryKey: ['site-stats'], queryFn: () => statsApi.get(), refetchOnWindowFocus: false });
+  const initial = useQuery({ ...statsQueries.site(), refetchOnWindowFocus: false });
   const refetchInterval = usePollingWindow();
-  const peek = useQuery({ queryKey: ['site-stats-current'], queryFn: () => statsApi.getCurrent(), refetchInterval });
+  const peek = useQuery({ ...statsQueries.siteCurrent(), refetchInterval });
 
   return { ...initial, data: peek.data ?? initial.data };
 }

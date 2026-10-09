@@ -1,13 +1,11 @@
 import { Hono } from 'hono';
-import { DisscoCSRepository } from '../db.js';
-import { requireSiteAdmin, resolveSiteId } from '../jwt.js';
-import { toInstitutionDto } from '../repositories/institutions.repository.js';
-import { setInstitutionsOrderSchema } from '../validators.js';
-import { institutionInputSchema } from '@dissco-cs/shared-types';
+import { requireSiteAdmin, resolveSiteId } from '../auth/auth.js';
+import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
+import { institutionInputSchema, setInstitutionsOrderSchema } from '@dissco-cs/shared-types';
 
 // The institution itself. Its numbers live in stats.controller.ts (/stats/institutions/:slug), its
 // project links in projects.controller.ts (/projects/:projectId/institution).
-export function institutionsController(repository: DisscoCSRepository): Hono {
+export function institutionsController(institutionsRepository: InstitutionsRepository): Hono {
   const app = new Hono();
 
   app.get('/active', async c => {
@@ -16,7 +14,7 @@ export function institutionsController(repository: DisscoCSRepository): Hono {
       return c.text('Could not resolve site', 400);
     }
 
-    const institutions = await repository.institutions.listActiveInstitutions(siteId);
+    const institutions = await institutionsRepository.listActiveInstitutions(siteId);
     return c.json({ institutions: institutions.map(toInstitutionDto) });
   });
 
@@ -26,7 +24,7 @@ export function institutionsController(repository: DisscoCSRepository): Hono {
       return c.text('Could not resolve site', 400);
     }
 
-    const institution = await repository.institutions.getActiveInstitutionBySlug(siteId, c.req.param('slug'));
+    const institution = await institutionsRepository.getActiveInstitutionBySlug(siteId, c.req.param('slug'));
     if (!institution) {
       return c.notFound();
     }
@@ -40,12 +38,12 @@ export function institutionsController(repository: DisscoCSRepository): Hono {
       return c.text('Could not resolve site', 400);
     }
 
-    const institution = await repository.institutions.getActiveInstitutionBySlug(siteId, c.req.param('slug'));
+    const institution = await institutionsRepository.getActiveInstitutionBySlug(siteId, c.req.param('slug'));
     if (!institution) {
       return c.notFound();
     }
 
-    const projectSlugs = await repository.institutions.listProjectSlugsForInstitution(siteId, institution.id);
+    const projectSlugs = await institutionsRepository.listProjectSlugsForInstitution(siteId, institution.id);
     return c.json({ projectSlugs });
   });
 
@@ -55,7 +53,7 @@ export function institutionsController(repository: DisscoCSRepository): Hono {
       return identity;
     }
 
-    const institutions = await repository.institutions.listInstitutions(identity.siteId);
+    const institutions = await institutionsRepository.listInstitutions(identity.siteId);
     return c.json({ institutions: institutions.map(toInstitutionDto) });
   });
 
@@ -70,7 +68,7 @@ export function institutionsController(repository: DisscoCSRepository): Hono {
       return c.text('Invalid institution payload', 400);
     }
 
-    const institution = await repository.institutions.createInstitution(identity.siteId, result.data);
+    const institution = await institutionsRepository.createInstitution(identity.siteId, result.data);
     return c.json(toInstitutionDto(institution), 201);
   });
 
@@ -85,7 +83,7 @@ export function institutionsController(repository: DisscoCSRepository): Hono {
       return c.text('order must be an array of institution ids', 400);
     }
 
-    await repository.institutions.setInstitutionsOrder(identity.siteId, result.data.order);
+    await institutionsRepository.setInstitutionsOrder(identity.siteId, result.data.order);
     return c.body(null, 204);
   });
 
@@ -105,7 +103,7 @@ export function institutionsController(repository: DisscoCSRepository): Hono {
       return c.text('Invalid institution payload', 400);
     }
 
-    const institution = await repository.institutions.updateInstitution(identity.siteId, id, result.data);
+    const institution = await institutionsRepository.updateInstitution(identity.siteId, id, result.data);
     if (!institution) {
       return c.notFound();
     }
@@ -124,7 +122,7 @@ export function institutionsController(repository: DisscoCSRepository): Hono {
       return c.notFound();
     }
 
-    const deleted = await repository.institutions.deleteInstitution(identity.siteId, id);
+    const deleted = await institutionsRepository.deleteInstitution(identity.siteId, id);
     if (!deleted) {
       return c.notFound();
     }

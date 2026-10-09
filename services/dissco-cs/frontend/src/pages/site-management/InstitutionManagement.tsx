@@ -1,6 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { institutionQueries } from '../../api/queries/institutions';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/CsPage';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -41,7 +42,7 @@ function fileToDataUrl(file: File): Promise<string> {
 
 export const InstitutionManagement: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data, isLoading, refetch } = useQuery({ queryKey: ['admin-institutions'], queryFn: () => institutionsApi.listAdmin() });
+  const { data, isLoading, refetch } = useQuery(institutionQueries.admin());
   const institutions = data?.institutions ?? [];
 
   const [editingId, setEditingId] = useState<InstitutionDto['id'] | null>(null);

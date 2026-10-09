@@ -3,14 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { CsPage } from '../../components/CsPage';
 import { StatBanner } from '../../components/StatBanner';
 import { PeriodCard } from '../../components/honour-board/PeriodCard';
-import { useHonourBoard } from '../../hooks/use-honour-board';
+import { useSiteHonourBoard } from '../../hooks/use-site-honour-board';
 import { useSiteStats } from '../../hooks/use-site-stats';
 import { LuMedal, LuClock, LuCalendar } from 'react-icons/lu';
 import { formatNumber as formatCount } from '../../utility/format-number';
 
 export const HonourBoard: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { today, week, month, legend } = useHonourBoard();
+  const { today, week, month, legend } = useSiteHonourBoard();
   const { data: siteStats } = useSiteStats();
   const formatNumber = (n: number) => formatCount(n, i18n.language);
   const legendLeader = legend.data?.top[0];

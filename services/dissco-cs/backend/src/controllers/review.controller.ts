@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 
-import { MadocUserIdentity, requestBearerToken, requireUser } from '../jwt.js';
+import { MadocUserIdentity, requestBearerToken, requireUser } from '../auth/auth.js';
 import { forwardJsonBody, isSafeSegment } from '../madoc-client/client.js';
 import { getMadocReviewTasks } from '../madoc-client/reviews.js';
 import { getMadocSiteUserRole } from '../madoc-client/users.js';
@@ -20,7 +20,9 @@ export function reviewController(): Hono {
 
   app.get('/is-reviewer', async c => {
     const identity = requireUser(c);
-    if (identity instanceof Response) return identity;
+    if (identity instanceof Response) {
+      return identity;
+    }
 
     try {
       const role = await getMadocSiteUserRole(identity.siteId, identity.userId);
@@ -33,7 +35,9 @@ export function reviewController(): Hono {
 
   app.get('/tasks', async c => {
     const identity = requireUser(c);
-    if (identity instanceof Response) return identity;
+    if (identity instanceof Response) {
+      return identity;
+    }
 
     if (!(await isReviewerOrAdmin(identity))) {
       return c.text('Forbidden', 403);

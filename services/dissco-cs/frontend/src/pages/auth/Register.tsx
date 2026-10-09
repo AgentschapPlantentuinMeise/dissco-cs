@@ -6,13 +6,13 @@ import { TermsModal } from '../../components/TermsModal';
 import { HrefLink } from '../../utility/href-link';
 import { register, getInvitation, getTerms } from '../../api/madoc-auth/auth';
 import { MadocSiteTermsDto, InvitationDto } from '@dissco-cs/shared-types';
-import { useUser } from '../../hooks/use-current-user';
+import { useCurrentUser } from '../../hooks/use-current-user';
 import { getSiteSlug } from '../../api/slug';
 
 export const Register: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
   const [searchParams] = useSearchParams();
-  const user = useUser();
+  const user = useCurrentUser();
   const code = searchParams.get('code') || undefined;
   const formRef = useRef<HTMLFormElement>(null);
 

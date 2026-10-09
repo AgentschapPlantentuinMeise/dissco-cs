@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import { reviewApi } from '../../api/cs-client/review';
-import { feedbackApi } from '../../api/cs-client/feedback';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { reviewQueries } from '../api/queries/review';
+import { feedbackKeys } from '../api/queries/feedback';
+import { reviewApi } from '../api/cs-client/review';
+import { feedbackApi } from '../api/cs-client/feedback';
 import { ReviewTaskDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
-import { ApiError } from '../../api/cs-client/request';
-import { captureModelsApi } from '../../api/cs-client/capture-models';
-import { localeText } from '../../utility/locale-text';
-import { useUser } from '../../hooks/use-current-user';
+import { ApiError } from '../api/cs-client/request';
+import { captureModelsApi } from '../api/cs-client/capture-models';
+import { localeText } from '../utility/locale-text';
+import { useCurrentUser } from './use-current-user';
 
 export type SortKey = 'project' | 'subject' | 'status' | 'submitter' | 'reviewer' | 'modified_at';
 export type SortDir = 'asc' | 'desc';
@@ -38,10 +40,11 @@ function singleSubmitter(refs: BatchSubmitterRef[]): { id: number; name: string 
 }
 
 // Alle data, filter/sort-, selectie- en accept-logica voor de review-pagina zit hier.
-export function useReviewTasksController() {
+export function useReviewPage() {
   const { t, i18n } = useTranslation('dissco-cs');
-  const user = useUser();
-  const { data, status: queryStatus, refetch } = useQuery({ queryKey: ['review-tasks'], queryFn: () => reviewApi.getReviewTasks(), staleTime: 0 });
+  const user = useCurrentUser();
+  const queryClient = useQueryClient();
+  const { data, status: queryStatus, refetch } = useQuery({ ...reviewQueries.tasks(), staleTime: 0 });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'' | '0' | '1' | '2'>('');
@@ -64,7 +67,7 @@ export function useReviewTasksController() {
 
   // Compose-doel voor de feedback-modal (vóór een accept, vanaf rij-icoon/actiebalk/selectie), en
   // de single-slot "laatste verwerkte batch" die na een accept overleeft zolang er niet opnieuw
-  // geaccepteerd wordt -- zie ReviewTasks.tsx voor de sticky balk die dit toont.
+  // geaccepteerd wordt -- zie Review.tsx voor de sticky balk die dit toont.
   const [feedbackTarget, setFeedbackTarget] = useState<FeedbackComposeTarget | null>(null);
   const [lastBatchTasks, setLastBatchTasks] = useState<BatchSubmitterRef[] | null>(null);
   const [sendingFeedback, setSendingFeedback] = useState(false);
@@ -326,7 +329,8 @@ export function useReviewTasksController() {
         body,
       });
       setFeedbackTarget(null);
-      window.dispatchEvent(new Event('feedback_updated'));
+      // The new thread shows up in the reviewer's own dashboard list and navbar badge.
+      queryClient.invalidateQueries({ queryKey: feedbackKeys.threads() });
     } catch (err) {
       setFeedbackError(err instanceof Error ? err.message : t('review_bulk_error_generic'));
     } finally {

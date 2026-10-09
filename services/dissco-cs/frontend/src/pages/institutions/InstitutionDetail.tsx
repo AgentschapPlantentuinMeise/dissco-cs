@@ -2,13 +2,13 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { institutionQueries } from '../../api/queries/institutions';
+import { projectQueries } from '../../api/queries/projects';
 import { CsPage } from '../../components/CsPage';
 import { HrefLink } from '../../utility/href-link';
 import { LuArrowLeft, LuMail, LuPhone, LuGlobe, LuMedal, LuClock, LuCalendar } from 'react-icons/lu';
-import { institutionsApi } from '../../api/cs-client/institutions';
 import { StatBanner } from '../../components/StatBanner';
 import { PeriodCard } from '../../components/honour-board/PeriodCard';
-import { projectsApi } from '../../api/cs-client/projects';
 import { useInstitutionStats } from '../../hooks/use-institution-stats';
 import { useInstitutionHonourBoard } from '../../hooks/use-institution-honour-board';
 import { ProjectCard } from '../../components/projectcard/ProjectCard';
@@ -19,25 +19,16 @@ import { MadocProjectDto } from '@dissco-cs/shared-types';
 export const InstitutionDetail: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const { slug } = useParams<{ slug: string }>();
-  const { data: institution, isLoading } = useQuery({
-    queryKey: ['institution', slug],
-    queryFn: () => institutionsApi.getActive(slug!),
-    enabled: !!slug,
-  });
+  const { data: institution, isLoading } = useQuery(institutionQueries.detail(slug));
 
-  const { data: projectSlugsResponse } = useQuery({
-    queryKey: ['institution-projects', slug],
-    queryFn: () => institutionsApi.getActiveProjectSlugs(slug!),
-    enabled: !!slug,
-  });
+  const { data: projectSlugsResponse } = useQuery(institutionQueries.projectSlugs(slug));
   const projectSlugs = projectSlugsResponse?.projectSlugs ?? [];
 
   // All pages, published-only -- same reasoning as Homepage/Projects.tsx: a site-admin viewer
   // otherwise gets every status unfiltered from page 1 only, which can miss this institution's
   // linked projects entirely if enough other/older projects exist.
   const { data: allProjects } = useQuery({
-    queryKey: ['all-site-projects', { published: true }],
-    queryFn: () => projectsApi.listAll({ published: true }),
+    ...projectQueries.listAll({ published: true }),
     staleTime: 5 * 60 * 1000,
   });
   const linkedProjects = (allProjects ?? []).filter((p: MadocProjectDto) => projectSlugs.includes(p.slug));

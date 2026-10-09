@@ -1,14 +1,15 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { taskQueries } from '../../api/queries/tasks';
+import { projectQueries } from '../../api/queries/projects';
 import { useTranslation } from 'react-i18next';
-import { useProject } from '../../hooks/use-project';
+import { useCurrentProject } from '../../hooks/use-current-project';
 import { useProjectProgress } from '../../hooks/use-project-progress';
 import { useRouteContext } from '../../hooks/use-route-context';
-import { useUser } from '../../hooks/use-current-user';
-import { tasksApi } from '../../api/cs-client/tasks';
+import { useCurrentUser } from '../../hooks/use-current-user';
 import { projectsApi } from '../../api/cs-client/projects';
-import { MadocCrowdsourcingTaskDto, MadocInternationalString } from '@dissco-cs/shared-types';
+import { MadocInternationalString } from '@dissco-cs/shared-types';
 import { buildTaskLink } from '../../utility/build-task-link';
 import { HrefLink } from '../../utility/href-link';
 import { LocaleString } from '../../components/LocaleString';
@@ -23,8 +24,8 @@ function manualSeenKey(projectSlug: string): string {
 
 export const ProjectDetail: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
-  const { data: project } = useProject();
-  const user = useUser();
+  const { data: project } = useCurrentProject();
+  const user = useCurrentUser();
   const navigate = useNavigate();
   const [manualOpen, setManualOpen] = useState(false);
 
@@ -50,19 +51,7 @@ export const ProjectDetail: React.FC = () => {
   // gebruikers hetzelfde manifest niet tegelijk kunnen claimen (zie docs/MANIFEST-CLAIMS.md) —
   // maar dat verbergt ook de eigen opgeslagen taken (status 1) van de ingelogde gebruiker voor
   // zichzelf. Aparte query zodat die apart getoond kunnen worden i.p.v. te verdwijnen.
-  const { data: ownTasksData } = useQuery({
-    queryKey: ['project-own-saved-tasks', project?.id, user?.id],
-    queryFn: () =>
-      tasksApi.list<MadocCrowdsourcingTaskDto>(1, {
-        type: 'crowdsourcing-task',
-        all_tasks: true,
-        assignee: `urn:madoc:user:${user!.id}`,
-        per_page: 100,
-        status: 1,
-        detail: true,
-      }),
-    enabled: !!project && !!user,
-  });
+  const { data: ownTasksData } = useQuery({ ...taskQueries.mineSaved(user?.id), enabled: !!project && !!user });
   const ownSavedTasks = (ownTasksData?.tasks ?? []).filter(task => task.metadata?.project?.slug === project?.slug);
   console.log('[ProjectDetail] eigen opgeslagen taken in dit project (status 1):', ownSavedTasks.length, ownSavedTasks.map(task => ({
     id: task.id, name: task.name, subject: task.subject,
@@ -70,11 +59,7 @@ export const ProjectDetail: React.FC = () => {
 
   const { data: progress } = useProjectProgress(project?.id);
 
-  const { data: institution } = useQuery({
-    queryKey: ['project-institution', project?.slug],
-    queryFn: () => projectsApi.getInstitution(project!.slug),
-    enabled: !!project,
-  });
+  const { data: institution } = useQuery(projectQueries.institution(project?.slug));
 
   const navigateToFirstCanvas = async (manifestId: number) => {
     navigate(`/explore/${project!.slug}/manifests/${manifestId}/annotate`);

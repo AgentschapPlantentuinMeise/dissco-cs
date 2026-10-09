@@ -2,7 +2,7 @@
 import { useTranslation } from 'react-i18next';
 import { CsPage } from '../../components/CsPage';
 import { CsMarkdown } from '../../components/CsMarkdown';
-import { useNavItems } from '../../contexts/NavItemsContext';
+import { useNavItems } from '../../hooks/use-nav-items';
 import { contactApi } from '../../api/cs-client/contact';
 
 export const Contact: React.FC = () => {

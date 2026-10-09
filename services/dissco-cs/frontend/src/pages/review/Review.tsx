@@ -10,12 +10,12 @@ import { FeedbackModal } from '../../components/FeedbackModal';
 import { ReviewInlineExpansion } from './ReviewInlineExpansion';
 import { ReviewSearchInput } from './ReviewSearchInput';
 import { ReviewTable } from './ReviewTable';
-import { useReviewTasksController } from './useReviewTasksController';
+import { useReviewPage } from '../../hooks/use-review-page';
 
 // De tabel verandert nooit van breedte of positie -- een aangeklikte rij klapt zelf open met de
 // velden in een responsieve grid (zie ReviewInlineExpansion).
-export const ReviewTasks: React.FC = () => {
-  const c = useReviewTasksController();
+export const Review: React.FC = () => {
+  const c = useReviewPage();
   const { t, i18n } = c;
 
   return (

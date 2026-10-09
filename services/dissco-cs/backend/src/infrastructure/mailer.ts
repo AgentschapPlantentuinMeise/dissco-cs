@@ -1,6 +1,6 @@
 import { createTransport } from 'nodemailer';
 
-import { appConfig } from './config.js';
+import { appConfig } from '../config.js';
 
 class Mailer {
   enabled = false;

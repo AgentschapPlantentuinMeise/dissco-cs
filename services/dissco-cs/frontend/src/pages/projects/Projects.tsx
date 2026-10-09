@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { projectsApi } from '../../api/cs-client/projects';
+import { projectQueries } from '../../api/queries/projects';
 import { CsPage } from '../../components/CsPage';
 import { ProjectCard } from '../../components/projectcard/ProjectCard';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
@@ -19,10 +19,9 @@ const ROWS_PER_PAGE = 2;
 export const Projects: React.FC = () => {
   // All pages, published-only, so every active project shows regardless of how many draft/paused
   // projects exist (and regardless of whether the viewer is a site-admin, who would otherwise see
-  // every status unfiltered -- see useProjectList's `published` option).
+  // every status unfiltered -- see projectsApi.list's `published` filter).
   const { data: allProjects, status } = useQuery({
-    queryKey: ['all-site-projects', { published: true }],
-    queryFn: () => projectsApi.listAll({ published: true }),
+    ...projectQueries.listAll({ published: true }),
     staleTime: 5 * 60 * 1000,
   });
   const { data: siteStats } = useSiteStats();

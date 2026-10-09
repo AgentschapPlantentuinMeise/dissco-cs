@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { manualQueries } from '../../../api/queries/manuals';
+import { projectKeys } from '../../../api/queries/projects';
 import { manualsApi } from '../../../api/cs-client/manuals';
 import { MAX_MANUAL_ATTACHMENT_LENGTH, SitePageLang } from '@dissco-cs/shared-types';
 import { SaveButton } from '../../../components/SaveButton';
@@ -15,7 +17,7 @@ import { LANGUAGES, defaultLang } from '../../../utility/site-lang-text';
 export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }) => {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
-  const { data: manual, refetch } = useQuery({ queryKey: ['admin-manual', manualId], queryFn: () => manualsApi.getAdmin(manualId) });
+  const { data: manual, refetch } = useQuery(manualQueries.detail(manualId));
   const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
   const [draftContent, setDraftContent] = useState<Partial<Record<SitePageLang, string>>>({});
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -56,9 +58,9 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
         LANGUAGES.map(lang => manualsApi.setContent(manual.id, lang.code, draftContent[lang.code] ?? ''))
       );
       await refetch();
-      // De publieke handleiding-popup leest een eigen, apart gecachete query ('project-manual')
-      // die anders pas na de staleTime (5 min) of een harde refresh de nieuwe inhoud zou tonen.
-      queryClient.invalidateQueries({ queryKey: ['project-manual'] });
+      // The public manual popup reads its own cached query (projectQueries.manual), which would
+      // otherwise only show the new content after its staleTime (5 min) or a hard refresh.
+      queryClient.invalidateQueries({ queryKey: projectKeys.manuals() });
       setSaveState('saved');
     } catch {
       setSaveState('error');
@@ -75,7 +77,7 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
     try {
       await manualsApi.uploadAttachment(manual.id, selectedLang, file);
       await refetch();
-      queryClient.invalidateQueries({ queryKey: ['project-manual'] });
+      queryClient.invalidateQueries({ queryKey: projectKeys.manuals() });
       setAttachmentSaved(true);
     } finally {
       setUploading(false);
@@ -85,7 +87,7 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
   const removeAttachment = async () => {
     await manualsApi.deleteAttachment(manual.id, selectedLang);
     await refetch();
-    queryClient.invalidateQueries({ queryKey: ['project-manual'] });
+    queryClient.invalidateQueries({ queryKey: projectKeys.manuals() });
     setAttachmentSaved(false);
   };
 

@@ -17,8 +17,7 @@ export type InstitutionDto = {
   sort_order: number;
 };
 
-// Was backend/src/validators.ts MAX_LOGO_LENGTH -- lives here now because the schema enforces the
-// limit both client- and server-side.
+// Lives here because the schema enforces the limit both client- and server-side.
 export const INSTITUTION_LOGO_MAX_LENGTH = 3_000_000;
 
 // Copied verbatim from the frontend's old isValidPhone -- keep permissive, a stricter regex once
@@ -45,3 +44,5 @@ export const institutionInputSchema = z.object({
 });
 
 export type InstitutionInput = z.infer<typeof institutionInputSchema>;
+
+export const setInstitutionsOrderSchema = z.object({ order: z.array(z.number().int()) });

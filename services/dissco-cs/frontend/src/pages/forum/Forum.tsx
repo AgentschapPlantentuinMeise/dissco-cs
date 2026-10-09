@@ -1,13 +1,14 @@
-﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
+﻿import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { projectQueries } from '../../api/queries/projects';
+import { forumKeys, forumQueries } from '../../api/queries/forum';
 import { CsPage } from '../../components/CsPage';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { ForumTopicForm } from '../../components/forum/ForumTopicForm';
-import { useUser } from '../../hooks/use-current-user';
+import { useCurrentUser } from '../../hooks/use-current-user';
 import { useTranslation } from 'react-i18next';
 import { forumApi } from '../../api/cs-client/forum';
-import { projectsApi } from '../../api/cs-client/projects';
 import { MadocProjectDto, ForumTopicDto, ForumReplyDto, ForumTopicInput } from '@dissco-cs/shared-types';
 import { DeleteIconButton } from '../../components/DeleteIconButton';
 import { localeText } from '../../utility/locale-text';
@@ -27,12 +28,11 @@ const inputClass = 'py-[9px] px-3 border border-gray-300 rounded text-[0.95rem] 
 
 export const Forum: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const user = useUser();
+  const user = useCurrentUser();
   const authorName = user?.name || t('forum_meta_author');
 
   const { data: allProjects } = useQuery({
-    queryKey: ['forum-project-options'],
-    queryFn: () => projectsApi.listAll({ published: true }),
+    ...projectQueries.listAll({ published: true }),
     staleTime: 5 * 60 * 1000,
   });
   const projectOptions = useMemo(
@@ -40,10 +40,22 @@ export const Forum: React.FC = () => {
     [allProjects, i18n.language]
   );
 
-  const [topics, setTopics] = useState<ForumTopicDto[]>([]);
-  const [repliesByTopic, setRepliesByTopic] = useState<Record<string, ForumReplyDto[]>>({});
+  const queryClient = useQueryClient();
+  const topicsQuery = useQuery(forumQueries.topics());
+  const topics = useMemo(() => topicsQuery.data?.topics ?? [], [topicsQuery.data]);
+  // Local edits (delete, close, reply, mark seen) go straight into the shared cache instead of a
+  // separate copy in component state.
+  const setTopics = useCallback(
+    (update: (prev: ForumTopicDto[]) => ForumTopicDto[]) =>
+      queryClient.setQueryData(forumQueries.topics().queryKey, old => (old ? { ...old, topics: update(old.topics) } : old)),
+    [queryClient]
+  );
+
   const [showNewForm, setShowNewForm] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const { data: expandedReplies } = useQuery(forumQueries.replies(expandedId));
+  const setReplies = (topicId: number, update: (prev: ForumReplyDto[]) => ForumReplyDto[]) =>
+    queryClient.setQueryData(forumQueries.replies(topicId).queryKey, old => update(old ?? []));
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'mine' | 'unread' | 'unanswered' | null>(null);
@@ -54,14 +66,17 @@ export const Forum: React.FC = () => {
   const deepLinkTopicId = searchParams.get('topic');
   const didHandleDeepLink = useRef(false);
 
+  // Mark the visit only once this page's own fresh topic list is in, so the unread markers it shows
+  // reflect the state before the visit; then let the navbar badge catch up with the server.
+  const didVisit = useRef(false);
   useEffect(() => {
-    forumApi.listTopics().then(res => {
-      setTopics(res.topics);
-      return forumApi.visitForum().then(() => {
-        window.dispatchEvent(new Event('mb_updated'));
-      });
-    }).catch(() => setTopics([]));
-  }, []);
+    if (didVisit.current || !topicsQuery.isFetchedAfterMount) return;
+    didVisit.current = true;
+    forumApi
+      .visitForum()
+      .then(() => queryClient.invalidateQueries({ queryKey: forumKeys.unreadCount() }))
+      .catch(() => {});
+  }, [topicsQuery.isFetchedAfterMount, queryClient]);
 
   // Open het topic uit de ?topic=<id> deep-link (vanaf de dashboard-widget) automatisch, één keer,
   // zodra de topics geladen zijn. De ref voorkomt dat het topic zich meteen weer opent na sluiten.
@@ -72,18 +87,19 @@ export const Forum: React.FC = () => {
     didHandleDeepLink.current = true;
 
     setExpandedId(topicId);
-    forumApi.listReplies(topicId).then(replies => {
-      setRepliesByTopic(prev => ({ ...prev, [topicId]: replies }));
-      setTopics(prev => prev.map(m =>
-        m.id === topicId ? { ...m, last_seen_reply_count: replies.length } : m
-      ));
-    });
     document.getElementById(`topic-${topicId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [deepLinkTopicId, topics]);
 
+  // Fetching a topic's replies marks it seen on the server -- mirror that in the list.
   useEffect(() => {
-    window.dispatchEvent(new Event('mb_updated'));
-  }, [topics]);
+    if (expandedId === null || !expandedReplies) return;
+    setTopics(prev => prev.map(m => (m.id === expandedId ? { ...m, last_seen_reply_count: expandedReplies.length } : m)));
+  }, [expandedId, expandedReplies, setTopics]);
+
+  // Any change to the topic list may change the unread count in the navbar badge.
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: forumKeys.unreadCount() });
+  }, [topicsQuery.data, queryClient]);
 
   const isUnread = (msg: ForumTopicDto) => {
     const seen = msg.last_seen_reply_count;
@@ -122,12 +138,6 @@ export const Forum: React.FC = () => {
     }
 
     setExpandedId(topicId);
-    forumApi.listReplies(topicId).then(replies => {
-      setRepliesByTopic(prev => ({ ...prev, [topicId]: replies }));
-      setTopics(prev => prev.map(m =>
-        m.id === topicId ? { ...m, last_seen_reply_count: replies.length } : m
-      ));
-    });
   };
 
   const confirmDeleteTopic = () => {
@@ -155,10 +165,7 @@ export const Forum: React.FC = () => {
     const { topicId, replyId } = pendingDeleteReply;
 
     forumApi.deleteReply(topicId, replyId).then(() => {
-      setRepliesByTopic(prev => ({
-        ...prev,
-        [topicId]: (prev[topicId] || []).filter(r => r.id !== replyId),
-      }));
+      setReplies(topicId, prev => prev.filter(r => r.id !== replyId));
       setTopics(prev => prev.map(m =>
         m.id === topicId
           ? {
@@ -185,7 +192,7 @@ export const Forum: React.FC = () => {
     if (!body.trim()) return;
 
     forumApi.createReply(topicId, body).then(reply => {
-      setRepliesByTopic(prev => ({ ...prev, [topicId]: [...(prev[topicId] || []), reply] }));
+      setReplies(topicId, prev => [...prev, reply]);
       setTopics(prev => prev.map(m =>
         m.id === topicId
           ? { ...m, reply_count: m.reply_count + 1, last_activity: reply.created_at, last_seen_reply_count: m.reply_count + 1 }
@@ -227,7 +234,7 @@ export const Forum: React.FC = () => {
             <div className="flex flex-col gap-2.5">
               {displayTopics.map((msg: ForumTopicDto) => {
                 const unread = isUnread(msg);
-                const replies = repliesByTopic[msg.id] || [];
+                const replies = msg.id === expandedId ? expandedReplies ?? [] : [];
                 const isAdmin = !!user?.scope.includes('site.admin');
                 const isTopicOwner = user?.id === msg.author_user_id;
                 const closed = !!msg.closed_at;

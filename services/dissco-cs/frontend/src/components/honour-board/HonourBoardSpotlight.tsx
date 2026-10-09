@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LuMedal } from 'react-icons/lu';
-import { useHonourBoard } from '../../hooks/use-honour-board';
+import { useSiteHonourBoard } from '../../hooks/use-site-honour-board';
 import { formatNumber } from '../../utility/format-number';
 
 type SpotlightPeriod = 'today' | 'week' | 'month' | 'legend';
@@ -24,13 +24,13 @@ const PERIOD_LINE_KEY: Record<SpotlightPeriod, string> = {
 };
 
 // "Featured" column: one hourly-rotating featured person on top, full 4-period list below. Each
-// period is an independent query (see useHonourBoard), so this renders progressively -- whichever
+// period is an independent query (see useSiteHonourBoard), so this renders progressively -- whichever
 // period resolves first (usually "today", the smallest/fastest query) shows immediately instead
 // of the whole widget waiting on the slowest one (legend, unfiltered). A period that resolves
 // empty (nobody today/this week yet) still shows its row with a message instead of being hidden.
 export const HonourBoardSpotlight: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const board = useHonourBoard();
+  const board = useSiteHonourBoard();
 
   // Only periods that actually resolved with a top entry are candidates for the rotating featured
   // spot -- an empty or still-loading period would make a poor hero.

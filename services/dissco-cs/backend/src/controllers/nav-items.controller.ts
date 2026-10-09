@@ -1,17 +1,17 @@
 import { Hono } from 'hono';
-import { DisscoCSRepository } from '../db.js';
-import { requireSiteAdmin, resolveSiteId } from '../jwt.js';
+import { NavItemsRepository } from '../repositories/nav-items.repository.js';
+import { requireSiteAdmin, resolveSiteId } from '../auth/auth.js';
 import {
   isNavItemContentKey,
   isNavItemKey,
+  setContactEmailSchema,
   setNavItemActiveSchema,
   setNavItemContentSchema,
   setNavItemsOrderSchema,
   setShowContactFormSchema,
-} from '../validators.js';
-import { setContactEmailSchema } from '@dissco-cs/shared-types';
+} from '@dissco-cs/shared-types';
 
-export function navItemsController(repository: DisscoCSRepository): Hono {
+export function navItemsController(navItemsRepository: NavItemsRepository): Hono {
   const app = new Hono();
 
   app.get('/', async c => {
@@ -20,7 +20,7 @@ export function navItemsController(repository: DisscoCSRepository): Hono {
       return c.text('Could not resolve site', 400);
     }
 
-    const navItems = await repository.navItems.getNavItems(siteId);
+    const navItems = await navItemsRepository.getNavItems(siteId);
     return c.json({ navItems });
   });
 
@@ -35,7 +35,7 @@ export function navItemsController(repository: DisscoCSRepository): Hono {
       return c.text('order must contain every page key exactly once', 400);
     }
 
-    await repository.navItems.setNavItemsOrder(identity.siteId, result.data.order);
+    await navItemsRepository.setNavItemsOrder(identity.siteId, result.data.order);
     return c.body(null, 204);
   });
 
@@ -50,7 +50,7 @@ export function navItemsController(repository: DisscoCSRepository): Hono {
       return c.text('A valid email is required', 400);
     }
 
-    await repository.navItems.setContactEmail(identity.siteId, result.data.email);
+    await navItemsRepository.setContactEmail(identity.siteId, result.data.email);
     return c.body(null, 204);
   });
 
@@ -65,7 +65,7 @@ export function navItemsController(repository: DisscoCSRepository): Hono {
       return c.text('showForm must be a boolean', 400);
     }
 
-    await repository.navItems.setShowContactForm(identity.siteId, result.data.showForm);
+    await navItemsRepository.setShowContactForm(identity.siteId, result.data.showForm);
     return c.body(null, 204);
   });
 
@@ -85,7 +85,7 @@ export function navItemsController(repository: DisscoCSRepository): Hono {
       return c.text('lang and contentMd are required', 400);
     }
 
-    await repository.navItems.upsertNavItemContent(identity.siteId, pageKey, result.data.lang, result.data.contentMd);
+    await navItemsRepository.upsertNavItemContent(identity.siteId, pageKey, result.data.lang, result.data.contentMd);
     return c.body(null, 204);
   });
 
@@ -105,7 +105,7 @@ export function navItemsController(repository: DisscoCSRepository): Hono {
       return c.text('isActive must be a boolean', 400);
     }
 
-    await repository.navItems.setNavItemActive(identity.siteId, pageKey, result.data.isActive);
+    await navItemsRepository.setNavItemActive(identity.siteId, pageKey, result.data.isActive);
     return c.body(null, 204);
   });
 

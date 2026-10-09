@@ -1,7 +1,7 @@
 import { Context, Hono } from 'hono';
 
-import { DisscoCSRepository } from '../db.js';
-import { requestMadocUserIdentity, resolveSiteId } from '../jwt.js';
+import { InstitutionsRepository } from '../repositories/institutions.repository.js';
+import { requestMadocUserIdentity, resolveSiteId } from '../auth/auth.js';
 import { HonourBoardRepository, isHonourBoardPeriod } from '../madoc-db/honour-board.repository.js';
 import { StatsRepository } from '../madoc-db/stats.repository.js';
 
@@ -10,7 +10,7 @@ import { StatsRepository } from '../madoc-db/stats.repository.js';
 // it never triggers a recompute itself, and only falls back to the triggering path if nothing has
 // ever been cached yet.
 export function statsController(
-  repository: DisscoCSRepository,
+  institutionsRepository: InstitutionsRepository,
   statsRepository: StatsRepository,
   honourBoardRepository: HonourBoardRepository
 ): Hono {
@@ -23,7 +23,7 @@ export function statsController(
       return c.text('Could not resolve site', 400);
     }
 
-    const institution = await repository.institutions.getActiveInstitutionBySlug(siteId, c.req.param('slug') ?? '');
+    const institution = await institutionsRepository.getActiveInstitutionBySlug(siteId, c.req.param('slug') ?? '');
     if (!institution) {
       return c.notFound();
     }
@@ -32,7 +32,7 @@ export function statsController(
   }
 
   async function institutionTaskIds(siteId: number, institutionId: number): Promise<string[]> {
-    const projectSlugs = await repository.institutions.listProjectSlugsForInstitution(siteId, institutionId);
+    const projectSlugs = await institutionsRepository.listProjectSlugsForInstitution(siteId, institutionId);
     const projects = await statsRepository.resolveProjects(siteId, projectSlugs);
     return projects.map(p => p.task_id);
   }
@@ -102,7 +102,7 @@ export function statsController(
       return scope;
     }
 
-    const projectSlugs = await repository.institutions.listProjectSlugsForInstitution(scope.siteId, scope.institutionId);
+    const projectSlugs = await institutionsRepository.listProjectSlugsForInstitution(scope.siteId, scope.institutionId);
     const overview = await statsRepository.getInstitution(scope.siteId, scope.institutionId, projectSlugs);
     return c.json(overview);
   });
@@ -118,7 +118,7 @@ export function statsController(
       return c.json(cached);
     }
 
-    const projectSlugs = await repository.institutions.listProjectSlugsForInstitution(scope.siteId, scope.institutionId);
+    const projectSlugs = await institutionsRepository.listProjectSlugsForInstitution(scope.siteId, scope.institutionId);
     const overview = await statsRepository.getInstitution(scope.siteId, scope.institutionId, projectSlugs);
     return c.json(overview);
   });

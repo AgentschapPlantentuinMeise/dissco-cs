@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { LuChevronDown, LuEye } from 'react-icons/lu';
 import { ReviewTaskDto } from '@dissco-cs/shared-types';
 import { localeText } from '../../utility/locale-text';
-import { SortKey, SortDir } from './useReviewTasksController';
+import { SortKey, SortDir } from '../../hooks/use-review-page';
 import { reviewStatusKey, STATUS_BADGE_CLASSES, badgeClass, thClass, tdClass } from './review-table-styles';
 
 interface ReviewTableProps {

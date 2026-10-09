@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { captureModelsApi } from '../../api/cs-client/capture-models';
-import { ReviewTaskDto, MadocAnnotationDocumentDto, MadocCaptureModelDto } from '@dissco-cs/shared-types';
-import { cloneModelDocument, setFieldValue, DocumentPath } from '../annotate/form/document';
+import { captureModelQueries } from '../api/queries/capture-models';
+import { ReviewTaskDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
+import { cloneModelDocument, setFieldValue, DocumentPath } from '../utility/annotation-document';
 
 // Gebruikt door ReviewInlineExpansion: haalt de revisie + het capture model op en levert het
 // document dat getoond moet worden (lokale correctie indien aanwezig, anders een leeg document
@@ -11,16 +11,8 @@ export function useReviewRevisionDocument(
   editedDocument: MadocAnnotationDocumentDto | undefined,
   onDocumentChange: (rowId: string, document: MadocAnnotationDocumentDto) => void
 ) {
-  const revisionQuery = useQuery({
-    queryKey: ['review-revision', row.revisionId],
-    queryFn: () => captureModelsApi.getRevision(row.revisionId as string),
-    enabled: !!row.revisionId,
-  });
-  const modelQuery = useQuery<MadocCaptureModelDto>({
-    queryKey: ['capture-model', revisionQuery.data?.captureModelId],
-    queryFn: () => captureModelsApi.get(revisionQuery.data!.captureModelId),
-    enabled: !!revisionQuery.data?.captureModelId,
-  });
+  const revisionQuery = useQuery(captureModelQueries.revision(row.revisionId));
+  const modelQuery = useQuery(captureModelQueries.model(revisionQuery.data?.captureModelId));
 
   const currentDocument: MadocAnnotationDocumentDto | undefined = modelQuery.data
     ? editedDocument ?? cloneModelDocument(modelQuery.data)

@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { iiifQueries } from '../../../api/queries/iiif';
+import { projectKeys } from '../../../api/queries/projects';
 import { projectsApi } from '../../../api/cs-client/projects';
 import { iiifApi } from '../../../api/cs-client/iiif';
 import { Select } from '../../../components/Select';
@@ -22,7 +24,7 @@ export const BulkCreateProjectsSubview: React.FC<{ projects: MadocProjectDto[] }
   const [sourceSlug, setSourceSlug] = useState('');
   const [manifestCollectionIds, setManifestCollectionIds] = useState<string[]>([]);
   const queryClient = useQueryClient();
-  const { data: collections = [] } = useQuery({ queryKey: ['admin-collections'], queryFn: iiifApi.listCollections });
+  const { data: collections = [] } = useQuery(iiifQueries.collections());
   const [running, setRunning] = useState(false);
   const [finished, setFinished] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0, failed: 0 });
@@ -76,7 +78,7 @@ export const BulkCreateProjectsSubview: React.FC<{ projects: MadocProjectDto[] }
     setErrors(collectedErrors);
     setRunning(false);
     setFinished(true);
-    queryClient.invalidateQueries({ queryKey: ['site-projects'] });
+    queryClient.invalidateQueries({ queryKey: projectKeys.all });
   };
 
   return (

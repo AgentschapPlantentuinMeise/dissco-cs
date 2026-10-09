@@ -9,7 +9,7 @@ import { LuPencil, LuArrowUp, LuArrowDown, LuArrowLeft } from 'react-icons/lu';
 import { navItemsApi } from '../../api/cs-client/nav-items';
 import { setContactEmailSchema, NavItemDto, NavItemKey, SitePageLang } from '@dissco-cs/shared-types';
 import { LANGUAGES, defaultLang } from '../../utility/site-lang-text';
-import { useNavItems } from '../../contexts/NavItemsContext';
+import { useNavItems } from '../../hooks/use-nav-items';
 import { MarkdownToolbar } from '../../components/MarkdownToolbar';
 
 const CONTENT_PAGE_KEYS: NavItemKey[] = ['about', 'help', 'contact', 'welcome'];

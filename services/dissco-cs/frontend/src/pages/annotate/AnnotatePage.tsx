@@ -1,16 +1,19 @@
 ﻿import React, { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { iiifQueries } from '../../api/queries/iiif';
+import { projectKeys, projectQueries } from '../../api/queries/projects';
+import { taskKeys } from '../../api/queries/tasks';
+import { captureModelQueries } from '../../api/queries/capture-models';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../../api/cs-client/request';
-import { iiifApi } from '../../api/cs-client/iiif';
 import { captureModelsApi } from '../../api/cs-client/capture-models';
 import { tasksApi } from '../../api/cs-client/tasks';
 import { projectsApi } from '../../api/cs-client/projects';
 import { forumApi } from '../../api/cs-client/forum';
-import { useProject } from '../../hooks/use-project';
+import { useCurrentProject } from '../../hooks/use-current-project';
 import { useRouteContext } from '../../hooks/use-route-context';
-import { useDisscoCSNavigation } from '../../hooks/use-dissco-cs-navigation';
+import { useNextTask } from '../../hooks/use-next-task';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { CsPage } from '../../components/CsPage';
 import { LocaleString, useLocaleString } from '../../components/LocaleString';
@@ -23,8 +26,8 @@ import { LuBookOpen, LuMail } from 'react-icons/lu';
 import { AnnotateLayout } from './AnnotateLayout';
 import { OpenSeadragonViewer } from './viewer/OpenSeadragonViewer';
 import { CaptureModelForm } from './form/CaptureModelForm';
-import { cloneModelDocument, createBlankDocument, setFieldValue, setFieldSelector, collectSelectorStates, pathsEqual, DocumentPath } from './form/document';
-import { MadocAnnotationDocumentDto, MadocCaptureModelDto, MadocStructureNodeDto, MadocBoxSelectorState, MadocCreateResourceClaimDto } from '@dissco-cs/shared-types';
+import { cloneModelDocument, createBlankDocument, setFieldValue, setFieldSelector, collectSelectorStates, pathsEqual, DocumentPath } from '../../utility/annotation-document';
+import { MadocAnnotationDocumentDto, MadocStructureNodeDto, MadocBoxSelectorState, MadocCreateResourceClaimDto } from '@dissco-cs/shared-types';
 import { getImageServiceId } from '../../utility/get-image-service-id';
 
 // crypto.randomUUID() only exists in secure contexts (https/localhost); this dev
@@ -41,10 +44,10 @@ function generateUUID(): string {
 
 export function AnnotatePage() {
   const { t } = useTranslation('dissco-cs');
-  const { projectId, manifestId } = useRouteContext();
-  const { data: project } = useProject();
+  const { manifestId } = useRouteContext();
+  const { data: project } = useCurrentProject();
   const [projectLabel] = useLocaleString(project?.label);
-  const { requestNextUrl, isLoadingNext } = useDisscoCSNavigation();
+  const { requestNextUrl, isLoadingNext } = useNextTask();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
@@ -63,24 +66,18 @@ export function AnnotatePage() {
   }, []);
 
   const { data: structure, isError: structureError, error: structureErrorObj } = useQuery({
-    queryKey: ['manifest-structure', manifestId],
-    queryFn: () => iiifApi.getManifestStructure(manifestId!),
-    enabled: !!manifestId,
+    ...iiifQueries.manifestStructure(manifestId),
     retry: false,
   });
   const canvases = structure?.items ?? [];
   const [canvasIndex, setCanvasIndex] = useState(0);
 
   const { data: canvasData } = useQuery({
-    queryKey: ['canvas', canvases[canvasIndex]?.id],
-    queryFn: () => iiifApi.getCanvas(canvases[canvasIndex].id),
-    enabled: !!canvases[canvasIndex],
+    ...iiifQueries.canvas(canvases[canvasIndex]?.id),
   });
 
   const { data: prepared, isError: preparedError, error: preparedErrorObj } = useQuery({
-    queryKey: ['prepare-claim', project?.id, manifestId],
-    queryFn: () => projectsApi.prepareClaim(project!.id, { manifestId }),
-    enabled: !!project?.id && !!manifestId,
+    ...projectQueries.prepareClaim(project?.id, manifestId),
     retry: false,
   });
   useEffect(() => {
@@ -95,10 +92,8 @@ export function AnnotatePage() {
     }
   }, [prepared, manifestId]);
 
-  const { data: model, isError: modelError, error: modelErrorObj } = useQuery<MadocCaptureModelDto>({
-    queryKey: ['capture-model', prepared?.model?.id],
-    queryFn: () => captureModelsApi.get(prepared!.model!.id),
-    enabled: !!prepared?.model,
+  const { data: model, isError: modelError, error: modelErrorObj } = useQuery({
+    ...captureModelQueries.model(prepared?.model?.id),
     retry: false,
   });
 
@@ -195,13 +190,14 @@ export function AnnotatePage() {
       // Deletes the claim task outright (upstream madoc-ts route), instead of leaving an
       // 'abandoned' row behind — see AnnotatePage/manifest-claims discussion.
       await projectsApi.revokeClaim(project.id, { manifestId });
-      // ProjectDetail.tsx's manifest list is cached under ['collection', collectionId] — invalidate by
-      // prefix so the "Choose where to start" grid re-fetches and shows the manifest as available again.
-      queryClient.invalidateQueries({ queryKey: ['collection'] });
       // Best-effort: madoc-ts only re-syncs the shared max-contributors counter when a NEW claim
       // is created, never on an abandon — without this, a manifest that hit its contributor
       // limit stays blocked for everyone (incl. this user) once its only active claim is released.
       await projectsApi.resyncClaim(project.id, manifestId).catch(err => console.error('[CS] resync failed', err));
+      // After the resync, so the refetch sees the recalculated counter: ProjectDetail's "Choose where
+      // to start" grid (project progress) shows the manifest as available again.
+      queryClient.invalidateQueries({ queryKey: projectKeys.progress(project.id) });
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
     } catch (err) {
       console.error('[CS] abandon failed', err);
     }
@@ -288,9 +284,9 @@ export function AnnotatePage() {
     if (project?.id && manifestId) {
       try {
         await projectsApi.revokeClaim(project.id, { manifestId });
-        queryClient.invalidateQueries({ queryKey: ['collection'] });
-        queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
         await projectsApi.resyncClaim(project.id, manifestId).catch(err => console.error('[CS] resync failed', err));
+        queryClient.invalidateQueries({ queryKey: projectKeys.progress(project.id) });
+        queryClient.invalidateQueries({ queryKey: taskKeys.all });
       } catch (err) {
         console.error('[CS] release failed', err);
       }
@@ -329,7 +325,10 @@ export function AnnotatePage() {
           status: status === 'draft' ? 1 : 2,
           status_text: status === 'draft' ? 'in progress' : 'submitted',
         });
-        queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
+        queryClient.invalidateQueries({ queryKey: taskKeys.all });
+        if (project?.id) {
+          queryClient.invalidateQueries({ queryKey: projectKeys.progress(project.id) });
+        }
       }
     },
   });

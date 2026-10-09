@@ -1,12 +1,17 @@
 import { Hono } from 'hono';
-import { DisscoCSRepository } from '../db.js';
-import { resolveSiteId } from '../jwt.js';
-import { mailer } from '../mailer.js';
-import { isRateLimited } from '../rate-limit.js';
-import { CONTACT_RATE_LIMIT, getClientIp, isNonEmptyString } from '../validators.js';
+import { NavItemsRepository } from '../repositories/nav-items.repository.js';
+import { resolveSiteId } from '../auth/auth.js';
+import { mailer } from '../infrastructure/mailer.js';
+import { getClientIp, isRateLimited } from '../infrastructure/rate-limit.js';
 import { contactSubmissionSchema } from '@dissco-cs/shared-types';
 
-export function contactController(repository: DisscoCSRepository): Hono {
+const CONTACT_RATE_LIMIT = { maxAttempts: 5, windowMs: 10 * 60 * 1000 };
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+export function contactController(navItemsRepository: NavItemsRepository): Hono {
   const app = new Hono();
 
   app.post('/', async c => {
@@ -32,7 +37,7 @@ export function contactController(repository: DisscoCSRepository): Hono {
       return c.text('Too many requests, please try again later', 429);
     }
 
-    const contactEmail = await repository.navItems.getContactEmail(siteId);
+    const contactEmail = await navItemsRepository.getContactEmail(siteId);
     if (!contactEmail) {
       return c.text('Contact form is not configured for this site', 503);
     }
