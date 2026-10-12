@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { iiifQueries } from '../../api/queries/iiif';
 import { projectKeys, projectQueries } from '../../api/queries/projects';
@@ -14,7 +14,6 @@ import { forumApi } from '../../api/cs-client/forum';
 import { useCurrentProject } from '../../hooks/use-current-project';
 import { useRouteContext } from '../../hooks/use-route-context';
 import { useNextTask } from './use-next-task';
-import { disscoCSConfig } from '../../dissco-cs-config';
 import { CsPage } from '../../components/layout/CsPage';
 import { LocaleString, useLocaleString } from '../../components/ui/LocaleString';
 import { ManualModal } from '../../components/manuals/ManualModal';

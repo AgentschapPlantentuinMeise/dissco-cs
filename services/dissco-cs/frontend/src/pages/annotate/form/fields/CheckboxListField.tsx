@@ -1,4 +1,3 @@
-import React from 'react';
 import { FieldProps } from './registry';
 
 export function CheckboxListField({ field, path, onChange }: FieldProps) {

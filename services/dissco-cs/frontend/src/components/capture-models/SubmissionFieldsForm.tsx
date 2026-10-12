@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { MadocCaptureModelDto, MadocModelFields, MadocNestedModelFields, MadocStructureNodeDto, MadocAnnotationDocumentDto, MadocBaseFieldDto } from '@dissco-cs/shared-types';
 import { DocumentPath } from '../../utility/annotation-document';
 
-export interface ReviewFieldFormProps {
+export interface SubmissionFieldsFormProps {
   model: MadocCaptureModelDto;
   document: MadocAnnotationDocumentDto;
   onChange?: (path: DocumentPath, value: unknown) => void;
-  /** Toont de velden als niet-bewerkbare tekst i.p.v. invulbare tekstvakken. */
+  /** Shows the fields as plain text instead of editable inputs. */
   readOnly?: boolean;
 }
 
@@ -15,9 +15,9 @@ function isEntityList(entry: Array<MadocBaseFieldDto> | Array<MadocAnnotationDoc
   return entry.length > 0 && (entry[0] as MadocAnnotationDocumentDto).type === 'entity';
 }
 
-// Review-context heeft geen interactieve keuzeschermen nodig -- een reviewer wil zien wat er
-// effectief werd ingediend, niet zelf een model-variant kiezen. Bij een echte keuze (>1 item)
-// tonen we gewoon de eerste tak.
+// Shows an already-submitted document (reviewer editing it, or a volunteer viewing their own
+// task), so there's no interactive choice screen: whoever looks at it wants to see what was
+// actually submitted, not pick a model variant. For a real choice (>1 item) we show the first branch.
 function resolveDisplayStructure(node: MadocStructureNodeDto): MadocStructureNodeDto {
   while (node.type === 'choice' && node.items.length > 0) {
     node = node.items[0];
@@ -27,7 +27,7 @@ function resolveDisplayStructure(node: MadocStructureNodeDto): MadocStructureNod
 
 // Mirrors CaptureModelForm.tsx's resolveSectionModels: a choice opted into 'tabs' via its own
 // `profile` isn't a real either/or (see resolveDisplayStructure above) -- it's a set of sections
-// that were all filled in together, so the reviewer needs to see all of them, not just the first.
+// that were all filled in together, so the viewer needs to see all of them, not just the first.
 function resolveDisplayModels(node: MadocStructureNodeDto): Array<MadocStructureNodeDto & { type: 'model' }> {
   if (node.type === 'choice' && node.profile?.includes('tabs')) {
     return node.items
@@ -56,7 +56,7 @@ function textToFieldValue(text: string, original: unknown): unknown {
   }
 }
 
-function FieldRow({ field, path, onChange, readOnly }: { field: MadocBaseFieldDto; path: DocumentPath; onChange: ReviewFieldFormProps['onChange']; readOnly?: boolean }) {
+function FieldRow({ field, path, onChange, readOnly }: { field: MadocBaseFieldDto; path: DocumentPath; onChange: SubmissionFieldsFormProps['onChange']; readOnly?: boolean }) {
   const { t } = useTranslation('dissco-cs');
   return (
     <div className="mb-3">
@@ -101,7 +101,7 @@ function chunkForGrid(blocks: Block[]): Block[] {
   return result;
 }
 
-function collectBlocks(fields: MadocModelFields, doc: MadocAnnotationDocumentDto, pathPrefix: DocumentPath, onChange: ReviewFieldFormProps['onChange'], readOnly?: boolean): Block[] {
+function collectBlocks(fields: MadocModelFields, doc: MadocAnnotationDocumentDto, pathPrefix: DocumentPath, onChange: SubmissionFieldsFormProps['onChange'], readOnly?: boolean): Block[] {
   const blocks: Block[] = [];
   const ungrouped: React.ReactNode[] = [];
 
@@ -143,7 +143,7 @@ function collectBlocks(fields: MadocModelFields, doc: MadocAnnotationDocumentDto
 // zodat een reviewer ingediende data snel kan nalezen en corrigeren zonder per-type widgets.
 // Secties staan altijd naast elkaar in 3 vaste kolommen (valt terug naar 1 kolom op smalle
 // schermen); bij >3 secties valt de rest gewoon naar een nieuwe rij van 3.
-export function ReviewFieldForm({ model, document, onChange, readOnly }: ReviewFieldFormProps) {
+export function SubmissionFieldsForm({ model, document, onChange, readOnly }: SubmissionFieldsFormProps) {
   const models = resolveDisplayModels(model.structure);
   if (models.length === 0) {
     return null;

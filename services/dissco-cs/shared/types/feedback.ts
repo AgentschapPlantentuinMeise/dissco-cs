@@ -8,7 +8,6 @@ export type FeedbackThreadRole = 'recipient' | 'reviewer';
 // a thread is responsible for supplying accurate values, not just the list endpoint.
 export type FeedbackThreadDto = {
   id: number;
-  site_id: number;
   reviewer_user_id: number;
   reviewer_name: string;
   recipient_user_id: number;
@@ -16,8 +15,6 @@ export type FeedbackThreadDto = {
   subject: string;
   created_at: string;
   last_activity: string;
-  reviewer_hidden_at: string | null;
-  recipient_hidden_at: string | null;
   role: FeedbackThreadRole;
   message_count: number;
   unread_count: number;
@@ -29,7 +26,6 @@ export type FeedbackMessageDto = {
   author_user_id: number;
   author_name: string;
   body: string;
-  read_at: string | null;
   created_at: string;
 };
 
@@ -42,4 +38,3 @@ export const feedbackThreadInputSchema = z.object({
 export type FeedbackThreadInput = z.infer<typeof feedbackThreadInputSchema>;
 
 export const feedbackReplyInputSchema = z.object({ body: z.string().trim().min(1) });
-export type FeedbackReplyInput = z.infer<typeof feedbackReplyInputSchema>;

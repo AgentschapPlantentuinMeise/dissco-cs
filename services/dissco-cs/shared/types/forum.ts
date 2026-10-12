@@ -4,7 +4,6 @@ import { z } from 'zod';
 // `ForumReplyRow` row types with `Date` fields for internal use.
 export type ForumTopicDto = {
   id: number;
-  site_id: number;
   author_user_id: number;
   author_name: string;
   title: string;
@@ -22,7 +21,6 @@ export type ForumTopicDto = {
 export type ForumReplyDto = {
   id: number;
   topic_id: number;
-  site_id: number;
   author_user_id: number;
   author_name: string;
   body: string;
@@ -45,4 +43,3 @@ export const forumTopicInputSchema = z.object({
 export type ForumTopicInput = z.infer<typeof forumTopicInputSchema>;
 
 export const forumReplyInputSchema = z.object({ body: z.string().trim().min(1, 'Body is required') });
-export type ForumReplyInput = z.infer<typeof forumReplyInputSchema>;

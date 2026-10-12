@@ -19,7 +19,4 @@ export const institutionsApi = {
     csFetch<InstitutionDto>(`/institutions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
   remove: (id: InstitutionDto['id']) => csFetch<void>(`/institutions/${id}`, { method: 'DELETE' }),
-
-  setOrder: (order: InstitutionDto['id'][]) =>
-    csFetch<void>('/institutions/order', { method: 'PUT', body: JSON.stringify({ order }) }),
 };

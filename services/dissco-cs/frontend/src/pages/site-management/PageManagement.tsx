@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/layout/CsPage';
 import { ToggleSwitch } from '../../components/ui/ToggleSwitch';
@@ -7,6 +8,7 @@ import { SaveButton } from '../../components/ui/SaveButton';
 import { ActiveStatusToggle } from '../../components/ui/ActiveStatusToggle';
 import { LuPencil, LuArrowUp, LuArrowDown, LuArrowLeft } from 'react-icons/lu';
 import { navItemsApi } from '../../api/cs-client/nav-items';
+import { navItemQueries } from '../../api/queries/nav-items';
 import { setContactEmailSchema, NavItemDto, NavItemKey, SitePageLang } from '@dissco-cs/shared-types';
 import { LANGUAGES, defaultLang } from '../../utility/site-lang-text';
 import { useNavItems } from '../../hooks/use-nav-items';
@@ -28,6 +30,7 @@ const pageLabelKey = (key: NavItemKey) => MERGED_PAGE_TITLE_KEY[key] ?? `sm_page
 export const PageManagement: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const { navItems: pages, loading, refresh } = useNavItems();
+  const { data: contactEmail, isPending: contactEmailLoading } = useQuery(navItemQueries.contactEmail());
   const [selectedKey, setSelectedKey] = useState<NavItemKey | null>(null);
   const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
   const [draftContent, setDraftContent] = useState<NavItemDto['content']>({});
@@ -46,13 +49,13 @@ export const PageManagement: React.FC = () => {
   // background (e.g. a toggle elsewhere triggers a refresh) — otherwise in-progress edits and
   // the "saved" confirmation would be wiped out a moment after saving.
   useEffect(() => {
-    if (!selectedKey || loading) return;
+    if (!selectedKey || loading || contactEmailLoading) return;
     const page = pages.find(p => p.page_key === selectedKey);
     setDraftContent(page?.content ?? {});
-    setDraftContactEmail(page?.contact_email ?? '');
+    setDraftContactEmail(contactEmail?.email ?? '');
     setDraftShowContactForm(page?.show_contact_form ?? false);
     setSaved(false);
-  }, [selectedKey, loading]);
+  }, [selectedKey, loading, contactEmailLoading]);
 
   const isActive = (key: NavItemKey) => pages.find(p => p.page_key === key)?.is_active ?? true;
 

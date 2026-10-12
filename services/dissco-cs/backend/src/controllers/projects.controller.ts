@@ -10,15 +10,15 @@ import {
   getMadocProjectManifestsAndTaskStats,
 } from '../madoc-client/collections.js';
 import { getMadocProjectTasks, getMadocTasksBySubjectAndType, resyncManifestTaskCounter } from '../madoc-client/tasks.js';
-import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
+import { InstitutionsRepository } from '../repositories/institutions.repository.js';
+import { toInstitutionDto } from '../mappers/institutions.mapper.js';
+import { toManualDetailDto } from '../mappers/manuals.mapper.js';
 import {
   isSitePageLang,
-  ManualAttachmentDto,
   MadocCrowdsourcingTaskDto,
   MadocInternationalString,
   MadocProjectDto,
   MadocProjectListPageDto,
-  PerLanguage,
   ProjectDebugDto,
   ProjectProgressDto,
   pruneProjectLinksSchema,
@@ -371,9 +371,8 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     const projectId = c.req.param('projectId');
     const manifestId = c.req.param('manifestId');
 
-    let project: MadocProjectDto;
     try {
-      project = await getMadocProject(siteId, projectId);
+      await getMadocProject(siteId, projectId);
     } catch (err) {
       console.error('[manifest-claim] getMadocProject failed', { siteId, projectId }, err);
       return c.text('Internal Server Error', 500);
@@ -498,13 +497,7 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
       return c.notFound();
     }
 
-    const attachmentMeta = await manualsRepository.listAttachmentMeta(manual.id);
-    const attachments: PerLanguage<ManualAttachmentDto> = {};
-    for (const meta of attachmentMeta) {
-      attachments[meta.lang] = { filename: meta.filename, mimeType: meta.mime_type, size: meta.file_size };
-    }
-
-    return c.json({ id: manual.id, title: manual.title, content: manual.content, attachments });
+    return c.json(toManualDetailDto(manual, await manualsRepository.listAttachmentMeta(manual.id)));
   });
 
   app.get('/:projectId/manual/attachment/:lang', async c => {

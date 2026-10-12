@@ -1,14 +1,8 @@
 import { Hono } from 'hono';
 import { ManualsRepository } from '../repositories/manuals.repository.js';
+import { toManualDetailDto, toManualDto, toManualSummaryDto } from '../mappers/manuals.mapper.js';
 import { requireSiteAdmin } from '../auth/auth.js';
-import {
-  attachmentFileSchema,
-  isSitePageLang,
-  PerLanguage,
-  ManualAttachmentDto,
-  setManualContentSchema,
-  setManualTitleSchema,
-} from '@dissco-cs/shared-types';
+import { attachmentFileSchema, isSitePageLang, setManualContentSchema, setManualTitleSchema } from '@dissco-cs/shared-types';
 
 // The manual library (admin). Reading a project's manual and linking it to a project live in
 // projects.controller.ts (/projects/:projectId/manual).
@@ -22,7 +16,7 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
     }
 
     const manuals = await manualsRepository.listManuals(identity.siteId);
-    return c.json({ manuals });
+    return c.json({ manuals: manuals.map(toManualSummaryDto) });
   });
 
   app.post('/', async c => {
@@ -37,7 +31,7 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
     }
 
     const manual = await manualsRepository.createManual(identity.siteId, { [result.data.lang]: result.data.title });
-    return c.json(manual, 201);
+    return c.json(toManualDto(manual), 201);
   });
 
   app.get('/:manualId', async c => {
@@ -56,13 +50,7 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
       return c.notFound();
     }
 
-    const attachmentMeta = await manualsRepository.listAttachmentMeta(manual.id);
-    const attachments: PerLanguage<ManualAttachmentDto> = {};
-    for (const meta of attachmentMeta) {
-      attachments[meta.lang] = { filename: meta.filename, mimeType: meta.mime_type, size: meta.file_size };
-    }
-
-    return c.json({ ...manual, attachments });
+    return c.json(toManualDetailDto(manual, await manualsRepository.listAttachmentMeta(manual.id)));
   });
 
   app.delete('/:manualId', async c => {
@@ -82,30 +70,6 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
     }
 
     return c.body(null, 204);
-  });
-
-  app.put('/:manualId/title', async c => {
-    const identity = requireSiteAdmin(c);
-    if (identity instanceof Response) {
-      return identity;
-    }
-
-    const manualId = Number(c.req.param('manualId'));
-    if (!Number.isInteger(manualId)) {
-      return c.notFound();
-    }
-
-    const result = setManualTitleSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('Invalid payload', 400);
-    }
-
-    const manual = await manualsRepository.updateManualTitle(identity.siteId, manualId, result.data.lang, result.data.title);
-    if (!manual) {
-      return c.notFound();
-    }
-
-    return c.json(manual);
   });
 
   app.put('/:manualId/:lang', async c => {

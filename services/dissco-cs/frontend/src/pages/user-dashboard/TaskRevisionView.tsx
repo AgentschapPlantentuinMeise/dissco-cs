@@ -1,10 +1,9 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { taskQueries } from '../../api/queries/tasks';
 import { captureModelQueries } from '../../api/queries/capture-models';
 import { useTranslation } from 'react-i18next';
 import { cloneModelDocument } from '../../utility/annotation-document';
-import { ReviewFieldForm } from '../../components/capture-models/ReviewFieldForm';
+import { SubmissionFieldsForm } from '../../components/capture-models/SubmissionFieldsForm';
 
 interface TaskRevisionViewProps {
   taskId: string;
@@ -37,7 +36,7 @@ export function TaskRevisionView({ taskId }: TaskRevisionViewProps) {
 
   return (
     <div className="px-1 py-3">
-      <ReviewFieldForm model={model} document={cloneModelDocument(model)} readOnly />
+      <SubmissionFieldsForm model={model} document={cloneModelDocument(model)} readOnly />
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { CsPage } from '../../components/layout/CsPage';
 import { HrefLink } from '../../utility/href-link';
 import { LuArrowLeft, LuMail, LuPhone, LuGlobe, LuMedal, LuClock, LuCalendar } from 'react-icons/lu';
 import { StatBanner } from '../../components/ui/StatBanner';
-import { PeriodCard } from '../../components/stats/PeriodCard';
+import { HonourBoardPeriodCard } from '../../components/stats/HonourBoardPeriodCard';
 import { useInstitutionStats } from './use-institution-stats';
 import { useInstitutionHonourBoard } from './use-institution-honour-board';
 import { ProjectCard } from '../../components/projects/ProjectCard';
@@ -154,7 +154,7 @@ export const InstitutionDetail: React.FC = () => {
 
                 {/* Leaderboard — starts level with the banner, runs down alongside it */}
                 <div className="mt-14 lg:col-start-2 lg:row-start-2 flex flex-col gap-4">
-                  <PeriodCard
+                  <HonourBoardPeriodCard
                     titleKey="honour_board_period_today"
                     icon={<LuClock className="w-4 h-4" />}
                     period={today.data}
@@ -162,7 +162,7 @@ export const InstitutionDetail: React.FC = () => {
                     formatNumber={formatNumber}
                     dark
                   />
-                  <PeriodCard
+                  <HonourBoardPeriodCard
                     titleKey="honour_board_period_week"
                     icon={<LuCalendar className="w-4 h-4" />}
                     period={week.data}
@@ -170,7 +170,7 @@ export const InstitutionDetail: React.FC = () => {
                     formatNumber={formatNumber}
                     dark
                   />
-                  <PeriodCard
+                  <HonourBoardPeriodCard
                     titleKey="honour_board_period_month"
                     icon={<LuCalendar className="w-4 h-4" />}
                     period={month.data}

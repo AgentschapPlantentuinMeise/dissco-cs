@@ -1,17 +1,8 @@
 import { Hono } from 'hono';
 import { requireSiteAdmin, resolveSiteId } from '../auth/auth.js';
-import { AnnouncementsRepository, AnnouncementRow } from '../repositories/announcements.repository.js';
-import { AnnouncementDto, announcementInputSchema, isAnnouncementTargetType } from '@dissco-cs/shared-types';
-
-// created_at is DB bookkeeping (see AnnouncementRow), never part of the wire DTO.
-function toAnnouncementDto(row: AnnouncementRow): AnnouncementDto {
-  const { created_at, start_date, end_date, ...rest } = row;
-  return {
-    ...rest,
-    start_date: start_date ? start_date.toISOString() : null,
-    end_date: end_date ? end_date.toISOString() : null,
-  };
-}
+import { AnnouncementsRepository } from '../repositories/announcements.repository.js';
+import { toAnnouncementDto } from '../mappers/announcements.mapper.js';
+import { announcementInputSchema, isAnnouncementTargetType } from '@dissco-cs/shared-types';
 
 export function announcementsController(announcementsRepository: AnnouncementsRepository): Hono {
   const app = new Hono();

@@ -44,5 +44,3 @@ export const institutionInputSchema = z.object({
 });
 
 export type InstitutionInput = z.infer<typeof institutionInputSchema>;
-
-export const setInstitutionsOrderSchema = z.object({ order: z.array(z.number().int()) });

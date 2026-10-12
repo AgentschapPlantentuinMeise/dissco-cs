@@ -8,7 +8,6 @@ export type ManualAttachmentDto = { filename: string; mimeType: string; size: nu
 
 export type ManualDto = {
   id: number;
-  site_id: number;
   title: MultilingualText;
   content: MultilingualText;
   updated_at: string;
@@ -16,10 +15,8 @@ export type ManualDto = {
 
 export type ManualSummaryDto = ManualDto & { linkedProjectSlugs: string[]; attachmentLangs: SitePageLang[] };
 
-// Gedeelde vorm voor zowel de admin- (GET /manuals/:manualId) als de vrijwilligers-facing
-// (GET /projects/:projectId/manual) detailrespons -- de admin-route stuurt op de server ook nog
-// site_id/updated_at mee (ongewijzigd, zie bekende output-shaping-inconsistentie), maar geen enkele
-// consument leest die velden, dus dit type belooft ze bewust niet.
+// Shared detail shape for both the admin (GET /manuals/:manualId) and the volunteer-facing
+// (GET /projects/:projectId/manual) response.
 export type ManualDetailDto = {
   id: number;
   title: MultilingualText;
@@ -35,9 +32,7 @@ export const setManualTitleSchema = z.object({
   lang: sitePageLangSchema,
   title: z.string().trim().min(1).max(MAX_MANUAL_TITLE_LENGTH),
 });
-export type SetManualTitleInput = z.infer<typeof setManualTitleSchema>;
 
 export const setManualContentSchema = z.object({ content: z.string().max(MAX_MANUAL_CONTENT_LENGTH) });
-export type SetManualContentInput = z.infer<typeof setManualContentSchema>;
 
 export const attachmentFileSchema = z.instanceof(File).refine(f => f.size <= MAX_MANUAL_ATTACHMENT_LENGTH, 'File too large');

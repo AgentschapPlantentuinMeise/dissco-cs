@@ -107,25 +107,6 @@ export class ManualsRepository {
     return result.rows[0];
   }
 
-  async updateManualTitle(
-    siteId: number,
-    manualId: number,
-    lang: SitePageLang,
-    title: string
-  ): Promise<ManualRow | null> {
-    const result = await this.pool.query<ManualRow>(
-      `
-      UPDATE ${this.table('manuals')}
-      SET title = jsonb_set(title, ARRAY[$3::text], to_jsonb($4::text)), updated_at = NOW()
-      WHERE id = $1 AND site_id = $2
-      RETURNING *
-    `,
-      [manualId, siteId, lang, title]
-    );
-
-    return result.rows[0] ?? null;
-  }
-
   async updateManualContent(siteId: number, manualId: number, lang: SitePageLang, contentMd: string): Promise<boolean> {
     const result = await this.pool.query(
       `

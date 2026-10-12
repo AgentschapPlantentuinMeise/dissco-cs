@@ -1,9 +1,11 @@
 import { Hono } from 'hono';
 import { NavItemsRepository } from '../repositories/nav-items.repository.js';
+import { toNavItemDto } from '../mappers/nav-items.mapper.js';
 import { requireSiteAdmin, resolveSiteId } from '../auth/auth.js';
 import {
   isNavItemContentKey,
   isNavItemKey,
+  NavItemContactEmailDto,
   setContactEmailSchema,
   setNavItemActiveSchema,
   setNavItemContentSchema,
@@ -21,7 +23,22 @@ export function navItemsController(navItemsRepository: NavItemsRepository): Hono
     }
 
     const navItems = await navItemsRepository.getNavItems(siteId);
-    return c.json({ navItems });
+    return c.json({ navItems: navItems.map(toNavItemDto) });
+  });
+
+  // Admin-only: unlike getContactEmail() (used for sending), this returns the stored address even
+  // while the contact page is inactive, so page management can show and edit it.
+  app.get('/contact/email', async c => {
+    const identity = requireSiteAdmin(c);
+    if (identity instanceof Response) {
+      return identity;
+    }
+
+    const navItems = await navItemsRepository.getNavItems(identity.siteId);
+    const result: NavItemContactEmailDto = {
+      email: navItems.find(item => item.page_key === 'contact')?.contact_email ?? null,
+    };
+    return c.json(result);
   });
 
   app.put('/order', async c => {

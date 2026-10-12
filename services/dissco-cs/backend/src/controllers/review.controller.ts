@@ -29,7 +29,7 @@ export function reviewController(): Hono {
       return c.json({ isReviewer: role === 'reviewer' });
     } catch (err) {
       console.error('[review] is-reviewer check failed', { siteId: identity.siteId, userId: identity.userId }, err);
-      return c.json({ error: err instanceof Error ? err.message : String(err) }, 500);
+      return c.text('Internal Server Error', 500);
     }
   });
 

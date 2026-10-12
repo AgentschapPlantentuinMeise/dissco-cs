@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { HonourBoardEntryDto, HonourBoardPeriodDto } from '@dissco-cs/shared-types';
 
-export const PeriodCard: React.FC<{
+export const HonourBoardPeriodCard: React.FC<{
   titleKey: string;
   icon: React.ReactNode;
   period: HonourBoardPeriodDto | undefined;

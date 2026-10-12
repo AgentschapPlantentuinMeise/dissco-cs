@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { ForumRepository } from '../repositories/forum.repository.js';
+import { toForumReplyDto, toForumTopicDto } from '../mappers/forum.mapper.js';
 import { MadocUserIdentity, requestMadocUserIdentity, requireUser } from '../auth/auth.js';
 import { forumReplyInputSchema, forumTopicInputSchema } from '@dissco-cs/shared-types';
 
@@ -19,7 +20,7 @@ export function forumController(forumRepository: ForumRepository): Hono {
     }
 
     const topics = await forumRepository.listTopics(identity.siteId, identity.userId);
-    return c.json({ topics });
+    return c.json({ topics: topics.map(toForumTopicDto) });
   });
 
   app.post('/topics/visit', async c => {
@@ -57,7 +58,7 @@ export function forumController(forumRepository: ForumRepository): Hono {
     await forumRepository.markTopicSeen(identity.userId, topic.id, 0);
 
     // A freshly created topic trivially has no replies yet -- no extra query needed.
-    return c.json({ ...topic, reply_count: 0, last_seen_reply_count: 0 }, 201);
+    return c.json(toForumTopicDto({ ...topic, reply_count: 0, last_seen_reply_count: 0 }), 201);
   });
 
   app.get('/topics/:id/replies', async c => {
@@ -78,7 +79,7 @@ export function forumController(forumRepository: ForumRepository): Hono {
 
     const replies = await forumRepository.listReplies(identity.siteId, topicId);
     await forumRepository.markTopicSeen(identity.userId, topicId, replies.length);
-    return c.json(replies);
+    return c.json(replies.map(toForumReplyDto));
   });
 
   app.delete('/topics/:id', async c => {
@@ -129,7 +130,7 @@ export function forumController(forumRepository: ForumRepository): Hono {
 
     const closed = await forumRepository.closeTopic(identity.siteId, topicId);
     const replies = await forumRepository.listReplies(identity.siteId, topicId);
-    return c.json({ ...(closed ?? topic), reply_count: replies.length, last_seen_reply_count: replies.length });
+    return c.json(toForumTopicDto({ ...(closed ?? topic), reply_count: replies.length, last_seen_reply_count: replies.length }));
   });
 
   app.delete('/topics/:id/replies/:replyId', async c => {
@@ -198,7 +199,7 @@ export function forumController(forumRepository: ForumRepository): Hono {
     const replies = await forumRepository.listReplies(identity.siteId, topicId);
     await forumRepository.markTopicSeen(identity.userId, topicId, replies.length);
 
-    return c.json(reply, 201);
+    return c.json(toForumReplyDto(reply), 201);
   });
 
   return app;

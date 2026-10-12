@@ -17,21 +17,19 @@ export function isNavItemContentKey(value: unknown): value is NavItemContentKey 
   return typeof value === 'string' && (NAV_ITEM_CONTENT_KEYS as readonly string[]).includes(value);
 }
 
-// Wire shape (dates as ISO strings). The API repository keeps its own local `NavItemRow`
-// type with `updated_at: Date` for internal use; route handlers send this shape.
+// Wire shape of the public nav-items list. The API repository keeps its own local `NavItemRow`;
+// contact_email is admin-only and served separately as NavItemContactEmailDto.
 export type NavItemDto = {
-  site_id: number;
   page_key: NavItemKey;
   is_active: boolean;
   content: MultilingualText;
-  contact_email: string | null;
   show_contact_form: boolean;
   sort_order: number;
-  updated_at: string;
 };
 
+export type NavItemContactEmailDto = { email: string | null };
+
 export const setContactEmailSchema = z.object({ email: emailSchema });
-export type SetContactEmailInput = z.infer<typeof setContactEmailSchema>;
 
 export const setNavItemActiveSchema = z.object({ isActive: z.boolean() });
 export const setShowContactFormSchema = z.object({ showForm: z.boolean() });

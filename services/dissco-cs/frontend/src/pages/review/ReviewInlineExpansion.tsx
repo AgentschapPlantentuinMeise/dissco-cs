@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReviewTaskDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
-import { ReviewFieldForm } from '../../components/capture-models/ReviewFieldForm';
+import { SubmissionFieldsForm } from '../../components/capture-models/SubmissionFieldsForm';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { useReviewRevisionDocument } from './use-review-revision-document';
 import { localeText } from '../../utility/locale-text';
@@ -57,7 +57,7 @@ function ExpansionChrome({
 
 // Inline-uitklap-variant: verschijnt als een extra rij direct onder de aangeklikte tabelrij (zie
 // ReviewTable's renderRowExpansion) i.p.v. een zijpaneel. Velden staan in een grid die zelf
-// herschikt naar het aantal secties -- zie ReviewFieldForm.
+// herschikt naar het aantal secties -- zie SubmissionFieldsForm.
 export function ReviewInlineExpansion({
   row,
   editedDocument,
@@ -139,7 +139,7 @@ export function ReviewInlineExpansion({
         </>
       }
     >
-      <ReviewFieldForm model={modelQuery.data} document={currentDocument} onChange={handleChange} />
+      <SubmissionFieldsForm model={modelQuery.data} document={currentDocument} onChange={handleChange} />
       {releaseError && <p className="mt-3 text-[0.78rem] text-red-600">{releaseError}</p>}
       {confirmingRelease && (
         <ConfirmDialog

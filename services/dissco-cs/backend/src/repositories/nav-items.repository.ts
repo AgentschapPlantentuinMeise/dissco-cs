@@ -1,8 +1,8 @@
 import { Pool, PoolClient } from 'pg';
 import { NAV_ITEM_KEYS, NavItemContentKey, NavItemKey, SitePageLang } from '@dissco-cs/shared-types';
 
-// Local row shape (`updated_at: Date`, from `pg`) -- the shared `NavItemDto` type describes
-// the wire shape (`updated_at: string`) route handlers actually send.
+// Local row shape (from `pg`) -- route handlers send the shared `NavItemDto` via
+// toNavItemDto() in mappers/nav-items.mapper.ts.
 export type NavItemRow = {
   site_id: number;
   page_key: NavItemKey;

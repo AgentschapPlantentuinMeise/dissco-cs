@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { requireSiteAdmin, resolveSiteId } from '../auth/auth.js';
-import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
-import { institutionInputSchema, setInstitutionsOrderSchema } from '@dissco-cs/shared-types';
+import { InstitutionsRepository } from '../repositories/institutions.repository.js';
+import { toInstitutionDto } from '../mappers/institutions.mapper.js';
+import { institutionInputSchema } from '@dissco-cs/shared-types';
 
 // The institution itself. Its numbers live in stats.controller.ts (/stats/institutions/:slug), its
 // project links in projects.controller.ts (/projects/:projectId/institution).
@@ -70,21 +71,6 @@ export function institutionsController(institutionsRepository: InstitutionsRepos
 
     const institution = await institutionsRepository.createInstitution(identity.siteId, result.data);
     return c.json(toInstitutionDto(institution), 201);
-  });
-
-  app.put('/order', async c => {
-    const identity = requireSiteAdmin(c);
-    if (identity instanceof Response) {
-      return identity;
-    }
-
-    const result = setInstitutionsOrderSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('order must be an array of institution ids', 400);
-    }
-
-    await institutionsRepository.setInstitutionsOrder(identity.siteId, result.data.order);
-    return c.body(null, 204);
   });
 
   app.put('/:id', async c => {

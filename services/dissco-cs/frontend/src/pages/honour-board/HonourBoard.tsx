@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { CsPage } from '../../components/layout/CsPage';
 import { StatBanner } from '../../components/ui/StatBanner';
-import { PeriodCard } from '../../components/stats/PeriodCard';
+import { HonourBoardPeriodCard } from '../../components/stats/HonourBoardPeriodCard';
 import { useSiteHonourBoard } from '../../hooks/use-site-honour-board';
 import { useSiteStats } from '../../hooks/use-site-stats';
 import { LuMedal, LuClock, LuCalendar } from 'react-icons/lu';
@@ -42,21 +42,21 @@ export const HonourBoard: React.FC = () => {
           />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <PeriodCard
+            <HonourBoardPeriodCard
               titleKey="honour_board_period_today"
               icon={<LuClock className="w-4 h-4" />}
               period={today.data}
               loading={today.status === 'pending'}
               formatNumber={formatNumber}
             />
-            <PeriodCard
+            <HonourBoardPeriodCard
               titleKey="honour_board_period_week"
               icon={<LuCalendar className="w-4 h-4" />}
               period={week.data}
               loading={week.status === 'pending'}
               formatNumber={formatNumber}
             />
-            <PeriodCard
+            <HonourBoardPeriodCard
               titleKey="honour_board_period_month"
               icon={<LuCalendar className="w-4 h-4" />}
               period={month.data}

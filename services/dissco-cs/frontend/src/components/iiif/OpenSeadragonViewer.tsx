@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import OpenSeadragon from 'openseadragon';
 import { MadocBoxSelectorState } from '@dissco-cs/shared-types';
 

@@ -6,7 +6,6 @@ import { projectQueries } from '../../api/queries/projects';
 import { useTranslation } from 'react-i18next';
 import { useCurrentProject } from '../../hooks/use-current-project';
 import { useProjectProgress } from '../../hooks/use-project-progress';
-import { useRouteContext } from '../../hooks/use-route-context';
 import { useCurrentUser } from '../../hooks/use-current-user';
 import { projectsApi } from '../../api/cs-client/projects';
 import { MadocInternationalString } from '@dissco-cs/shared-types';
@@ -16,7 +15,6 @@ import { LocaleString } from '../../components/ui/LocaleString';
 import { CsPage } from '../../components/layout/CsPage';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
 import { ManualModal } from '../../components/manuals/ManualModal';
-import { disscoCSConfig } from '../../dissco-cs-config';
 
 function manualSeenKey(projectSlug: string): string {
   return `project-manual-seen-${projectSlug}`;

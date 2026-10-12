@@ -1,9 +1,11 @@
 import { csFetch } from './request';
 import { getSiteSlug } from '../slug';
-import { NavItemKey, SitePageLang, NavItemDto } from '@dissco-cs/shared-types';
+import { NavItemKey, SitePageLang, NavItemDto, NavItemContactEmailDto } from '@dissco-cs/shared-types';
 
 export const navItemsApi = {
   list: () => csFetch<{ navItems: NavItemDto[] }>(`/nav-items?slug=${getSiteSlug()}`),
+
+  getContactEmail: () => csFetch<NavItemContactEmailDto>('/nav-items/contact/email'),
 
   setActive: (key: NavItemKey, isActive: boolean) =>
     csFetch<void>(`/nav-items/${key}`, { method: 'PUT', body: JSON.stringify({ isActive }) }),

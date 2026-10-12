@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { getSiteSlug } from './api/slug';
-import { disscoCSConfig } from './dissco-cs-config';
 import { PageGate } from './components/layout/PageGate';
 import { AuthGate } from './components/layout/AuthGate';
 import { Homepage } from './pages/homepage/Homepage';

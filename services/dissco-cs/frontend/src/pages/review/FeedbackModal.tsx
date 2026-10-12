@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '../../components/ui/Modal';
 import { LuMail } from 'react-icons/lu';

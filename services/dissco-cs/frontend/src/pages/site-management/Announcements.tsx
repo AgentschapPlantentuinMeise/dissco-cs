@@ -92,9 +92,6 @@ export const Announcements: React.FC = () => {
   };
 
   const validation = announcementInputSchema.safeParse(draft);
-  const issues = validation.success ? [] : validation.error.issues;
-  const issueAt = (...path: (string | number)[]) =>
-    issues.some(issue => issue.path.length === path.length && issue.path.every((seg, i) => seg === path[i]));
   const canSave = validation.success;
 
   const save = async () => {

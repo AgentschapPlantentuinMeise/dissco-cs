@@ -1,5 +1,5 @@
-import { Pool, PoolClient } from 'pg';
-import { InstitutionDto, InstitutionInput, SitePageLang } from '@dissco-cs/shared-types';
+import { Pool } from 'pg';
+import { InstitutionInput, SitePageLang } from '@dissco-cs/shared-types';
 
 export type InstitutionRow = {
   id: number;
@@ -16,12 +16,6 @@ export type InstitutionRow = {
   created_at: Date;
   updated_at: Date;
 };
-
-// created_at/updated_at are DB bookkeeping (see InstitutionRow), never part of the wire DTO.
-export function toInstitutionDto(row: InstitutionRow): InstitutionDto {
-  const { created_at, updated_at, ...dto } = row;
-  return dto;
-}
 
 function slugify(text: string): string {
   return text
@@ -219,15 +213,6 @@ export class InstitutionsRepository {
     return (result.rowCount ?? 0) > 0;
   }
 
-  async setInstitutionsOrder(siteId: number, orderedIds: number[]): Promise<void> {
-    await this.runOrderedUpdate(orderedIds, (client, id, sortOrder) =>
-      client.query(
-        `UPDATE ${this.table('institutions')} SET sort_order = $3, updated_at = NOW() WHERE id = $1 AND site_id = $2`,
-        [id, siteId, sortOrder]
-      )
-    );
-  }
-
   private async uniqueInstitutionSlug(siteId: number, baseName: string, excludeId: number | null): Promise<string> {
     const base = slugify(baseName) || 'instituut';
     let candidate = base;
@@ -246,28 +231,6 @@ export class InstitutionsRepository {
 
       candidate = `${base}-${suffix}`;
       suffix += 1;
-    }
-  }
-
-  private async runOrderedUpdate<T>(
-    items: T[],
-    queryFor: (client: PoolClient, item: T, index: number) => Promise<unknown>
-  ): Promise<void> {
-    const client = await this.pool.connect();
-
-    try {
-      await client.query('BEGIN');
-
-      for (let i = 0; i < items.length; i++) {
-        await queryFor(client, items[i], i);
-      }
-
-      await client.query('COMMIT');
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
     }
   }
 }

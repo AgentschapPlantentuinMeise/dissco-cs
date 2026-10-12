@@ -12,9 +12,6 @@ export const manualsApi = {
 
   remove: (manualId: number) => csFetch<void>(`/manuals/${manualId}`, { method: 'DELETE' }),
 
-  setTitle: (manualId: number, lang: SitePageLang, title: string) =>
-    csFetch<ManualDto>(`/manuals/${manualId}/title`, { method: 'PUT', body: JSON.stringify({ lang, title }) }),
-
   setContent: (manualId: number, lang: SitePageLang, content: string) =>
     csFetch<void>(`/manuals/${manualId}/${lang}`, { method: 'PUT', body: JSON.stringify({ content }) }),
 

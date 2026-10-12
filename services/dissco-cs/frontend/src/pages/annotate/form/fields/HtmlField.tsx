@@ -1,4 +1,3 @@
-import React from 'react';
 import { FieldProps } from './registry';
 
 // Fase 1: a plain textarea editing raw HTML. A WYSIWYG toolbar is Fase 2 scope.

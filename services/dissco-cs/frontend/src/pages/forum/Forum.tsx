@@ -29,7 +29,6 @@ const inputClass = 'py-[9px] px-3 border border-gray-300 rounded text-[0.95rem] 
 export const Forum: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useCurrentUser();
-  const authorName = user?.name || t('forum_meta_author');
 
   const { data: allProjects } = useQuery({
     ...projectQueries.listAll({ published: true }),

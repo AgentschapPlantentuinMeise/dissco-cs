@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { FeedbackRepository } from '../repositories/feedback.repository.js';
+import { toFeedbackMessageDto, toFeedbackThreadDto } from '../mappers/feedback.mapper.js';
 import { requestMadocUserIdentity } from '../auth/auth.js';
 import { feedbackReplyInputSchema, feedbackThreadInputSchema } from '@dissco-cs/shared-types';
 import { isReviewerOrAdmin } from './review.controller.js';
@@ -14,7 +15,7 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
     }
 
     const threads = await feedbackRepository.listThreadsForUser(identity.siteId, identity.userId);
-    return c.json({ threads });
+    return c.json({ threads: threads.map(toFeedbackThreadDto) });
   });
 
   app.post('/threads', async c => {
@@ -44,7 +45,7 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
 
     // The creator is always the reviewer (gated above), with the one message just inserted --
     // nothing to count via an extra query.
-    return c.json({ ...thread, role: 'reviewer', message_count: 1, unread_count: 0 }, 201);
+    return c.json(toFeedbackThreadDto({ ...thread, role: 'reviewer', message_count: 1, unread_count: 0 }), 201);
   });
 
   app.get('/threads/:id', async c => {
@@ -68,8 +69,8 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
     // no extra query needed.
     const role = identity.userId === result.thread.recipient_user_id ? 'recipient' : 'reviewer';
     return c.json({
-      thread: { ...result.thread, role, message_count: result.messages.length, unread_count: 0 },
-      messages: result.messages,
+      thread: toFeedbackThreadDto({ ...result.thread, role, message_count: result.messages.length, unread_count: 0 }),
+      messages: result.messages.map(toFeedbackMessageDto),
     });
   });
 
@@ -102,7 +103,7 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
     }
 
     await feedbackRepository.markThreadSeen(identity.userId, threadId);
-    return c.json(reply, 201);
+    return c.json(toFeedbackMessageDto(reply), 201);
   });
 
   app.delete('/threads/:id', async c => {
