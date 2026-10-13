@@ -12,6 +12,7 @@ COPY --from=shared-build /build/shared ./shared/
 COPY frontend/ ./frontend/
 WORKDIR /build/frontend
 RUN pnpm install --frozen-lockfile
+RUN pnpm test
 RUN pnpm run build
 
 FROM node:22.22.3-alpine AS backend-build
@@ -23,6 +24,9 @@ WORKDIR /build/backend
 RUN pnpm install --frozen-lockfile
 COPY backend/tsconfig.json ./
 COPY backend/src ./src
+COPY backend/vitest.config.ts ./
+COPY backend/test ./test
+RUN pnpm test
 RUN pnpm run build
 RUN pnpm prune --prod
 

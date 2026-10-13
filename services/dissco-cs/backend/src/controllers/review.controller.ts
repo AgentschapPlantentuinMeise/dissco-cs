@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 
 import { MadocUserIdentity, requestBearerToken, requireUser } from '../auth/auth.js';
-import { forwardJsonBody, isSafeSegment } from '../madoc-client/client.js';
+import { forwardJsonBody } from '../madoc-client/client.js';
+import { isSafeSegment } from '../madoc-client/path-segment.js';
 import { getMadocReviewTasks } from '../madoc-client/reviews.js';
 import { getMadocSiteUserRole } from '../madoc-client/users.js';
 

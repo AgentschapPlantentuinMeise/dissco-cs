@@ -1,12 +1,14 @@
 import { appConfig } from '../config.js';
 import { getServiceJwt } from './client.js';
 import { listAllMadocProjects } from './projects.js';
+import { assertSafeSegment } from './path-segment.js';
 import { MadocCrowdsourcingTaskDto, MadocInternationalString } from '@dissco-cs/shared-types';
 
 export async function getMadocTaskStats(
   siteId: number,
   taskId: string
 ): Promise<{ statuses: Record<string, number>; total: number }> {
+  assertSafeSegment(taskId, 'task id');
   const query = new URLSearchParams({ type: 'crowdsourcing-task', root: 'true', distinct_subjects: 'true' });
   const response = await fetch(`${appConfig.madocGatewayUrl}/api/tasks/${taskId}/stats?${query}`, {
     headers: {
@@ -56,6 +58,7 @@ export async function getMadocTaskDetail(siteId: number, taskId: string): Promis
     metadata?: { project?: { id: number; slug: string; label?: unknown } };
   }>;
 }> {
+  assertSafeSegment(taskId, 'task id');
   const query = new URLSearchParams({ all: 'true', detail: 'true' });
   const response = await fetch(`${appConfig.madocGatewayUrl}/api/tasks/${taskId}?${query}`, {
     headers: {
@@ -72,6 +75,7 @@ export async function getMadocTaskDetail(siteId: number, taskId: string): Promis
 }
 
 export async function updateMadocTask(siteId: number, taskId: string, body: Record<string, unknown>): Promise<void> {
+  assertSafeSegment(taskId, 'task id');
   const response = await fetch(`${appConfig.madocGatewayUrl}/api/tasks/${taskId}`, {
     method: 'PATCH',
     headers: {

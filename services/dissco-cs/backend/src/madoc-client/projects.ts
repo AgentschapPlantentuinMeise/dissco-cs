@@ -1,8 +1,10 @@
 import { appConfig } from '../config.js';
 import { getServiceJwt } from './client.js';
+import { assertSafeSegment } from './path-segment.js';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
 
 export async function getMadocProject(siteId: number, projectId: string): Promise<MadocProjectDto> {
+  assertSafeSegment(projectId, 'project id');
   const response = await fetch(`${appConfig.madocGatewayUrl}/api/madoc/projects/${projectId}`, {
     headers: {
       Authorization: `Bearer ${getServiceJwt()}`,

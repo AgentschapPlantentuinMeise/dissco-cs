@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 
 import { requestBearerToken } from '../auth/auth.js';
-import { forwardJsonBody, isSafeSegment, madocFetch, relayMadocResponse } from '../madoc-client/client.js';
+import { forwardJsonBody, madocFetch, relayMadocResponse } from '../madoc-client/client.js';
+import { isSafeSegment } from '../madoc-client/path-segment.js';
 
 // Capture models and their revisions (a volunteer's saved annotations), forwarded to Madoc as the
 // requesting user -- Madoc decides who may read or change which revision.

@@ -2,7 +2,8 @@ import { Hono } from 'hono';
 
 import { ManualsRepository } from '../repositories/manuals.repository.js';
 import { requestBearerToken, requireSiteAdmin, requestMadocUserIdentity, resolveSiteId } from '../auth/auth.js';
-import { forwardJsonBody, isSafeSegment, madocFetch, publicSitePath, relayMadocResponse } from '../madoc-client/client.js';
+import { forwardJsonBody, madocFetch, publicSitePath, relayMadocResponse } from '../madoc-client/client.js';
+import { isSafeSegment } from '../madoc-client/path-segment.js';
 import { getMadocProject } from '../madoc-client/projects.js';
 import {
   getMadocCollectionManifestThumbnails,
@@ -255,6 +256,9 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     }
 
     const projectId = c.req.param('projectId');
+    if (!isSafeSegment(projectId)) {
+      return c.text('Invalid project id', 400);
+    }
 
     let project: MadocProjectDto;
     try {
@@ -370,6 +374,9 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
 
     const projectId = c.req.param('projectId');
     const manifestId = c.req.param('manifestId');
+    if (!isSafeSegment(projectId) || !isSafeSegment(manifestId)) {
+      return c.text('Invalid project or manifest id', 400);
+    }
 
     try {
       await getMadocProject(siteId, projectId);
@@ -417,6 +424,9 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     }
 
     const projectId = c.req.param('projectId');
+    if (!isSafeSegment(projectId)) {
+      return c.text('Invalid project id', 400);
+    }
 
     let project: MadocProjectDto;
     try {

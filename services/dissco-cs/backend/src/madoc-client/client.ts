@@ -2,6 +2,7 @@ import { readFileSync } from 'fs';
 import type { Context } from 'hono';
 
 import { appConfig } from '../config.js';
+import { isSafeSegment } from './path-segment.js';
 
 export function getServiceJwt(): string {
   const jwtJsonString = readFileSync(appConfig.madocServiceJwtPath).toString('utf-8');
@@ -14,14 +15,6 @@ export function getServiceJwt(): string {
 // forwarded from here *as that user* (their own JWT), so Madoc applies its own permission checks
 // and attributes contributions to the right person. The service JWT above is only for this
 // backend's own computations (stats, progress, stuck tasks, ...), never for forwarding.
-
-const SAFE_SEGMENT = /^[A-Za-z0-9_-]+$/;
-
-// Every value interpolated into a Madoc path must pass this first, so a crafted id (e.g. `..`)
-// can never reach a different Madoc route than the one the handler intends.
-export function isSafeSegment(value: string | undefined): value is string {
-  return typeof value === 'string' && SAFE_SEGMENT.test(value);
-}
 
 export async function madocFetch(
   path: string,

@@ -19,6 +19,10 @@ services/madoc-next
 scripts
 notes
 .vscode/*
+# Shared project settings (Vitest extension for services/dissco-cs) -- personal settings belong in
+# your own VS Code User settings, not here.
+!.vscode/settings.json
+!.vscode/extensions.json
 
 # Ingevulde deploy-secrets (sjablonen .env.dev.example/.env.prod.example blijven wel getrackt)
 .env.dev

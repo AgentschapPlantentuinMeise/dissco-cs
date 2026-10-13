@@ -113,5 +113,20 @@ Keep in mind that the structure en code we provide is in a open source context
 - Start alleen een subagent als een taak strikt parallelle verwerking of diepgaand onderzoek in meerdere mappen vereist.
 - Voer routinematige code-aanpassingen, tests en bestandswijzigingen rechtstreeks uit in de hoofdsessie.
 
+## Tests (services/dissco-cs)
+
+**Wanneer ze lopen — drie lagen, zodat een falende test nooit pas bij een release opduikt:**
+1. *Tijdens het coderen:* na elke edit van Claude draait `.claude/hooks/run-related-tests.mjs` de tests die bij het gewijzigde bestand horen; faalt er een, dan herstelt Claude dat eerst. Voor eigen wijzigingen: de Vitest-extensie in VS Code (aanbevolen via `.vscode/extensions.json`, draait bij elke opslag).
+2. *Bij elke commit:* `.githooks/pre-commit` draait tests + `tsc` (+ `lint` in frontend) voor elk dissco-cs-pakket met gestagede wijzigingen. **Eenmalig activeren per clone:** `git config core.hooksPath .githooks`. Bewust overslaan: `git commit --no-verify`.
+3. *Docker-build:* vangnet, draait `pnpm test` vóór de build.
+
+**Wat wel en niet testen:**
+- Wel: pure logica — regels, berekeningen, validatie, transformaties.
+- Niet: componenttests, nagemaakte Madoc-antwoorden (mocks), tests "voor de coverage". Rekenlogica die in een controller zit eerst uithalen als pure functie, dan pas testen.
+- Bij elke bugfix in rekenlogica komt er een test bij die de bug reproduceert.
+- Faalt een test: ofwel een echte bug (code fixen), ofwel een bewust gewijzigde regel (test in dezelfde wijziging aanpassen). Een test die herhaaldelijk breekt zonder ooit een bug te vangen, mag weg.
+
+**Waar:** `<pakket>/test/`, met de mappenstructuur van `src/` gespiegeld (buiten `src/`, zodat `tsc`/`vite build` ze niet meenemen). `.vscode/settings.json` bevat enkel projectinstellingen; persoonlijke instellingen horen in je eigen VS Code User settings.
+
 
 

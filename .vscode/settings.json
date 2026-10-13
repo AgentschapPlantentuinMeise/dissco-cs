@@ -1,0 +1,4 @@
+{
+  "vitest.configSearchPatternInclude": "services/dissco-cs/{backend/vitest,frontend/vite}.config.ts",
+  "vitest.watchOnStartup": true
+}

@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 
 import { requestBearerToken, requireSiteAdmin } from '../auth/auth.js';
-import { forwardQuery, isSafeSegment, madocFetch, publicSitePath, relayMadocResponse } from '../madoc-client/client.js';
+import { forwardQuery, madocFetch, publicSitePath, relayMadocResponse } from '../madoc-client/client.js';
+import { isSafeSegment } from '../madoc-client/path-segment.js';
 import { MadocCollectionSummaryDto, MadocPagination } from '@dissco-cs/shared-types';
 
 // IIIF resources (canvases, manifests, collections), forwarded to Madoc as the requesting user.

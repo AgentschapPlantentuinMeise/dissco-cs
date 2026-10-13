@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 
 import { requestBearerToken, requireSiteAdmin } from '../auth/auth.js';
-import { forwardJsonBody, forwardQuery, isSafeSegment, madocFetch, relayMadocResponse } from '../madoc-client/client.js';
+import { forwardJsonBody, forwardQuery, madocFetch, relayMadocResponse } from '../madoc-client/client.js';
+import { isSafeSegment } from '../madoc-client/path-segment.js';
 import { getStuckMadocTasks, getStuckManifestCounters, resyncManifestTaskCounter, updateMadocTask } from '../madoc-client/tasks.js';
 
 // Crowdsourcing tasks: the user's own tasks (forwarded to tasks-api as that user, so it only ever
@@ -38,6 +39,10 @@ export function tasksController(): Hono {
     }
 
     const containerId = c.req.param('containerId');
+    if (!isSafeSegment(containerId)) {
+      return c.text('Invalid task id', 400);
+    }
+
     try {
       const resynced = await resyncManifestTaskCounter(identity.siteId, containerId);
       return c.json({ resynced });
@@ -54,6 +59,10 @@ export function tasksController(): Hono {
     }
 
     const taskId = c.req.param('taskId');
+    if (!isSafeSegment(taskId)) {
+      return c.text('Invalid task id', 400);
+    }
+
     try {
       await updateMadocTask(identity.siteId, taskId, { status: -1, status_text: 'abandoned' });
     } catch (err) {
