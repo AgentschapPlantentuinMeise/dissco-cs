@@ -1,0 +1,46 @@
+#!/bin/sh
+# Pre-commit hook for services/dissco-cs: runs the tests and type/lint checks of only the dissco-cs
+# packages that have staged changes, so a failing test blocks the commit instead of surfacing while
+# preparing a release. Commits that touch nothing in services/dissco-cs pass straight through.
+#
+# Activate once per clone:   git config core.hooksPath .githooks
+# Skip deliberately:         git commit --no-verify
+#
+# Note: the checks run on the working tree, not on the staged snapshot only.
+
+root=$(git rev-parse --show-toplevel)
+staged=$(git diff --cached --name-only)
+
+check_backend=false
+check_frontend=false
+echo "$staged" | grep -q '^services/dissco-cs/backend/' && check_backend=true
+echo "$staged" | grep -q '^services/dissco-cs/frontend/' && check_frontend=true
+if echo "$staged" | grep -q '^services/dissco-cs/shared/'; then
+  check_backend=true
+  check_frontend=true
+  echo "[pre-commit] shared/ changed: both packages check against their installed copy of shared --"
+  echo "             rebuild shared and reinstall in backend/frontend first if you haven't yet."
+fi
+
+run() {
+  echo "[pre-commit] services/dissco-cs/$1: $2"
+  if ! (cd "$root/services/dissco-cs/$1" && sh -c "$2"); then
+    echo ""
+    echo "[pre-commit] FAILED in services/dissco-cs/$1: $2"
+    echo "[pre-commit] Fix it, or skip deliberately with: git commit --no-verify"
+    exit 1
+  fi
+}
+
+if [ "$check_backend" = true ]; then
+  run backend "pnpm test"
+  run backend "pnpm exec tsc -p tsconfig.json --noEmit"
+fi
+
+if [ "$check_frontend" = true ]; then
+  run frontend "pnpm test"
+  run frontend "pnpm exec tsc -p tsconfig.json --noEmit"
+  run frontend "pnpm lint"
+fi
+
+exit 0
