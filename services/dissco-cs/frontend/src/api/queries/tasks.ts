@@ -24,15 +24,9 @@ export const taskQueries = {
   mine: (userId: number | undefined) =>
     queryOptions({
       queryKey: taskKeys.mine(userId),
-      queryFn: async () => {
-        const query = { ...mineQuery(userId!), sort_by: 'newest', detail: true };
-        const first = await tasksApi.list<MadocCrowdsourcingTaskDto>(1, query);
-        const totalPages = first.pagination?.totalPages ?? 1;
-        const rest = await Promise.all(
-          Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => tasksApi.list<MadocCrowdsourcingTaskDto>(i + 2, query))
-        );
-        return { ...first, tasks: [...first.tasks, ...rest.flatMap(r => r.tasks)] };
-      },
+      queryFn: async () => ({
+        tasks: await tasksApi.listAll<MadocCrowdsourcingTaskDto>({ ...mineQuery(userId!), sort_by: 'newest', detail: true }),
+      }),
       enabled: !!userId,
     }),
 

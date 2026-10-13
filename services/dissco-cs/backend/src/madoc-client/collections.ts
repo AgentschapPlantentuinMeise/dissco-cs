@@ -1,23 +1,11 @@
-import { appConfig } from '../config.js';
-import { getServiceJwt } from './client.js';
+import { serviceJson } from './client.js';
+import { collectAllPages } from './pagination.js';
+import { madocPath } from './path-segment.js';
 import { getMadocTaskStats } from './tasks.js';
+import { MadocPagination } from '@dissco-cs/shared-types';
 
-export async function getMadocCollectionStructure(
-  siteId: number,
-  collectionId: number
-): Promise<{ items: unknown[] }> {
-  const response = await fetch(`${appConfig.madocGatewayUrl}/api/madoc/iiif/collections/${collectionId}/structure`, {
-    headers: {
-      Authorization: `Bearer ${getServiceJwt()}`,
-      'x-madoc-site-id': String(siteId),
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Madoc collection structure request failed with status ${response.status}`);
-  }
-
-  return response.json();
+export function getMadocCollectionStructure(siteId: number, collectionId: number): Promise<{ items: unknown[] }> {
+  return serviceJson(madocPath`/api/madoc/iiif/collections/${collectionId}/structure`, { siteId });
 }
 
 // The structure endpoint above doesn't include thumbnails -- that query only selects the
@@ -27,35 +15,18 @@ export async function getMadocCollectionManifestThumbnails(
   siteId: number,
   collectionId: number
 ): Promise<Map<number, string | undefined>> {
-  const thumbnails = new Map<number, string | undefined>();
-  let page = 1;
-  let totalPages = 1;
-
-  do {
-    const query = new URLSearchParams({ type: 'manifest', page: String(page) });
-    const response = await fetch(`${appConfig.madocGatewayUrl}/api/madoc/iiif/collections/${collectionId}?${query}`, {
-      headers: {
-        Authorization: `Bearer ${getServiceJwt()}`,
-        'x-madoc-site-id': String(siteId),
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Madoc collection request failed with status ${response.status}`);
-    }
-
-    const data = (await response.json()) as {
+  const items = await collectAllPages(async page => {
+    const data = await serviceJson<{
       collection: { items: Array<{ id: number; thumbnail?: string }> };
-      pagination?: { totalPages?: number };
-    };
-    for (const item of data.collection.items) {
-      thumbnails.set(item.id, item.thumbnail);
-    }
-    totalPages = data.pagination?.totalPages ?? 1;
-    page += 1;
-  } while (page <= totalPages);
+      pagination?: MadocPagination;
+    }>(madocPath`/api/madoc/iiif/collections/${collectionId}`, {
+      siteId,
+      query: { type: 'manifest', page: String(page) },
+    });
+    return { items: data.collection.items, totalPages: data.pagination?.totalPages };
+  });
 
-  return thumbnails;
+  return new Map(items.map(item => [item.id, item.thumbnail]));
 }
 
 // Used by projects.controller.ts (/:projectId/progress) for the per-project progress bar (the site-wide total on

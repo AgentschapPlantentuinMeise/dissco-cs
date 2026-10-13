@@ -1,6 +1,5 @@
-import { appConfig } from '../config.js';
-import { getServiceJwt } from './client.js';
-import { isSafeSegment } from './path-segment.js';
+import { serviceFetch } from './client.js';
+import { isSafeSegment, madocPath } from './path-segment.js';
 
 const siteIdBySlugCache = new Map<string, number>();
 
@@ -15,11 +14,7 @@ export async function getSiteIdBySlug(slug: string): Promise<number | null> {
     return cached;
   }
 
-  const response = await fetch(`${appConfig.madocGatewayUrl}/s/${slug}/madoc/api/site`, {
-    headers: {
-      Authorization: `Bearer ${getServiceJwt()}`,
-    },
-  });
+  const response = await serviceFetch(madocPath`/s/${slug}/madoc/api/site`);
 
   if (!response.ok) {
     return null;

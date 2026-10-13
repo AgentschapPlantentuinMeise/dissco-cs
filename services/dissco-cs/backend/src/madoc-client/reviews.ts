@@ -1,6 +1,4 @@
-import { appConfig } from '../config.js';
-import { getServiceJwt } from './client.js';
-import { getMadocTaskDetail } from './tasks.js';
+import { fetchAllTasks, getMadocTaskDetail } from './tasks.js';
 import { getMadocProjectByRootTaskId } from './projects.js';
 import { MadocCrowdsourcingTaskDto, MadocInternationalString, MadocProjectDto, ReviewTaskDto } from '@dissco-cs/shared-types';
 
@@ -9,39 +7,13 @@ function parseUserId(urn: string | undefined): number | undefined {
   return match ? Number(match[1]) : undefined;
 }
 
-async function fetchMadocReviewTasks(siteId: number): Promise<MadocCrowdsourcingTaskDto[]> {
-  const perPage = 100;
-  const tasks: MadocCrowdsourcingTaskDto[] = [];
-  let page = 1;
-  let totalPages = 1;
-
-  do {
-    const query = new URLSearchParams({
-      type: 'crowdsourcing-review',
-      all_tasks: 'true',
-      status: '0,1,2',
-      detail: 'true',
-      per_page: String(perPage),
-      page: String(page),
-    });
-    const response = await fetch(`${appConfig.madocGatewayUrl}/api/tasks?${query}`, {
-      headers: {
-        Authorization: `Bearer ${getServiceJwt()}`,
-        'x-madoc-site-id': String(siteId),
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Madoc review-tasks request failed with status ${response.status}`);
-    }
-
-    const data = (await response.json()) as { tasks: MadocCrowdsourcingTaskDto[]; pagination?: { totalPages?: number } };
-    tasks.push(...data.tasks);
-    totalPages = data.pagination?.totalPages ?? 1;
-    page += 1;
-  } while (page <= totalPages);
-
-  return tasks;
+function fetchMadocReviewTasks(siteId: number): Promise<MadocCrowdsourcingTaskDto[]> {
+  return fetchAllTasks(siteId, {
+    type: 'crowdsourcing-review',
+    all_tasks: 'true',
+    status: '0,1,2',
+    detail: 'true',
+  });
 }
 
 // All still-open review tasks on the site (-1 rejected, 3 accepted and 4/5 handled don't

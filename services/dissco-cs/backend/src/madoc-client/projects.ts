@@ -1,41 +1,20 @@
-import { appConfig } from '../config.js';
-import { getServiceJwt } from './client.js';
-import { assertSafeSegment } from './path-segment.js';
-import { MadocProjectDto } from '@dissco-cs/shared-types';
+import { serviceJson } from './client.js';
+import { collectAllPages } from './pagination.js';
+import { madocPath } from './path-segment.js';
+import { MadocProjectDto, MadocProjectListPageDto } from '@dissco-cs/shared-types';
 
-export async function getMadocProject(siteId: number, projectId: string): Promise<MadocProjectDto> {
-  assertSafeSegment(projectId, 'project id');
-  const response = await fetch(`${appConfig.madocGatewayUrl}/api/madoc/projects/${projectId}`, {
-    headers: {
-      Authorization: `Bearer ${getServiceJwt()}`,
-      'x-madoc-site-id': String(siteId),
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Madoc project request failed with status ${response.status}`);
-  }
-
-  return response.json();
+export function getMadocProject(siteId: number, projectId: string): Promise<MadocProjectDto> {
+  return serviceJson(madocPath`/api/madoc/projects/${projectId}`, { siteId });
 }
 
 // task.metadata.project turns out to be empty for crowdsourcing-review tasks (unlike
 // crowdsourcing-task), so the project is looked up via root_task_id instead -- the same
 // filter list-projects.ts already supports server-side.
 export async function getMadocProjectByRootTaskId(siteId: number, rootTaskId: string): Promise<MadocProjectDto | null> {
-  const query = new URLSearchParams({ root_task_id: rootTaskId });
-  const response = await fetch(`${appConfig.madocGatewayUrl}/api/madoc/projects?${query}`, {
-    headers: {
-      Authorization: `Bearer ${getServiceJwt()}`,
-      'x-madoc-site-id': String(siteId),
-    },
+  const data = await serviceJson<{ projects: MadocProjectDto[] }>('/api/madoc/projects', {
+    siteId,
+    query: { root_task_id: rootTaskId },
   });
-
-  if (!response.ok) {
-    throw new Error(`Madoc project-by-root-task request failed with status ${response.status}`);
-  }
-
-  const data = (await response.json()) as { projects: MadocProjectDto[] };
   return data.projects[0] ?? null;
 }
 
@@ -43,32 +22,12 @@ export async function getMadocProjectByRootTaskId(siteId: number, rootTaskId: st
 // public listProjects route in madoc-ts only shows status 1/2 unless the caller has site.admin
 // scope AND sends no `published` query param (see listProjects.ts), which is the case here
 // thanks to the service JWT.
-export async function listAllMadocProjects(siteId: number): Promise<MadocProjectDto[]> {
-  const projects: MadocProjectDto[] = [];
-  let page = 1;
-  let totalPages = 1;
-
-  do {
-    const query = new URLSearchParams({ page: String(page) });
-    const response = await fetch(`${appConfig.madocGatewayUrl}/api/madoc/projects?${query}`, {
-      headers: {
-        Authorization: `Bearer ${getServiceJwt()}`,
-        'x-madoc-site-id': String(siteId),
-      },
+export function listAllMadocProjects(siteId: number): Promise<MadocProjectDto[]> {
+  return collectAllPages(async page => {
+    const data = await serviceJson<MadocProjectListPageDto>('/api/madoc/projects', {
+      siteId,
+      query: { page: String(page) },
     });
-
-    if (!response.ok) {
-      throw new Error(`Madoc projects-list request failed with status ${response.status}`);
-    }
-
-    const data = (await response.json()) as {
-      projects: MadocProjectDto[];
-      pagination?: { totalPages?: number };
-    };
-    projects.push(...data.projects);
-    totalPages = data.pagination?.totalPages ?? 1;
-    page += 1;
-  } while (page <= totalPages);
-
-  return projects;
+    return { items: data.projects, totalPages: data.pagination?.totalPages };
+  });
 }

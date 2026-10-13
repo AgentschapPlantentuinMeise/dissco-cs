@@ -1,8 +1,18 @@
 import { Hono } from 'hono';
 
 import { requestBearerToken, requireSiteAdmin } from '../auth/auth.js';
-import { forwardJsonBody, forwardQuery, madocFetch, relayMadocResponse } from '../madoc-client/client.js';
+import { appConfig } from '../config.js';
+import {
+  forwardJsonBody,
+  forwardQuery,
+  madocErrorResponse,
+  madocFetch,
+  madocJson,
+  relayMadocResponse,
+} from '../madoc-client/client.js';
+import { collectAllPages } from '../madoc-client/pagination.js';
 import { isSafeSegment } from '../madoc-client/path-segment.js';
+import { MadocCrowdsourcingTaskDto, MadocPagination } from '@dissco-cs/shared-types';
 import { getStuckMadocTasks, getStuckManifestCounters, resyncManifestTaskCounter, updateMadocTask } from '../madoc-client/tasks.js';
 
 // Crowdsourcing tasks: the user's own tasks (forwarded to tasks-api as that user, so it only ever
@@ -75,8 +85,32 @@ export function tasksController(): Hono {
 
   // ---- the user's own tasks ----
 
+  // With `all=true` this walks every page itself and returns `{ tasks }` (same as GET /projects);
+  // otherwise it relays the requested page as-is.
   app.get('/', async c => {
-    return relayMadocResponse(await madocFetch(`/api/tasks${forwardQuery(c)}`, requestBearerToken(c)));
+    const userToken = requestBearerToken(c);
+    if (c.req.query('all') !== 'true') {
+      return relayMadocResponse(await madocFetch(`/api/tasks${forwardQuery(c)}`, userToken));
+    }
+
+    const query = new URLSearchParams(c.req.query());
+    for (const ours of ['slug', 'all', 'page']) {
+      query.delete(ours);
+    }
+
+    try {
+      const tasks = await collectAllPages(async page => {
+        query.set('page', String(page));
+        const data = await madocJson<{ tasks: MadocCrowdsourcingTaskDto[]; pagination?: MadocPagination }>(
+          `/api/tasks?${query}`,
+          userToken
+        );
+        return { items: data.tasks, totalPages: data.pagination?.totalPages };
+      }, appConfig.madocPageConcurrency);
+      return c.json({ tasks });
+    } catch (err) {
+      return madocErrorResponse(err, '[tasks] list all failed');
+    }
   });
 
   app.get('/:taskId', async c => {

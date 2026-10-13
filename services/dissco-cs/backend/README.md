@@ -37,6 +37,7 @@ Of via de volledige stack: `docker compose up -d --build citizen-science-api`.
 | `POSTGRES_HOST` / `_PORT` / `_USER` / `_PASSWORD` / `_DB` / `_SCHEMA` | Verbinding met het eigen `citizen_science`-schema in shared-postgres | zie `docker-compose.yml` |
 | `MADOC_GATEWAY_URL` | Basis-URL om Madoc's eigen API te bereiken (voor verrijking) | `http://gateway:8080` |
 | `MADOC_SERVICE_JWT_PATH` | Pad naar het door madoc-ts ondertekende service-token | `/app/service-jwt-responses/citizen-science-api.json` |
+| `MADOC_PAGE_CONCURRENCY` | Max. aantal Madoc-lijstpagina's dat tegelijk wordt opgevraagd bij het overlopen van een lange lijst (alle pagina's worden altijd opgehaald). Hoger is sneller, maar zet meer gelijktijdige queries op Madoc's Postgres | `6` |
 
 ## Authenticatie
 

@@ -2,7 +2,16 @@ import { Hono } from 'hono';
 
 import { ManualsRepository } from '../repositories/manuals.repository.js';
 import { requestBearerToken, requireSiteAdmin, requestMadocUserIdentity, resolveSiteId } from '../auth/auth.js';
-import { forwardJsonBody, madocFetch, publicSitePath, relayMadocResponse } from '../madoc-client/client.js';
+import { appConfig } from '../config.js';
+import {
+  forwardJsonBody,
+  madocErrorResponse,
+  madocFetch,
+  madocJson,
+  publicSitePath,
+  relayMadocResponse,
+} from '../madoc-client/client.js';
+import { collectAllPages } from '../madoc-client/pagination.js';
 import { isSafeSegment } from '../madoc-client/path-segment.js';
 import { getMadocProject } from '../madoc-client/projects.js';
 import {
@@ -111,38 +120,19 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
       return relayMadocResponse(await madocFetch(path, userToken));
     }
 
-    const firstPath = pagePath('1');
-    if (!firstPath) {
+    if (!pagePath('1')) {
       return c.text('Invalid slug', 400);
     }
 
-    const firstResponse = await madocFetch(firstPath, userToken);
-    if (!firstResponse.ok) {
-      return relayMadocResponse(firstResponse);
+    try {
+      const projects = await collectAllPages(async page => {
+        const data = await madocJson<MadocProjectListPageDto>(pagePath(String(page)) as string, userToken);
+        return { items: data.projects || [], totalPages: data.pagination?.totalPages };
+      }, appConfig.madocPageConcurrency);
+      return c.json({ projects });
+    } catch (err) {
+      return madocErrorResponse(err, '[projects] list all failed');
     }
-
-    const first = (await firstResponse.json()) as MadocProjectListPageDto;
-    const totalPages = first.pagination?.totalPages || 1;
-    const projects: MadocProjectDto[] = first.projects || [];
-
-    const rest = await Promise.all(
-      Array.from({ length: totalPages - 1 }, async (_, i) => {
-        const response = await madocFetch(pagePath(String(i + 2)) as string, userToken);
-        if (!response.ok) {
-          throw new Error(`Madoc projects page ${i + 2} failed with status ${response.status}`);
-        }
-        return (await response.json()) as MadocProjectListPageDto;
-      })
-    ).catch(err => {
-      console.error('[projects] list all failed', err);
-      return null;
-    });
-
-    if (!rest) {
-      return c.text('Internal Server Error', 500);
-    }
-
-    return c.json({ projects: projects.concat(...rest.map(page => page.projects || [])) });
   });
 
   app.get('/:projectId', async c => {

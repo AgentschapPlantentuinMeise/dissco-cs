@@ -1,50 +1,39 @@
-import { appConfig } from '../config.js';
-import { getServiceJwt } from './client.js';
+import { serviceJson } from './client.js';
+import { collectAllPages } from './pagination.js';
+import { madocPath } from './path-segment.js';
 import { listAllMadocProjects } from './projects.js';
-import { assertSafeSegment } from './path-segment.js';
-import { MadocCrowdsourcingTaskDto, MadocInternationalString } from '@dissco-cs/shared-types';
+import { MadocCrowdsourcingTaskDto, MadocInternationalString, MadocPagination } from '@dissco-cs/shared-types';
 
-export async function getMadocTaskStats(
+// Every page of an /api/tasks query, one page after the other (service JWT, so kept sequential).
+export function fetchAllTasks<T = MadocCrowdsourcingTaskDto>(siteId: number, query: Record<string, string>): Promise<T[]> {
+  return collectAllPages(async page => {
+    const data = await serviceJson<{ tasks: T[]; pagination?: MadocPagination }>('/api/tasks', {
+      siteId,
+      query: { ...query, per_page: '100', page: String(page) },
+    });
+    return { items: data.tasks, totalPages: data.pagination?.totalPages };
+  });
+}
+
+export function getMadocTaskStats(
   siteId: number,
   taskId: string
 ): Promise<{ statuses: Record<string, number>; total: number }> {
-  assertSafeSegment(taskId, 'task id');
-  const query = new URLSearchParams({ type: 'crowdsourcing-task', root: 'true', distinct_subjects: 'true' });
-  const response = await fetch(`${appConfig.madocGatewayUrl}/api/tasks/${taskId}/stats?${query}`, {
-    headers: {
-      Authorization: `Bearer ${getServiceJwt()}`,
-      'x-madoc-site-id': String(siteId),
-    },
+  return serviceJson(madocPath`/api/tasks/${taskId}/stats`, {
+    siteId,
+    query: { type: 'crowdsourcing-task', root: 'true', distinct_subjects: 'true' },
   });
-
-  if (!response.ok) {
-    throw new Error(`Madoc task stats request failed with status ${response.status}`);
-  }
-
-  return response.json();
 }
 
-export async function getMadocTasksBySubjectAndType(
+export function getMadocTasksBySubjectAndType(
   siteId: number,
   subject: string,
   type: string
 ): Promise<{ tasks: Array<{ id: string }> }> {
-  const query = new URLSearchParams({ subject, type, all_tasks: 'true' });
-  const response = await fetch(`${appConfig.madocGatewayUrl}/api/tasks?${query}`, {
-    headers: {
-      Authorization: `Bearer ${getServiceJwt()}`,
-      'x-madoc-site-id': String(siteId),
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Madoc tasks-by-subject request failed with status ${response.status}`);
-  }
-
-  return response.json();
+  return serviceJson('/api/tasks', { siteId, query: { subject, type, all_tasks: 'true' } });
 }
 
-export async function getMadocTaskDetail(siteId: number, taskId: string): Promise<{
+export function getMadocTaskDetail(siteId: number, taskId: string): Promise<{
   id: string;
   status: number;
   assignee?: { id: string; name?: string };
@@ -58,75 +47,23 @@ export async function getMadocTaskDetail(siteId: number, taskId: string): Promis
     metadata?: { project?: { id: number; slug: string; label?: unknown } };
   }>;
 }> {
-  assertSafeSegment(taskId, 'task id');
-  const query = new URLSearchParams({ all: 'true', detail: 'true' });
-  const response = await fetch(`${appConfig.madocGatewayUrl}/api/tasks/${taskId}?${query}`, {
-    headers: {
-      Authorization: `Bearer ${getServiceJwt()}`,
-      'x-madoc-site-id': String(siteId),
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Madoc task detail request failed with status ${response.status}`);
-  }
-
-  return response.json();
+  return serviceJson(madocPath`/api/tasks/${taskId}`, { siteId, query: { all: 'true', detail: 'true' } });
 }
 
 export async function updateMadocTask(siteId: number, taskId: string, body: Record<string, unknown>): Promise<void> {
-  assertSafeSegment(taskId, 'task id');
-  const response = await fetch(`${appConfig.madocGatewayUrl}/api/tasks/${taskId}`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${getServiceJwt()}`,
-      'x-madoc-site-id': String(siteId),
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Madoc task update failed with status ${response.status}`);
-  }
+  await serviceJson(madocPath`/api/tasks/${taskId}`, { siteId, method: 'PATCH', body });
 }
 
 // All crowdsourcing-task subtasks of a project (same root_task_id + type as the /progress
 // calculation in projects.controller.ts /:projectId/progress) -- for the admin debug page that makes the
 // per-manifest transcribed percentage verifiable.
-export async function getMadocProjectTasks(siteId: number, rootTaskId: string): Promise<MadocCrowdsourcingTaskDto[]> {
-  const perPage = 100;
-  const tasks: MadocCrowdsourcingTaskDto[] = [];
-  let page = 1;
-  let totalPages = 1;
-
-  do {
-    const query = new URLSearchParams({
-      root_task_id: rootTaskId,
-      type: 'crowdsourcing-task',
-      all_tasks: 'true',
-      detail: 'true',
-      per_page: String(perPage),
-      page: String(page),
-    });
-    const response = await fetch(`${appConfig.madocGatewayUrl}/api/tasks?${query}`, {
-      headers: {
-        Authorization: `Bearer ${getServiceJwt()}`,
-        'x-madoc-site-id': String(siteId),
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Madoc project-tasks request failed with status ${response.status}`);
-    }
-
-    const data = (await response.json()) as { tasks: MadocCrowdsourcingTaskDto[]; pagination?: { totalPages?: number } };
-    tasks.push(...data.tasks);
-    totalPages = data.pagination?.totalPages ?? 1;
-    page += 1;
-  } while (page <= totalPages);
-
-  return tasks;
+export function getMadocProjectTasks(siteId: number, rootTaskId: string): Promise<MadocCrowdsourcingTaskDto[]> {
+  return fetchAllTasks(siteId, {
+    root_task_id: rootTaskId,
+    type: 'crowdsourcing-task',
+    all_tasks: 'true',
+    detail: 'true',
+  });
 }
 
 // Madoc-ts only re-computes a manifest-task's shared max-contributors counter when a NEW claim
@@ -155,48 +92,23 @@ export async function resyncManifestTaskCounter(siteId: number, containerTaskId:
 // table scan that gets dramatically slower as the site accumulates tasks over time — scoping by
 // root_task_id (like getMadocProjectTasks already does for the task-debug tab) turns each call
 // back into an indexed, near-instant lookup.
-async function fetchCrowdsourcingTasksByStatus(
+function fetchCrowdsourcingTasksByStatus(
   siteId: number,
   status: 0 | 1,
   rootTaskId: string,
   modifiedBefore?: Date
 ): Promise<MadocCrowdsourcingTaskDto[]> {
-  const perPage = 100;
-  const tasks: MadocCrowdsourcingTaskDto[] = [];
-  let page = 1;
-  let totalPages = 1;
-
-  do {
-    const query = new URLSearchParams({
-      type: 'crowdsourcing-task',
-      all_tasks: 'true',
-      root_task_id: rootTaskId,
-      status: String(status),
-      detail: 'true',
-      per_page: String(perPage),
-      page: String(page),
-    });
-    if (modifiedBefore) {
-      query.set('modified_date_end', modifiedBefore.toISOString());
-    }
-    const response = await fetch(`${appConfig.madocGatewayUrl}/api/tasks?${query}`, {
-      headers: {
-        Authorization: `Bearer ${getServiceJwt()}`,
-        'x-madoc-site-id': String(siteId),
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Madoc stuck-tasks request failed with status ${response.status}`);
-    }
-
-    const data = (await response.json()) as { tasks: MadocCrowdsourcingTaskDto[]; pagination?: { totalPages?: number } };
-    tasks.push(...data.tasks);
-    totalPages = data.pagination?.totalPages ?? 1;
-    page += 1;
-  } while (page <= totalPages);
-
-  return tasks;
+  const query: Record<string, string> = {
+    type: 'crowdsourcing-task',
+    all_tasks: 'true',
+    root_task_id: rootTaskId,
+    status: String(status),
+    detail: 'true',
+  };
+  if (modifiedBefore) {
+    query.modified_date_end = modifiedBefore.toISOString();
+  }
+  return fetchAllTasks(siteId, query);
 }
 
 const STUCK_IN_PROGRESS_AFTER_DAYS = 14;
@@ -227,39 +139,12 @@ export async function getStuckMadocTasks(siteId: number): Promise<MadocCrowdsour
 // ALL already resolved (-1/abandoned) — no single task to release, just a stale counter that
 // resyncManifestTaskCounter() would fix, but nothing ever triggers that automatically.
 export async function getStuckManifestCounters(siteId: number): Promise<MadocCrowdsourcingTaskDto[]> {
-  const perPage = 100;
-  const containers: Array<{ id: string; name?: string; subject: string; modified_at: number }> = [];
-  let page = 1;
-  let totalPages = 1;
-
-  do {
-    const query = new URLSearchParams({
-      type: 'crowdsourcing-manifest-task',
-      all_tasks: 'true',
-      status: '2',
-      detail: 'true',
-      per_page: String(perPage),
-      page: String(page),
-    });
-    const response = await fetch(`${appConfig.madocGatewayUrl}/api/tasks?${query}`, {
-      headers: {
-        Authorization: `Bearer ${getServiceJwt()}`,
-        'x-madoc-site-id': String(siteId),
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Madoc stuck-manifest-counters request failed with status ${response.status}`);
-    }
-
-    const data = (await response.json()) as {
-      tasks: Array<{ id: string; name?: string; subject: string; modified_at: number }>;
-      pagination?: { totalPages?: number };
-    };
-    containers.push(...data.tasks);
-    totalPages = data.pagination?.totalPages ?? 1;
-    page += 1;
-  } while (page <= totalPages);
+  const containers = await fetchAllTasks<{ id: string; name?: string; subject: string; modified_at: number }>(siteId, {
+    type: 'crowdsourcing-manifest-task',
+    all_tasks: 'true',
+    status: '2',
+    detail: 'true',
+  });
 
   const results: MadocCrowdsourcingTaskDto[] = [];
   for (const container of containers) {

@@ -160,6 +160,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - MADOC_GATEWAY_URL=http://gateway:8080
       - MADOC_SERVICE_JWT_PATH=/app/service-jwt-responses/dissco-cs-api.json
+      - MADOC_PAGE_CONCURRENCY=${MADOC_PAGE_CONCURRENCY:-6}
       # Read-only reuse of the tasks-api service's own DB credentials, for the honour board and
       # stats (queries tasks_api.tasks directly, see madoc-db/pools.ts).
       - POSTGRES_TASKS_API_USER=${POSTGRES_TASKS_API_USER}

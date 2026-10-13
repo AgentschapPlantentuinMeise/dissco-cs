@@ -9,6 +9,11 @@ export const tasksApi = {
       `/tasks?${queryString.stringify({ page: page || 1, ...query }, { arrayFormat: 'comma' })}`
     ),
 
+  // Every page at once (the backend walks Madoc's pagination).
+  listAll: async <T = unknown>(query: Record<string, unknown> = {}) =>
+    (await csFetch<{ tasks: T[] }>(`/tasks?${queryString.stringify({ ...query, all: true }, { arrayFormat: 'comma' })}`))
+      .tasks,
+
   get: (taskId: string) => csFetch<{ id: string; status: number; state?: { revisionId?: string } }>(`/tasks/${taskId}`),
 
   update: (taskId: string, task: Record<string, unknown>) =>

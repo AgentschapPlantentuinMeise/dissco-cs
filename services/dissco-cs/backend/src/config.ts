@@ -46,6 +46,10 @@ export const appConfig = {
   startupRetryCount: requiredNumber('STARTUP_RETRY_COUNT', 120),
   madocGatewayUrl: process.env.MADOC_GATEWAY_URL ?? 'http://gateway:8080',
   madocServiceJwtPath: process.env.MADOC_SERVICE_JWT_PATH ?? '/app/service-jwt-responses/dissco-cs-api.json',
+  // Max number of Madoc list pages requested at once when a forwarded call walks every page (all
+  // pages are always fetched). Higher is faster but puts more concurrent queries on Madoc's
+  // Postgres. This backend's own service-JWT loops stay sequential regardless.
+  madocPageConcurrency: requiredNumber('MADOC_PAGE_CONCURRENCY', 6),
   // Read-only reuse of tasks-api's own DB user, for the honour-board and stats queries
   // (see madoc-db/pools.ts).
   tasksApiPostgresUser: required('POSTGRES_TASKS_API_USER'),

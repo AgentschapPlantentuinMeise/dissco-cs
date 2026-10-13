@@ -6,10 +6,19 @@ export function isSafeSegment(value: string | undefined): value is string {
   return typeof value === 'string' && SAFE_SEGMENT.test(value);
 }
 
-// Safety net inside the madoc-client helpers that call Madoc with the service JWT: controllers
-// already answer 400 for an invalid route param, so this only fires if a caller forgot that check.
-export function assertSafeSegment(value: string, label: string): void {
-  if (!isSafeSegment(value)) {
-    throw new Error(`Unsafe ${label} for Madoc path`);
-  }
+// Builds a Madoc path and validates every interpolated value on the way, so a call can't forget
+// the check: madocPath`/api/tasks/${taskId}/stats`. Path only -- the query string goes separately
+// (see MadocRequest.query in client.ts). Controllers still check route params with isSafeSegment
+// themselves to answer a clean 400; this throws if one slipped through anyway.
+export function madocPath(strings: TemplateStringsArray, ...values: Array<string | number>): string {
+  return strings.reduce((path, part, i) => {
+    if (i === 0) {
+      return part;
+    }
+    const value = String(values[i - 1]);
+    if (!isSafeSegment(value)) {
+      throw new Error('Unsafe path segment for Madoc path');
+    }
+    return path + value + part;
+  }, '');
 }

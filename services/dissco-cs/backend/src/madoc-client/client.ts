@@ -4,36 +4,102 @@ import type { Context } from 'hono';
 import { appConfig } from '../config.js';
 import { isSafeSegment } from './path-segment.js';
 
-export function getServiceJwt(): string {
+// Read on every call on purpose: madoc-ts rewrites this file whenever the token stops being valid
+// (see sync-jwt-requests.ts), and its own gateway/token.ts reads it the same way.
+function getServiceJwt(): string {
   const jwtJsonString = readFileSync(appConfig.madocServiceJwtPath).toString('utf-8');
   return JSON.parse(jwtJsonString).token;
+}
+
+export interface MadocRequest {
+  method?: string;
+  body?: unknown;
+  // Sent as x-madoc-site-id -- with the service JWT, Madoc needs it to know which site is meant.
+  siteId?: number;
+  query?: Record<string, string> | URLSearchParams;
+  headers?: Record<string, string>;
+}
+
+// A non-2xx answer from Madoc, keeping its status and body so a controller can still pass them on.
+export class MadocHttpError extends Error {
+  constructor(
+    readonly status: number,
+    readonly body: string,
+    method: string,
+    path: string
+  ) {
+    super(`Madoc ${method} ${path} failed with status ${status}${body ? `: ${body.slice(0, 200)}` : ''}`);
+    this.name = 'MadocHttpError';
+  }
+}
+
+function gatewayFetch(path: string, token: string | undefined, req: MadocRequest = {}): Promise<Response> {
+  const headers: Record<string, string> = { ...req.headers };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  if (req.siteId !== undefined) {
+    headers['x-madoc-site-id'] = String(req.siteId);
+  }
+  if (req.body !== undefined) {
+    headers['Content-Type'] = 'application/json';
+  }
+  const query = req.query ? new URLSearchParams(req.query).toString() : '';
+
+  return fetch(`${appConfig.madocGatewayUrl}${path}${query ? `?${query}` : ''}`, {
+    method: req.method ?? 'GET',
+    headers,
+    body: req.body !== undefined ? JSON.stringify(req.body) : undefined,
+  });
+}
+
+async function parseJsonOrThrow<T>(response: Response, method: string | undefined, path: string): Promise<T> {
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new MadocHttpError(response.status, body, method ?? 'GET', path);
+  }
+  return response.json() as Promise<T>;
+}
+
+// ---- this backend's own calls to Madoc (service JWT) ----
+//
+// For this backend's own computations (stats, progress, stuck tasks, ...), never for forwarding
+// something a user does. Build `path` with madocPath (path-segment.ts) so every id is validated.
+
+export function serviceFetch(path: string, req: MadocRequest = {}): Promise<Response> {
+  return gatewayFetch(path, getServiceJwt(), req);
+}
+
+export async function serviceJson<T>(path: string, req: MadocRequest = {}): Promise<T> {
+  return parseJsonOrThrow<T>(await serviceFetch(path, req), req.method, path);
 }
 
 // ---- forwarding user-initiated calls to Madoc ----
 //
 // The frontend only ever talks to this backend; everything a user or admin does in Madoc is
 // forwarded from here *as that user* (their own JWT), so Madoc applies its own permission checks
-// and attributes contributions to the right person. The service JWT above is only for this
-// backend's own computations (stats, progress, stuck tasks, ...), never for forwarding.
+// and attributes contributions to the right person.
 
-export async function madocFetch(
+export function madocFetch(
   path: string,
   userToken: string | undefined,
   init: { method?: string; body?: unknown } = {}
 ): Promise<Response> {
-  const headers: Record<string, string> = {};
-  if (userToken) {
-    headers.Authorization = `Bearer ${userToken}`;
-  }
-  if (init.body !== undefined) {
-    headers['Content-Type'] = 'application/json';
-  }
+  return gatewayFetch(path, userToken, init);
+}
 
-  return fetch(`${appConfig.madocGatewayUrl}${path}`, {
-    method: init.method ?? 'GET',
-    headers,
-    body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
-  });
+// For when this backend combines several answers (e.g. walking every page) instead of relaying one.
+export async function madocJson<T>(path: string, userToken: string | undefined): Promise<T> {
+  return parseJsonOrThrow<T>(await madocFetch(path, userToken), 'GET', path);
+}
+
+// Relays a MadocHttpError's status and body as-is; anything else is a 500 of our own.
+export function madocErrorResponse(err: unknown, logLabel: string): Response {
+  if (err instanceof MadocHttpError) {
+    return new Response(err.body, { status: err.status, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+  }
+  console.error(logLabel, err);
+  return new Response('Internal Server Error', { status: 500 });
 }
 
 // Passes Madoc's status code and body through unchanged, so the frontend can still branch on

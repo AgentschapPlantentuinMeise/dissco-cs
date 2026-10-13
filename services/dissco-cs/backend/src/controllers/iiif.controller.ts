@@ -1,7 +1,16 @@
 import { Hono } from 'hono';
 
 import { requestBearerToken, requireSiteAdmin } from '../auth/auth.js';
-import { forwardQuery, madocFetch, publicSitePath, relayMadocResponse } from '../madoc-client/client.js';
+import { appConfig } from '../config.js';
+import {
+  forwardQuery,
+  madocErrorResponse,
+  madocFetch,
+  madocJson,
+  publicSitePath,
+  relayMadocResponse,
+} from '../madoc-client/client.js';
+import { collectAllPages } from '../madoc-client/pagination.js';
 import { isSafeSegment } from '../madoc-client/path-segment.js';
 import { MadocCollectionSummaryDto, MadocPagination } from '@dissco-cs/shared-types';
 
@@ -43,41 +52,21 @@ export function iiifController(): Hono {
       return identity;
     }
 
+    // Madoc pages this list 5 at a time, so a site with thousands of collections means hundreds of
+    // pages -- requested a few at once (madocPageConcurrency), not all concurrently.
     const userToken = requestBearerToken(c);
-    const firstResponse = await madocFetch('/api/madoc/iiif/collections?page=0', userToken);
-    if (!firstResponse.ok) {
-      return relayMadocResponse(firstResponse);
-    }
-
-    const first = (await firstResponse.json()) as { collections?: MadocCollectionSummaryDto[]; pagination?: MadocPagination };
-    const totalPages = first.pagination?.totalPages || 1;
-    const collections = first.collections || [];
-
-    // Remaining pages in small batches rather than all at once -- with thousands of collections,
-    // firing every page concurrently would hammer Madoc for no benefit.
-    const BATCH_SIZE = 6;
-    const remainingPages = Array.from({ length: Math.max(totalPages - 1, 0) }, (_, i) => i + 1);
-
     try {
-      for (let i = 0; i < remainingPages.length; i += BATCH_SIZE) {
-        const batch = remainingPages.slice(i, i + BATCH_SIZE);
-        const results = await Promise.all(
-          batch.map(async page => {
-            const response = await madocFetch(`/api/madoc/iiif/collections?page=${page}`, userToken);
-            if (!response.ok) {
-              throw new Error(`Madoc collections page ${page} failed with status ${response.status}`);
-            }
-            return (await response.json()) as { collections?: MadocCollectionSummaryDto[] };
-          })
+      const collections = await collectAllPages(async page => {
+        const data = await madocJson<{ collections?: MadocCollectionSummaryDto[]; pagination?: MadocPagination }>(
+          `/api/madoc/iiif/collections?page=${page}`,
+          userToken
         );
-        collections.push(...results.flatMap(page => page.collections || []));
-      }
+        return { items: data.collections || [], totalPages: data.pagination?.totalPages };
+      }, appConfig.madocPageConcurrency);
+      return c.json({ collections: collections.filter(collection => collection.itemCount !== 0) });
     } catch (err) {
-      console.error('[iiif] list collections failed', err);
-      return c.text('Internal Server Error', 500);
+      return madocErrorResponse(err, '[iiif] list collections failed');
     }
-
-    return c.json({ collections: collections.filter(collection => collection.itemCount !== 0) });
   });
 
   // Full desired `item_ids` list for a project's flat collection -- this replaces the whole list
