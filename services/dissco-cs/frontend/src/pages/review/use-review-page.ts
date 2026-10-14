@@ -11,7 +11,7 @@ import { captureModelsApi } from '../../api/cs-client/capture-models';
 import { localeText } from '../../utility/locale-text';
 import { useCurrentUser } from '../../hooks/use-current-user';
 
-export type SortKey = 'project' | 'subject' | 'status' | 'submitter' | 'reviewer' | 'modified_at';
+export type SortKey = 'project' | 'subject' | 'status' | 'submitter' | 'reviewer' | 'modifiedAt';
 export type SortDir = 'asc' | 'desc';
 export type BulkResult = { id: string; label: string; success: boolean; error?: string };
 
@@ -48,7 +48,7 @@ export function useReviewPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'' | '0' | '1' | '2'>('');
-  const [sortKey, setSortKey] = useState<SortKey>('modified_at');
+  const [sortKey, setSortKey] = useState<SortKey>('modifiedAt');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmingAccept, setConfirmingAccept] = useState(false);
@@ -130,8 +130,8 @@ export function useReviewPage() {
         case 'reviewer':
           result = (a.reviewer ?? '').localeCompare(b.reviewer ?? '');
           break;
-        case 'modified_at':
-          result = (a.modified_at ?? 0) - (b.modified_at ?? 0);
+        case 'modifiedAt':
+          result = (a.modifiedAt ?? 0) - (b.modifiedAt ?? 0);
           break;
       }
       return sortDir === 'asc' ? result : -result;

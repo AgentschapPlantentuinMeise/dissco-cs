@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { SitePageLang } from '@dissco-cs/shared-types';
+import { ManualAttachmentDto, ManualDetailDto, ManualDto, ManualSummaryDto, PerLanguage, SitePageLang } from '@dissco-cs/shared-types';
 
 export type ManualRow = {
   id: number;
@@ -206,4 +206,28 @@ export class ManualsRepository {
 
     return (result.rowCount ?? 0) > 0;
   }
+}
+
+// ---- DTO mapping ----
+//
+// The row above is the database's shape (snake_case, Date objects); the DTO is the API's shape
+// (camelCase, ISO strings). Every field is listed explicitly, so a new column never leaks out.
+
+export function toManualDto(row: ManualRow): ManualDto {
+  return { id: row.id, title: row.title, content: row.content, updatedAt: row.updated_at.toISOString() };
+}
+
+export function toManualSummaryDto(summary: ManualSummary): ManualSummaryDto {
+  return { ...toManualDto(summary), linkedProjectSlugs: summary.linkedProjectSlugs, attachmentLangs: summary.attachmentLangs };
+}
+
+// Shared by the admin (GET /manuals/:manualId) and volunteer-facing (GET /projects/:projectId/manual)
+// detail routes.
+export function toManualDetailDto(manual: ManualRow, attachmentMeta: ManualAttachmentMeta[]): ManualDetailDto {
+  const attachments: PerLanguage<ManualAttachmentDto> = {};
+  for (const meta of attachmentMeta) {
+    attachments[meta.lang] = { filename: meta.filename, mimeType: meta.mime_type, size: meta.file_size };
+  }
+
+  return { id: manual.id, title: manual.title, content: manual.content, attachments };
 }

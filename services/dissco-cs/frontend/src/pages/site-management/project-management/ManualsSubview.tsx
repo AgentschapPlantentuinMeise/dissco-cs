@@ -101,7 +101,7 @@ export const ManualsSubview: React.FC<{
                     : t('sm_manuals_orphan_linked_empty')}
                 </td>
                 <td className="px-4 py-3 border-t border-gray-100 text-sm text-gray-500">
-                  {new Date(manual.updated_at).toLocaleDateString(i18n.language)}
+                  {new Date(manual.updatedAt).toLocaleDateString(i18n.language)}
                 </td>
                 <td className="px-4 py-3 border-t border-gray-100 text-right whitespace-nowrap">
                   <button

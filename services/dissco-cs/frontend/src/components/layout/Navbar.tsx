@@ -71,7 +71,7 @@ export const Navbar: React.FC = () => {
   const { data: feedbackUnreadCount = 0 } = useQuery({
     ...feedbackQueries.threads(),
     enabled: !!user,
-    select: res => res.threads.reduce((sum, thread) => sum + thread.unread_count, 0),
+    select: res => res.threads.reduce((sum, thread) => sum + thread.unreadCount, 0),
   });
 
   useEffect(() => {
@@ -125,20 +125,20 @@ export const Navbar: React.FC = () => {
           </li>
 
           {navItems.map(navItem => {
-            const nav = NAV_ITEMS[navItem.page_key];
-            if (!nav || !navItem.is_active || (nav.requiresLogin && !user)) {
+            const nav = NAV_ITEMS[navItem.pageKey];
+            if (!nav || !navItem.isActive || (nav.requiresLogin && !user)) {
               return null;
             }
 
             return (
-              <li key={navItem.page_key}>
+              <li key={navItem.pageKey}>
                 <HrefLink
                   href={nav.href}
                   className={navLinkClass(location.pathname.startsWith(nav.href))}
                   onClick={() => setMenuOpen(false)}
                 >
                   {t(nav.labelKey)}
-                  {navItem.page_key === 'forum' && newMsgCount > 0 && (
+                  {navItem.pageKey === 'forum' && newMsgCount > 0 && (
                     <span className="inline-block bg-[var(--cs-accent)] text-white rounded-[10px] px-[6px] py-[1px] text-[0.7rem] font-bold ml-[5px] align-middle leading-[1.4]">
                       {newMsgCount}
                     </span>

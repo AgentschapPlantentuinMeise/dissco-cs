@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+import { ForumReplyDto, ForumTopicDto } from '@dissco-cs/shared-types';
 
 export type ForumTopicRow = {
   id: number;
@@ -224,4 +225,38 @@ export class ForumRepository {
       [userId, topicId, replyCount]
     );
   }
+}
+
+// ---- DTO mapping ----
+//
+// The row above is the database's shape (snake_case, Date objects); the DTO is the API's shape
+// (camelCase, ISO strings). Every field is listed explicitly, so a new column never leaks out.
+
+export function toForumTopicDto(topic: ForumTopicWithReplyCount): ForumTopicDto {
+  return {
+    id: topic.id,
+    authorUserId: topic.author_user_id,
+    authorName: topic.author_name,
+    title: topic.title,
+    taskUrl: topic.task_url,
+    projectSlug: topic.project_slug,
+    projectLabel: topic.project_label,
+    body: topic.body,
+    createdAt: topic.created_at.toISOString(),
+    lastActivity: topic.last_activity.toISOString(),
+    closedAt: topic.closed_at ? topic.closed_at.toISOString() : null,
+    replyCount: topic.reply_count,
+    lastSeenReplyCount: topic.last_seen_reply_count,
+  };
+}
+
+export function toForumReplyDto(row: ForumReplyRow): ForumReplyDto {
+  return {
+    id: row.id,
+    topicId: row.topic_id,
+    authorUserId: row.author_user_id,
+    authorName: row.author_name,
+    body: row.body,
+    createdAt: row.created_at.toISOString(),
+  };
 }

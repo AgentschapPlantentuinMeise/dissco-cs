@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
-import { FeedbackRepository } from '../repositories/feedback.repository.js';
-import { toFeedbackMessageDto, toFeedbackThreadDto } from '../mappers/feedback.mapper.js';
+import { FeedbackRepository, toFeedbackMessageDto, toFeedbackThreadDto } from '../repositories/feedback.repository.js';
 import { requireUser } from '../auth/auth.js';
 import { feedbackReplyInputSchema, feedbackThreadInputSchema } from '@dissco-cs/shared-types';
 import { isReviewerOrAdmin } from './review.controller.js';

@@ -17,9 +17,9 @@ export type ProjectProgressDto = {
 export type ProjectDebugTaskEntryDto = {
   id: string;
   status: number;
-  status_text?: string;
+  statusText?: string;
   assignee?: string;
-  modified_at: number;
+  modifiedAt: number;
 };
 
 export type ProjectDebugManifestDto = {

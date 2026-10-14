@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
-import { ManualsRepository } from '../repositories/manuals.repository.js';
-import { toManualDetailDto, toManualDto, toManualSummaryDto } from '../mappers/manuals.mapper.js';
+import { ManualsRepository, toManualDetailDto, toManualDto, toManualSummaryDto } from '../repositories/manuals.repository.js';
 import { requireSiteAdmin } from '../auth/auth.js';
 import { attachmentFileSchema, isSitePageLang, setManualContentSchema, setManualTitleSchema } from '@dissco-cs/shared-types';
 

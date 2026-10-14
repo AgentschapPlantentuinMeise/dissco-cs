@@ -93,7 +93,7 @@ export const TaskDebugSubview: React.FC<{ projects: MadocProjectDto[] }> = ({ pr
                               {taskDebugStatusLabel(task.status)}
                               {task.assignee ? ` — ${task.assignee}` : ''}
                               {' · '}
-                              {new Date(task.modified_at).toLocaleDateString(i18n.language)}
+                              {new Date(task.modifiedAt).toLocaleDateString(i18n.language)}
                             </li>
                           ))}
                         </ul>

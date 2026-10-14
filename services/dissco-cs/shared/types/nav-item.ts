@@ -17,14 +17,15 @@ export function isNavItemContentKey(value: unknown): value is NavItemContentKey 
   return typeof value === 'string' && (NAV_ITEM_CONTENT_KEYS as readonly string[]).includes(value);
 }
 
-// Wire shape of the public nav-items list. The API repository keeps its own local `NavItemRow`;
-// contact_email is admin-only and served separately as NavItemContactEmailDto.
+// Wire shape of the public nav-items list, built by toNavItemDto() at the bottom of
+// nav-items.repository.ts; the contact email is admin-only and served separately as
+// NavItemContactEmailDto.
 export type NavItemDto = {
-  page_key: NavItemKey;
-  is_active: boolean;
+  pageKey: NavItemKey;
+  isActive: boolean;
   content: MultilingualText;
-  show_contact_form: boolean;
-  sort_order: number;
+  showContactForm: boolean;
+  sortOrder: number;
 };
 
 export type NavItemContactEmailDto = { email: string | null };
@@ -32,7 +33,7 @@ export type NavItemContactEmailDto = { email: string | null };
 export const setContactEmailSchema = z.object({ email: emailSchema });
 
 export const setNavItemActiveSchema = z.object({ isActive: z.boolean() });
-export const setShowContactFormSchema = z.object({ showForm: z.boolean() });
+export const setShowContactFormSchema = z.object({ showContactForm: z.boolean() });
 export const setNavItemContentSchema = z.object({ lang: sitePageLangSchema, contentMd: z.string() });
 
 function isNavItemKeyPermutation(value: unknown): value is NavItemKey[] {

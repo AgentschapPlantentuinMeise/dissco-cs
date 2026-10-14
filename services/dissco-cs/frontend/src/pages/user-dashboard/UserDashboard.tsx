@@ -81,8 +81,8 @@ function FeedbackThreadDetail({ threadId }: { threadId: number }) {
         {data.messages.map(message => (
           <li key={message.id} className="text-sm">
             <div className="flex items-baseline gap-2">
-              <strong className="text-gray-800">{message.author_name}</strong>
-              <span className="text-xs text-gray-400">{new Date(message.created_at).toLocaleString(i18n.language)}</span>
+              <strong className="text-gray-800">{message.authorName}</strong>
+              <span className="text-xs text-gray-400">{new Date(message.createdAt).toLocaleString(i18n.language)}</span>
             </div>
             <p className="text-gray-700 m-0 mt-0.5 whitespace-pre-wrap">{message.body}</p>
           </li>
@@ -122,7 +122,7 @@ function FeedbackThreadRow({
   const { t } = useTranslation('dissco-cs');
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
-  const otherName = thread.role === 'recipient' ? thread.reviewer_name : thread.recipient_name;
+  const otherName = thread.role === 'recipient' ? thread.reviewerName : thread.recipientName;
   const directionLabel =
     thread.role === 'recipient'
       ? t('dashboard_feedback_from', { name: otherName })
@@ -144,12 +144,12 @@ function FeedbackThreadRow({
         <button onClick={onToggle} className="flex-1 min-w-0 text-left bg-transparent border-none cursor-pointer p-0">
           <div className="flex items-center justify-between gap-3">
             <span className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-              {thread.unread_count > 0 && (
+              {thread.unreadCount > 0 && (
                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: 'var(--cs-tertiary)' }} />
               )}
               {thread.subject}
             </span>
-            <span className="text-xs text-gray-400 flex-shrink-0">{new Date(thread.last_activity).toLocaleString(language)}</span>
+            <span className="text-xs text-gray-400 flex-shrink-0">{new Date(thread.lastActivity).toLocaleString(language)}</span>
           </div>
           <div className="text-xs text-gray-500 mt-0.5">{directionLabel}</div>
         </button>
@@ -209,8 +209,8 @@ export const UserDashboard: React.FC = () => {
     ...forumQueries.topics(),
     select: res =>
       res.topics
-        .filter(topic => topic.reply_count === 0)
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .filter(topic => topic.replyCount === 0)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 3),
     enabled: !!user,
   });
@@ -305,12 +305,12 @@ export const UserDashboard: React.FC = () => {
                   </button>
                   <button className={tabBtnClass(activeTab === 'feedback')} onClick={() => setActiveTab('feedback')}>
                     {t('dashboard_feedback_tab')}
-                    {feedbackThreads.some(thread => thread.unread_count > 0) && (
+                    {feedbackThreads.some(thread => thread.unreadCount > 0) && (
                       <span
                         className="inline-block text-white rounded-[10px] px-[6px] py-[1px] text-[0.7rem] font-bold ml-[5px] align-middle leading-[1.4]"
                         style={{ background: 'var(--cs-tertiary)' }}
                       >
-                        {feedbackThreads.reduce((sum, thread) => sum + thread.unread_count, 0)}
+                        {feedbackThreads.reduce((sum, thread) => sum + thread.unreadCount, 0)}
                       </span>
                     )}
                   </button>
@@ -391,7 +391,7 @@ export const UserDashboard: React.FC = () => {
                         >
                           <span className="text-sm font-semibold text-gray-800">{topic.title}</span>
                           <span className="text-xs text-gray-500">
-                            {topic.author_name} · {formatDate(topic.created_at, i18n.language)} · {t('dashboard_widget_no_reply')}
+                            {topic.authorName} · {formatDate(topic.createdAt, i18n.language)} · {t('dashboard_widget_no_reply')}
                           </span>
                         </HrefLink>
                       </li>

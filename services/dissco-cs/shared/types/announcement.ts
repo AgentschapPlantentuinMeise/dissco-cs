@@ -8,18 +8,17 @@ export function isAnnouncementTargetType(value: unknown): value is AnnouncementT
   return typeof value === 'string' && (ANNOUNCEMENT_TARGET_TYPES as readonly string[]).includes(value);
 }
 
-// Wire shape (dates as ISO strings). created_at is DB bookkeeping only (see AnnouncementRow in
-// the API repository) and never sent to the frontend; routes strip it via toAnnouncementDto().
+// Wire shape (camelCase, dates as ISO strings), built by toAnnouncementDto() at the bottom of
+// announcements.repository.ts from the snake_case AnnouncementRow.
 export type AnnouncementDto = {
   id: string;
-  site_id: number;
   title: MultilingualText;
   description: MultilingualText;
-  target_type: AnnouncementTargetType;
-  target_project_slug: string | null;
-  is_active: boolean;
-  start_date: string | null;
-  end_date: string | null;
+  targetType: AnnouncementTargetType;
+  targetProjectSlug: string | null;
+  isActive: boolean;
+  startDate: string | null;
+  endDate: string | null;
 };
 
 const isoDateOrNull = z

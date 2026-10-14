@@ -51,14 +51,14 @@ export const PageManagement: React.FC = () => {
   // the "saved" confirmation would be wiped out a moment after saving.
   useEffect(() => {
     if (!selectedKey || loading || contactEmailLoading) return;
-    const page = pages.find(p => p.page_key === selectedKey);
+    const page = pages.find(p => p.pageKey === selectedKey);
     setDraftContent(page?.content ?? {});
     setDraftContactEmail(contactEmail?.email ?? '');
-    setDraftShowContactForm(page?.show_contact_form ?? false);
+    setDraftShowContactForm(page?.showContactForm ?? false);
     setSaved(false);
   }, [selectedKey, loading, contactEmailLoading]);
 
-  const isActive = (key: NavItemKey) => pages.find(p => p.page_key === key)?.is_active ?? true;
+  const isActive = (key: NavItemKey) => pages.find(p => p.pageKey === key)?.isActive ?? true;
 
   const toggleActive = async (key: NavItemKey) => {
     try {
@@ -91,7 +91,7 @@ export const PageManagement: React.FC = () => {
     const reordered = [...pages];
     [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
     try {
-      await navItemsApi.setOrder(reordered.map(p => p.page_key));
+      await navItemsApi.setOrder(reordered.map(p => p.pageKey));
     } catch (err) {
       reportActionError(err, 'error_save_failed');
       return;
@@ -133,7 +133,7 @@ export const PageManagement: React.FC = () => {
           <div className={`grid grid-cols-1 gap-6 ${selectedKey ? 'md:grid-cols-[380px_1fr]' : ''}`}>
             <ul className="list-none m-0 p-0 bg-white border-t border-gray-200 divide-y divide-gray-100">
               {pages.map((page, index) => {
-                const key = page.page_key;
+                const key = page.pageKey;
                 return (
                   <li
                     key={key}

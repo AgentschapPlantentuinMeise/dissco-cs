@@ -16,8 +16,8 @@ export const navItemsApi = {
   setContactEmail: (email: string) =>
     csFetch<void>('/nav-items/contact/email', { method: 'PUT', body: JSON.stringify({ email }) }),
 
-  setShowContactForm: (showForm: boolean) =>
-    csFetch<void>('/nav-items/contact/show-form', { method: 'PUT', body: JSON.stringify({ showForm }) }),
+  setShowContactForm: (showContactForm: boolean) =>
+    csFetch<void>('/nav-items/contact/show-form', { method: 'PUT', body: JSON.stringify({ showContactForm }) }),
 
   setOrder: (order: NavItemKey[]) =>
     csFetch<void>('/nav-items/order', { method: 'PUT', body: JSON.stringify({ order }) }),

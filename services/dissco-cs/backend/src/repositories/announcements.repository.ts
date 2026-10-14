@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { AnnouncementTargetType, SitePageLang } from '@dissco-cs/shared-types';
+import { AnnouncementDto, AnnouncementTargetType, SitePageLang } from '@dissco-cs/shared-types';
 
 // Local row shape (`Date | null` fields, from `pg`) -- the shared `AnnouncementDto` type
 // describes the wire shape (all strings) route handlers actually send.
@@ -134,4 +134,22 @@ export class AnnouncementsRepository {
 
     return (result.rowCount ?? 0) > 0;
   }
+}
+
+// ---- DTO mapping ----
+//
+// The row above is the database's shape (snake_case, Date objects); the DTO is the API's shape
+// (camelCase, ISO strings). Every field is listed explicitly, so a new column never leaks out.
+
+export function toAnnouncementDto(row: AnnouncementRow): AnnouncementDto {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    targetType: row.target_type,
+    targetProjectSlug: row.target_project_slug,
+    isActive: row.is_active,
+    startDate: row.start_date ? row.start_date.toISOString() : null,
+    endDate: row.end_date ? row.end_date.toISOString() : null,
+  };
 }

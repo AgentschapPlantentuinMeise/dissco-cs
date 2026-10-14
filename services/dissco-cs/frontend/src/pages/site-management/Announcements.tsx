@@ -33,9 +33,9 @@ function toDateInputValue(iso: string | null): string {
 }
 
 function targetLabel(t: (key: string) => string, announcement: AnnouncementDto): string {
-  if (announcement.target_type === 'homepage') return t('sm_announcements_target_homepage');
-  if (announcement.target_type === 'projects') return t('sm_announcements_target_projects');
-  return `${t('sm_announcements_target_project')}: ${announcement.target_project_slug}`;
+  if (announcement.targetType === 'homepage') return t('sm_announcements_target_homepage');
+  if (announcement.targetType === 'projects') return t('sm_announcements_target_projects');
+  return `${t('sm_announcements_target_project')}: ${announcement.targetProjectSlug}`;
 }
 
 const emptyDraft: AnnouncementInput = {
@@ -76,11 +76,11 @@ export const Announcements: React.FC = () => {
     setDraft({
       title: announcement.title,
       description: announcement.description,
-      targetType: announcement.target_type,
-      targetProjectSlug: announcement.target_project_slug,
-      isActive: announcement.is_active,
-      startDate: announcement.start_date,
-      endDate: announcement.end_date,
+      targetType: announcement.targetType,
+      targetProjectSlug: announcement.targetProjectSlug,
+      isActive: announcement.isActive,
+      startDate: announcement.startDate,
+      endDate: announcement.endDate,
     });
     setSelectedLang(defaultLang(i18n.language));
     setIsFormOpen(true);
@@ -129,11 +129,11 @@ export const Announcements: React.FC = () => {
       await announcementsApi.update(announcement.id, {
         title: announcement.title,
         description: announcement.description,
-        targetType: announcement.target_type,
-        targetProjectSlug: announcement.target_project_slug,
-        isActive: !announcement.is_active,
-        startDate: announcement.start_date,
-        endDate: announcement.end_date,
+        targetType: announcement.targetType,
+        targetProjectSlug: announcement.targetProjectSlug,
+        isActive: !announcement.isActive,
+        startDate: announcement.startDate,
+        endDate: announcement.endDate,
       });
     } catch (err) {
       reportActionError(err, 'error_save_failed');
@@ -192,12 +192,12 @@ export const Announcements: React.FC = () => {
                       <p className="font-semibold m-0 truncate">{siteLangText(announcement.title, i18n.language, announcement.id)}</p>
                       <p className="text-sm text-gray-500 m-0">
                         {targetLabel(t, announcement)}
-                        {(announcement.start_date || announcement.end_date) && (
+                        {(announcement.startDate || announcement.endDate) && (
                           <>
                             {' · '}
-                            {announcement.start_date ? toDateInputValue(announcement.start_date) : t('sm_announcements_no_date')}
+                            {announcement.startDate ? toDateInputValue(announcement.startDate) : t('sm_announcements_no_date')}
                             {' – '}
-                            {announcement.end_date ? toDateInputValue(announcement.end_date) : t('sm_announcements_no_date')}
+                            {announcement.endDate ? toDateInputValue(announcement.endDate) : t('sm_announcements_no_date')}
                           </>
                         )}
                       </p>
@@ -205,7 +205,7 @@ export const Announcements: React.FC = () => {
 
                     <div className="flex items-center gap-3 shrink-0">
                       <ActiveStatusToggle
-                        active={announcement.is_active}
+                        active={announcement.isActive}
                         onChange={() => void toggleActive(announcement)}
                         label={siteLangText(announcement.title, i18n.language, announcement.id)}
                       />

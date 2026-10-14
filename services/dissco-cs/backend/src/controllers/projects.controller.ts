@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 
-import { ManualsRepository } from '../repositories/manuals.repository.js';
+import { ManualsRepository, toManualDetailDto } from '../repositories/manuals.repository.js';
 import { requestBearerToken, requireSiteAdmin, requireUser, resolveSiteId } from '../auth/auth.js';
 import { appConfig } from '../config.js';
 import {
@@ -20,9 +20,7 @@ import {
   getMadocProjectManifestsAndTaskStats,
 } from '../madoc-client/collections.js';
 import { getMadocProjectTasks, getMadocTasksBySubjectAndType, resyncManifestTaskCounter } from '../madoc-client/tasks.js';
-import { InstitutionsRepository } from '../repositories/institutions.repository.js';
-import { toInstitutionDto } from '../mappers/institutions.mapper.js';
-import { toManualDetailDto } from '../mappers/manuals.mapper.js';
+import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
 import {
   isSitePageLang,
   MadocCrowdsourcingTaskDto,
@@ -409,11 +407,11 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
         tasks: manifestTasks.map(t => ({
           id: t.id,
           status: t.status,
-          status_text: t.status_text,
+          statusText: t.status_text,
           assignee: t.assignee?.name,
           // tasks-api always returns this for a real task (see MadocCrowdsourcingTaskDto's comment) --
           // the field is only optional in the shared type for other call sites.
-          modified_at: t.modified_at ?? 0,
+          modifiedAt: t.modified_at ?? 0,
         })),
       };
     });

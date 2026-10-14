@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import { requireSiteAdmin, resolveSiteId } from '../auth/auth.js';
-import { InstitutionsRepository } from '../repositories/institutions.repository.js';
-import { toInstitutionDto } from '../mappers/institutions.mapper.js';
+import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
 import { institutionInputSchema } from '@dissco-cs/shared-types';
 
 // The institution itself. Its numbers live in stats.controller.ts (/stats/institutions/:slug), its

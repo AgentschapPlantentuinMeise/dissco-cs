@@ -200,9 +200,9 @@ export const Review: React.FC = () => {
         />
       )}
 
-      {c.previewRow?.subject_raw && (
+      {c.previewRow?.subjectRaw && (
         <ImagePreviewPopup
-          subject={c.previewRow.subject_raw}
+          subject={c.previewRow.subjectRaw}
           label={localeText(c.previewRow.subject.label, i18n.language) || c.previewRow.id}
           onClose={() => c.setPreviewRow(null)}
         />

@@ -1,8 +1,8 @@
 import { Pool, PoolClient } from 'pg';
-import { NAV_ITEM_KEYS, NavItemContentKey, NavItemKey, SitePageLang } from '@dissco-cs/shared-types';
+import { NAV_ITEM_KEYS, NavItemContentKey, NavItemDto, NavItemKey, SitePageLang } from '@dissco-cs/shared-types';
 
 // Local row shape (from `pg`) -- route handlers send the shared `NavItemDto` via
-// toNavItemDto() in mappers/nav-items.mapper.ts.
+// toNavItemDto() at the bottom of this file.
 export type NavItemRow = {
   site_id: number;
   page_key: NavItemKey;
@@ -163,4 +163,20 @@ export class NavItemsRepository {
       client.release();
     }
   }
+}
+
+// ---- DTO mapping ----
+//
+// The row above is the database's shape (snake_case, Date objects); the DTO is the API's shape
+// (camelCase, ISO strings). Every field is listed explicitly, so a new column never leaks out.
+
+// The nav-items list is public: contact_email is admin-only (served by GET /nav-items/contact/email).
+export function toNavItemDto(row: NavItemRow): NavItemDto {
+  return {
+    pageKey: row.page_key,
+    isActive: row.is_active,
+    content: row.content,
+    showContactForm: row.show_contact_form,
+    sortOrder: row.sort_order,
+  };
 }

@@ -21,7 +21,7 @@ export const forumQueries = {
       queryKey: forumKeys.unreadCount(),
       queryFn: async () => {
         const { topics } = await forumApi.listTopics();
-        return topics.filter(m => m.last_seen_reply_count === null || m.reply_count > m.last_seen_reply_count).length;
+        return topics.filter(m => m.lastSeenReplyCount === null || m.replyCount > m.lastSeenReplyCount).length;
       },
     }),
 

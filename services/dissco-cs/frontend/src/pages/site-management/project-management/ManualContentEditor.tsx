@@ -32,9 +32,9 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
       setDraftContent(manual.content ?? {});
       setSaveState('idle');
     }
-    // Enkel bij een echte wissel van handleiding herinitialiseren -- niet op manual.updated_at,
-    // want dat verandert ook na onze eigen succesvolle save (via refetch), wat anders de
-    // net gezette 'saved'-status meteen weer terug naar 'idle' zou zetten.
+    // Only re-initialise when the manual itself changes -- not on manual.updatedAt, which also
+    // changes after our own successful save (via refetch) and would otherwise reset the 'saved'
+    // status straight back to 'idle'.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [manual?.id]);
 

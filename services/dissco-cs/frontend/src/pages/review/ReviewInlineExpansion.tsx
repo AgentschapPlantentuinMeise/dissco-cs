@@ -74,7 +74,7 @@ export function ReviewInlineExpansion({
   const [confirmingRelease, setConfirmingRelease] = useState(false);
   const title = localeText(row.subject.label, i18n.language) || row.id;
   const subtitle = row.submitter
-    ? `${t('review_detail_submitted_by', { name: row.submitter })}${row.modified_at ? ` — ${new Date(row.modified_at).toLocaleString(i18n.language)}` : ''}`
+    ? `${t('review_detail_submitted_by', { name: row.submitter })}${row.modifiedAt ? ` — ${new Date(row.modifiedAt).toLocaleString(i18n.language)}` : ''}`
     : '';
 
   const { revisionQuery, modelQuery, currentDocument, handleChange } = useReviewRevisionDocument(row, editedDocument, onDocumentChange);

@@ -93,7 +93,7 @@ export const Forum: React.FC = () => {
   // Fetching a topic's replies marks it seen on the server -- mirror that in the list.
   useEffect(() => {
     if (expandedId === null || !expandedReplies) return;
-    setTopics(prev => prev.map(m => (m.id === expandedId ? { ...m, last_seen_reply_count: expandedReplies.length } : m)));
+    setTopics(prev => prev.map(m => (m.id === expandedId ? { ...m, lastSeenReplyCount: expandedReplies.length } : m)));
   }, [expandedId, expandedReplies, setTopics]);
 
   // Any change to the topic list may change the unread count in the navbar badge.
@@ -102,14 +102,14 @@ export const Forum: React.FC = () => {
   }, [topicsQuery.data, queryClient]);
 
   const isUnread = (msg: ForumTopicDto) => {
-    const seen = msg.last_seen_reply_count;
-    return seen === null || msg.reply_count > seen;
+    const seen = msg.lastSeenReplyCount;
+    return seen === null || msg.replyCount > seen;
   };
 
   const sortedTopics = useMemo(() =>
     [...topics].sort((a, b) =>
-      new Date(b.last_activity || b.created_at).getTime() -
-      new Date(a.last_activity || a.created_at).getTime()
+      new Date(b.lastActivity || b.createdAt).getTime() -
+      new Date(a.lastActivity || a.createdAt).getTime()
     ), [topics]);
 
   const filteredTopics = useMemo(() => {
@@ -118,16 +118,16 @@ export const Forum: React.FC = () => {
     return sortedTopics.filter(m =>
       m.title.toLowerCase().includes(q) ||
       m.body.toLowerCase().includes(q) ||
-      m.author_name.toLowerCase().includes(q) ||
-      (m.project_label || '').toLowerCase().includes(q)
+      m.authorName.toLowerCase().includes(q) ||
+      (m.projectLabel || '').toLowerCase().includes(q)
     );
   }, [sortedTopics, searchQuery]);
 
   const displayTopics = useMemo(() => {
     if (!activeFilter) return filteredTopics;
-    if (activeFilter === 'mine') return filteredTopics.filter(m => m.author_user_id === user?.id);
+    if (activeFilter === 'mine') return filteredTopics.filter(m => m.authorUserId === user?.id);
     if (activeFilter === 'unread') return filteredTopics.filter(isUnread);
-    if (activeFilter === 'unanswered') return filteredTopics.filter(m => m.reply_count === 0);
+    if (activeFilter === 'unanswered') return filteredTopics.filter(m => m.replyCount === 0);
     return filteredTopics;
   }, [filteredTopics, activeFilter, user]);
 
@@ -155,7 +155,7 @@ export const Forum: React.FC = () => {
     const topicId = pendingCloseTopicId;
 
     forumApi.closeTopic(topicId).then(closed => {
-      setTopics(prev => prev.map(m => (m.id === topicId ? { ...m, closed_at: closed.closed_at } : m)));
+      setTopics(prev => prev.map(m => (m.id === topicId ? { ...m, closedAt: closed.closedAt } : m)));
       setPendingCloseTopicId(null);
     }).catch(err => reportActionError(err, 'error_save_failed'));
   };
@@ -170,8 +170,8 @@ export const Forum: React.FC = () => {
         m.id === topicId
           ? {
               ...m,
-              reply_count: Math.max(0, m.reply_count - 1),
-              last_seen_reply_count: m.last_seen_reply_count === null ? null : Math.max(0, m.last_seen_reply_count - 1),
+              replyCount: Math.max(0, m.replyCount - 1),
+              lastSeenReplyCount: m.lastSeenReplyCount === null ? null : Math.max(0, m.lastSeenReplyCount - 1),
             }
           : m
       ));
@@ -195,7 +195,7 @@ export const Forum: React.FC = () => {
       setReplies(topicId, prev => [...prev, reply]);
       setTopics(prev => prev.map(m =>
         m.id === topicId
-          ? { ...m, reply_count: m.reply_count + 1, last_activity: reply.created_at, last_seen_reply_count: m.reply_count + 1 }
+          ? { ...m, replyCount: m.replyCount + 1, lastActivity: reply.createdAt, lastSeenReplyCount: m.replyCount + 1 }
           : m
       ));
       setReplyDrafts(prev => ({ ...prev, [topicId]: '' }));
@@ -236,8 +236,8 @@ export const Forum: React.FC = () => {
                 const unread = isUnread(msg);
                 const replies = msg.id === expandedId ? expandedReplies ?? [] : [];
                 const isAdmin = !!user?.scope.includes('site.admin');
-                const isTopicOwner = user?.id === msg.author_user_id;
-                const closed = !!msg.closed_at;
+                const isTopicOwner = user?.id === msg.authorUserId;
+                const closed = !!msg.closedAt;
                 return (
                   <div key={msg.id} id={`topic-${msg.id}`} className={`flex bg-white rounded-lg shadow-sm border border-gray-100 border-l-4 ${unread ? 'border-l-[var(--cs-secondary)]' : 'border-l-transparent'} px-4 py-3.5`}>
                     <div className="flex-1 min-w-0">
@@ -281,22 +281,22 @@ export const Forum: React.FC = () => {
                               muted reply count (clickable like the title/body), or nothing at all
                               when there are no replies. */}
                           {closed ? (
-                            msg.reply_count > 0 && (
+                            msg.replyCount > 0 && (
                               <span
                                 className="text-xs text-gray-400 cursor-pointer whitespace-nowrap"
                                 onClick={() => handleToggleExpand(msg.id)}
                               >
-                                {msg.reply_count === 1
-                                  ? `${msg.reply_count} ${t('forum_btn_replies_one')}`
-                                  : `${msg.reply_count} ${t('forum_btn_replies_many')}`}
+                                {msg.replyCount === 1
+                                  ? `${msg.replyCount} ${t('forum_btn_replies_one')}`
+                                  : `${msg.replyCount} ${t('forum_btn_replies_many')}`}
                               </span>
                             )
                           ) : (
                             <button className={`${btnGhost} flex items-center gap-1`} onClick={() => handleToggleExpand(msg.id)}>
-                              {msg.reply_count > 0
-                                ? msg.reply_count === 1
-                                  ? `${msg.reply_count} ${t('forum_btn_replies_one')}`
-                                  : `${msg.reply_count} ${t('forum_btn_replies_many')}`
+                              {msg.replyCount > 0
+                                ? msg.replyCount === 1
+                                  ? `${msg.replyCount} ${t('forum_btn_replies_one')}`
+                                  : `${msg.replyCount} ${t('forum_btn_replies_many')}`
                                 : t('forum_btn_reply')}
                               <LuChevronDown className={`transition-transform duration-200 ${expandedId === msg.id ? 'rotate-180' : ''}`} />
                             </button>
@@ -311,23 +311,23 @@ export const Forum: React.FC = () => {
                         onClick={() => handleToggleExpand(msg.id)}
                       >
                         <span className="inline-flex items-center gap-1 text-xs text-gray-400">
-                          <LuUser aria-hidden="true" className="text-gray-300" /> {msg.author_name}
+                          <LuUser aria-hidden="true" className="text-gray-300" /> {msg.authorName}
                         </span>
                         <span className="inline-flex items-center gap-1 text-xs text-gray-400">
-                          <LuClock aria-hidden="true" className="text-gray-300" /> {formatDate(msg.created_at, i18n.language)}
+                          <LuClock aria-hidden="true" className="text-gray-300" /> {formatDate(msg.createdAt, i18n.language)}
                         </span>
-                        {msg.project_slug && (
+                        {msg.projectSlug && (
                           <Link
-                            to={`/explore/${msg.project_slug}`}
+                            to={`/explore/${msg.projectSlug}`}
                             onClick={e => e.stopPropagation()}
                             className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--cs-primary)] no-underline hover:underline"
                           >
-                            <LuFolder aria-hidden="true" /> {msg.project_label || msg.project_slug}
+                            <LuFolder aria-hidden="true" /> {msg.projectLabel || msg.projectSlug}
                           </Link>
                         )}
-                        {msg.task_url && (
+                        {msg.taskUrl && (
                           <a
-                            href={msg.task_url}
+                            href={msg.taskUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={e => e.stopPropagation()}
@@ -352,10 +352,10 @@ export const Forum: React.FC = () => {
                               {replies.map(reply => (
                                 <div key={reply.id} className="flex items-start justify-between gap-2 bg-gray-50 border-l-[3px] border-[var(--cs-primary)] rounded-r-[6px] py-2 px-3 ml-2">
                                   <div className="min-w-0">
-                                    <span className="text-xs text-gray-400">{reply.author_name} · {formatDate(reply.created_at, i18n.language)}</span>
+                                    <span className="text-xs text-gray-400">{reply.authorName} · {formatDate(reply.createdAt, i18n.language)}</span>
                                     <p className="m-0 mt-1 text-[0.9rem] text-gray-800 leading-[1.5] whitespace-pre-line">{reply.body}</p>
                                   </div>
-                                  {(isAdmin || user?.id === reply.author_user_id) && (
+                                  {(isAdmin || user?.id === reply.authorUserId) && (
                                     <DeleteIconButton onClick={() => setPendingDeleteReply({ topicId: msg.id, replyId: reply.id })} />
                                   )}
                                 </div>

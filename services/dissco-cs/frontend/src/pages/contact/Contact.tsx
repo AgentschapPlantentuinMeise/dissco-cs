@@ -10,7 +10,7 @@ export const Contact: React.FC = () => {
   const { getContent, navItems } = useNavItems();
 
   const dbContent = getContent('contact', i18n.language);
-  const showForm = navItems.find(p => p.page_key === 'contact')?.show_contact_form ?? true;
+  const showForm = navItems.find(p => p.pageKey === 'contact')?.showContactForm ?? true;
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+import { FeedbackMessageDto, FeedbackThreadDto } from '@dissco-cs/shared-types';
 
 export type FeedbackThreadRole = 'recipient' | 'reviewer';
 
@@ -265,4 +266,38 @@ export class FeedbackRepository {
       [threadId, userId]
     );
   }
+}
+
+// ---- DTO mapping ----
+//
+// The row above is the database's shape (snake_case, Date objects); the DTO is the API's shape
+// (camelCase, ISO strings). Every field is listed explicitly, so a new column never leaks out.
+
+// Both *_hidden_at columns (the other participant's hide state) stay server-side.
+export function toFeedbackThreadDto(thread: FeedbackThreadWithMeta): FeedbackThreadDto {
+  return {
+    id: thread.id,
+    reviewerUserId: thread.reviewer_user_id,
+    reviewerName: thread.reviewer_name,
+    recipientUserId: thread.recipient_user_id,
+    recipientName: thread.recipient_name,
+    subject: thread.subject,
+    createdAt: thread.created_at.toISOString(),
+    lastActivity: thread.last_activity.toISOString(),
+    role: thread.role,
+    messageCount: thread.message_count,
+    unreadCount: thread.unread_count,
+  };
+}
+
+// read_at is only used server-side for unread counts.
+export function toFeedbackMessageDto(row: FeedbackMessageRow): FeedbackMessageDto {
+  return {
+    id: row.id,
+    threadId: row.thread_id,
+    authorUserId: row.author_user_id,
+    authorName: row.author_name,
+    body: row.body,
+    createdAt: row.created_at.toISOString(),
+  };
 }

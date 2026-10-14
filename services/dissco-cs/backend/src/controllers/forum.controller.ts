@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
-import { ForumRepository } from '../repositories/forum.repository.js';
-import { toForumReplyDto, toForumTopicDto } from '../mappers/forum.mapper.js';
+import { ForumRepository, toForumReplyDto, toForumTopicDto } from '../repositories/forum.repository.js';
 import { MadocUserIdentity, requireUser } from '../auth/auth.js';
 import { forumReplyInputSchema, forumTopicInputSchema } from '@dissco-cs/shared-types';
 

@@ -138,3 +138,11 @@ Keep in mind that the structure en code we provide is in a open source context
    - Backend: gooi de fout gewoon door; `app.onError` + de middleware leggen ze vast. Geen eigen try/catch die enkel logt en 500 geeft. Een eigen try/catch alleen als je iets anders teruggeeft; is dat een 5xx, geef de fout dan door met `passErrorOn(c, err)`.
    - Frontend: geen `console.log`/`console.error` in productiecode. Een `useMutation`-fout wordt centraal gerapporteerd en getoond (`api/query-client.ts`); zet `meta: { handlesOwnError: true }` als de pagina zelf een melding toont. Een fout in een eigen handler gaat via `reportActionError(err, key)` (`hooks/use-toast.ts`).
 3. **De gebruiker** ziet bij een mislukte actie een korte, menselijke melding in de taal van de site: een vaste vertaalsleutel (`ErrorMessageKey`), nooit de technische servermelding. De toast toont enkel fouten bij acties. Kan een hele pagina niet laden, dan toont ze `PageError` (`components/layout/PageError.tsx`) met een uitweg (knop), zonder toast erbij; een verwachte situatie (bv. een volzette taak) krijgt daar een eigen tekst, geen foutmelding.
+
+## DTO's (services/dissco-cs)
+
+- **Eigen DTO's zijn camelCase.** De databank blijft snake_case; de vertaling gebeurt op één plek: de mapper.
+- **Een mapper somt elk veld expliciet op** — geen `...row`, zodat er nooit een kolom (bv. `site_id`) ongemerkt doorlekt. `backend/test/repositories/mappers.test.ts` controleert de exacte sleutels.
+- **De mapper staat onderaan het repository-bestand** van zijn tabel (`// ---- DTO mapping ----`), er is geen aparte `mappers/`-map. Row = vorm van de databank, DTO = vorm van de API.
+- **Input en output spiegelen elkaar:** hetzelfde veld heet in het inputschema en in de DTO hetzelfde.
+- **Types met voorvoegsel `Madoc*`** beschrijven Madocs eigen antwoorden die we doorgeven en blijven Madocs vorm. Wat wij zelf opbouwen (ook met velden uit Madoc, bv. `ReviewTaskDto`) volgt onze regel.

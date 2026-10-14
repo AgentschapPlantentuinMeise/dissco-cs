@@ -73,8 +73,8 @@ export function ReviewTable({
           <th className={thClass} onClick={() => toggleSort('reviewer')}>
             {t('review_col_reviewer')}{sortIndicator('reviewer')}
           </th>
-          <th className={thClass} onClick={() => toggleSort('modified_at')}>
-            {t('review_col_modified')}{sortIndicator('modified_at')}
+          <th className={thClass} onClick={() => toggleSort('modifiedAt')}>
+            {t('review_col_modified')}{sortIndicator('modifiedAt')}
           </th>
           <th className="px-4 py-3" />
         </tr>
@@ -83,8 +83,8 @@ export function ReviewTable({
         {visibleRows.map((row: ReviewTaskDto) => {
           const projectLabel = localeText(row.project.label, i18n.language) || row.project.slug || '—';
           const subjectLabel = localeText(row.subject.label, i18n.language) || row.id;
-          const modified = row.modified_at ? new Date(row.modified_at).toLocaleString(i18n.language) : '—';
-          const canPreview = !!row.subject_raw;
+          const modified = row.modifiedAt ? new Date(row.modifiedAt).toLocaleString(i18n.language) : '—';
+          const canPreview = !!row.subjectRaw;
           const selectable = isOwnTask(row);
           const isOpen = openRowId === row.id;
 

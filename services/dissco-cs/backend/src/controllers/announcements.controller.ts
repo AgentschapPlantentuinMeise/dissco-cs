@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import { requireSiteAdmin, resolveSiteId } from '../auth/auth.js';
-import { AnnouncementsRepository } from '../repositories/announcements.repository.js';
-import { toAnnouncementDto } from '../mappers/announcements.mapper.js';
+import { AnnouncementsRepository, toAnnouncementDto } from '../repositories/announcements.repository.js';
 import { announcementInputSchema, isAnnouncementTargetType } from '@dissco-cs/shared-types';
 
 export function announcementsController(announcementsRepository: AnnouncementsRepository): Hono {

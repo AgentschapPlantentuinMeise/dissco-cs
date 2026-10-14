@@ -1,11 +1,10 @@
 import { z } from 'zod';
 import { MultilingualText, multilingualTextSchema, emailSchema } from './common.js';
 
-// Wire shape -- created_at/updated_at are DB bookkeeping only (see InstitutionRow in the API
-// repository) and never sent to the frontend; routes strip them via toInstitutionDto().
+// Wire shape (camelCase), built by toInstitutionDto() at the bottom of institutions.repository.ts
+// from the snake_case InstitutionRow.
 export type InstitutionDto = {
   id: number;
-  site_id: number;
   slug: string;
   name: MultilingualText;
   description: MultilingualText;
@@ -13,8 +12,8 @@ export type InstitutionDto = {
   phone: string | null;
   website: string | null;
   logo: string | null;
-  is_active: boolean;
-  sort_order: number;
+  isActive: boolean;
+  sortOrder: number;
 };
 
 // Lives here because the schema enforces the limit both client- and server-side.

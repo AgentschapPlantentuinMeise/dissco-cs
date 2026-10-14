@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { InstitutionInput, SitePageLang } from '@dissco-cs/shared-types';
+import { InstitutionDto, InstitutionInput, SitePageLang } from '@dissco-cs/shared-types';
 
 export type InstitutionRow = {
   id: number;
@@ -233,4 +233,24 @@ export class InstitutionsRepository {
       suffix += 1;
     }
   }
+}
+
+// ---- DTO mapping ----
+//
+// The row above is the database's shape (snake_case, Date objects); the DTO is the API's shape
+// (camelCase, ISO strings). Every field is listed explicitly, so a new column never leaks out.
+
+export function toInstitutionDto(row: InstitutionRow): InstitutionDto {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    description: row.description,
+    email: row.email,
+    phone: row.phone,
+    website: row.website,
+    logo: row.logo,
+    isActive: row.is_active,
+    sortOrder: row.sort_order,
+  };
 }

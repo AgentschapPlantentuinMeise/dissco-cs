@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
-import { NavItemsRepository } from '../repositories/nav-items.repository.js';
-import { toNavItemDto } from '../mappers/nav-items.mapper.js';
+import { NavItemsRepository, toNavItemDto } from '../repositories/nav-items.repository.js';
 import { requireSiteAdmin, resolveSiteId } from '../auth/auth.js';
 import {
   isNavItemContentKey,
@@ -79,10 +78,10 @@ export function navItemsController(navItemsRepository: NavItemsRepository): Hono
 
     const result = setShowContactFormSchema.safeParse(await c.req.json().catch(() => null));
     if (!result.success) {
-      return c.text('showForm must be a boolean', 400);
+      return c.text('showContactForm must be a boolean', 400);
     }
 
-    await navItemsRepository.setShowContactForm(identity.siteId, result.data.showForm);
+    await navItemsRepository.setShowContactForm(identity.siteId, result.data.showContactForm);
     return c.body(null, 204);
   });
 

@@ -74,7 +74,7 @@ export const InstitutionManagement: React.FC = () => {
       phone: institution.phone ?? '',
       website: institution.website ?? '',
       logo: institution.logo ?? '',
-      isActive: institution.is_active,
+      isActive: institution.isActive,
     });
     setLogoFileName(null);
     setSelectedLang(defaultLang(i18n.language));
@@ -137,7 +137,7 @@ export const InstitutionManagement: React.FC = () => {
         phone: institution.phone ?? '',
         website: institution.website ?? '',
         logo: institution.logo ?? '',
-        isActive: !institution.is_active,
+        isActive: !institution.isActive,
       });
     } catch (err) {
       reportActionError(err, 'error_save_failed');
@@ -211,7 +211,7 @@ export const InstitutionManagement: React.FC = () => {
 
                     <div className="flex items-center gap-3 shrink-0">
                       <ActiveStatusToggle
-                        active={institution.is_active}
+                        active={institution.isActive}
                         onChange={() => void toggleActive(institution)}
                         label={siteLangText(institution.name, i18n.language, institution.slug)}
                       />

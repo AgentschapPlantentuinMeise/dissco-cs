@@ -2,31 +2,31 @@ import { z } from 'zod';
 
 export type FeedbackThreadRole = 'recipient' | 'reviewer';
 
-// Wire shape (dates as ISO strings). The API repository keeps its own local `FeedbackThreadRow`/
-// `FeedbackMessageRow` row types with `Date` fields for internal use. `role`/`message_count`/
-// `unread_count` are always computed relative to the requesting user -- every route that returns
-// a thread is responsible for supplying accurate values, not just the list endpoint.
+// Wire shape (camelCase, dates as ISO strings), built by the mappers at the bottom of
+// feedback.repository.ts. `role`/`messageCount`/`unreadCount` are always computed relative to
+// the requesting user -- every route that returns a thread is responsible for supplying accurate
+// values, not just the list endpoint.
 export type FeedbackThreadDto = {
   id: number;
-  reviewer_user_id: number;
-  reviewer_name: string;
-  recipient_user_id: number;
-  recipient_name: string;
+  reviewerUserId: number;
+  reviewerName: string;
+  recipientUserId: number;
+  recipientName: string;
   subject: string;
-  created_at: string;
-  last_activity: string;
+  createdAt: string;
+  lastActivity: string;
   role: FeedbackThreadRole;
-  message_count: number;
-  unread_count: number;
+  messageCount: number;
+  unreadCount: number;
 };
 
 export type FeedbackMessageDto = {
   id: number;
-  thread_id: number;
-  author_user_id: number;
-  author_name: string;
+  threadId: number;
+  authorUserId: number;
+  authorName: string;
   body: string;
-  created_at: string;
+  createdAt: string;
 };
 
 export const feedbackThreadInputSchema = z.object({

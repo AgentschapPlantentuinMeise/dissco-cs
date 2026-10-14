@@ -5,11 +5,11 @@ import { NavItemDto, NavItemKey, NAV_ITEM_KEYS } from '@dissco-cs/shared-types';
 // Used before the first fetch resolves (or if it fails) — fail-open, in the default order,
 // so the navbar never flashes empty/incomplete while loading.
 const DEFAULT_NAV_ITEMS: NavItemDto[] = NAV_ITEM_KEYS.map((key, sortOrder) => ({
-  page_key: key,
-  is_active: true,
+  pageKey: key,
+  isActive: true,
   content: {},
-  show_contact_form: true,
-  sort_order: sortOrder,
+  showContactForm: true,
+  sortOrder: sortOrder,
 }));
 
 // Every caller shares the same query cache entry, so this is still one request per site load.
@@ -22,12 +22,12 @@ export function useNavItems() {
   const navItems = data?.navItems ?? DEFAULT_NAV_ITEMS;
 
   const isActive = (key: NavItemKey) => {
-    const item = navItems.find(p => p.page_key === key);
-    return item ? item.is_active : true;
+    const item = navItems.find(p => p.pageKey === key);
+    return item ? item.isActive : true;
   };
 
   const getContent = (key: NavItemKey, lang: string) => {
-    const item = navItems.find(p => p.page_key === key);
+    const item = navItems.find(p => p.pageKey === key);
     return item?.content[lang as keyof NavItemDto['content']];
   };
 

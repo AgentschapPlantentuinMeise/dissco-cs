@@ -69,10 +69,10 @@ export async function getMadocReviewTasks(siteId: number): Promise<ReviewTaskDto
       id: task.id,
       project: { id: project?.id, slug: project?.slug, label: project?.label },
       subject: { id: task.metadata?.subject?.id, label: task.metadata?.subject?.label as MadocInternationalString | string | undefined },
-      subject_raw: task.subject,
-      subject_parent_raw: task.subject_parent,
+      subjectRaw: task.subject,
+      subjectParentRaw: task.subject_parent,
       status: task.status,
-      status_text: task.status_text,
+      statusText: task.status_text,
       submitter,
       submitterId,
       reviewer: task.assignee?.name,
@@ -81,7 +81,7 @@ export async function getMadocReviewTasks(siteId: number): Promise<ReviewTaskDto
       revisionId,
       // tasks-api always returns this for a real task (see MadocCrowdsourcingTaskDto's comment) --
       // the field is only optional in the shared type for other call sites.
-      modified_at: task.modified_at ?? 0,
+      modifiedAt: task.modified_at ?? 0,
     });
   }
 
