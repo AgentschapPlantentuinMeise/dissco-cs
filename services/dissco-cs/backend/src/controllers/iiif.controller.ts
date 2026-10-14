@@ -65,7 +65,7 @@ export function iiifController(): Hono {
       }, appConfig.madocPageConcurrency);
       return c.json({ collections: collections.filter(collection => collection.itemCount !== 0) });
     } catch (err) {
-      return madocErrorResponse(err, '[iiif] list collections failed');
+      return madocErrorResponse(err);
     }
   });
 

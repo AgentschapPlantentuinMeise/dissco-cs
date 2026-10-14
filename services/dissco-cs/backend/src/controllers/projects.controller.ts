@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 
 import { ManualsRepository } from '../repositories/manuals.repository.js';
-import { requestBearerToken, requireSiteAdmin, requestMadocUserIdentity, resolveSiteId } from '../auth/auth.js';
+import { requestBearerToken, requireSiteAdmin, requireUser, resolveSiteId } from '../auth/auth.js';
 import { appConfig } from '../config.js';
 import {
   forwardJsonBody,
@@ -27,7 +27,6 @@ import {
   isSitePageLang,
   MadocCrowdsourcingTaskDto,
   MadocInternationalString,
-  MadocProjectDto,
   MadocProjectListPageDto,
   ProjectDebugDto,
   ProjectProgressDto,
@@ -131,7 +130,7 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
       }, appConfig.madocPageConcurrency);
       return c.json({ projects });
     } catch (err) {
-      return madocErrorResponse(err, '[projects] list all failed');
+      return madocErrorResponse(err);
     }
   });
 
@@ -250,41 +249,18 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
       return c.text('Invalid project id', 400);
     }
 
-    let project: MadocProjectDto;
-    try {
-      project = await getMadocProject(siteId, projectId);
-    } catch (err) {
-      console.error('[project-progress] getMadocProject failed', { siteId, projectId }, err);
-      return c.text('Internal Server Error', 500);
-    }
-
-    let manifestCount: number;
-    let taskStats: { statuses: Record<string, number>; total: number };
-    let manifestItems: Array<{ id: number; label: unknown; thumbnail?: string }>;
-    let canvasTasks: Awaited<ReturnType<typeof getMadocProjectTasks>>;
-    try {
-      const [{ manifestItems: rawManifestItems, taskStats: stats }, tasks, thumbnails] = await Promise.all([
-        getMadocProjectManifestsAndTaskStats(siteId, project.collection_id, project.task_id),
-        getMadocProjectTasks(siteId, project.task_id),
-        getMadocCollectionManifestThumbnails(siteId, project.collection_id),
-      ]);
-      // navigateToFirstCanvas expects a manifest id, hence the manifest filter in the shared helper.
-      manifestItems = rawManifestItems.map(item => ({
-        ...item,
-        thumbnail: thumbnails.get(item.id),
-      }));
-      manifestCount = manifestItems.length;
-      taskStats = stats;
-      canvasTasks = tasks;
-    } catch (err) {
-      console.error('[project-progress] stats fetch failed', {
-        siteId,
-        projectId,
-        collection_id: project.collection_id,
-        task_id: project.task_id,
-      }, err);
-      return c.text('Internal Server Error', 500);
-    }
+    const project = await getMadocProject(siteId, projectId);
+    const [{ manifestItems: rawManifestItems, taskStats }, canvasTasks, thumbnails] = await Promise.all([
+      getMadocProjectManifestsAndTaskStats(siteId, project.collection_id, project.task_id),
+      getMadocProjectTasks(siteId, project.task_id),
+      getMadocCollectionManifestThumbnails(siteId, project.collection_id),
+    ]);
+    // navigateToFirstCanvas expects a manifest id, hence the manifest filter in the shared helper.
+    const manifestItems = rawManifestItems.map(item => ({
+      ...item,
+      thumbnail: thumbnails.get(item.id),
+    }));
+    const manifestCount = manifestItems.length;
 
     const taskStatuses = taskStats.statuses || {};
     const inReview = taskStatuses['2'] || 0;
@@ -352,14 +328,9 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
   // This endpoint recalculates the counter right after an abandon, using the same rule as
   // madoc-ts's syncManifestTaskStatus.
   app.post('/:projectId/manifests/:manifestId/resync-claim', async c => {
-    const identity = requestMadocUserIdentity(c);
-    if (!identity) {
-      return c.text('Unauthorized', 401);
-    }
-
-    const siteId = await resolveSiteId(c);
-    if (siteId === null) {
-      return c.text('Could not resolve site', 400);
+    const identity = requireUser(c);
+    if (identity instanceof Response) {
+      return identity;
     }
 
     const projectId = c.req.param('projectId');
@@ -368,38 +339,22 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
       return c.text('Invalid project or manifest id', 400);
     }
 
-    try {
-      await getMadocProject(siteId, projectId);
-    } catch (err) {
-      console.error('[manifest-claim] getMadocProject failed', { siteId, projectId }, err);
-      return c.text('Internal Server Error', 500);
-    }
+    // Only to make sure the project exists on this site before touching any of its tasks.
+    await getMadocProject(identity.siteId, projectId);
 
-    let containerTaskId: string | undefined;
-    try {
-      const { tasks } = await getMadocTasksBySubjectAndType(
-        siteId,
-        `urn:madoc:manifest:${manifestId}`,
-        'crowdsourcing-manifest-task'
-      );
-      containerTaskId = tasks[0]?.id;
-    } catch (err) {
-      console.error('[manifest-claim] task lookup failed', { siteId, projectId, manifestId }, err);
-      return c.text('Internal Server Error', 500);
-    }
-
+    const { tasks } = await getMadocTasksBySubjectAndType(
+      identity.siteId,
+      `urn:madoc:manifest:${manifestId}`,
+      'crowdsourcing-manifest-task'
+    );
+    const containerTaskId = tasks[0]?.id;
     if (!containerTaskId) {
       // No manifest task created yet for this manifest -- nothing to resync.
       return c.json({ resynced: false });
     }
 
-    try {
-      const resynced = await resyncManifestTaskCounter(siteId, containerTaskId);
-      return c.json({ resynced });
-    } catch (err) {
-      console.error('[manifest-claim] task resync failed', { siteId, containerTaskId }, err);
-      return c.text('Internal Server Error', 500);
-    }
+    const resynced = await resyncManifestTaskCounter(identity.siteId, containerTaskId);
+    return c.json({ resynced });
   });
 
   // ---- admin: task debug ----
@@ -418,25 +373,11 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
       return c.text('Invalid project id', 400);
     }
 
-    let project: MadocProjectDto;
-    try {
-      project = await getMadocProject(identity.siteId, projectId);
-    } catch (err) {
-      console.error('[project-debug] getMadocProject failed', { siteId: identity.siteId, projectId }, err);
-      return c.text('Internal Server Error', 500);
-    }
-
-    let structure: { items: CollectionStructureItem[] };
-    let tasks: MadocCrowdsourcingTaskDto[];
-    try {
-      [structure, tasks] = await Promise.all([
-        getMadocCollectionStructure(identity.siteId, project.collection_id) as Promise<{ items: CollectionStructureItem[] }>,
-        getMadocProjectTasks(identity.siteId, project.task_id),
-      ]);
-    } catch (err) {
-      console.error('[project-debug] fetch failed', { siteId: identity.siteId, projectId }, err);
-      return c.text('Internal Server Error', 500);
-    }
+    const project = await getMadocProject(identity.siteId, projectId);
+    const [structure, tasks] = await Promise.all([
+      getMadocCollectionStructure(identity.siteId, project.collection_id) as Promise<{ items: CollectionStructureItem[] }>,
+      getMadocProjectTasks(identity.siteId, project.task_id),
+    ]);
 
     // Subject is a manifest or canvas urn depending on the project's claimGranularity -- with
     // canvas granularity we group via subject_parent (the manifest urn).

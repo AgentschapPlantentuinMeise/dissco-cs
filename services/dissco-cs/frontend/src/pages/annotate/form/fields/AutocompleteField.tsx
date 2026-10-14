@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { FieldProps } from './registry';
+import { reportClientError } from '../../../../api/cs-client/client-errors';
 
 type CompletionItem = { uri: string; label: string; resource_class?: string };
 type AutocompleteValue = { uri: string; label: string; resource_class?: string };
@@ -51,11 +52,8 @@ export function AutocompleteField({ field, path, onChange }: FieldProps) {
       setLoading(true);
       try {
         const url = dataSource.replace('%', encodeURIComponent(text));
-        console.log('[AutocompleteField] fetching', url);
         const res = await fetch(url, { signal: controller.signal });
-        console.log('[AutocompleteField] response status', res.status);
         const body: { completions: CompletionItem[] } = await res.json();
-        console.log('[AutocompleteField] response body', body);
         const completions = body.completions ?? [];
         // Some sources (e.g. Nager.Date's AvailableCountries) ignore the query and always return
         // everything — filter client-side so typing still narrows the list down.
@@ -65,7 +63,7 @@ export function AutocompleteField({ field, path, onChange }: FieldProps) {
         setOptions(filtered);
       } catch (e) {
         if ((e as Error).name !== 'AbortError') {
-          console.error('[AutocompleteField] fetch failed', e);
+          reportClientError(e, 'action');
           setOptions([]);
         }
       } finally {

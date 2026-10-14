@@ -51,9 +51,6 @@ export const ProjectDetail: React.FC = () => {
   // zichzelf. Aparte query zodat die apart getoond kunnen worden i.p.v. te verdwijnen.
   const { data: ownTasksData } = useQuery({ ...taskQueries.mineSaved(user?.id), enabled: !!project && !!user });
   const ownSavedTasks = (ownTasksData?.tasks ?? []).filter(task => task.metadata?.project?.slug === project?.slug);
-  console.log('[ProjectDetail] eigen opgeslagen taken in dit project (status 1):', ownSavedTasks.length, ownSavedTasks.map(task => ({
-    id: task.id, name: task.name, subject: task.subject,
-  })));
 
   const { data: progress } = useProjectProgress(project?.id);
 

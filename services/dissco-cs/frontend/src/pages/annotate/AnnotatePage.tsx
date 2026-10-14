@@ -28,6 +28,10 @@ import { CaptureModelForm } from './form/CaptureModelForm';
 import { cloneModelDocument, createBlankDocument, setFieldValue, setFieldSelector, collectSelectorStates, pathsEqual, DocumentPath } from '../../utility/annotation-document';
 import { MadocAnnotationDocumentDto, MadocStructureNodeDto, MadocBoxSelectorState, MadocCreateResourceClaimDto } from '@dissco-cs/shared-types';
 import { getImageServiceId } from '../../utility/get-image-service-id';
+import { reportClientError } from '../../api/cs-client/client-errors';
+import { showError } from '../../hooks/use-toast';
+import { PageError, pageErrorPrimaryButton, pageErrorSecondaryButton } from '../../components/layout/PageError';
+import { isContributorLimitReached } from './claim-errors';
 
 // crypto.randomUUID() only exists in secure contexts (https/localhost); this dev
 // deployment is served over plain http, so fall back to crypto.getRandomValues,
@@ -79,17 +83,6 @@ export function AnnotatePage() {
     ...projectQueries.prepareClaim(project?.id, manifestId),
     retry: false,
   });
-  useEffect(() => {
-    if (prepared) {
-      console.log('[CS] prepareClaim resultaat', {
-        manifestId,
-        claimId: prepared.claim?.id,
-        claimStatus: prepared.claim?.status,
-        modelId: prepared.model?.id,
-        fullPrepared: prepared,
-      });
-    }
-  }, [prepared, manifestId]);
 
   const { data: model, isError: modelError, error: modelErrorObj } = useQuery({
     ...captureModelQueries.model(prepared?.model?.id),
@@ -131,14 +124,6 @@ export function AnnotatePage() {
   const savedSelectors = annotationDocument
     ? collectSelectorStates(annotationDocument).filter(entry => !pathsEqual(entry.path, drawingPath))
     : [];
-
-  useEffect(() => {
-    if (model) console.log('[CS] full capture model', model);
-  }, [model]);
-
-  useEffect(() => {
-    if (annotationDocument) console.log('[CS] current document state', annotationDocument);
-  }, [annotationDocument]);
 
   useEffect(() => {
     if (!model || !prepared) return;
@@ -184,7 +169,6 @@ export function AnnotatePage() {
     const claimId = await getClaimId();
     if (!claimId) return;
 
-    console.log('[CS] releasing claim', { manifestId, claimId });
     try {
       // Deletes the claim task outright (upstream madoc-ts route), instead of leaving an
       // 'abandoned' row behind — see AnnotatePage/manifest-claims discussion.
@@ -192,13 +176,13 @@ export function AnnotatePage() {
       // Best-effort: madoc-ts only re-syncs the shared max-contributors counter when a NEW claim
       // is created, never on an abandon — without this, a manifest that hit its contributor
       // limit stays blocked for everyone (incl. this user) once its only active claim is released.
-      await projectsApi.resyncClaim(project.id, manifestId).catch(err => console.error('[CS] resync failed', err));
+      await projectsApi.resyncClaim(project.id, manifestId).catch(err => reportClientError(err, 'action'));
       // After the resync, so the refetch sees the recalculated counter: ProjectDetail's "Choose where
       // to start" grid (project progress) shows the manifest as available again.
       queryClient.invalidateQueries({ queryKey: projectKeys.progress(project.id) });
       queryClient.invalidateQueries({ queryKey: taskKeys.all });
     } catch (err) {
-      console.error('[CS] abandon failed', err);
+      reportClientError(err, 'action');
     }
   };
 
@@ -233,7 +217,6 @@ export function AnnotatePage() {
     // van vóór deze wijziging hebben nog geen opgeslagen revisionId, vandaar de fallback.
     if (existingStatus !== undefined && existingStatus >= 1) {
       const existingRevisionId = prepared.claim?.state?.revisionId as string | undefined;
-      console.log('[CS] bestaande claim gevonden, geen nieuwe aanmaken', { existingStatus, claimId: prepared.claim?.id, existingRevisionId });
       claimIdRef.current = prepared.claim?.id;
       revisionIdRef.current = existingRevisionId || generateUUID();
       hasSaved.current = true;
@@ -244,18 +227,19 @@ export function AnnotatePage() {
     // wordt meegestuurd zodat de taak 'm bewaart (state.revisionId) en toekomstige heropeningen
     // 'm hierboven kunnen hergebruiken.
     revisionIdRef.current = generateUUID();
-    console.log('[CS] claiming manifest', { projectId: project.id, manifestId, revisionId: revisionIdRef.current });
     const promise = projectsApi.claim(project.id, { manifestId, status: 0, revisionId: revisionIdRef.current });
     claimPromiseRef.current = promise;
     promise
       .then(result => {
-        console.log('[CS] claim result', result);
         claimIdRef.current = result?.claim?.id;
         if (!claimIdRef.current) {
-          console.error('[CS] claim response has no claim.id — release will not work', result);
+          reportClientError(new Error('Claim response has no claim.id, release will not work'), 'action');
         }
       })
-      .catch(err => console.error('[CS] claim failed', err));
+      .catch(err => {
+        reportClientError(err, 'action');
+        showError('error_claim_failed');
+      });
 
     return () => {
       if (firstSaveTimerRef.current) {
@@ -283,11 +267,12 @@ export function AnnotatePage() {
     if (project?.id && manifestId) {
       try {
         await projectsApi.revokeClaim(project.id, { manifestId });
-        await projectsApi.resyncClaim(project.id, manifestId).catch(err => console.error('[CS] resync failed', err));
+        await projectsApi.resyncClaim(project.id, manifestId).catch(err => reportClientError(err, 'action'));
         queryClient.invalidateQueries({ queryKey: projectKeys.progress(project.id) });
         queryClient.invalidateQueries({ queryKey: taskKeys.all });
       } catch (err) {
-        console.error('[CS] release failed', err);
+        reportClientError(err, 'action');
+        showError('error_release_failed');
       }
     }
     navigate(`/explore/${project?.slug}`);
@@ -343,8 +328,12 @@ export function AnnotatePage() {
     firstSaveTimerRef.current = setTimeout(async () => {
       firstSaveTimerRef.current = null;
       if (!isDirty.current) return;
-      await save('draft');
-      setFirstSaveDone(true);
+      try {
+        await save('draft');
+        setFirstSaveDone(true);
+      } catch {
+        // Already reported and shown to the user by the global MutationCache handler.
+      }
     }, 2000);
   };
 
@@ -357,7 +346,8 @@ export function AnnotatePage() {
     if (!firstSaveDone) return;
     const interval = setInterval(() => {
       if (!isDirty.current) return;
-      save('draft');
+      // A failure is already reported and shown by the global MutationCache handler.
+      save('draft').catch(() => undefined);
     }, 30000);
     return () => clearInterval(interval);
   }, [firstSaveDone]);
@@ -366,7 +356,8 @@ export function AnnotatePage() {
   // there — falling back to the project page once none are left. Records the manifest we're
   // leaving so "Vorige taak" has somewhere to go back to.
   const goToNext = async () => {
-    const url = await requestNextUrl(undefined);
+    // A failed lookup lands on the project page, same as when no tasks are left.
+    const url = await requestNextUrl(undefined).catch(() => null);
     if (manifestId) setVisited(v => [...v, manifestId]);
     await handleLeave(url ?? `/explore/${project?.slug}`);
   };
@@ -384,7 +375,13 @@ export function AnnotatePage() {
   const [advancing, setAdvancing] = useState(false);
   const handleSaveAndAdvance = async (status: 'draft' | 'submitted') => {
     setAdvancing(true);
-    await save(status);
+    try {
+      await save(status);
+    } catch {
+      // Already reported and shown by the global MutationCache handler -- stay on this task.
+      setAdvancing(false);
+      return;
+    }
     setConfirmation(status === 'draft' ? t('annotate_saved_draft', 'Opgeslagen als concept') : t('annotate_submitted', 'Ingediend'));
     await new Promise(resolve => setTimeout(resolve, 1200));
     if (returnTo) {
@@ -399,14 +396,25 @@ export function AnnotatePage() {
   // returnTo (if they came from their saved-tasks list) or the next task, exactly like a normal
   // draft save.
   const handlePostForumMessage = async (data: ForumTopicInput) => {
-    await forumApi.createTopic({ ...data, projectSlug: project?.slug ?? null, projectLabel: projectLabel ?? null });
+    try {
+      await forumApi.createTopic({ ...data, projectSlug: project?.slug ?? null, projectLabel: projectLabel ?? null });
+    } catch (err) {
+      reportClientError(err, 'action');
+      showError('error_save_failed');
+      return;
+    }
     setForumOpen(false);
     await handleSaveAndAdvance('draft');
   };
 
   // Same save as handleSaveAndAdvance('draft') but stays on the current task — no goToNext().
   const handleSaveDraft = async () => {
-    await save('draft');
+    try {
+      await save('draft');
+    } catch {
+      // Already reported and shown by the global MutationCache handler.
+      return;
+    }
     setConfirmation(
       t('annotate_saved_draft_24h', 'Opgeslagen als concept. Deze taak blijft 24 uur op jouw naam staan en wordt daarna automatisch weer vrijgegeven.')
     );
@@ -415,23 +423,32 @@ export function AnnotatePage() {
   if (structureError || preparedError || modelError) {
     const err = structureErrorObj || preparedErrorObj || modelErrorObj;
 
-    if (err instanceof ApiError && err.status === 404) {
+    // Not an error: enough volunteers already work on this one -- offer the next task instead.
+    if (isContributorLimitReached(err)) {
       return (
         <CsPage>
-          <div className="cs-main-wrapper py-16 text-center text-gray-600">
-            {t('annotate_no_access', 'Deze taak kan niet worden geladen. Mogelijk heb je geen toegang tot dit project, of bestaat de taak niet meer. Neem contact op met de sitebeheerder als dit niet klopt.')}
-          </div>
+          <PageError role="status" title={t('annotate_full_title')} text={t('annotate_full_text')}>
+            <button type="button" onClick={goToNext} disabled={isLoadingNext} className={pageErrorPrimaryButton}>
+              {t('annotate_next_task')}
+            </button>
+            <button type="button" onClick={() => navigate(`/explore/${project?.slug}`)} className={pageErrorSecondaryButton}>
+              {t('annotate_back_to_project')}
+            </button>
+          </PageError>
         </CsPage>
       );
     }
 
     return (
       <CsPage>
-        <div className="cs-main-wrapper py-16 text-center text-red-600">
-          {t('annotate_error_loading', 'Fout bij laden van de taak: {{error}}', {
-            error: err instanceof Error ? err.message : String(err),
-          })}
-        </div>
+        <PageError
+          title={t('annotate_error_title')}
+          text={err instanceof ApiError && err.status === 404 ? t('annotate_no_access') : t('annotate_error_loading')}
+        >
+          <button type="button" onClick={() => navigate(`/explore/${project?.slug}`)} className={pageErrorSecondaryButton}>
+            {t('annotate_back_to_project')}
+          </button>
+        </PageError>
       </CsPage>
     );
   }
@@ -439,9 +456,11 @@ export function AnnotatePage() {
   if (prepared && !prepared.model) {
     return (
       <CsPage>
-        <div className="cs-main-wrapper py-16 text-center text-gray-500">
-          {t('annotate_no_capture_model', 'Dit project heeft geen capture model geconfigureerd, dus deze taak kan niet getoond worden.')}
-        </div>
+        <PageError title={t('annotate_error_title')} text={t('annotate_no_capture_model')}>
+          <button type="button" onClick={() => navigate(`/explore/${project?.slug}`)} className={pageErrorSecondaryButton}>
+            {t('annotate_back_to_project')}
+          </button>
+        </PageError>
       </CsPage>
     );
   }

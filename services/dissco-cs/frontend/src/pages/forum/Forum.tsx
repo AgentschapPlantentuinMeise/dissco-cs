@@ -14,6 +14,7 @@ import { DeleteIconButton } from '../../components/ui/DeleteIconButton';
 import { localeText } from '../../utility/locale-text';
 import { formatDate } from '../../utility/format-date';
 import { LuChevronDown, LuSearch, LuUser, LuClock, LuFolder, LuLink, LuCheck } from 'react-icons/lu';
+import { reportActionError } from '../../hooks/use-toast';
 
 const btnPrimary = 'bg-[var(--cs-primary)] text-white border-none px-[18px] py-[10px] rounded text-[0.95rem] font-medium cursor-pointer transition-colors duration-200 hover:bg-[var(--cs-dark)]';
 const btnGhost = 'bg-transparent border border-gray-300 px-3 py-1.5 rounded text-[0.85rem] text-gray-600 cursor-pointer whitespace-nowrap transition-[border-color,color] duration-200 hover:border-[var(--cs-primary)] hover:text-[var(--cs-primary)]';
@@ -146,7 +147,7 @@ export const Forum: React.FC = () => {
     forumApi.deleteTopic(topicId).then(() => {
       setTopics(prev => prev.filter(m => m.id !== topicId));
       setPendingDeleteTopicId(null);
-    });
+    }).catch(err => reportActionError(err, 'error_delete_failed'));
   };
 
   const confirmCloseTopic = () => {
@@ -156,7 +157,7 @@ export const Forum: React.FC = () => {
     forumApi.closeTopic(topicId).then(closed => {
       setTopics(prev => prev.map(m => (m.id === topicId ? { ...m, closed_at: closed.closed_at } : m)));
       setPendingCloseTopicId(null);
-    });
+    }).catch(err => reportActionError(err, 'error_save_failed'));
   };
 
   const confirmDeleteReply = () => {
@@ -175,14 +176,14 @@ export const Forum: React.FC = () => {
           : m
       ));
       setPendingDeleteReply(null);
-    });
+    }).catch(err => reportActionError(err, 'error_delete_failed'));
   };
 
   const handleSubmitMessage = (data: ForumTopicInput) => {
     forumApi.createTopic(data).then(topic => {
       setTopics(prev => [topic, ...prev]);
       setShowNewForm(false);
-    });
+    }).catch(err => reportActionError(err, 'error_save_failed'));
   };
 
   const handleSubmitReply = (e: React.FormEvent, topicId: number) => {

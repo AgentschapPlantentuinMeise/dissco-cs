@@ -93,13 +93,13 @@ export async function madocJson<T>(path: string, userToken: string | undefined):
   return parseJsonOrThrow<T>(await madocFetch(path, userToken), 'GET', path);
 }
 
-// Relays a MadocHttpError's status and body as-is; anything else is a 500 of our own.
-export function madocErrorResponse(err: unknown, logLabel: string): Response {
+// Relays a MadocHttpError's status and body as-is; anything else is rethrown for app.onError
+// (logged and stored centrally, see infrastructure/request-log.ts).
+export function madocErrorResponse(err: unknown): Response {
   if (err instanceof MadocHttpError) {
     return new Response(err.body, { status: err.status, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
   }
-  console.error(logLabel, err);
-  return new Response('Internal Server Error', { status: 500 });
+  throw err;
 }
 
 // Passes Madoc's status code and body through unchanged, so the frontend can still branch on

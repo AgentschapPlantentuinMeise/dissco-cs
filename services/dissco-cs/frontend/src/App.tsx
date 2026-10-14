@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { getSiteSlug } from './api/slug';
 import { PageGate } from './components/layout/PageGate';
 import { AuthGate } from './components/layout/AuthGate';
+import { RouteErrorBoundary } from './components/layout/ErrorBoundary';
 import { Homepage } from './pages/homepage/Homepage';
 import { Projects } from './pages/projects/Projects';
 import { ProjectDetail } from './pages/project-detail/ProjectDetail';
@@ -35,34 +36,36 @@ export const App: React.FC = () => {
 
   return (
     <BrowserRouter basename={basename}>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/set-password" element={<SetPassword />} />
-        <Route path="/reset-password" element={<SetPassword />} />
-        <Route path="/activate-account" element={<SetPassword />} />
-        <Route path="/" element={<Homepage />} />
-        <Route path="/about" element={<PageGate pageKey="about"><About /></PageGate>} />
-        <Route path="/help" element={<PageGate pageKey="help"><Help /></PageGate>} />
-        <Route path="/institutions" element={<PageGate pageKey="institutions"><Institutions /></PageGate>} />
-        <Route path="/institutions/:slug" element={<PageGate pageKey="institutions"><InstitutionDetail /></PageGate>} />
-        <Route path="/honour-board" element={<HonourBoard />} />
-        <Route path="/forum" element={<PageGate pageKey="forum"><AuthGate><Forum /></AuthGate></PageGate>} />
-        <Route path="/contact" element={<PageGate pageKey="contact"><Contact /></PageGate>} />
-        <Route path="/my-dashboard" element={<AuthGate><UserDashboard /></AuthGate>} />
-        <Route path="/review" element={<AuthGate requireReviewer><Review /></AuthGate>} />
-        <Route path="/manage" element={<AuthGate requireAdmin><SiteManagement /></AuthGate>} />
-        <Route path="/manage/projects" element={<AuthGate requireAdmin><ProjectManagement /></AuthGate>} />
-        <Route path="/manage/announcements" element={<AuthGate requireAdmin><Announcements /></AuthGate>} />
-        <Route path="/manage/users" element={<AuthGate requireAdmin><UserManagement /></AuthGate>} />
-        <Route path="/manage/pages" element={<AuthGate requireAdmin><PageManagement /></AuthGate>} />
-        <Route path="/manage/institutions" element={<AuthGate requireAdmin><InstitutionManagement /></AuthGate>} />
-        <Route path="/find" element={<SearchResults />} />
-        <Route path="/explore" element={<Projects />} />
-        <Route path="/explore/:slug"element={<ProjectDetail />} />
-        <Route path="/explore/:slug/manifests/:manifestId/annotate" element={<AuthGate><AnnotatePage /></AuthGate>} />
-      </Routes>
+      <RouteErrorBoundary>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/set-password" element={<SetPassword />} />
+          <Route path="/reset-password" element={<SetPassword />} />
+          <Route path="/activate-account" element={<SetPassword />} />
+          <Route path="/" element={<Homepage />} />
+          <Route path="/about" element={<PageGate pageKey="about"><About /></PageGate>} />
+          <Route path="/help" element={<PageGate pageKey="help"><Help /></PageGate>} />
+          <Route path="/institutions" element={<PageGate pageKey="institutions"><Institutions /></PageGate>} />
+          <Route path="/institutions/:slug" element={<PageGate pageKey="institutions"><InstitutionDetail /></PageGate>} />
+          <Route path="/honour-board" element={<HonourBoard />} />
+          <Route path="/forum" element={<PageGate pageKey="forum"><AuthGate><Forum /></AuthGate></PageGate>} />
+          <Route path="/contact" element={<PageGate pageKey="contact"><Contact /></PageGate>} />
+          <Route path="/my-dashboard" element={<AuthGate><UserDashboard /></AuthGate>} />
+          <Route path="/review" element={<AuthGate requireReviewer><Review /></AuthGate>} />
+          <Route path="/manage" element={<AuthGate requireAdmin><SiteManagement /></AuthGate>} />
+          <Route path="/manage/projects" element={<AuthGate requireAdmin><ProjectManagement /></AuthGate>} />
+          <Route path="/manage/announcements" element={<AuthGate requireAdmin><Announcements /></AuthGate>} />
+          <Route path="/manage/users" element={<AuthGate requireAdmin><UserManagement /></AuthGate>} />
+          <Route path="/manage/pages" element={<AuthGate requireAdmin><PageManagement /></AuthGate>} />
+          <Route path="/manage/institutions" element={<AuthGate requireAdmin><InstitutionManagement /></AuthGate>} />
+          <Route path="/find" element={<SearchResults />} />
+          <Route path="/explore" element={<Projects />} />
+          <Route path="/explore/:slug"element={<ProjectDetail />} />
+          <Route path="/explore/:slug/manifests/:manifestId/annotate" element={<AuthGate><AnnotatePage /></AuthGate>} />
+        </Routes>
+      </RouteErrorBoundary>
     </BrowserRouter>
   );
 };

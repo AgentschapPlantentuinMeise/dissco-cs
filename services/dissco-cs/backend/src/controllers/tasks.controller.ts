@@ -30,16 +30,11 @@ export function tasksController(): Hono {
       return identity;
     }
 
-    try {
-      const [tasks, manifestCounters] = await Promise.all([
-        getStuckMadocTasks(identity.siteId),
-        getStuckManifestCounters(identity.siteId),
-      ]);
-      return c.json({ tasks, manifestCounters });
-    } catch (err) {
-      console.error('[stuck-tasks] fetch failed', { siteId: identity.siteId }, err);
-      return c.text('Internal Server Error', 500);
-    }
+    const [tasks, manifestCounters] = await Promise.all([
+      getStuckMadocTasks(identity.siteId),
+      getStuckManifestCounters(identity.siteId),
+    ]);
+    return c.json({ tasks, manifestCounters });
   });
 
   app.post('/manifests/:containerId/resync', async c => {
@@ -53,13 +48,7 @@ export function tasksController(): Hono {
       return c.text('Invalid task id', 400);
     }
 
-    try {
-      const resynced = await resyncManifestTaskCounter(identity.siteId, containerId);
-      return c.json({ resynced });
-    } catch (err) {
-      console.error('[stuck-tasks] manifest resync failed', { siteId: identity.siteId, containerId }, err);
-      return c.text('Internal Server Error', 500);
-    }
+    return c.json({ resynced: await resyncManifestTaskCounter(identity.siteId, containerId) });
   });
 
   app.post('/:taskId/release', async c => {
@@ -73,13 +62,7 @@ export function tasksController(): Hono {
       return c.text('Invalid task id', 400);
     }
 
-    try {
-      await updateMadocTask(identity.siteId, taskId, { status: -1, status_text: 'abandoned' });
-    } catch (err) {
-      console.error('[stuck-tasks] release failed', { siteId: identity.siteId, taskId }, err);
-      return c.text('Internal Server Error', 500);
-    }
-
+    await updateMadocTask(identity.siteId, taskId, { status: -1, status_text: 'abandoned' });
     return c.json({ released: true });
   });
 
@@ -109,7 +92,7 @@ export function tasksController(): Hono {
       }, appConfig.madocPageConcurrency);
       return c.json({ tasks });
     } catch (err) {
-      return madocErrorResponse(err, '[tasks] list all failed');
+      return madocErrorResponse(err);
     }
   });
 

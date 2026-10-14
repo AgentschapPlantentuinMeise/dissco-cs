@@ -6,16 +6,16 @@ import { isSafeSegment } from '../madoc-client/path-segment.js';
 import { getMadocReviewTasks } from '../madoc-client/reviews.js';
 import { getMadocSiteUserRole } from '../madoc-client/users.js';
 
-// Zelfde voorwaarde als de frontend's is-reviewer-check: site-admins mogen altijd, anderen
-// enkel als hun site-rol effectief 'reviewer' is.
+// Same condition as the frontend's is-reviewer check: site admins always qualify, anyone else
+// only when their site role is actually 'reviewer'.
 export async function isReviewerOrAdmin(identity: MadocUserIdentity): Promise<boolean> {
   if (identity.scope.includes('site.admin')) return true;
   const role = await getMadocSiteUserRole(identity.siteId, identity.userId);
   return role === 'reviewer';
 }
 
-// Eigen reviewer-overzicht: alle site-brede taken die ter review staan, met de toegewezen
-// reviewer als kolom -- i.p.v. Madoc's eigen /reviews-pagina.
+// Our own reviewer overview: every site-wide task up for review, with the assigned reviewer as a
+// column -- instead of Madoc's own /reviews page.
 export function reviewController(): Hono {
   const app = new Hono();
 
@@ -25,13 +25,8 @@ export function reviewController(): Hono {
       return identity;
     }
 
-    try {
-      const role = await getMadocSiteUserRole(identity.siteId, identity.userId);
-      return c.json({ isReviewer: role === 'reviewer' });
-    } catch (err) {
-      console.error('[review] is-reviewer check failed', { siteId: identity.siteId, userId: identity.userId }, err);
-      return c.text('Internal Server Error', 500);
-    }
+    const role = await getMadocSiteUserRole(identity.siteId, identity.userId);
+    return c.json({ isReviewer: role === 'reviewer' });
   });
 
   app.get('/tasks', async c => {
@@ -44,13 +39,7 @@ export function reviewController(): Hono {
       return c.text('Forbidden', 403);
     }
 
-    try {
-      const tasks = await getMadocReviewTasks(identity.siteId);
-      return c.json({ tasks });
-    } catch (err) {
-      console.error('[review] getMadocReviewTasks failed', { siteId: identity.siteId }, err);
-      return c.text('Internal Server Error', 500);
-    }
+    return c.json({ tasks: await getMadocReviewTasks(identity.siteId) });
   });
 
   // Accept/reject a submission, forwarded as the reviewer. Deliberately madoc-ts's own

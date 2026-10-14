@@ -41,14 +41,11 @@ export const Navbar: React.FC = () => {
   const showAdmin = !!user && user.scope.includes('site.admin');
   // Reviewer-rol zit niet in het JWT (enkel scope), dus navraag via een lichte backend-call;
   // admins hoeven deze niet te doen, want die zien de link toch al.
-  const { data: reviewerCheck, error: reviewerError } = useQuery({
+  const { data: reviewerCheck } = useQuery({
     ...reviewQueries.isReviewer(),
     enabled: !!user && !showAdmin,
     staleTime: 5 * 60 * 1000,
   });
-  useEffect(() => {
-    if (reviewerError) console.error('[nav] is-reviewer check failed', reviewerError);
-  }, [reviewerError]);
   const showReview = showAdmin || !!reviewerCheck?.isReviewer;
   const dropdownCount = 3 + (showReview ? 1 : 0) + (showAdmin ? 1 : 0);
 

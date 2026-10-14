@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { statsQueries } from '../api/queries/stats';
 import { HonourBoardPeriodKey } from '@dissco-cs/shared-types';
@@ -14,15 +13,7 @@ import { usePollingWindow } from './use-polling-window';
 // Without a slug the board covers the whole site; with one it's scoped to that institution.
 function usePeriod(slug: string | undefined, enabled: boolean, period: HonourBoardPeriodKey, refetchInterval: number | false) {
   const initial = useQuery({ ...statsQueries.honourBoard(period, slug), enabled, refetchOnWindowFocus: false });
-  useEffect(() => {
-    if (initial.error) console.error('[honour-board] initial fetch failed', slug, period, initial.error);
-  }, [initial.error, slug, period]);
-
   const peek = useQuery({ ...statsQueries.honourBoardCurrent(period, slug), enabled, refetchInterval });
-  useEffect(() => {
-    if (peek.error) console.error('[honour-board] peek fetch failed', slug, period, peek.error);
-  }, [peek.error, slug, period]);
-
   return { ...initial, data: peek.data ?? initial.data };
 }
 

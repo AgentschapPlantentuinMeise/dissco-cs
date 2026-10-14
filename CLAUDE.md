@@ -126,7 +126,15 @@ Keep in mind that the structure en code we provide is in a open source context
 - Bij elke bugfix in rekenlogica komt er een test bij die de bug reproduceert.
 - Faalt een test: ofwel een echte bug (code fixen), ofwel een bewust gewijzigde regel (test in dezelfde wijziging aanpassen). Een test die herhaaldelijk breekt zonder ooit een bug te vangen, mag weg.
 
-**Waar:** `<pakket>/test/`, met de mappenstructuur van `src/` gespiegeld (buiten `src/`, zodat `tsc`/`vite build` ze niet meenemen). `.vscode/settings.json` bevat enkel projectinstellingen; persoonlijke instellingen horen in je eigen VS Code User settings.
+**Waar (tests):** `<pakket>/test/`, met de mappenstructuur van `src/` gespiegeld (buiten `src/`, zodat `tsc`/`vite build` ze niet meenemen). `.vscode/settings.json` bevat enkel projectinstellingen; persoonlijke instellingen horen in je eigen VS Code User settings.
 
 
 
+
+## Fouten en logging (services/dissco-cs)
+
+1. **Elke request** geeft één regel in stdout (`infrastructure/request-log.ts`). Requests komen niet in de databank.
+2. **Elke fout gaat op één plek naar `app_log`**. Code die een fout tegenkomt, logt niet zelf.
+   - Backend: gooi de fout gewoon door; `app.onError` + de middleware leggen ze vast. Geen eigen try/catch die enkel logt en 500 geeft. Een eigen try/catch alleen als je iets anders teruggeeft; is dat een 5xx, geef de fout dan door met `passErrorOn(c, err)`.
+   - Frontend: geen `console.log`/`console.error` in productiecode. Een `useMutation`-fout wordt centraal gerapporteerd en getoond (`api/query-client.ts`); zet `meta: { handlesOwnError: true }` als de pagina zelf een melding toont. Een fout in een eigen handler gaat via `reportActionError(err, key)` (`hooks/use-toast.ts`).
+3. **De gebruiker** ziet bij een mislukte actie een korte, menselijke melding in de taal van de site: een vaste vertaalsleutel (`ErrorMessageKey`), nooit de technische servermelding. De toast toont enkel fouten bij acties. Kan een hele pagina niet laden, dan toont ze `PageError` (`components/layout/PageError.tsx`) met een uitweg (knop), zonder toast erbij; een verwachte situatie (bv. een volzette taak) krijgt daar een eigen tekst, geen foutmelding.

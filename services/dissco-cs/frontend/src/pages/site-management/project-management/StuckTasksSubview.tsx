@@ -10,6 +10,8 @@ import { buildTaskLink } from '../../../utility/build-task-link';
 import { localeText } from '../../../utility/locale-text';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
+import { reportClientError } from '../../../api/cs-client/client-errors';
+import { reportActionError } from '../../../hooks/use-toast';
 
 function statusLabelKey(status: number): string {
   return status === 0 ? 'sm_stuck_tasks_status_not_started' : 'sm_stuck_tasks_status_in_progress';
@@ -36,11 +38,13 @@ export const StuckTasksSubview: React.FC = () => {
       if (projectId && manifestId) {
         // Best-effort: madoc-ts only re-syncs the shared max-contributors counter when a NEW
         // claim is created, never on a release — same reason AnnotatePage does this after abandon.
-        await projectsApi.resyncClaim(projectId, manifestId).catch(err => console.error('[StuckTasks] resync failed', err));
+        await projectsApi.resyncClaim(projectId, manifestId).catch(err => reportClientError(err, 'action'));
       }
       // Progress (available manifests) and every task list, this stuck list included.
       queryClient.invalidateQueries({ queryKey: projectKeys.all });
       await queryClient.invalidateQueries({ queryKey: taskKeys.all });
+    } catch (err) {
+      reportActionError(err, 'error_release_failed');
     } finally {
       setReleasingId(null);
     }
@@ -53,6 +57,8 @@ export const StuckTasksSubview: React.FC = () => {
       // Progress (available manifests) and every task list, this stuck list included.
       queryClient.invalidateQueries({ queryKey: projectKeys.all });
       await queryClient.invalidateQueries({ queryKey: taskKeys.all });
+    } catch (err) {
+      reportActionError(err, 'error_generic');
     } finally {
       setResyncingId(null);
     }

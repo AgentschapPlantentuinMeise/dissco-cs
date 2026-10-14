@@ -10,6 +10,7 @@ import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
 import { MarkdownToolbar } from '../../../components/ui/MarkdownToolbar';
 import { LuCheck } from 'react-icons/lu';
 import { LANGUAGES, defaultLang } from '../../../utility/site-lang-text';
+import { reportActionError } from '../../../hooks/use-toast';
 
 // Shared editor for a manual's content (language tabs + markdown toolbar/textarea +
 // attachment). Reused by both the per-project panel and the manual-library "Bewerken" row,
@@ -79,13 +80,20 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
       await refetch();
       queryClient.invalidateQueries({ queryKey: projectKeys.manuals() });
       setAttachmentSaved(true);
+    } catch (err) {
+      reportActionError(err, 'error_upload_failed');
     } finally {
       setUploading(false);
     }
   };
 
   const removeAttachment = async () => {
-    await manualsApi.deleteAttachment(manual.id, selectedLang);
+    try {
+      await manualsApi.deleteAttachment(manual.id, selectedLang);
+    } catch (err) {
+      reportActionError(err, 'error_delete_failed');
+      return;
+    }
     await refetch();
     queryClient.invalidateQueries({ queryKey: projectKeys.manuals() });
     setAttachmentSaved(false);

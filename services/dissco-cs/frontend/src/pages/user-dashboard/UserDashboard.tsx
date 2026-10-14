@@ -20,6 +20,7 @@ import { TaskTable, tabBtnClass } from './TaskTable';
 import { feedbackApi } from '../../api/cs-client/feedback';
 import { MadocCrowdsourcingTaskDto, ForumTopicDto, FeedbackThreadDto } from '@dissco-cs/shared-types';
 import { useSiteStats } from '../../hooks/use-site-stats';
+import { showError } from '../../hooks/use-toast';
 
 
 
@@ -133,6 +134,8 @@ function FeedbackThreadRow({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: feedbackKeys.threads() });
     },
+    onError: () => showError('error_delete_failed'),
+    meta: { handlesOwnError: true },
   });
 
   return (
@@ -191,6 +194,8 @@ export const UserDashboard: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.all });
       queryClient.invalidateQueries({ queryKey: projectKeys.all });
     },
+    onError: () => showError('error_release_failed'),
+    meta: { handlesOwnError: true },
   });
 
   const { data: tasksData, status: tasksStatus } = useQuery(taskQueries.mine(user?.id));
@@ -240,10 +245,6 @@ export const UserDashboard: React.FC = () => {
   const visibleTasks = Array.from(latestPerSubject.values());
 
   const savedTasks = visibleTasks.filter(task => s(task) === 1);
-  console.log('[Dashboard] savedTasks (status === 1):', savedTasks.length, savedTasks.map(task => ({
-    id: task.id, name: task.name, subject: task.subject,
-    project: task.metadata?.project ? { id: task.metadata.project.id, slug: task.metadata.project.slug } : undefined,
-  })));
   const doneTasks = visibleTasks.filter(task => s(task) === 2 || s(task) === 3 || s(task) === 5);
   const doneCount = doneTasks.length;
   // Matches the backend's own definition of "completed" (status 2/3 only, see

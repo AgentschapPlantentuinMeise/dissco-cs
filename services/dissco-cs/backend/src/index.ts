@@ -2,6 +2,7 @@ import { serve } from '@hono/node-server';
 
 import { appConfig } from './config.js';
 import { DisscoCSDatabase } from './database/database.js';
+import { describeError } from './infrastructure/describe-error.js';
 import { HonourBoardRepository } from './madoc-db/honour-board.repository.js';
 import { MadocDbPools } from './madoc-db/pools.js';
 import { StatsRepository } from './madoc-db/stats.repository.js';
@@ -11,6 +12,12 @@ export async function bootstrap(): Promise<void> {
   const database = new DisscoCSDatabase();
   const madocDbPools = new MadocDbPools();
   const app = createDisscoCSApp(database, new StatsRepository(madocDbPools), new HonourBoardRepository(madocDbPools));
+
+  // A promise nobody awaited (e.g. a background refresh) -- no request to attach it to.
+  process.on('unhandledRejection', reason => {
+    console.error('[process] unhandled rejection', reason);
+    void database.appLog.record({ level: 'error', source: 'backend', ...describeError(reason) });
+  });
 
   try {
     await database.waitUntilReady(appConfig.startupRetryCount, appConfig.startupRetryMs);

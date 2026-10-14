@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 import { appConfig } from '../config.js';
 import { runMigrations } from './migrations.js';
 import { AnnouncementsRepository } from '../repositories/announcements.repository.js';
+import { AppLogRepository } from '../repositories/app-log.repository.js';
 import { ForumRepository } from '../repositories/forum.repository.js';
 import { InstitutionsRepository } from '../repositories/institutions.repository.js';
 import { ManualsRepository } from '../repositories/manuals.repository.js';
@@ -17,6 +18,7 @@ export class DisscoCSDatabase {
   readonly institutions: InstitutionsRepository;
   readonly manuals: ManualsRepository;
   readonly feedback: FeedbackRepository;
+  readonly appLog: AppLogRepository;
 
   private readonly pool: Pool;
   private readonly schemaRef: string;
@@ -45,6 +47,7 @@ export class DisscoCSDatabase {
     this.announcements = new AnnouncementsRepository(this.pool, this.schemaRef);
     this.institutions = new InstitutionsRepository(this.pool, this.schemaRef);
     this.feedback = new FeedbackRepository(this.pool, this.schemaRef);
+    this.appLog = new AppLogRepository(this.pool, this.schemaRef);
   }
 
   async close(): Promise<void> {

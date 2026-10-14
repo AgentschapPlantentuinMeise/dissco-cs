@@ -8,6 +8,7 @@ export * from './forum.js';
 export * from './manual.js';
 export * from './feedback.js';
 export * from './contact.js';
+export * from './client-error.js';
 export * from './project.js';
 export * from './review.js';
 export * from './madoc-capture-model.js';

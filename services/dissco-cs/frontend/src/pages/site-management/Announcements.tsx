@@ -25,6 +25,7 @@ import {
   SitePageLang,
   announcementInputSchema,
 } from '@dissco-cs/shared-types';
+import { reportActionError } from '../../hooks/use-toast';
 
 function toDateInputValue(iso: string | null): string {
   if (!iso) return '';
@@ -97,10 +98,15 @@ export const Announcements: React.FC = () => {
   const save = async () => {
     const result = announcementInputSchema.safeParse(draft);
     if (!result.success) return;
-    if (editingId !== null) {
-      await announcementsApi.update(editingId, result.data);
-    } else {
-      await announcementsApi.create(result.data);
+    try {
+      if (editingId !== null) {
+        await announcementsApi.update(editingId, result.data);
+      } else {
+        await announcementsApi.create(result.data);
+      }
+    } catch (err) {
+      reportActionError(err, 'error_save_failed');
+      return;
     }
     cancelForm();
     refresh();
@@ -108,21 +114,31 @@ export const Announcements: React.FC = () => {
 
   const confirmDelete = async () => {
     if (pendingDeleteId === null) return;
-    await announcementsApi.remove(pendingDeleteId);
+    try {
+      await announcementsApi.remove(pendingDeleteId);
+    } catch (err) {
+      reportActionError(err, 'error_delete_failed');
+      return;
+    }
     setPendingDeleteId(null);
     refresh();
   };
 
   const toggleActive = async (announcement: AnnouncementDto) => {
-    await announcementsApi.update(announcement.id, {
-      title: announcement.title,
-      description: announcement.description,
-      targetType: announcement.target_type,
-      targetProjectSlug: announcement.target_project_slug,
-      isActive: !announcement.is_active,
-      startDate: announcement.start_date,
-      endDate: announcement.end_date,
-    });
+    try {
+      await announcementsApi.update(announcement.id, {
+        title: announcement.title,
+        description: announcement.description,
+        targetType: announcement.target_type,
+        targetProjectSlug: announcement.target_project_slug,
+        isActive: !announcement.is_active,
+        startDate: announcement.start_date,
+        endDate: announcement.end_date,
+      });
+    } catch (err) {
+      reportActionError(err, 'error_save_failed');
+      return;
+    }
     refresh();
   };
 

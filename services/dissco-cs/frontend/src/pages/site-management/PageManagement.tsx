@@ -13,6 +13,7 @@ import { setContactEmailSchema, NavItemDto, NavItemKey, SitePageLang } from '@di
 import { LANGUAGES, defaultLang } from '../../utility/site-lang-text';
 import { useNavItems } from '../../hooks/use-nav-items';
 import { MarkdownToolbar } from '../../components/ui/MarkdownToolbar';
+import { reportActionError } from '../../hooks/use-toast';
 
 const CONTENT_PAGE_KEYS: NavItemKey[] = ['about', 'help', 'contact', 'welcome'];
 
@@ -60,7 +61,12 @@ export const PageManagement: React.FC = () => {
   const isActive = (key: NavItemKey) => pages.find(p => p.page_key === key)?.is_active ?? true;
 
   const toggleActive = async (key: NavItemKey) => {
-    await navItemsApi.setActive(key, !isActive(key));
+    try {
+      await navItemsApi.setActive(key, !isActive(key));
+    } catch (err) {
+      reportActionError(err, 'error_save_failed');
+      return;
+    }
     refresh();
   };
 
@@ -68,7 +74,13 @@ export const PageManagement: React.FC = () => {
     const next = !draftShowContactForm;
     setDraftShowContactForm(next);
     setSaved(false);
-    await navItemsApi.setShowContactForm(next);
+    try {
+      await navItemsApi.setShowContactForm(next);
+    } catch (err) {
+      setDraftShowContactForm(!next);
+      reportActionError(err, 'error_save_failed');
+      return;
+    }
     refresh();
   };
 
@@ -78,7 +90,12 @@ export const PageManagement: React.FC = () => {
 
     const reordered = [...pages];
     [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
-    await navItemsApi.setOrder(reordered.map(p => p.page_key));
+    try {
+      await navItemsApi.setOrder(reordered.map(p => p.page_key));
+    } catch (err) {
+      reportActionError(err, 'error_save_failed');
+      return;
+    }
     refresh();
   };
 
@@ -90,10 +107,15 @@ export const PageManagement: React.FC = () => {
 
   const saveContent = async () => {
     if (!selectedKey || !canSave) return;
-    await Promise.all([
-      ...LANGUAGES.map(lang => navItemsApi.setContent(selectedKey, lang.code, draftContent[lang.code] ?? '')),
-      ...(isContact && draftShowContactForm ? [navItemsApi.setContactEmail(draftContactEmail.trim())] : []),
-    ]);
+    try {
+      await Promise.all([
+        ...LANGUAGES.map(lang => navItemsApi.setContent(selectedKey, lang.code, draftContent[lang.code] ?? '')),
+        ...(isContact && draftShowContactForm ? [navItemsApi.setContactEmail(draftContactEmail.trim())] : []),
+      ]);
+    } catch (err) {
+      reportActionError(err, 'error_save_failed');
+      return;
+    }
     refresh();
     setSaved(true);
   };

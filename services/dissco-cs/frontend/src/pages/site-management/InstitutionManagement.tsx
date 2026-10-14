@@ -14,6 +14,7 @@ import { LuPencil, LuArrowLeft } from 'react-icons/lu';
 import { institutionsApi } from '../../api/cs-client/institutions';
 import { InstitutionDto, InstitutionInput, SitePageLang, SITE_PAGE_LANGS, institutionInputSchema } from '@dissco-cs/shared-types';
 import { LANGUAGES, defaultLang, siteLangText } from '../../utility/site-lang-text';
+import { reportActionError } from '../../hooks/use-toast';
 
 const emptyMultilingualText = Object.fromEntries(SITE_PAGE_LANGS.map(lang => [lang, ''])) as Record<SitePageLang, string>;
 
@@ -117,21 +118,31 @@ export const InstitutionManagement: React.FC = () => {
 
   const confirmDelete = async () => {
     if (pendingDeleteId === null) return;
-    await institutionsApi.remove(pendingDeleteId);
+    try {
+      await institutionsApi.remove(pendingDeleteId);
+    } catch (err) {
+      reportActionError(err, 'error_delete_failed');
+      return;
+    }
     setPendingDeleteId(null);
     refresh();
   };
 
   const toggleActive = async (institution: InstitutionDto) => {
-    await institutionsApi.update(institution.id, {
-      name: toMultilingualDraft(institution.name),
-      description: toMultilingualDraft(institution.description),
-      email: institution.email ?? '',
-      phone: institution.phone ?? '',
-      website: institution.website ?? '',
-      logo: institution.logo ?? '',
-      isActive: !institution.is_active,
-    });
+    try {
+      await institutionsApi.update(institution.id, {
+        name: toMultilingualDraft(institution.name),
+        description: toMultilingualDraft(institution.description),
+        email: institution.email ?? '',
+        phone: institution.phone ?? '',
+        website: institution.website ?? '',
+        logo: institution.logo ?? '',
+        isActive: !institution.is_active,
+      });
+    } catch (err) {
+      reportActionError(err, 'error_save_failed');
+      return;
+    }
     refresh();
   };
 

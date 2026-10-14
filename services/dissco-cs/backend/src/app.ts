@@ -6,7 +6,9 @@ import { Hono } from 'hono';
 import { DisscoCSDatabase } from './database/database.js';
 import { HonourBoardRepository } from './madoc-db/honour-board.repository.js';
 import { StatsRepository } from './madoc-db/stats.repository.js';
+import { requestLog } from './infrastructure/request-log.js';
 import { announcementsController } from './controllers/announcements.controller.js';
+import { clientErrorsController } from './controllers/client-errors.controller.js';
 import { contactController } from './controllers/contact.controller.js';
 import { captureModelsController } from './controllers/capture-models.controller.js';
 import { forumController } from './controllers/forum.controller.js';
@@ -27,8 +29,19 @@ export function createDisscoCSApp(
 ): Hono {
   const app = new Hono();
 
-  // Each controller gets exactly the repositories it uses.
   app.get('/api/dissco-cs/health', c => c.text('ok'));
+
+  // Logging and errors (see infrastructure/request-log.ts): every request is logged once, every
+  // uncaught error becomes a plain 500 here and is stored by the middleware -- controllers only
+  // catch errors when they answer something else.
+  app.use('/api/dissco-cs/*', requestLog(database.appLog));
+  app.onError((err, c) => {
+    console.error(`[http] ${c.req.method} ${c.req.path} failed`, err);
+    return c.text('Internal Server Error', 500);
+  });
+
+  // Each controller gets exactly the repositories it uses.
+  app.route('/api/dissco-cs/client-errors', clientErrorsController(database.appLog));
   app.route('/api/dissco-cs/forum', forumController(database.forum));
   app.route('/api/dissco-cs/nav-items', navItemsController(database.navItems));
   app.route('/api/dissco-cs/contact', contactController(database.navItems));

@@ -1,4 +1,4 @@
-import { csFetch } from './request';
+import { ApiError, csFetch } from './request';
 import { getJwt, redirectToExpiredLogin } from '../jwt';
 import { SitePageLang, ManualDto, ManualSummaryDto, ManualDetailDto } from '@dissco-cs/shared-types';
 
@@ -31,7 +31,8 @@ export const manualsApi = {
     }
 
     if (!response.ok) {
-      throw new Error(`DiSSCo CS API request failed: ${response.status}`);
+      const path = `/manuals/${manualId}/${lang}/attachment`;
+      throw new ApiError(response.status, path, (await response.text().catch(() => '')) || undefined);
     }
   },
 

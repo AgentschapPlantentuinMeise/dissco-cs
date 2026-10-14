@@ -238,6 +238,29 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
       ON ${schemaRef}.feedback_messages (thread_id, created_at ASC)
     `);
 
+    // Errors only for now (level 'error'); requests go to stdout. No retention yet, see TODO.md.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS ${schemaRef}.app_log (
+        id BIGSERIAL PRIMARY KEY,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        level TEXT NOT NULL,
+        source TEXT NOT NULL,
+        site_id INTEGER,
+        user_id INTEGER,
+        method TEXT,
+        path TEXT,
+        status INTEGER,
+        message TEXT NOT NULL,
+        stack TEXT,
+        details JSONB
+      )
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS app_log_created_at_idx
+      ON ${schemaRef}.app_log (created_at DESC)
+    `);
+
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');

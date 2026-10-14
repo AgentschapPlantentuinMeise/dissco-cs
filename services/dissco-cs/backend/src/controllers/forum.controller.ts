@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { ForumRepository } from '../repositories/forum.repository.js';
 import { toForumReplyDto, toForumTopicDto } from '../mappers/forum.mapper.js';
-import { MadocUserIdentity, requestMadocUserIdentity, requireUser } from '../auth/auth.js';
+import { MadocUserIdentity, requireUser } from '../auth/auth.js';
 import { forumReplyInputSchema, forumTopicInputSchema } from '@dissco-cs/shared-types';
 
 // A piece of forum content (topic or reply) can be removed/closed by whoever wrote it, or by
@@ -14,9 +14,9 @@ export function forumController(forumRepository: ForumRepository): Hono {
   const app = new Hono();
 
   app.get('/topics', async c => {
-    const identity = requestMadocUserIdentity(c);
-    if (!identity) {
-      return c.text('Unauthorized', 401);
+    const identity = requireUser(c);
+    if (identity instanceof Response) {
+      return identity;
     }
 
     const topics = await forumRepository.listTopics(identity.siteId, identity.userId);
@@ -24,9 +24,9 @@ export function forumController(forumRepository: ForumRepository): Hono {
   });
 
   app.post('/topics/visit', async c => {
-    const identity = requestMadocUserIdentity(c);
-    if (!identity) {
-      return c.text('Unauthorized', 401);
+    const identity = requireUser(c);
+    if (identity instanceof Response) {
+      return identity;
     }
 
     await forumRepository.markAllEmptyTopicsSeen(identity.siteId, identity.userId);
@@ -34,9 +34,9 @@ export function forumController(forumRepository: ForumRepository): Hono {
   });
 
   app.post('/topics', async c => {
-    const identity = requestMadocUserIdentity(c);
-    if (!identity) {
-      return c.text('Unauthorized', 401);
+    const identity = requireUser(c);
+    if (identity instanceof Response) {
+      return identity;
     }
 
     const result = forumTopicInputSchema.safeParse(await c.req.json().catch(() => null));
@@ -62,9 +62,9 @@ export function forumController(forumRepository: ForumRepository): Hono {
   });
 
   app.get('/topics/:id/replies', async c => {
-    const identity = requestMadocUserIdentity(c);
-    if (!identity) {
-      return c.text('Unauthorized', 401);
+    const identity = requireUser(c);
+    if (identity instanceof Response) {
+      return identity;
     }
 
     const topicId = Number(c.req.param('id'));
@@ -161,9 +161,9 @@ export function forumController(forumRepository: ForumRepository): Hono {
   });
 
   app.post('/topics/:id/replies', async c => {
-    const identity = requestMadocUserIdentity(c);
-    if (!identity) {
-      return c.text('Unauthorized', 401);
+    const identity = requireUser(c);
+    if (identity instanceof Response) {
+      return identity;
     }
 
     const topicId = Number(c.req.param('id'));

@@ -58,7 +58,8 @@ export function publicRequest<T>(endpoint: string, query?: Record<string, unknow
  * use this need to show that message to the user.
  */
 export async function publicPost<T>(endpoint: string, body: unknown): Promise<T> {
-  const response = await fetch(`/s/${getSiteSlug()}/madoc/api${endpoint}`, {
+  const path = `/s/${getSiteSlug()}/madoc/api${endpoint}`;
+  const response = await fetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -66,7 +67,7 @@ export async function publicPost<T>(endpoint: string, body: unknown): Promise<T>
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    throw new Error(data.error || `Request failed: ${response.status}`);
+    throw new ApiError(response.status, path, data.error);
   }
 
   return response.json();

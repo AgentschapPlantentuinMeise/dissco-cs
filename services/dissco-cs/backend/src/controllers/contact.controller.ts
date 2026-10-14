@@ -3,6 +3,7 @@ import { NavItemsRepository } from '../repositories/nav-items.repository.js';
 import { resolveSiteId } from '../auth/auth.js';
 import { mailer } from '../infrastructure/mailer.js';
 import { getClientIp, isRateLimited } from '../infrastructure/rate-limit.js';
+import { passErrorOn } from '../infrastructure/request-log.js';
 import { contactSubmissionSchema } from '@dissco-cs/shared-types';
 
 const CONTACT_RATE_LIMIT = { maxAttempts: 5, windowMs: 10 * 60 * 1000 };
@@ -47,7 +48,9 @@ export function contactController(navItemsRepository: NavItemsRepository): Hono 
         subject: `[Contact] ${payload.name}`,
         text: `From: ${payload.name} <${payload.email}>\n\n${payload.message}`,
       });
-    } catch {
+    } catch (err) {
+      // E.g. SMTP not configured or unreachable -- stored centrally so it doesn't go unnoticed.
+      passErrorOn(c, err);
       return c.text('Could not send the message, please try again later', 502);
     }
 

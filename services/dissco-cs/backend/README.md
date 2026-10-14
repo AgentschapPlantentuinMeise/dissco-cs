@@ -68,6 +68,27 @@ combineert deze API dat zelf, in de backend-laag:
 Geverifieerd: een geslaagde call naar `/api/madoc/projects` en `/api/madoc/projects/:id` via dit
 mechanisme (2026-06-17).
 
+## Logs bekijken
+
+- **Requests:** elke API-call geeft één regel in stdout (`docker logs dissco-cs-api`):
+  `[http] GET /api/dissco-cs/projects/12/progress 200 84ms site=3 user=17`.
+- **Fouten:** elke 5xx, elke niet-opgevangen fout en elke fout uit de browser (crash, mislukte
+  actie) komt in de tabel `app_log` (zie `src/infrastructure/request-log.ts` en
+  `src/controllers/client-errors.controller.ts`):
+
+  ```sql
+  SELECT created_at, source, status, method, path, site_id, user_id, message, details
+  FROM dissco_cs.app_log
+  ORDER BY created_at DESC
+  LIMIT 50;
+  ```
+
+  `details` bevat bij een browserfout de soort (`render`, `query`, `mutation`, `action`) en de
+  breadcrumbs (de laatste paginawissels en API-calls vóór de fout), bij een doorgegeven
+  Madoc-fout het begin van de response-body. Bij een browserfout is `user_id` wat de browser
+  opgeeft (dit publieke pad valideert de gateway niet). Er is nog geen automatische opkuis, zie
+  `TODO.md`.
+
 ## Endpoints
 
 - `GET /api/citizen-science/health` — status-check

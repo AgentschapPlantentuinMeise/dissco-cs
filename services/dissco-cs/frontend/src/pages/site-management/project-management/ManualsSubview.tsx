@@ -8,6 +8,7 @@ import { manualHasContent } from './manual-content';
 import { localeText } from '../../../utility/locale-text';
 import { defaultLang, siteLangText } from '../../../utility/site-lang-text';
 import { MadocProjectDto, MAX_MANUAL_TITLE_LENGTH, ManualSummaryDto, setManualTitleSchema } from '@dissco-cs/shared-types';
+import { reportActionError } from '../../../hooks/use-toast';
 
 export const ManualsSubview: React.FC<{
   projects: MadocProjectDto[];
@@ -25,7 +26,12 @@ export const ManualsSubview: React.FC<{
   };
 
   const remove = async (id: number) => {
-    await manualsApi.remove(id);
+    try {
+      await manualsApi.remove(id);
+    } catch (err) {
+      reportActionError(err, 'error_delete_failed');
+      return;
+    }
     setPendingDeleteId(null);
     if (editingId === id) {
       setEditingId(null);
@@ -37,7 +43,13 @@ export const ManualsSubview: React.FC<{
 
   const create = async () => {
     if (!canCreate) return;
-    const manual = await manualsApi.create(defaultLang(i18n.language), newTitle.trim());
+    let manual;
+    try {
+      manual = await manualsApi.create(defaultLang(i18n.language), newTitle.trim());
+    } catch (err) {
+      reportActionError(err, 'error_save_failed');
+      return;
+    }
     setNewTitle('');
     setEditingId(manual.id);
     refetchManuals();

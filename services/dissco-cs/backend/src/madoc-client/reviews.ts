@@ -37,7 +37,7 @@ export async function getMadocReviewTasks(siteId: number): Promise<ReviewTaskDto
         submitterId = parseUserId(originalTask.assignee?.id);
         revisionId = originalTask.state?.revisionId;
         if (!revisionId) {
-          console.warn('[review] geen state.revisionId op originele taak', {
+          console.warn('[review] original task has no state.revisionId', {
             reviewTaskId: task.id,
             originalTaskId,
             status: originalTask.status,
@@ -49,9 +49,8 @@ export async function getMadocReviewTasks(siteId: number): Promise<ReviewTaskDto
       }
     }
 
-    // task.metadata.project is niet gevuld voor crowdsourcing-review-taken (in
-    // tegenstelling tot crowdsourcing-task) -- opzoeken via root_task_id, één keer per
-    // uniek project.
+    // task.metadata.project isn't filled in for crowdsourcing-review tasks (unlike
+    // crowdsourcing-task) -- looked up via root_task_id instead, once per unique project.
     let project: MadocProjectDto | null = null;
     if (task.root_task) {
       if (projectByRootTask.has(task.root_task)) {

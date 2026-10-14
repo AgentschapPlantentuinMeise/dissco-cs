@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { FeedbackRepository } from '../repositories/feedback.repository.js';
 import { toFeedbackMessageDto, toFeedbackThreadDto } from '../mappers/feedback.mapper.js';
-import { requestMadocUserIdentity } from '../auth/auth.js';
+import { requireUser } from '../auth/auth.js';
 import { feedbackReplyInputSchema, feedbackThreadInputSchema } from '@dissco-cs/shared-types';
 import { isReviewerOrAdmin } from './review.controller.js';
 
@@ -9,9 +9,9 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
   const app = new Hono();
 
   app.get('/threads', async c => {
-    const identity = requestMadocUserIdentity(c);
-    if (!identity) {
-      return c.text('Unauthorized', 401);
+    const identity = requireUser(c);
+    if (identity instanceof Response) {
+      return identity;
     }
 
     const threads = await feedbackRepository.listThreadsForUser(identity.siteId, identity.userId);
@@ -19,9 +19,9 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
   });
 
   app.post('/threads', async c => {
-    const identity = requestMadocUserIdentity(c);
-    if (!identity) {
-      return c.text('Unauthorized', 401);
+    const identity = requireUser(c);
+    if (identity instanceof Response) {
+      return identity;
     }
 
     if (!(await isReviewerOrAdmin(identity))) {
@@ -49,9 +49,9 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
   });
 
   app.get('/threads/:id', async c => {
-    const identity = requestMadocUserIdentity(c);
-    if (!identity) {
-      return c.text('Unauthorized', 401);
+    const identity = requireUser(c);
+    if (identity instanceof Response) {
+      return identity;
     }
 
     const threadId = Number(c.req.param('id'));
@@ -75,9 +75,9 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
   });
 
   app.post('/threads/:id/replies', async c => {
-    const identity = requestMadocUserIdentity(c);
-    if (!identity) {
-      return c.text('Unauthorized', 401);
+    const identity = requireUser(c);
+    if (identity instanceof Response) {
+      return identity;
     }
 
     const threadId = Number(c.req.param('id'));
@@ -107,9 +107,9 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
   });
 
   app.delete('/threads/:id', async c => {
-    const identity = requestMadocUserIdentity(c);
-    if (!identity) {
-      return c.text('Unauthorized', 401);
+    const identity = requireUser(c);
+    if (identity instanceof Response) {
+      return identity;
     }
 
     const threadId = Number(c.req.param('id'));

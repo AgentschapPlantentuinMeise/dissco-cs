@@ -1,3 +1,4 @@
+import { addBreadcrumb, withoutQuery } from '../breadcrumbs';
 import { getJwt, redirectToExpiredLogin } from '../jwt';
 
 // The one error type for every API call in the app. Lets callers branch on the status (e.g. 404 =
@@ -28,15 +29,23 @@ async function readServerMessage(response: Response): Promise<string | undefined
 
 export async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const jwt = getJwt();
+  const call = `${init?.method ?? 'GET'} ${withoutQuery(path)}`;
 
-  const response = await fetch(`/api/dissco-cs${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
-      ...(init?.headers || {}),
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`/api/dissco-cs${path}`, {
+      ...init,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
+        ...(init?.headers || {}),
+      },
+    });
+  } catch (err) {
+    addBreadcrumb('api', `${call} network error`);
+    throw err;
+  }
+  addBreadcrumb('api', `${call} ${response.status}`);
 
   if (response.status === 401) {
     return redirectToExpiredLogin<T>();

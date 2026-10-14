@@ -9,6 +9,7 @@ import { LuChevronDown, LuX, LuArrowLeft, LuArrowRight } from 'react-icons/lu';
 import { projectsApi } from '../../api/cs-client/projects';
 import { SitePageLang } from '@dissco-cs/shared-types';
 import { siteLangText } from '../../utility/site-lang-text';
+import { reportClientError } from '../../api/cs-client/client-errors';
 
 type ManualModalProps = {
   projectSlug: string;
@@ -170,7 +171,7 @@ const PdfGallery: React.FC<{ url: string; filename: string; openDirectly?: boole
           setPages(prev => [...prev, dataUrl]);
         }
       } catch (err) {
-        console.error('[ManualModal] PDF-galerij kon niet geladen worden', err);
+        reportClientError(err, 'action');
         if (!cancelled) {
           setFailed(true);
         }

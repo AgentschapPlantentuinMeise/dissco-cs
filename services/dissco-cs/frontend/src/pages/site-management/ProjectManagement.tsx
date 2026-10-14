@@ -13,6 +13,7 @@ import { ManualsSubview } from './project-management/ManualsSubview';
 import { StuckTasksSubview } from './project-management/StuckTasksSubview';
 import { TaskDebugSubview } from './project-management/TaskDebugSubview';
 import { BulkCreateProjectsSubview } from './project-management/BulkCreateProjectsSubview';
+import { reportClientError } from '../../api/cs-client/client-errors';
 
 export const ProjectManagement: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
@@ -72,7 +73,7 @@ export const ProjectManagement: React.FC = () => {
         if (institutionResult.removed > 0) refetchInstitutionLinks();
         if (manualResult.removed > 0) refetchManuals();
       } catch (err) {
-        console.error('[ProjectManagement] opruimen van verweesde projectlinks mislukt', err);
+        reportClientError(err, 'action');
       }
     })();
 

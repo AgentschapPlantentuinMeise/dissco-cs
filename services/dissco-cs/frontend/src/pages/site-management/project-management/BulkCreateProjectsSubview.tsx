@@ -10,6 +10,7 @@ import { slugify } from './slugify';
 import { localeText } from '../../../utility/locale-text';
 import { defaultLang } from '../../../utility/site-lang-text';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
+import { reportActionError } from '../../../hooks/use-toast';
 
 // Creates `count` real Madoc projects sequentially, via the exact same route the "New project" /
 // "Duplicate" admin UI uses (createProject) -- so each one gets a proper collection, capture
@@ -44,7 +45,14 @@ export const BulkCreateProjectsSubview: React.FC<{ projects: MadocProjectDto[] }
     const runSuffix = Date.now().toString(36);
 
     const sourceProject = sourceSlug ? projects.find(p => p.slug === sourceSlug) : null;
-    const remoteTemplate = sourceProject ? await projectsApi.exportTemplate(sourceProject.id) : null;
+    let remoteTemplate = null;
+    try {
+      remoteTemplate = sourceProject ? await projectsApi.exportTemplate(sourceProject.id) : null;
+    } catch (err) {
+      reportActionError(err, 'error_load_failed');
+      setRunning(false);
+      return;
+    }
 
     let done = 0;
     let failed = 0;

@@ -16,6 +16,8 @@ export function useNextTask() {
       const result = await projectsApi.randomManifest(project.slug);
       return result?.manifest ? `/explore/${project.slug}/manifests/${result.manifest}/annotate` : null;
     },
+    // The caller falls back to the project page instead of showing an error.
+    meta: { handlesOwnError: true },
   });
 
   return { requestNextUrl, isLoadingNext };
