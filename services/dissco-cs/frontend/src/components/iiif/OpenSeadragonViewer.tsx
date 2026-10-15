@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import OpenSeadragon from 'openseadragon';
+import { useTranslation } from 'react-i18next';
+import { LuArrowLeft, LuArrowRight, LuRotateCcw, LuRotateCw } from 'react-icons/lu';
 import { MadocBoxSelectorState } from '@dissco-cs/shared-types';
 
 export interface OpenSeadragonViewerProps {
@@ -34,6 +36,7 @@ export function OpenSeadragonViewer({
   onCancelDrawing,
   savedSelectors,
 }: OpenSeadragonViewerProps) {
+  const { t } = useTranslation('dissco-cs');
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<OpenSeadragon.Viewer | null>(null);
   const [brightness, setBrightness] = useState(100);
@@ -155,15 +158,15 @@ export function OpenSeadragonViewer({
     <div className="flex flex-col h-full">
       <div className="flex items-center h-[40px] px-3 bg-[var(--cs-primary)] flex-shrink-0 select-none gap-[6px]">
         <div className="flex items-center gap-[6px] flex-1">
-          <button className={btnClass} onClick={onPrevCanvas} disabled={!onPrevCanvas}>←</button>
+          <button className={btnClass} onClick={onPrevCanvas} disabled={!onPrevCanvas} aria-label={t('viewer_prev_canvas')}><LuArrowLeft aria-hidden="true" /></button>
           <span className="text-white/85 text-[0.8rem] whitespace-nowrap truncate max-w-[160px]">
             {totalCanvases ? `${(canvasIndex ?? 0) + 1} / ${totalCanvases}` : canvasLabel}
           </span>
-          <button className={btnClass} onClick={onNextCanvas} disabled={!onNextCanvas}>→</button>
+          <button className={btnClass} onClick={onNextCanvas} disabled={!onNextCanvas} aria-label={t('viewer_next_canvas')}><LuArrowRight aria-hidden="true" /></button>
         </div>
         <div className="flex items-center gap-2">
-          <button className={btnClass} onClick={() => setRotation(r => r - 90)} aria-label="Roteer links">⟲</button>
-          <button className={btnClass} onClick={() => setRotation(r => r + 90)} aria-label="Roteer rechts">⟳</button>
+          <button className={btnClass} onClick={() => setRotation(r => r - 90)} aria-label={t('viewer_rotate_left')}><LuRotateCcw aria-hidden="true" /></button>
+          <button className={btnClass} onClick={() => setRotation(r => r + 90)} aria-label={t('viewer_rotate_right')}><LuRotateCw aria-hidden="true" /></button>
           <input
             type="range"
             min={50}

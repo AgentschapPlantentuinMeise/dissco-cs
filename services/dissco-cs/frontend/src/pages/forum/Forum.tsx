@@ -1,471 +1,112 @@
-﻿import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { projectQueries } from '../../api/queries/projects';
-import { forumKeys, forumQueries } from '../../api/queries/forum';
+﻿import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { CsPage } from '../../components/layout/CsPage';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { ForumTopicForm } from '../../components/forum/ForumTopicForm';
-import { useCurrentUser } from '../../hooks/use-current-user';
-import { useTranslation } from 'react-i18next';
-import { forumApi } from '../../api/cs-client/forum';
-import { MadocProjectDto, ForumTopicDto, ForumReplyDto, ForumTopicInput } from '@dissco-cs/shared-types';
-import { DeleteIconButton } from '../../components/ui/DeleteIconButton';
-import { localeText } from '../../utility/locale-text';
-import { formatDate } from '../../utility/format-date';
-import { LuChevronDown, LuSearch, LuUser, LuClock, LuFolder, LuLink, LuCheck } from 'react-icons/lu';
-import { reportClientError } from '../../api/cs-client/client-errors';
-
-const btnPrimary = 'bg-[var(--cs-primary)] text-white border-none px-[18px] py-[10px] rounded text-[0.95rem] font-medium cursor-pointer transition-colors duration-200 hover:bg-[var(--cs-dark)]';
-const btnGhost = 'bg-transparent border border-gray-300 px-3 py-1.5 rounded text-[0.85rem] text-gray-600 cursor-pointer whitespace-nowrap transition-[border-color,color] duration-200 hover:border-[var(--cs-primary)] hover:text-[var(--cs-primary)]';
-
-const filterRowClass = (isActive: boolean) =>
-  'block w-full text-left px-[10px] py-2 rounded-md text-[0.85rem] cursor-pointer transition-colors duration-200 ' +
-  (isActive
-    ? 'bg-[var(--cs-primary)]/10 text-[var(--cs-primary)] font-semibold'
-    : 'text-gray-600 hover:bg-gray-100 hover:text-[var(--cs-primary)]');
-
-const inputClass = 'py-[9px] px-3 border border-gray-300 rounded text-[0.95rem] font-[inherit] resize-y transition-colors duration-200 focus:outline-none focus:border-[var(--cs-primary)]';
+import { isUnread } from './forum-topics';
+import { btnPrimary } from './forum-styles';
+import { useForumPage } from './use-forum-page';
+import { ForumTopicCard } from './ForumTopicCard';
+import { ForumReplyThread } from './ForumReplyThread';
+import { ForumSidebar } from './ForumSidebar';
 
 export const Forum: React.FC = () => {
-  const { t, i18n } = useTranslation('dissco-cs');
-  const user = useCurrentUser();
-
-  const { data: allProjects } = useQuery({
-    ...projectQueries.listAll({ published: true }),
-    staleTime: 5 * 60 * 1000,
-  });
-  const projectOptions = useMemo(
-    () => (allProjects || []).map((p: MadocProjectDto) => ({ slug: p.slug, label: localeText(p.label, i18n.language) })),
-    [allProjects, i18n.language]
-  );
-
-  const queryClient = useQueryClient();
-  const topicsQuery = useQuery(forumQueries.topics());
-  const topics = useMemo(() => topicsQuery.data?.topics ?? [], [topicsQuery.data]);
-  // Local edits (delete, close, reply, mark seen) go straight into the shared cache instead of a
-  // separate copy in component state.
-  const setTopics = useCallback(
-    (update: (prev: ForumTopicDto[]) => ForumTopicDto[]) =>
-      queryClient.setQueryData(forumQueries.topics().queryKey, old => (old ? { ...old, topics: update(old.topics) } : old)),
-    [queryClient]
-  );
-
-  const [showNewForm, setShowNewForm] = useState(false);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
-  const { data: expandedReplies } = useQuery(forumQueries.replies(expandedId));
-  const setReplies = (topicId: number, update: (prev: ForumReplyDto[]) => ForumReplyDto[]) =>
-    queryClient.setQueryData(forumQueries.replies(topicId).queryKey, old => update(old ?? []));
-  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'mine' | 'unread' | 'unanswered' | null>(null);
-  const [pendingDeleteTopicId, setPendingDeleteTopicId] = useState<number | null>(null);
-  const [pendingCloseTopicId, setPendingCloseTopicId] = useState<number | null>(null);
-  const [pendingDeleteReply, setPendingDeleteReply] = useState<{ topicId: number; replyId: number } | null>(null);
-  const [searchParams] = useSearchParams();
-  const deepLinkTopicId = searchParams.get('topic');
-  const didHandleDeepLink = useRef(false);
-
-  // Mark the visit only once this page's own fresh topic list is in, so the unread markers it shows
-  // reflect the state before the visit; then let the navbar badge catch up with the server.
-  const didVisit = useRef(false);
-  useEffect(() => {
-    if (didVisit.current || !topicsQuery.isFetchedAfterMount) return;
-    didVisit.current = true;
-    forumApi
-      .visitForum()
-      .then(() => queryClient.invalidateQueries({ queryKey: forumKeys.unreadCount() }))
-      .catch(err => reportClientError(err, 'action'));
-  }, [topicsQuery.isFetchedAfterMount, queryClient]);
-
-  // Open het topic uit de ?topic=<id> deep-link (vanaf de dashboard-widget) automatisch, één keer,
-  // zodra de topics geladen zijn. De ref voorkomt dat het topic zich meteen weer opent na sluiten.
-  useEffect(() => {
-    if (didHandleDeepLink.current || !deepLinkTopicId || topics.length === 0) return;
-    const topicId = Number(deepLinkTopicId);
-    if (!topics.some(m => m.id === topicId)) return;
-    didHandleDeepLink.current = true;
-
-    setExpandedId(topicId);
-    document.getElementById(`topic-${topicId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [deepLinkTopicId, topics]);
-
-  // Fetching a topic's replies marks it seen on the server -- mirror that in the list.
-  useEffect(() => {
-    if (expandedId === null || !expandedReplies) return;
-    setTopics(prev => prev.map(m => (m.id === expandedId ? { ...m, lastSeenReplyCount: expandedReplies.length } : m)));
-  }, [expandedId, expandedReplies, setTopics]);
-
-  // Any change to the topic list may change the unread count in the navbar badge.
-  useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: forumKeys.unreadCount() });
-  }, [topicsQuery.data, queryClient]);
-
-  const isUnread = (msg: ForumTopicDto) => {
-    const seen = msg.lastSeenReplyCount;
-    return seen === null || msg.replyCount > seen;
-  };
-
-  const sortedTopics = useMemo(() =>
-    [...topics].sort((a, b) =>
-      new Date(b.lastActivity || b.createdAt).getTime() -
-      new Date(a.lastActivity || a.createdAt).getTime()
-    ), [topics]);
-
-  const filteredTopics = useMemo(() => {
-    if (!searchQuery.trim()) return sortedTopics;
-    const q = searchQuery.toLowerCase();
-    return sortedTopics.filter(m =>
-      m.title.toLowerCase().includes(q) ||
-      m.body.toLowerCase().includes(q) ||
-      m.authorName.toLowerCase().includes(q) ||
-      (m.projectLabel || '').toLowerCase().includes(q)
-    );
-  }, [sortedTopics, searchQuery]);
-
-  const displayTopics = useMemo(() => {
-    if (!activeFilter) return filteredTopics;
-    if (activeFilter === 'mine') return filteredTopics.filter(m => m.authorUserId === user?.id);
-    if (activeFilter === 'unread') return filteredTopics.filter(isUnread);
-    if (activeFilter === 'unanswered') return filteredTopics.filter(m => m.replyCount === 0);
-    return filteredTopics;
-  }, [filteredTopics, activeFilter, user]);
-
-  const handleToggleExpand = (topicId: number) => {
-    if (expandedId === topicId) {
-      setExpandedId(null);
-      return;
-    }
-
-    setExpandedId(topicId);
-  };
-
-  const { mutate: deleteTopic } = useMutation({
-    mutationFn: (topicId: number) => forumApi.deleteTopic(topicId),
-    onSuccess: (_result, topicId) => {
-      setTopics(prev => prev.filter(m => m.id !== topicId));
-      setPendingDeleteTopicId(null);
-    },
-    meta: { errorMessage: 'error_delete_failed' },
-  });
-
-  const { mutate: closeTopic } = useMutation({
-    mutationFn: (topicId: number) => forumApi.closeTopic(topicId),
-    onSuccess: (closed, topicId) => {
-      setTopics(prev => prev.map(m => (m.id === topicId ? { ...m, closedAt: closed.closedAt } : m)));
-      setPendingCloseTopicId(null);
-    },
-  });
-
-  const { mutate: deleteReply } = useMutation({
-    mutationFn: ({ topicId, replyId }: { topicId: number; replyId: number }) => forumApi.deleteReply(topicId, replyId),
-    onSuccess: (_result, { topicId, replyId }) => {
-      setReplies(topicId, prev => prev.filter(r => r.id !== replyId));
-      setTopics(prev => prev.map(m =>
-        m.id === topicId
-          ? {
-              ...m,
-              replyCount: Math.max(0, m.replyCount - 1),
-              lastSeenReplyCount: m.lastSeenReplyCount === null ? null : Math.max(0, m.lastSeenReplyCount - 1),
-            }
-          : m
-      ));
-      setPendingDeleteReply(null);
-    },
-    meta: { errorMessage: 'error_delete_failed' },
-  });
-
-  const { mutate: createTopic } = useMutation({
-    mutationFn: (data: ForumTopicInput) => forumApi.createTopic(data),
-    onSuccess: topic => {
-      setTopics(prev => [topic, ...prev]);
-      setShowNewForm(false);
-    },
-    meta: { errorMessage: 'error_send_failed' },
-  });
-
-  const { mutate: createReply } = useMutation({
-    mutationFn: ({ topicId, body }: { topicId: number; body: string }) => forumApi.createReply(topicId, body),
-    onSuccess: (reply, { topicId }) => {
-      setReplies(topicId, prev => [...prev, reply]);
-      setTopics(prev => prev.map(m =>
-        m.id === topicId
-          ? { ...m, replyCount: m.replyCount + 1, lastActivity: reply.createdAt, lastSeenReplyCount: m.replyCount + 1 }
-          : m
-      ));
-      setReplyDrafts(prev => ({ ...prev, [topicId]: '' }));
-    },
-    meta: { errorMessage: 'error_send_failed' },
-  });
-
-  const confirmDeleteTopic = () => {
-    if (pendingDeleteTopicId === null) return;
-    deleteTopic(pendingDeleteTopicId);
-  };
-
-  const confirmCloseTopic = () => {
-    if (pendingCloseTopicId === null) return;
-    closeTopic(pendingCloseTopicId);
-  };
-
-  const confirmDeleteReply = () => {
-    if (pendingDeleteReply === null) return;
-    deleteReply(pendingDeleteReply);
-  };
-
-  const handleSubmitMessage = (data: ForumTopicInput) => createTopic(data);
-
-  const handleSubmitReply = (e: React.SubmitEvent<HTMLFormElement>, topicId: number) => {
-    e.preventDefault();
-    const body = replyDrafts[topicId] || '';
-    if (!body.trim()) return;
-    createReply({ topicId, body });
-  };
+  const { t } = useTranslation('dissco-cs');
+  const c = useForumPage();
+  const isAdmin = !!c.user?.scope.includes('site.admin');
 
   return (
     <CsPage>
       <div className="cs-container cs-container--wide pt-10 pb-16">
         <header className="flex justify-between items-center mb-4">
           <h1 className="text-4xl text-[var(--cs-primary)] m-0">{t('nav_forum')}</h1>
-          <button className={btnPrimary} onClick={() => setShowNewForm(v => !v)}>
-            {showNewForm ? t('common_cancel') : t('forum_btn_new_message')}
+          <button className={btnPrimary} onClick={() => c.setShowNewForm(v => !v)}>
+            {c.showNewForm ? t('common_cancel') : t('forum_btn_new_message')}
           </button>
         </header>
 
-
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 items-start">
           <div className="order-2 lg:order-1 min-w-0">
-            {showNewForm && (
+            {c.showNewForm && (
               <ForumTopicForm
-                onSubmit={handleSubmitMessage}
-                onCancel={() => setShowNewForm(false)}
-                projectOptions={projectOptions}
+                onSubmit={data => c.createTopic(data)}
+                onCancel={() => c.setShowNewForm(false)}
+                projectOptions={c.projectOptions}
               />
             )}
 
-            {displayTopics.length === 0 && !showNewForm && (
+            {c.displayTopics.length === 0 && !c.showNewForm && (
               <p className="text-gray-500 text-[0.95rem] text-center py-10">
-                {activeFilter || searchQuery.trim()
-                  ? t('forum_empty_search_or_filter')
-                  : t('forum_empty_start')}
+                {c.activeFilter || c.searchQuery.trim() ? t('forum_empty_search_or_filter') : t('forum_empty_start')}
               </p>
             )}
 
             <div className="flex flex-col gap-2.5">
-              {displayTopics.map((msg: ForumTopicDto) => {
-                const unread = isUnread(msg);
-                const replies = msg.id === expandedId ? expandedReplies ?? [] : [];
-                const isAdmin = !!user?.scope.includes('site.admin');
-                const isTopicOwner = user?.id === msg.authorUserId;
-                const closed = !!msg.closedAt;
-                return (
-                  <div key={msg.id} id={`topic-${msg.id}`} className={`flex bg-white rounded-lg shadow-sm border border-gray-100 border-l-4 ${unread ? 'border-l-[var(--cs-secondary)]' : 'border-l-transparent'} px-4 py-3.5`}>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start gap-3 mb-1">
-                        {/* Clicking the title/meta/body reads the full message — same toggle as
-                            "Antwoord", so opening it to just read doesn't require hitting the
-                            reply button specifically. */}
-                        <div
-                          className="min-w-0 flex-1 cursor-pointer"
-                          onClick={() => handleToggleExpand(msg.id)}
-                        >
-                          <h3 className={`m-0 text-[0.95rem] text-[var(--cs-primary)] flex items-center gap-[6px] min-w-0 ${unread ? 'font-bold' : 'font-medium'}`}>
-                            {unread && <span className="inline-block w-2 h-2 rounded-full bg-[var(--cs-secondary)] flex-shrink-0" aria-label="nieuw" />}
-                            {msg.title}
-                            {closed && (
-                              <span className="text-[0.68rem] font-semibold text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 flex-shrink-0">
-                                {t('forum_closed_badge')}
-                              </span>
-                            )}
-                          </h3>
-                        </div>
-                        {/* Reply stays last so it always sits flush against the card's right
-                            edge — the context actions before it (close/delete) vary per row
-                            (owner/admin, open/closed), so those are the ones that shift, not the
-                            button people click most often. */}
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {(isAdmin || isTopicOwner) && !closed && (
-                            <button
-                              onClick={() => setPendingCloseTopicId(msg.id)}
-                              aria-label={t('forum_btn_close')}
-                              title={t('forum_btn_close')}
-                              className="bg-transparent border-none cursor-pointer text-gray-600 text-base px-1 flex items-center hover:text-[var(--cs-primary)] transition-colors duration-200"
-                            >
-                              <LuCheck />
-                            </button>
-                          )}
-                          {(isAdmin || isTopicOwner) && (
-                            <DeleteIconButton onClick={() => setPendingDeleteTopicId(msg.id)} />
-                          )}
-                          {/* A closed topic allows no further action, so it gets no button: just a
-                              muted reply count (clickable like the title/body), or nothing at all
-                              when there are no replies. */}
-                          {closed ? (
-                            msg.replyCount > 0 && (
-                              <span
-                                className="text-xs text-gray-400 cursor-pointer whitespace-nowrap"
-                                onClick={() => handleToggleExpand(msg.id)}
-                              >
-                                {msg.replyCount === 1
-                                  ? `${msg.replyCount} ${t('forum_btn_replies_one')}`
-                                  : `${msg.replyCount} ${t('forum_btn_replies_many')}`}
-                              </span>
-                            )
-                          ) : (
-                            <button className={`${btnGhost} flex items-center gap-1`} onClick={() => handleToggleExpand(msg.id)}>
-                              {msg.replyCount > 0
-                                ? msg.replyCount === 1
-                                  ? `${msg.replyCount} ${t('forum_btn_replies_one')}`
-                                  : `${msg.replyCount} ${t('forum_btn_replies_many')}`
-                                : t('forum_btn_reply')}
-                              <LuChevronDown className={`transition-transform duration-200 ${expandedId === msg.id ? 'rotate-180' : ''}`} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Fixed order (who → when → about which project → which task) so every card
-                          reads the same regardless of which fields it has. */}
-                      <div
-                        className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 mb-1.5 cursor-pointer"
-                        onClick={() => handleToggleExpand(msg.id)}
-                      >
-                        <span className="inline-flex items-center gap-1 text-xs text-gray-400">
-                          <LuUser aria-hidden="true" className="text-gray-300" /> {msg.authorName}
-                        </span>
-                        <span className="inline-flex items-center gap-1 text-xs text-gray-400">
-                          <LuClock aria-hidden="true" className="text-gray-300" /> {formatDate(msg.createdAt, i18n.language)}
-                        </span>
-                        {msg.projectSlug && (
-                          <Link
-                            to={`/explore/${msg.projectSlug}`}
-                            onClick={e => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--cs-primary)] no-underline hover:underline"
-                          >
-                            <LuFolder aria-hidden="true" /> {msg.projectLabel || msg.projectSlug}
-                          </Link>
-                        )}
-                        {msg.taskUrl && (
-                          <a
-                            href={msg.taskUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={e => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-xs text-[var(--cs-primary)] no-underline hover:underline"
-                          >
-                            <LuLink aria-hidden="true" /> {t('forum_view_task')}
-                          </a>
-                        )}
-                      </div>
-
-                      <p
-                        className={`text-[0.9rem] text-[#555] leading-[1.4] my-1 mb-[6px] whitespace-pre-line cursor-pointer ${expandedId === msg.id ? '' : 'line-clamp-2'}`}
-                        onClick={() => handleToggleExpand(msg.id)}
-                      >
-                        {msg.body}
-                      </p>
-
-                      {expandedId === msg.id && (
-                        <div className="mt-3 border-t border-gray-100 pt-3 flex flex-col gap-2">
-                          {replies.length > 0 && (
-                            <div className="flex flex-col gap-[6px]">
-                              {replies.map(reply => (
-                                <div key={reply.id} className="flex items-start justify-between gap-2 bg-gray-50 border-l-[3px] border-[var(--cs-primary)] rounded-r-[6px] py-2 px-3 ml-2">
-                                  <div className="min-w-0">
-                                    <span className="text-xs text-gray-400">{reply.authorName} · {formatDate(reply.createdAt, i18n.language)}</span>
-                                    <p className="m-0 mt-1 text-[0.9rem] text-gray-800 leading-[1.5] whitespace-pre-line">{reply.body}</p>
-                                  </div>
-                                  {(isAdmin || user?.id === reply.authorUserId) && (
-                                    <DeleteIconButton onClick={() => setPendingDeleteReply({ topicId: msg.id, replyId: reply.id })} />
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          {closed ? (
-                            <p className="text-xs text-gray-400 italic mt-1">{t('forum_closed_notice')}</p>
-                          ) : (
-                            <form className="flex flex-col gap-[14px] mt-1" onSubmit={e => handleSubmitReply(e, msg.id)}>
-                              <textarea
-                                className={inputClass}
-                                value={replyDrafts[msg.id] || ''}
-                                onChange={e => setReplyDrafts(prev => ({ ...prev, [msg.id]: e.target.value }))}
-                                placeholder={t('forum_form_placeholder_reply')}
-                                rows={2}
-                                required
-                              />
-                              <button type="submit" className={btnPrimary}>{t('forum_form_submit_reply')}</button>
-                            </form>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+              {c.displayTopics.map(topic => (
+                <ForumTopicCard
+                  key={topic.id}
+                  topic={topic}
+                  unread={isUnread(topic)}
+                  isExpanded={c.expandedId === topic.id}
+                  canModerate={isAdmin || c.user?.id === topic.authorUserId}
+                  onToggle={() => c.toggleExpand(topic.id)}
+                  onClose={() => c.setPendingCloseTopicId(topic.id)}
+                  onDelete={() => c.setPendingDeleteTopicId(topic.id)}
+                  thread={
+                    <ForumReplyThread
+                      replies={c.expandedReplies}
+                      closed={!!topic.closedAt}
+                      canDeleteReply={reply => isAdmin || c.user?.id === reply.authorUserId}
+                      onDeleteReply={reply => c.setPendingDeleteReply({ topicId: topic.id, replyId: reply.id })}
+                      replyDraft={c.replyDrafts[topic.id] || ''}
+                      onReplyDraftChange={body => c.setReplyDraft(topic.id, body)}
+                      onSubmitReply={() => c.submitReply(topic.id)}
+                    />
+                  }
+                />
+              ))}
             </div>
           </div>
 
-          <aside className="order-1 lg:order-2 flex flex-col gap-6 lg:sticky lg:top-[90px]">
-            <div className="relative">
-              <LuSearch className="absolute left-[11px] top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" aria-hidden="true" />
-              <input
-                className={`${inputClass} w-full pl-9 box-border`}
-                type="search"
-                placeholder={t('forum_search_placeholder')}
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-gray-500 m-0 mb-3">{t('forum_filters_heading')}</p>
-              <div className="flex flex-col gap-1">
-                {(['mine', 'unread', 'unanswered'] as const).map(f => (
-                  <button
-                    key={f}
-                    className={filterRowClass(activeFilter === f)}
-                    onClick={() => setActiveFilter((cur: typeof activeFilter) => cur === f ? null : f)}
-                  >
-                    {f === 'mine' ? t('forum_filter_mine') : f === 'unread' ? t('forum_filter_unread') : t('forum_filter_unanswered')}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </aside>
+          <ForumSidebar
+            searchQuery={c.searchQuery}
+            onSearchChange={c.setSearchQuery}
+            activeFilter={c.activeFilter}
+            onFilterChange={c.setActiveFilter}
+          />
         </div>
 
-        {pendingDeleteTopicId !== null && (
+        {c.pendingDeleteTopicId !== null && (
           <ConfirmDialog
             title={t('forum_confirm_delete_title')}
             message={t('forum_confirm_delete')}
             confirmLabel={t('common_delete')}
             cancelLabel={t('common_cancel')}
-            onConfirm={confirmDeleteTopic}
-            onCancel={() => setPendingDeleteTopicId(null)}
+            onConfirm={c.confirmDeleteTopic}
+            onCancel={() => c.setPendingDeleteTopicId(null)}
           />
         )}
 
-        {pendingDeleteReply !== null && (
+        {c.pendingDeleteReply !== null && (
           <ConfirmDialog
             title={t('forum_confirm_delete_reply_title')}
             message={t('forum_confirm_delete_reply')}
             confirmLabel={t('common_delete')}
             cancelLabel={t('common_cancel')}
-            onConfirm={confirmDeleteReply}
-            onCancel={() => setPendingDeleteReply(null)}
+            onConfirm={c.confirmDeleteReply}
+            onCancel={() => c.setPendingDeleteReply(null)}
           />
         )}
 
-        {pendingCloseTopicId !== null && (
+        {c.pendingCloseTopicId !== null && (
           <ConfirmDialog
             title={t('forum_confirm_close_title')}
             message={t('forum_confirm_close')}
             confirmLabel={t('forum_btn_close')}
             cancelLabel={t('common_cancel')}
             tone="affirm"
-            onConfirm={confirmCloseTopic}
-            onCancel={() => setPendingCloseTopicId(null)}
+            onConfirm={c.confirmCloseTopic}
+            onCancel={() => c.setPendingCloseTopicId(null)}
           />
         )}
       </div>

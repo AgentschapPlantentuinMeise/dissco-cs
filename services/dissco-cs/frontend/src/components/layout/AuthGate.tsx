@@ -13,8 +13,8 @@ export const AuthGate: React.FC<{ requireAdmin?: boolean; requireReviewer?: bool
   const user = useCurrentUser();
   const isAdmin = !!user && user.scope.includes('site.admin');
 
-  // Zelfde query-key als Navbar's eigen is-reviewer-check, zodat react-query de call deelt
-  // i.p.v. een tweede keer op te vragen.
+  // Same query key as UserMenu's reviewer check, so react-query shares the call instead of
+  // fetching it twice.
   const { data: reviewerCheck, isLoading: reviewerLoading } = useQuery({
     ...reviewQueries.isReviewer(),
     enabled: !!requireReviewer && !!user && !isAdmin,

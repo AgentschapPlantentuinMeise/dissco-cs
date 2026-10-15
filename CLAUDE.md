@@ -98,6 +98,9 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Do prefer composition over prop drilling
 - Don't mutate state directly
 - Don't store derived values in state (calculate on render instead)
+- Do shape a page like `pages/review/`: logic (queries, state, mutations, handlers) in a `use-<page>.ts` hook, calculation rules as pure functions in a `.ts` file with a test, and the parts as small components next to the page
+- Don't let a `.tsx` file grow beyond 300 lines (`frontend/test/conventions.test.ts` checks it)
+- Do give every page its own folder, named after the component in kebab-case, with the page itself inside (`pages/forum/Forum.tsx`, `pages/site-management/announcements/Announcements.tsx`) — also a page that is a single file today
 
 
 Keep in mind that the structure en code we provide is in a open source context 

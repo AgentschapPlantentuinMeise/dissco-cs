@@ -1,8 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MadocCaptureModelDto, MadocModelFields, MadocNestedModelFields, MadocStructureNodeDto, MadocAnnotationDocumentDto, MadocBaseFieldDto } from '@dissco-cs/shared-types';
-import { fieldRegistry } from './fields/registry';
-import { DocumentPath, pathsEqual } from '../../../utility/annotation-document';
+import { LuArrowLeft, LuCheck } from 'react-icons/lu';
+import { MadocCaptureModelDto, MadocStructureNodeDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
+import { DocumentPath } from '../../../utility/annotation-document';
+import { collectMissingRequiredLabels, hasVisibleRequiredField, resolveSectionModels, resolveSingleChoice } from './capture-model-rules';
+import { Fieldset } from './Fieldset';
+import { ModelFields } from './ModelFields';
+import { SelectorControls } from './SelectorControl';
 
 export interface CaptureModelFormProps {
   model: MadocCaptureModelDto;
@@ -27,310 +31,6 @@ export interface CaptureModelFormProps {
   readOnly?: boolean;
   /** Banner-tekst die bovenaan het formulier verschijnt als readOnly true is. */
   readOnlyBanner?: string;
-}
-
-interface SelectorControls {
-  drawingPath?: DocumentPath | null;
-  onRequestDraw?: (path: DocumentPath) => void;
-  onCancelDraw?: () => void;
-  onClearSelector?: (path: DocumentPath) => void;
-}
-
-function SelectorControl({ path, hasRegion, isDrawing, controls }: {
-  path: DocumentPath;
-  hasRegion: boolean;
-  isDrawing: boolean;
-  controls: SelectorControls;
-}) {
-  if (isDrawing) {
-    return (
-      <div className="mt-1 flex items-center gap-2 text-[0.8rem] text-[var(--cs-primary)]">
-        <span>Sleep op de afbeelding om een gebied te markeren...</span>
-        <button type="button" className="text-gray-500 underline" onClick={() => controls.onCancelDraw?.()}>
-          Annuleren
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-1 flex items-center gap-2 text-[0.8rem]">
-      {hasRegion && <span className="text-[var(--cs-primary)]">✓ Gebied gemarkeerd</span>}
-      <button
-        type="button"
-        className="text-[var(--cs-primary)] underline"
-        onClick={() => controls.onRequestDraw?.(path)}
-      >
-        {hasRegion ? 'Opnieuw tekenen' : 'Teken op het beeld'}
-      </button>
-      {hasRegion && (
-        <button type="button" className="text-gray-500 underline" onClick={() => controls.onClearSelector?.(path)}>
-          Wissen
-        </button>
-      )}
-    </div>
-  );
-}
-
-function isEntityList(entry: Array<MadocBaseFieldDto> | Array<MadocAnnotationDocumentDto>): entry is Array<MadocAnnotationDocumentDto> {
-  return entry.length > 0 && (entry[0] as MadocAnnotationDocumentDto).type === 'entity';
-}
-
-function isEntityEmpty(entity: MadocAnnotationDocumentDto): boolean {
-  return Object.values(entity.properties).every(list =>
-    list.every(entry =>
-      (entry as MadocAnnotationDocumentDto).type === 'entity' ? isEntityEmpty(entry as MadocAnnotationDocumentDto) : !(entry as MadocBaseFieldDto).value
-    )
-  );
-}
-
-// Mirrors madoc-ts's useResolvedDependant: a field/entity with `dependent: '<term>'` only shows
-// once the sibling property named `<term>` (at the same document level) has a value.
-function isDependentSatisfied(dependent: string | undefined, document: MadocAnnotationDocumentDto): boolean {
-  if (!dependent) return true;
-
-  const dependentEntry = document.properties[dependent]?.[0];
-  if (!dependentEntry) return true;
-
-  if ((dependentEntry as MadocAnnotationDocumentDto).type === 'entity') {
-    return !isEntityEmpty(dependentEntry as MadocAnnotationDocumentDto);
-  }
-  const field = dependentEntry as MadocBaseFieldDto;
-  return !(!field.value || field.value === '') || !!field.selector?.state;
-}
-
-// The admin model-editor's "required" checkbox saves its checked state as the array ['on'],
-// not a boolean — confirmed by inspecting a real model's logged JSON.
-function isRequired(required: boolean | string[] | undefined): boolean {
-  return Array.isArray(required) ? required.length > 0 : !!required;
-}
-
-function isFieldEmpty(field: MadocBaseFieldDto): boolean {
-  if (field.selector?.state) return false;
-  const { value } = field;
-  if (!value || value === '') return true;
-  // checkbox-list-field's value is {[option]: boolean} rather than a primitive — it's only
-  // "filled" once at least one option is actually checked, not just because the object exists.
-  if (typeof value === 'object' && !Array.isArray(value)) {
-    return !Object.values(value).some(Boolean);
-  }
-  return false;
-}
-
-// Walks the same fields/document the renderer walks (skipping fields hidden by a
-// dependent-on condition) to find whether any visible field/entity is required — used to
-// decide whether the "* verplicht veld" legend is shown at all.
-function hasVisibleRequiredField(fields: MadocModelFields, document: MadocAnnotationDocumentDto): boolean {
-  return fields.some(entry => {
-    const isNested = Array.isArray(entry);
-    const term = isNested ? (entry as MadocNestedModelFields)[0] : (entry as string);
-    const list = document.properties[term] ?? [];
-
-    if (isNested) {
-      const [, nestedFields] = entry as MadocNestedModelFields;
-      const entities = isEntityList(list) ? list : [];
-      if (!isDependentSatisfied(entities[0]?.dependent, document)) return false;
-      return isRequired(entities[0]?.required) || entities.some(entity => hasVisibleRequiredField(nestedFields, entity));
-    }
-
-    const fieldList = !isEntityList(list) ? list : [];
-    return fieldList.some(field => isDependentSatisfied(field.dependent, document) && isRequired(field.required));
-  });
-}
-
-// Same walk, but collects the labels of required fields/entities that are still empty —
-// used to block "Indienen" until they're filled in.
-function collectMissingRequiredLabels(fields: MadocModelFields, document: MadocAnnotationDocumentDto): string[] {
-  const labels: string[] = [];
-  for (const entry of fields) {
-    const isNested = Array.isArray(entry);
-    const term = isNested ? (entry as MadocNestedModelFields)[0] : (entry as string);
-    const list = document.properties[term] ?? [];
-
-    if (isNested) {
-      const [, nestedFields] = entry as MadocNestedModelFields;
-      const entities = isEntityList(list) ? list : [];
-      if (!isDependentSatisfied(entities[0]?.dependent, document)) continue;
-      if (isRequired(entities[0]?.required) && entities.every(isEntityEmpty)) {
-        labels.push(entities[0]?.label ?? term);
-      }
-      entities.forEach(entity => labels.push(...collectMissingRequiredLabels(nestedFields, entity)));
-      continue;
-    }
-
-    const fieldList = !isEntityList(list) ? list : [];
-    fieldList.forEach(field => {
-      if (isDependentSatisfied(field.dependent, document) && isRequired(field.required) && isFieldEmpty(field)) {
-        labels.push(field.label);
-      }
-    });
-  }
-  return labels;
-}
-
-// Every capture model's top-level structure is technically a 'choice' (Madoc's model editor always
-// wraps it that way), even when there's only one "Default" model and no real branching — the admin
-// UI hides this single-item case from editors, so we skip it here too instead of showing the user
-// a "pick one" screen with exactly one button.
-function resolveSingleChoice(node: MadocStructureNodeDto): MadocStructureNodeDto {
-  while (node.type === 'choice' && node.items.length === 1) {
-    node = node.items[0];
-  }
-  return node;
-}
-
-// `collapsible` distinguishes the two uses: entity groups keep a static frame (a border showing
-// the fields belong together, no click-to-toggle — a real "section" concept didn't exist when
-// entities were pressed into that role, so it looked like one), while the tabs-profile model
-// sections below are meant to be genuinely collapsible.
-function CollapsibleFieldset({
-  label,
-  required,
-  collapsible = true,
-  children,
-}: {
-  label: string;
-  required: boolean;
-  collapsible?: boolean;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(true);
-
-  if (!collapsible) {
-    return (
-      <fieldset className="border border-gray-200 rounded mb-4">
-        <legend className="w-full px-1">
-          <div className="px-2 py-2 text-[0.85rem] font-semibold text-gray-700">
-            {label}
-            {required && <span className="text-red-500"> *</span>}
-          </div>
-        </legend>
-        <div className="px-3 pb-3">{children}</div>
-      </fieldset>
-    );
-  }
-
-  return (
-    <fieldset className="border border-gray-200 rounded mb-4 overflow-hidden">
-      <legend className="w-full px-0">
-        <button
-          type="button"
-          className="w-full flex items-center justify-between px-3.5 py-2.5 bg-[rgba(26,91,102,0.07)] border-b border-[rgba(26,91,102,0.15)] text-[0.92rem] font-bold text-[var(--cs-primary)] cursor-pointer"
-          onClick={() => setOpen(o => !o)}
-        >
-          <span>
-            {label}
-            {required && <span className="text-red-500"> *</span>}
-          </span>
-          <span className="text-[var(--cs-accent)] text-[0.8rem] flex-shrink-0">{open ? '▾' : '▸'}</span>
-        </button>
-      </legend>
-      {open && <div className="px-3.5 py-4">{children}</div>}
-    </fieldset>
-  );
-}
-
-function EntityFieldset({
-  label,
-  required,
-  nestedFields,
-  entities,
-  pathPrefix,
-  term,
-  onChange,
-  selectorControls,
-}: {
-  label: string;
-  required: boolean;
-  nestedFields: MadocModelFields;
-  entities: MadocAnnotationDocumentDto[];
-  pathPrefix: DocumentPath;
-  term: string;
-  onChange: CaptureModelFormProps['onChange'];
-  selectorControls: SelectorControls;
-}) {
-  return (
-    <CollapsibleFieldset label={label} required={required} collapsible={false}>
-      {entities.map((entity, idx) => (
-        <div key={entity.id ?? idx} className="mb-2">
-          {renderFields(nestedFields, entity, [...pathPrefix, term, idx], onChange, selectorControls)}
-        </div>
-      ))}
-    </CollapsibleFieldset>
-  );
-}
-
-// A choice's items are only rendered as sections when its own `profile` opts in via 'tabs' — the
-// same profile Madoc's own model editor exposes (StructureMetadataEditor's "tabs" toggle), reused
-// here as the "these are not real alternatives, show them together" signal instead of introducing
-// a separate custom flag. Each item is unwrapped through resolveSingleChoice first so an
-// accidental single-item nested choice still resolves to its model instead of being skipped.
-function resolveSectionModels(node: MadocStructureNodeDto): Array<MadocStructureNodeDto & { type: 'model' }> | null {
-  if (node.type !== 'choice' || !node.profile?.includes('tabs')) return null;
-  return node.items
-    .map(resolveSingleChoice)
-    .filter((item): item is MadocStructureNodeDto & { type: 'model' } => item.type === 'model');
-}
-
-function renderFields(
-  fields: MadocModelFields,
-  document: MadocAnnotationDocumentDto,
-  pathPrefix: DocumentPath,
-  onChange: CaptureModelFormProps['onChange'],
-  selectorControls: SelectorControls
-) {
-  return fields.map(entry => {
-    const isNested = Array.isArray(entry);
-    const term = isNested ? (entry as MadocNestedModelFields)[0] : (entry as string);
-    const list = document.properties[term] ?? [];
-
-    if (isNested) {
-      const [, nestedFields] = entry as MadocNestedModelFields;
-      const entities = isEntityList(list) ? list : [];
-      if (!isDependentSatisfied(entities[0]?.dependent, document)) return null;
-      return (
-        <EntityFieldset
-          key={term}
-          label={entities[0]?.label ?? term}
-          required={isRequired(entities[0]?.required)}
-          nestedFields={nestedFields}
-          entities={entities}
-          pathPrefix={pathPrefix}
-          term={term}
-          onChange={onChange}
-          selectorControls={selectorControls}
-        />
-      );
-    }
-
-    const fieldList = !isEntityList(list) ? list : [];
-    return fieldList.map((field, idx) => {
-      if (!isDependentSatisfied(field.dependent, document)) return null;
-      const FieldComponent = fieldRegistry[field.type];
-      const path = [...pathPrefix, term, idx];
-      return (
-        <div key={field.id ?? `${term}-${idx}`} className="mb-4">
-          <label className="block text-[0.85rem] font-medium text-gray-700 mb-1">
-            {field.label}
-            {isRequired(field.required) && <span className="text-red-500"> *</span>}
-          </label>
-          {FieldComponent ? (
-            <FieldComponent field={field} path={path} onChange={onChange} />
-          ) : (
-            <p className="text-[0.8rem] text-gray-400">Veldtype "{field.type}" wordt nog niet ondersteund.</p>
-          )}
-          {field.selector && (
-            <SelectorControl
-              path={path}
-              hasRegion={!!field.selector.state}
-              isDrawing={pathsEqual(selectorControls.drawingPath, path)}
-              controls={selectorControls}
-            />
-          )}
-        </div>
-      );
-    });
-  });
 }
 
 export function CaptureModelForm({
@@ -401,8 +101,8 @@ export function CaptureModelForm({
         )}
         <div className={`p-5 ${readOnly ? 'pointer-events-none opacity-60 select-none' : ''}`}>
           {stack.length > 1 && (
-            <button className="text-[0.85rem] text-[var(--cs-primary)] mb-3" onClick={() => setStack(s => s.slice(0, -1))}>
-              ← Terug
+            <button className="text-[0.85rem] text-[var(--cs-primary)] mb-3 inline-flex items-center gap-1" onClick={() => setStack(s => s.slice(0, -1))}>
+              <LuArrowLeft aria-hidden="true" /> {t('annotate_choice_back')}
             </button>
           )}
           <p className="text-[0.95rem] font-medium text-gray-800 mb-3">{current.label}</p>
@@ -431,30 +131,32 @@ export function CaptureModelForm({
       )}
       {stack.length > 1 && (
         <div className="px-5 pt-3">
-          <button className="text-[0.85rem] text-[var(--cs-primary)]" onClick={() => setStack(s => s.slice(0, -1))}>
-            ← Andere keuze
+          <button className="text-[0.85rem] text-[var(--cs-primary)] inline-flex items-center gap-1" onClick={() => setStack(s => s.slice(0, -1))}>
+            <LuArrowLeft aria-hidden="true" /> {t('annotate_other_choice')}
           </button>
         </div>
       )}
       <div className={`flex-1 min-h-0 px-5 py-5 pb-2 overflow-y-auto ${readOnly ? 'pointer-events-none opacity-60 select-none' : ''}`}>
         {activeModel && hasVisibleRequiredField(activeModel.fields, document) && (
           <p className="text-[0.78rem] text-gray-500 mb-3">
-            <span className="text-red-500">*</span> verplicht veld
+            <span className="text-red-500">*</span> {t('annotate_required_legend')}
           </p>
         )}
         {sectionModels
           ? sectionModels.map(sectionModel => (
-              <CollapsibleFieldset key={sectionModel.id} label={sectionModel.label} required={false}>
-                {renderFields(sectionModel.fields, document, [], onChange, selectorControls)}
-              </CollapsibleFieldset>
+              <Fieldset key={sectionModel.id} label={sectionModel.label} required={false}>
+                <ModelFields fields={sectionModel.fields} document={document} pathPrefix={[]} onChange={onChange} selectorControls={selectorControls} />
+              </Fieldset>
             ))
-          : current.type === 'model' && renderFields(current.fields, document, [], onChange, selectorControls)}
+          : current.type === 'model' && (
+              <ModelFields fields={current.fields} document={document} pathPrefix={[]} onChange={onChange} selectorControls={selectorControls} />
+            )}
       </div>
       {!readOnly && (
         <div className="px-5 py-3 border-t border-gray-300 bg-gray-50">
           {missingRequired.length > 0 && (
             <p className="text-[0.8rem] text-red-600 mb-2">
-              Vul eerst de verplichte velden in: {missingRequired.join(', ')}
+              {t('annotate_missing_required', { labels: missingRequired.join(', ') })}
             </p>
           )}
           <div className="flex gap-2 items-center flex-wrap">
@@ -473,8 +175,8 @@ export function CaptureModelForm({
               {t('task_submit')}
             </button>
             {confirmation && (
-              <span className="text-[0.9rem] text-[var(--cs-primary)] font-medium">
-                <span aria-hidden="true">✓</span> {confirmation}
+              <span className="text-[0.9rem] text-[var(--cs-primary)] font-medium inline-flex items-center gap-1">
+                <LuCheck aria-hidden="true" /> {confirmation}
               </span>
             )}
           </div>

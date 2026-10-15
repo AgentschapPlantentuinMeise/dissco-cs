@@ -93,7 +93,7 @@ export const ForumTopicForm: React.FC<Props> = ({
               value={fields.projectSlug ?? ''}
               onChange={e => setFields(p => ({ ...p, projectSlug: e.target.value }))}
             >
-              <option value="">{t('forum_form_project_none') || '— Geen project —'}</option>
+              <option value="">{t('forum_form_project_none')}</option>
               {projectOptions.map(p => (
                 <option key={p.slug} value={p.slug}>{p.label}</option>
               ))}

@@ -1,19 +1,19 @@
 ﻿import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { HrefLink } from '../../utility/href-link';
-import { CsPage } from '../../components/layout/CsPage';
-import { ToggleSwitch } from '../../components/ui/ToggleSwitch';
-import { SaveButton } from '../../components/ui/SaveButton';
-import { ActiveStatusToggle } from '../../components/ui/ActiveStatusToggle';
-import { LuPencil, LuArrowUp, LuArrowDown, LuArrowLeft } from 'react-icons/lu';
-import { navItemsApi } from '../../api/cs-client/nav-items';
-import { navItemKeys, navItemQueries } from '../../api/queries/nav-items';
+import { HrefLink } from '../../../utility/href-link';
+import { CsPage } from '../../../components/layout/CsPage';
+import { ToggleSwitch } from '../../../components/ui/ToggleSwitch';
+import { SaveButton } from '../../../components/ui/SaveButton';
+import { ActiveStatusToggle } from '../../../components/ui/ActiveStatusToggle';
+import { LuPencil, LuArrowUp, LuArrowDown, LuArrowLeft, LuCheck, LuX } from 'react-icons/lu';
+import { navItemsApi } from '../../../api/cs-client/nav-items';
+import { navItemKeys, navItemQueries } from '../../../api/queries/nav-items';
 import { setContactEmailSchema, NavItemDto, NavItemKey, SitePageLang } from '@dissco-cs/shared-types';
-import { LANGUAGES, defaultLang } from '../../utility/site-lang-text';
-import { LanguageTabs } from '../../components/ui/LanguageTabs';
-import { useNavItems } from '../../hooks/use-nav-items';
-import { MarkdownToolbar } from '../../components/ui/MarkdownToolbar';
+import { LANGUAGES, defaultLang } from '../../../utility/site-lang-text';
+import { LanguageTabs } from '../../../components/ui/LanguageTabs';
+import { useNavItems } from '../../../hooks/use-nav-items';
+import { MarkdownToolbar } from '../../../components/ui/MarkdownToolbar';
 
 const CONTENT_PAGE_KEYS: NavItemKey[] = ['about', 'help', 'contact', 'welcome'];
 
@@ -202,7 +202,7 @@ export const PageManagement: React.FC = () => {
                     aria-label={t('common_close')}
                     className="bg-transparent border-none cursor-pointer text-gray-500 hover:text-gray-800 text-lg leading-none p-1"
                   >
-                    ✕
+                    <LuX aria-hidden="true" />
                   </button>
                 </div>
 
@@ -283,7 +283,7 @@ export const PageManagement: React.FC = () => {
 
                 {saved && (
                   <div className="mt-4 flex items-center gap-2 bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-2">
-                    <span aria-hidden="true">✓</span>
+                    <LuCheck aria-hidden="true" />
                     <span className="text-sm font-medium">{t('common_saved')}</span>
                   </div>
                 )}

@@ -68,6 +68,16 @@ export function findViolations(srcDir: string, rule: ConventionRule): string[] {
   return violations;
 }
 
+// Every file in srcDir with this extension that is longer than maxLines, as "file  (n lines)".
+export function findOversizedFiles(srcDir: string, { extension, maxLines }: { extension: string; maxLines: number }): string[] {
+  return sourceFiles(srcDir)
+    .filter(path => path.endsWith(extension))
+    // The final newline ends the last line, it does not start a new one.
+    .map(path => ({ file: relative(srcDir, path).replace(/\\/g, '/'), lines: readFileSync(path, 'utf8').replace(/\r?\n$/, '').split(/\r?\n/).length }))
+    .filter(({ lines }) => lines > maxLines)
+    .map(({ file, lines }) => `${file}  (${lines} lines)`);
+}
+
 export function violationMessage(rule: ConventionRule, violations: string[]): string {
   return `${rule.name}\nInstead: ${rule.instead}\nFound:\n  ${violations.join('\n  ')}`;
 }

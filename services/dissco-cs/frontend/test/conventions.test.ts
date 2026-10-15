@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { ConventionRule, findViolations, violationMessage } from '../../test-support/conventions';
+import { ConventionRule, findOversizedFiles, findViolations, violationMessage } from '../../test-support/conventions';
 
 // Patterns we cleaned up on purpose (see CLAUDE.md). A failing rule means: change the code as the
 // message says. Extend an allowedIn list only with a reason.
@@ -61,6 +61,17 @@ const rules: ConventionRule[] = [
     },
   },
   {
+    name: 'Icons are react-icons, not text glyphs',
+    // Typography (— – … ·) is fine; these are characters used as an icon.
+    pattern: /[←→↑↓‹›▾▸▴◂✓✔✕✖⟲⟳○]/,
+    instead: "an icon from 'react-icons/lu' with aria-hidden=\"true\" (LuArrowLeft, LuChevronDown, LuCheck, LuX, ...)",
+  },
+  {
+    name: 'No inline default text in t()',
+    pattern: /\bt\(\s*'[^']*',\s*['"`]/,
+    instead: "t('key') with the key in all four translation files -- a missing key falls back to English (fallbackLng), not to inline Dutch",
+  },
+  {
     name: 'No silently swallowed errors',
     pattern: /\.catch\(\(\) => \{\s*\}\)|catch\s*(\(\w*\))?\s*\{\s*\}/,
     instead: "reportClientError(err, 'action'), or let the error through",
@@ -73,5 +84,12 @@ describe('frontend conventions', () => {
   it.each(rules.map(rule => [rule.name, rule] as const))('%s', (_name, rule) => {
     const violations = findViolations(srcDir, rule);
     expect(violations, violationMessage(rule, violations)).toEqual([]);
+  });
+
+  it('A component file stays at most 300 lines', () => {
+    const oversized = findOversizedFiles(srcDir, { extension: '.tsx', maxLines: 300 });
+    const instead =
+      "split it like pages/review/: logic in a use-<page>.ts hook, calculation rules as pure functions with a test, parts as components next to it -- CLAUDE.md 'React'";
+    expect(oversized, `A component file stays at most 300 lines\nInstead: ${instead}\nFound:\n  ${oversized.join('\n  ')}`).toEqual([]);
   });
 });

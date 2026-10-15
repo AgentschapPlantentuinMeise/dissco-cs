@@ -1,183 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { feedbackKeys, feedbackQueries } from '../../api/queries/feedback';
+import { feedbackQueries } from '../../api/queries/feedback';
 import { projectKeys } from '../../api/queries/projects';
 import { taskKeys, taskQueries } from '../../api/queries/tasks';
 import { forumQueries } from '../../api/queries/forum';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useCurrentUser } from '../../hooks/use-current-user';
-import { getSiteSlug } from '../../api/slug';
 import { tasksApi } from '../../api/cs-client/tasks';
 import { HrefLink } from '../../utility/href-link';
 import { localeText } from '../../utility/locale-text';
 import { formatDate } from '../../utility/format-date';
 import { CsPage } from '../../components/layout/CsPage';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
-import { LuTrash2 } from 'react-icons/lu';
 import { StatBanner } from '../../components/ui/StatBanner';
 import { TaskTable, tabBtnClass } from './TaskTable';
-import { feedbackApi } from '../../api/cs-client/feedback';
-import { MadocCrowdsourcingTaskDto, ForumTopicDto, FeedbackThreadDto } from '@dissco-cs/shared-types';
+import { MadocCrowdsourcingTaskDto, ForumTopicDto } from '@dissco-cs/shared-types';
 import { useSiteStats } from '../../hooks/use-site-stats';
-
-
+import { LuArrowRight } from 'react-icons/lu';
+import { ChartSegment, DonutChart } from './DonutChart';
+import { FeedbackThreadRow } from './FeedbackThreadRow';
+import { sharePercentage, summarizeTasks } from './dashboard-tasks';
 
 const PROJECT_CHART_COLORS = ['#4361ee', '#e63946', '#f4a261', '#2a9d8f', '#9b5de5', '#f15bb5', '#43aa8b', '#ffb703'];
-
-interface ChartSegment { value: number; color: string; name: string }
-
-function DonutChart({ segments }: { segments: ChartSegment[] }) {
-  const total = segments.reduce((s, seg) => s + seg.value, 0);
-  if (total === 0) return null;
-  const data = segments.filter(s => s.value > 0);
-  return (
-    <div className="w-[62px] h-[62px] flex-shrink-0">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie data={data} dataKey="value" nameKey="name" outerRadius="100%" paddingAngle={2} startAngle={90} endAngle={-270}>
-            {data.map((seg, i) => <Cell key={i} fill={seg.color} stroke="none" />)}
-          </Pie>
-          <Tooltip formatter={(value: number) => `${value} (${Math.round((value / total) * 100)}%)`} />
-        </PieChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function FeedbackThreadDetail({ threadId }: { threadId: number }) {
-  const { t, i18n } = useTranslation('dissco-cs');
-  const [replyBody, setReplyBody] = useState('');
-
-  const queryClient = useQueryClient();
-  const { data, status, dataUpdatedAt } = useQuery(feedbackQueries.thread(threadId));
-  // Opening a thread marks it read on the server -- refresh only the thread list (and with it the
-  // navbar badge), never this thread itself, or each refetch would retrigger this effect.
-  useEffect(() => {
-    if (dataUpdatedAt) {
-      queryClient.invalidateQueries({ queryKey: feedbackKeys.threads() });
-    }
-  }, [dataUpdatedAt]);
-
-  const { mutate: postReply, status: replyStatus } = useMutation({
-    mutationFn: (body: string) => feedbackApi.createReply(threadId, body),
-    onSuccess: () => {
-      setReplyBody('');
-      queryClient.invalidateQueries({ queryKey: feedbackKeys.all });
-    },
-    meta: { errorMessage: 'error_send_failed' },
-  });
-
-  if (status === 'pending') {
-    return <p className="text-sm text-gray-500 mt-3">{t('review_detail_loading')}</p>;
-  }
-  if (status === 'error' || !data) {
-    return <p className="text-sm text-red-600 mt-3">{t('review_detail_error')}</p>;
-  }
-
-  return (
-    <div className="mt-3 pl-3 border-l-2 border-gray-100" onClick={e => e.stopPropagation()}>
-      <ul className="list-none m-0 p-0 flex flex-col gap-3 mb-3">
-        {data.messages.map(message => (
-          <li key={message.id} className="text-sm">
-            <div className="flex items-baseline gap-2">
-              <strong className="text-gray-800">{message.authorName}</strong>
-              <span className="text-xs text-gray-400">{new Date(message.createdAt).toLocaleString(i18n.language)}</span>
-            </div>
-            <p className="text-gray-700 m-0 mt-0.5 whitespace-pre-wrap">{message.body}</p>
-          </li>
-        ))}
-      </ul>
-      <div className="flex items-start gap-2">
-        <textarea
-          value={replyBody}
-          onChange={e => setReplyBody(e.target.value)}
-          rows={2}
-          placeholder={t('dashboard_feedback_reply_placeholder')}
-          className="flex-1 border border-gray-300 rounded-lg p-2 text-sm resize-none focus:outline-none focus:border-[var(--cs-primary)]"
-        />
-        <button
-          onClick={() => replyBody.trim() && postReply(replyBody.trim())}
-          disabled={!replyBody.trim() || replyStatus === 'pending'}
-          className="px-4 py-2 rounded-full text-sm font-semibold border-none bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
-        >
-          {t('dashboard_feedback_reply_send')}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function FeedbackThreadRow({
-  thread,
-  isOpen,
-  onToggle,
-  language,
-}: {
-  thread: FeedbackThreadDto;
-  isOpen: boolean;
-  onToggle: () => void;
-  language: string;
-}) {
-  const { t } = useTranslation('dissco-cs');
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-
-  const otherName = thread.role === 'recipient' ? thread.reviewerName : thread.recipientName;
-  const directionLabel =
-    thread.role === 'recipient'
-      ? t('dashboard_feedback_from', { name: otherName })
-      : t('dashboard_feedback_to', { name: otherName });
-
-  const queryClient = useQueryClient();
-  const { mutate: deleteThread } = useMutation({
-    mutationFn: () => feedbackApi.deleteThread(thread.id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: feedbackKeys.threads() });
-    },
-    meta: { errorMessage: 'error_delete_failed' },
-  });
-
-  return (
-    <li className="border-b border-gray-200 last:border-b-0 py-3">
-      <div className="flex items-start gap-2">
-        <button onClick={onToggle} className="flex-1 min-w-0 text-left bg-transparent border-none cursor-pointer p-0">
-          <div className="flex items-center justify-between gap-3">
-            <span className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-              {thread.unreadCount > 0 && (
-                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: 'var(--cs-tertiary)' }} />
-              )}
-              {thread.subject}
-            </span>
-            <span className="text-xs text-gray-400 flex-shrink-0">{new Date(thread.lastActivity).toLocaleString(language)}</span>
-          </div>
-          <div className="text-xs text-gray-500 mt-0.5">{directionLabel}</div>
-        </button>
-        <button
-          onClick={() => setConfirmingDelete(true)}
-          aria-label={t('dashboard_feedback_delete_label')}
-          title={t('dashboard_feedback_delete_label')}
-          className="flex-shrink-0 bg-transparent border-none text-gray-600 cursor-pointer hover:text-[var(--cs-primary)] transition-colors duration-200 p-1"
-        >
-          <LuTrash2 />
-        </button>
-      </div>
-      {isOpen && <FeedbackThreadDetail threadId={thread.id} />}
-      {confirmingDelete && (
-        <ConfirmDialog
-          title={t('dashboard_feedback_delete_confirm_title')}
-          message={t('dashboard_feedback_delete_confirm')}
-          confirmLabel={t('common_delete')}
-          cancelLabel={t('common_cancel')}
-          onConfirm={() => {
-            setConfirmingDelete(false);
-            void deleteThread();
-          }}
-          onCancel={() => setConfirmingDelete(false)}
-        />
-      )}
-    </li>
-  );
-}
 
 export const UserDashboard: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
@@ -216,55 +60,18 @@ export const UserDashboard: React.FC = () => {
   const { data: feedbackThreadsData, status: feedbackThreadsStatus } = useQuery({ ...feedbackQueries.threads(), enabled: !!user });
   const feedbackThreads = feedbackThreadsData?.threads ?? [];
 
-  if (!user) {
-    window.location.href = `/s/${getSiteSlug()}/login`;
-    return null;
-  }
+  // The route sits behind <AuthGate>, which already sends a visitor without a session to login.
+  if (!user) return null;
 
-  const tasks: MadocCrowdsourcingTaskDto[] = tasksData?.tasks ?? [];
-
-  const seen = new Set<string>();
-  const uniqueTasks = tasks.filter(task => {
-    const id = task.id ?? '';
-    if (seen.has(id)) return false;
-    seen.add(id);
-    return true;
-  });
-  const s = (task: MadocCrowdsourcingTaskDto) => task.status as number;
-  const realTasks = uniqueTasks.filter(task => task.status !== 0 && task.status !== -1);
-  const latestPerSubject = new Map<string, MadocCrowdsourcingTaskDto>();
-  for (const task of realTasks) {
-    const key = `${task.subject ?? task.id}|${task.root_task ?? ''}`;
-    const existing = latestPerSubject.get(key);
-    if (!existing || (task.modified_at ?? '') > (existing.modified_at ?? '')) {
-      latestPerSubject.set(key, task);
-    }
-  }
-  const visibleTasks = Array.from(latestPerSubject.values());
-
-  const savedTasks = visibleTasks.filter(task => s(task) === 1);
-  const doneTasks = visibleTasks.filter(task => s(task) === 2 || s(task) === 3 || s(task) === 5);
+  const { savedTasks, doneTasks, contributedTasks, userDoneCount, projectCount, projectTaskCounts } = summarizeTasks(
+    tasksData?.tasks ?? []
+  );
   const doneCount = doneTasks.length;
-  // Matches the backend's own definition of "completed" (status 2/3 only, see
-  // site-task-totals.repository.ts) so this lines up with siteStats.tasksCompleted below.
-  const userDoneCount = uniqueTasks.filter(task => s(task) === 2 || s(task) === 3).length;
-  const contributedTasks = visibleTasks;
-  const projectIds = contributedTasks.filter(task => task.metadata?.project).map(task => String(task.metadata!.project!.id));
-  const projectCount = new Set(projectIds).size;
-  const siteTotal = siteStats?.tasksCompleted ?? 0;
-  const percentage = siteTotal > 0 ? ((userDoneCount / siteTotal) * 100).toFixed(2) : null;
+  const percentage = sharePercentage(userDoneCount, siteStats?.tasksCompleted ?? 0);
   const isLoading = tasksStatus === 'pending';
 
-  const projectTaskCounts: Record<string, { value: number; name: string }> = {};
-  for (const task of contributedTasks) {
-    const project = task.metadata?.project;
-    if (!project) continue;
-    const id = String(project.id);
-    const name = localeText(project.label, i18n.language) || project.slug;
-    projectTaskCounts[id] = { value: (projectTaskCounts[id]?.value || 0) + 1, name };
-  }
-  const chartSegments: ChartSegment[] = Object.values(projectTaskCounts).map(({ value, name }, i) => ({
-    name,
+  const chartSegments: ChartSegment[] = projectTaskCounts.map(({ value, project }, i) => ({
+    name: localeText(project.label, i18n.language) || project.slug,
     value,
     color: PROJECT_CHART_COLORS[i % PROJECT_CHART_COLORS.length],
   }));
@@ -398,9 +205,9 @@ export const UserDashboard: React.FC = () => {
                 )}
                 <HrefLink
                   href="/forum"
-                  className="inline-block text-sm text-[var(--cs-primary)] font-semibold no-underline hover:underline mt-3"
+                  className="inline-flex items-center gap-1 text-sm text-[var(--cs-primary)] font-semibold no-underline hover:underline mt-3"
                 >
-                  {t('dashboard_widget_view_all')} <span aria-hidden="true">→</span>
+                  {t('dashboard_widget_view_all')} <LuArrowRight aria-hidden="true" />
                 </HrefLink>
               </div>
             </div>

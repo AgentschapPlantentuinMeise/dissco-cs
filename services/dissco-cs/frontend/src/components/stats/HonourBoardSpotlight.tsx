@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LuMedal } from 'react-icons/lu';
+import { LuArrowRight, LuMedal } from 'react-icons/lu';
 import { useSiteHonourBoard } from '../../hooks/use-site-honour-board';
 import { formatNumber } from '../../utility/format-number';
 
@@ -95,8 +95,8 @@ export const HonourBoardSpotlight: React.FC<{ className?: string }> = ({ classNa
         })}
       </ol>
 
-      <Link to="/honour-board" className="inline-block text-sm font-bold text-[#7fe0d4] no-underline hover:underline mt-4">
-        {t('honour_board_spotlight_link')} →
+      <Link to="/honour-board" className="inline-flex items-center gap-1 text-sm font-bold text-[#7fe0d4] no-underline hover:underline mt-4">
+        {t('honour_board_spotlight_link')} <LuArrowRight aria-hidden="true" />
       </Link>
     </div>
   );

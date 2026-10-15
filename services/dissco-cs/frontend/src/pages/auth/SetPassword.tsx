@@ -4,7 +4,7 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/layout/CsPage';
 import { setPassword as submitSetPassword, checkReset } from '../../api/madoc-auth/auth';
 import { getSiteSlug } from '../../api/slug';
-import { LuEye, LuEyeOff } from 'react-icons/lu';
+import { LuCheck, LuCircle, LuEye, LuEyeOff } from 'react-icons/lu';
 
 // Mirrors validatePasswordStrength() in services/madoc-ts/src/routes/dissco-cs-auth.ts -
 // this is client-side feedback only, the server call is the real source of truth.
@@ -111,9 +111,9 @@ export const SetPassword: React.FC = () => {
                   {passwordRequirements.map(req => (
                     <li
                       key={req.key}
-                      className={`text-sm ${req.met ? 'text-green-700' : 'text-gray-500'}`}
+                      className={`text-sm flex items-center gap-1.5 ${req.met ? 'text-green-700' : 'text-gray-500'}`}
                     >
-                      <span aria-hidden="true">{req.met ? '✓' : '○'}</span> {t(req.key)}
+                      {req.met ? <LuCheck aria-hidden="true" /> : <LuCircle aria-hidden="true" />} {t(req.key)}
                     </li>
                   ))}
                 </ul>

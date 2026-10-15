@@ -1,36 +1,19 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { announcementKeys, announcementQueries } from '../../api/queries/announcements';
-import { projectQueries } from '../../api/queries/projects';
-import { HrefLink } from '../../utility/href-link';
-import { CsPage } from '../../components/layout/CsPage';
-import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
-import { DeleteIconButton } from '../../components/ui/DeleteIconButton';
-import { SaveButton } from '../../components/ui/SaveButton';
-import { CancelButton } from '../../components/ui/CancelButton';
-import { ActiveStatusToggle } from '../../components/ui/ActiveStatusToggle';
-import { ActiveToggleField } from '../../components/ui/ActiveToggleField';
-import { Select } from '../../components/ui/Select';
+import { announcementKeys, announcementQueries } from '../../../api/queries/announcements';
+import { projectQueries } from '../../../api/queries/projects';
+import { HrefLink } from '../../../utility/href-link';
+import { CsPage } from '../../../components/layout/CsPage';
+import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
+import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
+import { ActiveStatusToggle } from '../../../components/ui/ActiveStatusToggle';
 import { LuPencil, LuArrowLeft } from 'react-icons/lu';
-import { siteLangText } from '../../utility/site-lang-text';
-import { LanguageTabs } from '../../components/ui/LanguageTabs';
-import { useItemEditor } from '../../hooks/use-item-editor';
-import { localeText } from '../../utility/locale-text';
-import { announcementsApi } from '../../api/cs-client/announcements';
-import { MarkdownToolbar } from '../../components/ui/MarkdownToolbar';
-import {
-  MadocProjectDto,
-  AnnouncementDto,
-  AnnouncementInput,
-  AnnouncementTargetType,
-  announcementInputSchema,
-} from '@dissco-cs/shared-types';
-
-function toDateInputValue(iso: string | null): string {
-  if (!iso) return '';
-  return iso.slice(0, 10);
-}
+import { siteLangText } from '../../../utility/site-lang-text';
+import { useItemEditor } from '../../../hooks/use-item-editor';
+import { announcementsApi } from '../../../api/cs-client/announcements';
+import { AnnouncementForm, toDateInputValue } from './AnnouncementForm';
+import { MadocProjectDto, AnnouncementDto, AnnouncementInput } from '@dissco-cs/shared-types';
 
 function targetLabel(t: (key: string) => string, announcement: AnnouncementDto): string {
   if (announcement.targetType === 'homepage') return t('sm_announcements_target_homepage');
@@ -83,7 +66,6 @@ export const Announcements: React.FC = () => {
     startEdit,
     cancelForm,
   } = useItemEditor({ emptyDraft, toDraft: toAnnouncementInput });
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Invalidate every announcement query, so the public banners pick up the change too.
   const onWritten = () => queryClient.invalidateQueries({ queryKey: announcementKeys.all });
@@ -108,14 +90,7 @@ export const Announcements: React.FC = () => {
     meta: { errorMessage: 'error_delete_failed' },
   });
 
-  const validation = announcementInputSchema.safeParse(draft);
-  const canSave = validation.success;
-
-  const save = () => {
-    const result = announcementInputSchema.safeParse(draft);
-    if (!result.success) return;
-    upsert({ id: editingId, input: result.data }, { onSuccess: cancelForm });
-  };
+  const save = (input: AnnouncementInput) => upsert({ id: editingId, input }, { onSuccess: cancelForm });
 
   const confirmDelete = () => {
     if (pendingDeleteId === null) return;
@@ -208,116 +183,17 @@ export const Announcements: React.FC = () => {
               </ul>
 
               {isFormOpen && (
-                <div className="w-full lg:flex-[0_0_55%] lg:min-w-[420px] bg-white border border-gray-200 rounded-[10px] p-6">
-                  <h2 className="text-xl font-semibold text-[var(--cs-primary)] mb-4">
-                    {editingId !== null ? t('sm_announcements_edit') : t('sm_announcements_new')}
-                  </h2>
-
-                  <LanguageTabs
-                    selected={selectedLang}
-                    onSelect={setSelectedLang}
-                    isMissing={lang => !(draft.title[lang] ?? '').trim()}
-                  />
-
-                  <label className="flex flex-col gap-1 mb-4">
-                    <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_title')} *</span>
-                    <input
-                      type="text"
-                      value={draft.title[selectedLang] ?? ''}
-                      onChange={e => setDraft(prev => ({ ...prev, title: { ...prev.title, [selectedLang]: e.target.value } }))}
-                      className="border border-gray-300 rounded-lg p-2"
-                    />
-                  </label>
-
-                  <label className="flex flex-col gap-1 mb-4">
-                    <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_description')} *</span>
-                    <MarkdownToolbar
-                      textareaRef={textareaRef}
-                      value={draft.description[selectedLang] ?? ''}
-                      onChange={next => setDraft(prev => ({ ...prev, description: { ...prev.description, [selectedLang]: next } }))}
-                    />
-                    <textarea
-                      ref={textareaRef}
-                      value={draft.description[selectedLang] ?? ''}
-                      onChange={e =>
-                        setDraft(prev => ({ ...prev, description: { ...prev.description, [selectedLang]: e.target.value } }))
-                      }
-                      className="border border-gray-300 rounded-b-lg p-2 min-h-[90px]"
-                    />
-                  </label>
-
-                  <div className="flex flex-col gap-2 mb-4">
-                    <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_target')}</span>
-                    {(['homepage', 'projects', 'project'] as AnnouncementTargetType[]).map(targetType => (
-                      <label key={targetType} className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          checked={draft.targetType === targetType}
-                          onChange={() =>
-                            setDraft(prev => ({
-                              ...prev,
-                              targetType,
-                              targetProjectSlug: targetType === 'project' ? prev.targetProjectSlug : null,
-                            }))
-                          }
-                        />
-                        <span>{t(`sm_announcements_target_${targetType}`)}</span>
-                      </label>
-                    ))}
-
-                    {draft.targetType === 'project' && (
-                      <Select
-                        value={draft.targetProjectSlug ?? ''}
-                        onChange={e => setDraft(prev => ({ ...prev, targetProjectSlug: e.target.value || null }))}
-                        className="border border-gray-300 rounded-lg p-2"
-                        wrapperClassName="ml-6"
-                      >
-                        <option value="">{t('sm_announcements_select_project')}</option>
-                        {projects.map((project: MadocProjectDto) => (
-                          <option key={project.id} value={project.slug}>
-                            {localeText(project.label, i18n.language) || project.slug}
-                          </option>
-                        ))}
-                      </Select>
-                    )}
-                  </div>
-
-                  <div className="flex gap-4 mb-4">
-                    <label className="flex flex-col gap-1">
-                      <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_start')}</span>
-                      <input
-                        type="date"
-                        value={toDateInputValue(draft.startDate)}
-                        onChange={e => setDraft(prev => ({ ...prev, startDate: e.target.value || null }))}
-                        className="border border-gray-300 rounded-lg p-2"
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_end')}</span>
-                      <input
-                        type="date"
-                        value={toDateInputValue(draft.endDate)}
-                        onChange={e => setDraft(prev => ({ ...prev, endDate: e.target.value || null }))}
-                        className="border border-gray-300 rounded-lg p-2"
-                      />
-                    </label>
-                  </div>
-
-                  <ActiveToggleField
-                    checked={draft.isActive}
-                    onChange={() => setDraft(prev => ({ ...prev, isActive: !prev.isActive }))}
-                  />
-
-                  <div className="flex items-center gap-3">
-                    <SaveButton
-                      onClick={save}
-                      disabled={!canSave}
-                      title={!canSave ? t('common_fill_required_fields') : undefined}
-                    />
-                    <CancelButton onClick={cancelForm} />
-                    {!canSave && <span className="text-sm text-gray-500">{t('common_fill_required_fields')}</span>}
-                  </div>
-                </div>
+                <AnnouncementForm
+                  key={editingId ?? 'new'}
+                  draft={draft}
+                  setDraft={setDraft}
+                  selectedLang={selectedLang}
+                  onSelectLang={setSelectedLang}
+                  isEditing={editingId !== null}
+                  projects={projects}
+                  onSave={save}
+                  onCancel={cancelForm}
+                />
               )}
             </div>
           )}

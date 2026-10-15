@@ -1,21 +1,16 @@
-﻿import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+﻿import React, { useState, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import useDropdownMenu from 'react-accessible-dropdown-menu-hook';
-import { stringify } from 'query-string';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { reviewQueries } from '../../api/queries/review';
 import { forumQueries } from '../../api/queries/forum';
-import { feedbackQueries } from '../../api/queries/feedback';
-import Cookies from 'js-cookie';
 import { HrefLink } from '../../utility/href-link';
 import { useCurrentUser } from '../../hooks/use-current-user';
-import { LuUser, LuSearch, LuX } from 'react-icons/lu';
 import { disscoCSConfig } from '../../dissco-cs-config';
-import { getSiteSlug } from '../../api/slug';
 import { useNavItems } from '../../hooks/use-nav-items';
 import { NAV_ITEMS } from './nav-config';
-import { LANGUAGES } from '../../utility/site-lang-text';
+import { NavSearch } from './NavSearch';
+import { LanguageSwitcher } from './LanguageSwitcher';
+import { UserMenu } from './UserMenu';
 
 const navLinkClass = (isActive: boolean) =>
   `no-underline text-base transition-colors duration-200 hover:text-[var(--cs-primary)]
@@ -23,70 +18,20 @@ const navLinkClass = (isActive: boolean) =>
    md:inline md:py-0 md:border-t-0
    ${isActive ? 'font-medium text-[var(--cs-accent)]' : 'font-[380] text-gray-600'}`;
 
-const dropdownItemClass =
-  'block w-full px-4 py-[10px] no-underline text-gray-600 text-[0.9rem] bg-transparent border-none cursor-pointer text-left box-border transition-colors duration-150 hover:bg-gray-100 hover:text-[var(--cs-primary)]';
-
 export const Navbar: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const user = useCurrentUser();
-  const siteSlug = getSiteSlug();
   const location = useLocation();
-  const navigate = useNavigate();
   const { navItems } = useNavItems();
-  const showAdmin = !!user && user.scope.includes('site.admin');
-  // Reviewer-rol zit niet in het JWT (enkel scope), dus navraag via een lichte backend-call;
-  // admins hoeven deze niet te doen, want die zien de link toch al.
-  const { data: reviewerCheck } = useQuery({
-    ...reviewQueries.isReviewer(),
-    enabled: !!user && !showAdmin,
-    staleTime: 5 * 60 * 1000,
-  });
-  const showReview = showAdmin || !!reviewerCheck?.isReviewer;
-  const dropdownCount = 3 + (showReview ? 1 : 0) + (showAdmin ? 1 : 0);
-
-  const { buttonProps, itemProps, isOpen, setIsOpen } = useDropdownMenu(dropdownCount);
-  const idxReview = showReview ? 2 : -1;
-  const idxSiteAdmin = showAdmin ? 2 + (showReview ? 1 : 0) : -1;
-  const idxLogout = 2 + (showReview ? 1 : 0) + (showAdmin ? 1 : 0);
-
-  const { i18n } = useTranslation();
-  const { buttonProps: langBtnProps, itemProps: langItemProps, isOpen: langIsOpen, setIsOpen: setLangIsOpen } =
-    useDropdownMenu(LANGUAGES.length);
-  const currentLang = LANGUAGES.find(l => l.code === i18n.language) || LANGUAGES[0];
-
- 
 
   useLayoutEffect(() => {
     document.body.classList.add('cs-active');
     return () => document.body.classList.remove('cs-active');
   }, []);
 
-  // Unread badges: refreshed by invalidation from the forum page and the dashboard (no window events).
+  // Unread badge: refreshed by invalidation from the forum page (no window events).
   const { data: newMsgCount = 0 } = useQuery({ ...forumQueries.unreadCount(), enabled: !!user });
-  const { data: feedbackUnreadCount = 0 } = useQuery({
-    ...feedbackQueries.threads(),
-    enabled: !!user,
-    select: res => res.threads.reduce((sum, thread) => sum + thread.unreadCount, 0),
-  });
-
-  useEffect(() => {
-    setIsOpen(false);
-    setSearchOpen(false);
-  }, [location]);
-
-  const submitSearch = (event: React.SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const trimmed = searchQuery.trim();
-    if (!trimmed) return;
-    navigate(`/find?${stringify({ q: trimmed })}`);
-    setSearchOpen(false);
-    setSearchQuery('');
-    setMenuOpen(false);
-  };
 
   return (
     <nav className="cs-navbar">
@@ -147,147 +92,17 @@ export const Navbar: React.FC = () => {
             );
           })}
 
-          {/* Search */}
           <li className="relative max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:w-full max-[768px]:py-[10px]">
-            <div className="flex items-center gap-2">
-              {searchOpen && (
-                <form onSubmit={submitSearch} className="relative">
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    autoFocus
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    onBlur={() => {
-                      if (!searchQuery.trim()) setSearchOpen(false);
-                    }}
-                    placeholder={t('search_placeholder')}
-                    className="text-[0.9rem] border border-[#ddd] rounded-full pl-3 pr-7 py-1 outline-none focus:border-[var(--cs-primary)] w-[180px] max-[768px]:w-full"
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSearchQuery('');
-                        searchInputRef.current?.focus();
-                      }}
-                      aria-label={t('search_clear')}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-400 p-0 flex items-center hover:text-[var(--cs-primary)]"
-                    >
-                      <LuX style={{ fontSize: '0.75em' }} />
-                    </button>
-                  )}
-                </form>
-              )}
-              <button
-                type="button"
-                onClick={() => setSearchOpen(o => !o)}
-                aria-label={t('search_nav_label')}
-                className="bg-transparent border-none cursor-pointer text-gray-600 p-0 flex items-center hover:text-[var(--cs-primary)] transition-colors duration-200"
-              >
-                <LuSearch style={{ fontSize: '1.1em' }} />
-              </button>
-            </div>
+            <NavSearch onSearched={() => setMenuOpen(false)} />
           </li>
 
-          {/* Language switcher */}
           <li className="relative max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:w-full">
-            <div className="relative">
-              <button
-                className="bg-transparent border-none cursor-pointer text-gray-600 font-[380] text-base p-0 hover:text-[var(--cs-primary)] transition-colors duration-200 max-[768px]:py-[10px]"
-                {...langBtnProps}
-              >
-                {currentLang.code.toUpperCase()} ▾
-              </button>
-              <ul
-                className={`${langIsOpen ? 'block' : 'hidden'} absolute top-[calc(100%+8px)] right-0 bg-white rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.12)] min-w-[130px] z-[100] list-none p-[6px_0] m-0 max-[768px]:static max-[768px]:shadow-none max-[768px]:rounded-none max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:min-w-0`}
-                role="menu"
-              >
-                {LANGUAGES.map((lng, key) => (
-                  <li key={lng.code}>
-                    <button
-                      className={dropdownItemClass}
-                      style={{ fontWeight: lng.code === i18n.language ? 'bold' : undefined }}
-                      onClick={() => {
-                        localStorage.setItem('i18nextLng', lng.code);
-                        Cookies.set('i18next', lng.code);
-                        i18n.changeLanguage(lng.code);
-                        setLangIsOpen(false);
-                      }}
-                      {...(langItemProps[key] as unknown as React.ButtonHTMLAttributes<HTMLButtonElement>)}
-                    >
-                      {lng.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <LanguageSwitcher />
           </li>
 
-          {/* User section */}
           <li className="relative max-[768px]:w-full">
             {user ? (
-              <div className="relative">
-                <button
-                  className="bg-transparent border-none cursor-pointer text-gray-600 font-[380] text-base flex items-center gap-1 p-0 hover:text-[var(--cs-primary)] transition-colors duration-200 max-[768px]:py-[10px] max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:w-full"
-                  {...buttonProps}
-                >
-                  <span className="relative inline-flex">
-                    <LuUser style={{ fontSize: '1.2em', flexShrink: 0 }} />
-                    {feedbackUnreadCount > 0 && (
-                      <span
-                        className="absolute -top-0.5 -right-0.5 flex w-[9px] h-[9px]"
-                        role="status"
-                        aria-label={t('nav_feedback_notification')}
-                      >
-                        <span
-                          className="motion-safe:animate-ping absolute inline-flex w-full h-full rounded-full opacity-75"
-                          style={{ background: 'var(--cs-tertiary)' }}
-                        />
-                        <span
-                          className="relative inline-flex w-[9px] h-[9px] rounded-full border border-white"
-                          style={{ background: 'var(--cs-tertiary)' }}
-                        />
-                      </span>
-                    )}
-                  </span>
-                  {user.name} ▾
-                </button>
-                <ul
-                  className={`${isOpen ? 'block' : 'hidden'} absolute top-[calc(100%+10px)] right-0 bg-white rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.12)] min-w-[200px] z-[100] list-none p-[6px_0] m-0 max-[768px]:static max-[768px]:shadow-none max-[768px]:rounded-none max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:min-w-0`}
-                  role="menu"
-                >
-                  <li>
-                    <HrefLink href="/my-dashboard" className={dropdownItemClass} {...itemProps[0]}>
-                      {t('nav_dashboard')}
-                      {feedbackUnreadCount > 0 && (
-                        <span
-                          className="inline-block text-white rounded-[10px] px-[6px] py-[1px] text-[0.7rem] font-bold ml-[5px] align-middle leading-[1.4]"
-                          style={{ background: 'var(--cs-tertiary)' }}
-                        >
-                          {feedbackUnreadCount}
-                        </span>
-                      )}
-                    </HrefLink>
-                  </li>
-                  <li><a href={`/s/${siteSlug}/account`} className={dropdownItemClass} {...itemProps[1]}>{t('nav_profile_settings')}</a></li>
-                  {showReview && (
-                    <li><HrefLink href="/review" className={dropdownItemClass} {...itemProps[idxReview]}>{t('nav_review')}</HrefLink></li>
-                  )}
-                  {showAdmin && (
-                    <li><HrefLink href="/manage" className={dropdownItemClass} {...itemProps[idxSiteAdmin]}>{t('nav_site_admin')}</HrefLink></li>
-                  )}
-                  <li className="border-t border-[#eee] mt-1 pt-1">
-                    <a
-                      href={`/s/${siteSlug}/logout?${stringify({ redirect: `/s/${siteSlug}/` })}`}
-                      className={dropdownItemClass}
-                      {...itemProps[idxLogout]}
-                    >
-                      {t('nav_logout')}
-                    </a>
-                  </li>
-                </ul>
-              </div>
+              <UserMenu user={user} />
             ) : (
               <HrefLink
                 href="/login"

@@ -171,7 +171,7 @@ export const ProjectDetail: React.FC = () => {
 
           {allTasksTaken && (
             <div className="mb-6 px-5 py-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-[0.95rem]">
-              {t('pdp_all_tasks_taken', 'Alle taken zijn momenteel in behandeling of afgerond. Er zijn geen nieuwe taken beschikbaar.')}
+              {t('pdp_all_tasks_taken')}
             </div>
           )}
 

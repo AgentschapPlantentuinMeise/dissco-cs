@@ -1,19 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { projectKeys, projectQueries } from '../../api/queries/projects';
-import { manualKeys, manualQueries } from '../../api/queries/manuals';
-import { institutionQueries } from '../../api/queries/institutions';
-import { HrefLink } from '../../utility/href-link';
-import { CsPage } from '../../components/layout/CsPage';
+import { projectKeys, projectQueries } from '../../../api/queries/projects';
+import { manualKeys, manualQueries } from '../../../api/queries/manuals';
+import { institutionQueries } from '../../../api/queries/institutions';
+import { HrefLink } from '../../../utility/href-link';
+import { CsPage } from '../../../components/layout/CsPage';
 import { LuArrowLeft } from 'react-icons/lu';
-import { projectsApi } from '../../api/cs-client/projects';
-import { ProjectsSubview } from './project-management/ProjectsSubview';
-import { ManualsSubview } from './project-management/ManualsSubview';
-import { StuckTasksSubview } from './project-management/StuckTasksSubview';
-import { TaskDebugSubview } from './project-management/TaskDebugSubview';
-import { BulkCreateProjectsSubview } from './project-management/BulkCreateProjectsSubview';
-import { reportClientError } from '../../api/cs-client/client-errors';
+import { projectsApi } from '../../../api/cs-client/projects';
+import { ProjectsSubview } from './ProjectsSubview';
+import { ManualsSubview } from './ManualsSubview';
+import { StuckTasksSubview } from './StuckTasksSubview';
+import { TaskDebugSubview } from './TaskDebugSubview';
+import { BulkCreateProjectsSubview } from './BulkCreateProjectsSubview';
+import { reportClientError } from '../../../api/cs-client/client-errors';
 
 export const ProjectManagement: React.FC = () => {
   const { t } = useTranslation('dissco-cs');
