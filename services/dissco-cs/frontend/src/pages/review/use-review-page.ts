@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { reviewQueries } from '../../api/queries/review';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { reviewKeys, reviewQueries } from '../../api/queries/review';
 import { feedbackKeys } from '../../api/queries/feedback';
 import { reviewApi } from '../../api/cs-client/review';
 import { feedbackApi } from '../../api/cs-client/feedback';
 import { ReviewTaskDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
-import { ApiError } from '../../api/cs-client/request';
+import { reportClientError } from '../../api/cs-client/client-errors';
 import { captureModelsApi } from '../../api/cs-client/capture-models';
 import { localeText } from '../../utility/locale-text';
 import { useCurrentUser } from '../../hooks/use-current-user';
@@ -44,7 +44,7 @@ export function useReviewPage() {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useCurrentUser();
   const queryClient = useQueryClient();
-  const { data, status: queryStatus, refetch } = useQuery({ ...reviewQueries.tasks(), staleTime: 0 });
+  const { data, status: queryStatus } = useQuery({ ...reviewQueries.tasks(), staleTime: 0 });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'' | '0' | '1' | '2'>('');
@@ -62,16 +62,12 @@ export function useReviewPage() {
   // wordt.
   const [openRowId, setOpenRowId] = useState<string | null>(null);
   const [editedDocuments, setEditedDocuments] = useState<Record<string, MadocAnnotationDocumentDto>>({});
-  const [releasing, setReleasing] = useState<string | null>(null);
-  const [releaseError, setReleaseError] = useState<string | null>(null);
 
   // Compose-doel voor de feedback-modal (vóór een accept, vanaf rij-icoon/actiebalk/selectie), en
   // de single-slot "laatste verwerkte batch" die na een accept overleeft zolang er niet opnieuw
   // geaccepteerd wordt -- zie Review.tsx voor de sticky balk die dit toont.
   const [feedbackTarget, setFeedbackTarget] = useState<FeedbackComposeTarget | null>(null);
   const [lastBatchTasks, setLastBatchTasks] = useState<BatchSubmitterRef[] | null>(null);
-  const [sendingFeedback, setSendingFeedback] = useState(false);
-  const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
   // Taken die net vrijgegeven zijn maar nog niet uit de server-lijst verdwenen -- madoc-ts zet de
   // gekoppelde reviewtaak pas asynchroon (via zijn eigen achtergrond-jobqueue) op status -1, dus
@@ -230,7 +226,7 @@ export function useReviewPage() {
       const label = row ? localeText(row.subject.label, i18n.language) || row.id : id;
       setBulkProgress(prev => ({ ...prev, current: prev.current + 1 }));
 
-      if (!row) {
+      if (!row || !row.revisionId || !row.originalTaskId) {
         results.push({ id, label, success: false, error: t('review_bulk_error_no_revision') });
         continue;
       }
@@ -240,8 +236,9 @@ export function useReviewPage() {
         results.push({ id, label, success: true });
         acceptedTasks.push(submitterRefFromRow(row));
       } catch (err) {
-        const message = err instanceof ApiError ? err.message : t('review_bulk_error_generic');
-        results.push({ id, label, success: false, error: message });
+        // Per-row result instead of a toast; the user only ever sees our own translated text.
+        reportClientError(err, 'action');
+        results.push({ id, label, success: false, error: t('review_bulk_error_generic') });
       }
     }
 
@@ -258,7 +255,7 @@ export function useReviewPage() {
       return next;
     });
     setOpenRowId(current => (current && ids.includes(current) ? null : current));
-    await refetch();
+    await queryClient.invalidateQueries({ queryKey: reviewKeys.tasks() });
   };
 
   const successCount = bulkResults?.filter(r => r.success).length ?? 0;
@@ -272,29 +269,28 @@ export function useReviewPage() {
   // dat de resource nergens meer als "al gecontribueerd" meetelt (resourceTaskCountsAsContribution
   // in madoc-ts sluit status -1 expliciet uit) -- de opdracht komt dus vrij voor eender welke
   // gebruiker om opnieuw te claimen, met een leeg formulier (zie AnnotatePage.tsx).
-  const handleRelease = async (row: ReviewTaskDto) => {
-    if (!row.originalTaskId) return;
-    setReleaseError(null);
-    setReleasing(row.id);
-    try {
-      await reviewApi.updateTask(row.originalTaskId, { status: -1, status_text: 'Rejected' });
-      setDismissedIds(prev => new Set(prev).add(row.id));
+  const releaseMutation = useMutation({
+    mutationFn: ({ taskId }: { rowId: string; taskId: string }) =>
+      reviewApi.updateTask(taskId, { status: -1, status_text: 'Rejected' }),
+    onSuccess: (_result, { rowId }) => {
+      setDismissedIds(prev => new Set(prev).add(rowId));
       setOpenRowId(current => {
         const idx = visibleRows.findIndex(r => r.id === current);
         return idx >= 0 && idx + 1 < visibleRows.length ? visibleRows[idx + 1].id : null;
       });
-      void refetch();
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : t('review_bulk_error_generic');
-      setReleaseError(message);
-    } finally {
-      setReleasing(null);
-    }
+      queryClient.invalidateQueries({ queryKey: reviewKeys.tasks() });
+    },
+    meta: { errorMessage: 'error_release_failed' },
+  });
+  const releasing = releaseMutation.isPending ? releaseMutation.variables.rowId : null;
+
+  const handleRelease = (row: ReviewTaskDto) => {
+    if (!row.originalTaskId) return;
+    releaseMutation.mutate({ rowId: row.id, taskId: row.originalTaskId });
   };
 
   const openFeedbackForSelection = () => {
     if (!bulkFeedbackSubmitter) return;
-    setFeedbackError(null);
     setFeedbackTarget({
       submitterId: bulkFeedbackSubmitter.id,
       submitterName: bulkFeedbackSubmitter.name,
@@ -303,39 +299,34 @@ export function useReviewPage() {
 
   const openFeedbackForLastBatch = () => {
     if (!lastBatchTasks || !lastBatchSubmitter) return;
-    setFeedbackError(null);
     setFeedbackTarget({
       submitterId: lastBatchSubmitter.id,
       submitterName: lastBatchSubmitter.name,
     });
   };
 
-  const closeFeedbackTarget = () => {
-    setFeedbackTarget(null);
-    setFeedbackError(null);
-  };
+  const closeFeedbackTarget = () => setFeedbackTarget(null);
 
   const dismissLastBatch = () => setLastBatchTasks(null);
 
-  const sendFeedback = async (subject: string, body: string) => {
-    if (!feedbackTarget) return;
-    setSendingFeedback(true);
-    setFeedbackError(null);
-    try {
-      await feedbackApi.createThread({
-        recipientUserId: feedbackTarget.submitterId,
-        recipientName: feedbackTarget.submitterName,
-        subject,
-        body,
-      });
+  const { mutate: createFeedbackThread, isPending: sendingFeedback } = useMutation({
+    mutationFn: feedbackApi.createThread,
+    onSuccess: () => {
       setFeedbackTarget(null);
       // The new thread shows up in the reviewer's own dashboard list and navbar badge.
       queryClient.invalidateQueries({ queryKey: feedbackKeys.threads() });
-    } catch (err) {
-      setFeedbackError(err instanceof Error ? err.message : t('review_bulk_error_generic'));
-    } finally {
-      setSendingFeedback(false);
-    }
+    },
+    meta: { errorMessage: 'error_send_failed' },
+  });
+
+  const sendFeedback = (subject: string, body: string) => {
+    if (!feedbackTarget) return;
+    createFeedbackThread({
+      recipientUserId: feedbackTarget.submitterId,
+      recipientName: feedbackTarget.submitterName,
+      subject,
+      body,
+    });
   };
 
   // Pijltje omhoog/omlaag doorloopt visibleRows -- enkel als de focus niet in een formulierveld
@@ -393,7 +384,6 @@ export function useReviewPage() {
     editedDocuments,
     handleDocumentChange,
     releasing,
-    releaseError,
     handleRelease,
     confirmingAccept,
     setConfirmingAccept,
@@ -411,7 +401,6 @@ export function useReviewPage() {
     dismissLastBatch,
     feedbackTarget,
     sendingFeedback,
-    feedbackError,
     openFeedbackForSelection,
     openFeedbackForLastBatch,
     closeFeedbackTarget,

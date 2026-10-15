@@ -43,7 +43,7 @@ export const ForumTopicForm: React.FC<Props> = ({
     projectLabel: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!fields.title.trim() || !fields.body.trim()) return;
     const selectedProject = projectOptions?.find(p => p.slug === fields.projectSlug);

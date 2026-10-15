@@ -11,9 +11,9 @@ import {
   relayMadocResponse,
 } from '../madoc-client/client.js';
 import { collectAllPages } from '../madoc-client/pagination.js';
-import { isSafeSegment } from '../madoc-client/path-segment.js';
 import { MadocCrowdsourcingTaskDto, MadocPagination } from '@dissco-cs/shared-types';
 import { getStuckMadocTasks, getStuckManifestCounters, resyncManifestTaskCounter, updateMadocTask } from '../madoc-client/tasks.js';
+import { safeSegment, validateParams } from '../infrastructure/validate-params.js';
 
 // Crowdsourcing tasks: the user's own tasks (forwarded to tasks-api as that user, so it only ever
 // returns what they may see) and the admin's site-wide stuck-task tools. `/stuck` is registered
@@ -37,30 +37,24 @@ export function tasksController(): Hono {
     return c.json({ tasks, manifestCounters });
   });
 
-  app.post('/manifests/:containerId/resync', async c => {
+  app.post('/manifests/:containerId/resync', validateParams({ containerId: safeSegment }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const containerId = c.req.param('containerId');
-    if (!isSafeSegment(containerId)) {
-      return c.text('Invalid task id', 400);
-    }
+    const { containerId } = c.req.valid('param');
 
     return c.json({ resynced: await resyncManifestTaskCounter(identity.siteId, containerId) });
   });
 
-  app.post('/:taskId/release', async c => {
+  app.post('/:taskId/release', validateParams({ taskId: safeSegment }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const taskId = c.req.param('taskId');
-    if (!isSafeSegment(taskId)) {
-      return c.text('Invalid task id', 400);
-    }
+    const { taskId } = c.req.valid('param');
 
     await updateMadocTask(identity.siteId, taskId, { status: -1, status_text: 'abandoned' });
     return c.json({ released: true });
@@ -96,20 +90,14 @@ export function tasksController(): Hono {
     }
   });
 
-  app.get('/:taskId', async c => {
-    const taskId = c.req.param('taskId');
-    if (!isSafeSegment(taskId)) {
-      return c.text('Invalid task id', 400);
-    }
+  app.get('/:taskId', validateParams({ taskId: safeSegment }), async c => {
+    const { taskId } = c.req.valid('param');
 
     return relayMadocResponse(await madocFetch(`/api/tasks/${taskId}?all=true&detail=true`, requestBearerToken(c)));
   });
 
-  app.patch('/:taskId', async c => {
-    const taskId = c.req.param('taskId');
-    if (!isSafeSegment(taskId)) {
-      return c.text('Invalid task id', 400);
-    }
+  app.patch('/:taskId', validateParams({ taskId: safeSegment }), async c => {
+    const { taskId } = c.req.valid('param');
 
     return forwardJsonBody(c, `/api/tasks/${taskId}`, 'PATCH', requestBearerToken(c));
   });

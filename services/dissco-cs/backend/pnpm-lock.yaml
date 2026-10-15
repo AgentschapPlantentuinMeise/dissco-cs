@@ -14,6 +14,9 @@ importers:
       '@hono/node-server':
         specifier: ^1.19.5
         version: 1.19.14(hono@4.12.25)
+      '@hono/zod-validator':
+        specifier: ^0.9.1
+        version: 0.9.1(hono@4.12.25)(zod@4.6.5)
       hono:
         specifier: ^4.10.5
         version: 4.12.25
@@ -350,6 +353,12 @@ packages:
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
+
+  '@hono/zod-validator@0.9.1':
+    resolution: {integrity: sha512-iiv6w0qrIc0arfvCtUqBWsvl4fXjzaTcQcCJTTtCnkawF9HHGE+KjEl0ox3gQJ6rKZEgE3mLExlQCF72M+mNuw==}
+    peerDependencies:
+      hono: '>=4.11.2'
+      zod: ^3.25.0 || ^4.0.0
 
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
@@ -942,6 +951,11 @@ snapshots:
   '@hono/node-server@1.19.14(hono@4.12.25)':
     dependencies:
       hono: 4.12.25
+
+  '@hono/zod-validator@0.9.1(hono@4.12.25)(zod@4.6.5)':
+    dependencies:
+      hono: 4.12.25
+      zod: 4.6.5
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
 

@@ -3,6 +3,8 @@ import { FeedbackRepository, toFeedbackMessageDto, toFeedbackThreadDto } from '.
 import { requireUser } from '../auth/auth.js';
 import { feedbackReplyInputSchema, feedbackThreadInputSchema } from '@dissco-cs/shared-types';
 import { isReviewerOrAdmin } from './review.controller.js';
+import { validateJson } from '../infrastructure/validate-json.js';
+import { intId, validateParams } from '../infrastructure/validate-params.js';
 
 export function feedbackController(feedbackRepository: FeedbackRepository): Hono {
   const app = new Hono();
@@ -17,29 +19,26 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
     return c.json({ threads: threads.map(toFeedbackThreadDto) });
   });
 
-  app.post('/threads', async c => {
+  app.post('/threads', validateJson(feedbackThreadInputSchema), async c => {
     const identity = requireUser(c);
     if (identity instanceof Response) {
       return identity;
     }
 
     if (!(await isReviewerOrAdmin(identity))) {
-      return c.text('Forbidden', 403);
+      return c.json({ error: 'Forbidden' }, 403);
     }
 
-    const result = feedbackThreadInputSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('recipientUserId, recipientName, subject and body are required', 400);
-    }
+    const input = c.req.valid('json');
 
     const thread = await feedbackRepository.createThread({
       siteId: identity.siteId,
       reviewerUserId: identity.userId,
       reviewerName: identity.name,
-      recipientUserId: result.data.recipientUserId,
-      recipientName: result.data.recipientName,
-      subject: result.data.subject,
-      body: result.data.body,
+      recipientUserId: input.recipientUserId,
+      recipientName: input.recipientName,
+      subject: input.subject,
+      body: input.body,
     });
 
     // The creator is always the reviewer (gated above), with the one message just inserted --
@@ -47,16 +46,13 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
     return c.json(toFeedbackThreadDto({ ...thread, role: 'reviewer', message_count: 1, unread_count: 0 }), 201);
   });
 
-  app.get('/threads/:id', async c => {
+  app.get('/threads/:id', validateParams({ id: intId }), async c => {
     const identity = requireUser(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const threadId = Number(c.req.param('id'));
-    if (!Number.isInteger(threadId)) {
-      return c.notFound();
-    }
+    const { id: threadId } = c.req.valid('param');
 
     const result = await feedbackRepository.getThread(identity.siteId, threadId, identity.userId);
     if (!result) {
@@ -73,28 +69,22 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
     });
   });
 
-  app.post('/threads/:id/replies', async c => {
+  app.post('/threads/:id/replies', validateParams({ id: intId }), validateJson(feedbackReplyInputSchema), async c => {
     const identity = requireUser(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const threadId = Number(c.req.param('id'));
-    if (!Number.isInteger(threadId)) {
-      return c.notFound();
-    }
+    const { id: threadId } = c.req.valid('param');
 
-    const result = feedbackReplyInputSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('body is required', 400);
-    }
+    const input = c.req.valid('json');
 
     const reply = await feedbackRepository.createReply({
       siteId: identity.siteId,
       threadId,
       authorUserId: identity.userId,
       authorName: identity.name,
-      body: result.data.body,
+      body: input.body,
     });
 
     if (!reply) {
@@ -105,16 +95,13 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
     return c.json(toFeedbackMessageDto(reply), 201);
   });
 
-  app.delete('/threads/:id', async c => {
+  app.delete('/threads/:id', validateParams({ id: intId }), async c => {
     const identity = requireUser(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const threadId = Number(c.req.param('id'));
-    if (!Number.isInteger(threadId)) {
-      return c.notFound();
-    }
+    const { id: threadId } = c.req.valid('param');
 
     const result = await feedbackRepository.deleteThreadForUser(identity.siteId, threadId, identity.userId);
     if (!result) {

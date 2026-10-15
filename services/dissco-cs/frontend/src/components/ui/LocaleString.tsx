@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import React, { useMemo } from 'react';
-
-export type MadocInternationalString = { [lang: string]: string[] };
+import { MadocInternationalString } from '@dissco-cs/shared-types';
 
 export const LanguageString: React.FC<{ [key: string]: any } & { as?: string | React.FC<any>; language: string }> = ({
   as: Component,

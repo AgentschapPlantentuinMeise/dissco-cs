@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 
 import { ManualsRepository, toManualDetailDto } from '../repositories/manuals.repository.js';
-import { requestBearerToken, requireSiteAdmin, requireUser, resolveSiteId } from '../auth/auth.js';
+import { requestBearerToken, requireSiteAdmin, requireUser, requireSiteId } from '../auth/auth.js';
 import { appConfig } from '../config.js';
 import {
   forwardJsonBody,
@@ -9,10 +9,10 @@ import {
   madocFetch,
   madocJson,
   publicSitePath,
+  readJsonBody,
   relayMadocResponse,
 } from '../madoc-client/client.js';
 import { collectAllPages } from '../madoc-client/pagination.js';
-import { isSafeSegment } from '../madoc-client/path-segment.js';
 import { getMadocProject } from '../madoc-client/projects.js';
 import {
   getMadocCollectionManifestThumbnails,
@@ -21,6 +21,8 @@ import {
 } from '../madoc-client/collections.js';
 import { getMadocProjectTasks, getMadocTasksBySubjectAndType, resyncManifestTaskCounter } from '../madoc-client/tasks.js';
 import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
+import { validateJson } from '../infrastructure/validate-json.js';
+import { safeSegment, validateParams } from '../infrastructure/validate-params.js';
 import {
   isSitePageLang,
   MadocCrowdsourcingTaskDto,
@@ -57,34 +59,28 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
   // Cleans up links to projects that no longer appear in the given live Madoc list (e.g. because
   // the project was deleted in Madoc) -- called in the background by the frontend as soon as the
   // project management page has fetched the current project list.
-  app.put('/institution-links/prune', async c => {
+  app.post('/institution-links/prune', validateJson(pruneProjectLinksSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const result = pruneProjectLinksSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('Invalid payload', 400);
-    }
+    const input = c.req.valid('json');
 
-    const removed = await institutionsRepository.pruneOrphanedProjectLinks(identity.siteId, result.data.liveSlugs);
+    const removed = await institutionsRepository.pruneOrphanedProjectLinks(identity.siteId, input.liveSlugs);
     return c.json({ removed });
   });
 
   // Same background cleanup as /institution-links/prune, for manual links.
-  app.put('/manual-links/prune', async c => {
+  app.post('/manual-links/prune', validateJson(pruneProjectLinksSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const result = pruneProjectLinksSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('Invalid payload', 400);
-    }
+    const input = c.req.valid('json');
 
-    const removed = await manualsRepository.pruneOrphanedProjectLinks(identity.siteId, result.data.liveSlugs);
+    const removed = await manualsRepository.pruneOrphanedProjectLinks(identity.siteId, input.liveSlugs);
     return c.json({ removed });
   });
 
@@ -112,13 +108,13 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
       const page = c.req.query('page') ?? '1';
       const path = /^\d+$/.test(page) ? pagePath(page) : null;
       if (!path) {
-        return c.text('Invalid slug or page', 400);
+        return c.json({ error: 'Invalid slug or page' }, 400);
       }
       return relayMadocResponse(await madocFetch(path, userToken));
     }
 
     if (!pagePath('1')) {
-      return c.text('Invalid slug', 400);
+      return c.json({ error: 'Invalid slug' }, 400);
     }
 
     try {
@@ -132,11 +128,11 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     }
   });
 
-  app.get('/:projectId', async c => {
-    const projectId = c.req.param('projectId');
-    const path = isSafeSegment(projectId) ? publicSitePath(c, `/projects/${projectId}`) : null;
+  app.get('/:projectId', validateParams({ projectId: safeSegment }), async c => {
+    const { projectId } = c.req.valid('param');
+    const path = publicSitePath(c, `/projects/${projectId}`);
     if (!path) {
-      return c.text('Invalid slug or project id', 400);
+      return c.json({ error: 'Invalid slug' }, 400);
     }
 
     return relayMadocResponse(await madocFetch(path, requestBearerToken(c)));
@@ -156,9 +152,9 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
       return identity;
     }
 
-    const body = await c.req.json().catch(() => undefined);
-    if (body === undefined) {
-      return c.text('Invalid JSON', 400);
+    const body = await readJsonBody(c);
+    if (body instanceof Response) {
+      return body;
     }
 
     return relayMadocResponse(await madocFetch('/api/madoc/projects', requestBearerToken(c), { method: 'POST', body }));
@@ -166,51 +162,42 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
 
   // Exports a project's capture model (+ config) as a reusable template -- same payload shape the
   // "Duplicate project" button passes as `remote_template` when creating a new one.
-  app.get('/:projectId/export', async c => {
+  app.get('/:projectId/export', validateParams({ projectId: safeSegment }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const projectId = c.req.param('projectId');
-    if (!isSafeSegment(projectId)) {
-      return c.text('Invalid project id', 400);
-    }
+    const { projectId } = c.req.valid('param');
 
     return relayMadocResponse(await madocFetch(`/api/madoc/projects/${projectId}/export`, requestBearerToken(c)));
   });
 
   // The project's own flat collection id, needed to link manifests/collections to it.
-  app.get('/:projectId/structure', async c => {
+  app.get('/:projectId/structure', validateParams({ projectId: safeSegment }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const projectId = c.req.param('projectId');
-    if (!isSafeSegment(projectId)) {
-      return c.text('Invalid project id', 400);
-    }
+    const { projectId } = c.req.valid('param');
 
     return relayMadocResponse(await madocFetch(`/api/madoc/projects/${projectId}/structure`, requestBearerToken(c)));
   });
 
   // Same transition as the admin Pause/Resume/Complete/Archive buttons (0 paused, 1 active,
   // 2 published/complete, 3 archived, 4 prepared).
-  app.put('/:projectId/status', async c => {
+  app.put('/:projectId/status', validateParams({ projectId: safeSegment }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const projectId = c.req.param('projectId');
-    if (!isSafeSegment(projectId)) {
-      return c.text('Invalid project id', 400);
-    }
+    const { projectId } = c.req.valid('param');
 
-    const body = await c.req.json().catch(() => undefined);
-    if (body === undefined) {
-      return c.text('Invalid JSON', 400);
+    const body = await readJsonBody(c);
+    if (body instanceof Response) {
+      return body;
     }
 
     return relayMadocResponse(
@@ -224,11 +211,8 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
   // reach the frontend unchanged (e.g. prepare-claim answers 404, not 403, when the user lacks
   // the site scope -- the annotate page branches on exactly that).
   for (const action of ['random', 'prepare-claim', 'claim', 'revoke-claim'] as const) {
-    app.post(`/:projectId/${action}`, async c => {
-      const projectId = c.req.param('projectId');
-      if (!isSafeSegment(projectId)) {
-        return c.text('Invalid project id', 400);
-      }
+    app.post(`/:projectId/${action}`, validateParams({ projectId: safeSegment }), async c => {
+      const { projectId } = c.req.valid('param');
 
       return forwardJsonBody(c, `/api/madoc/projects/${projectId}/${action}`, 'POST', requestBearerToken(c));
     });
@@ -236,16 +220,13 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
 
   // ---- public: progress ----
 
-  app.get('/:projectId/progress', async c => {
-    const siteId = await resolveSiteId(c);
-    if (siteId === null) {
-      return c.text('Could not resolve site', 400);
+  app.get('/:projectId/progress', validateParams({ projectId: safeSegment }), async c => {
+    const siteId = await requireSiteId(c);
+    if (siteId instanceof Response) {
+      return siteId;
     }
 
-    const projectId = c.req.param('projectId');
-    if (!isSafeSegment(projectId)) {
-      return c.text('Invalid project id', 400);
-    }
+    const { projectId } = c.req.valid('param');
 
     const project = await getMadocProject(siteId, projectId);
     const [{ manifestItems: rawManifestItems, taskStats }, canvasTasks, thumbnails] = await Promise.all([
@@ -325,17 +306,13 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
   // stay blocked for everyone (including the user who just abandoned it), potentially forever.
   // This endpoint recalculates the counter right after an abandon, using the same rule as
   // madoc-ts's syncManifestTaskStatus.
-  app.post('/:projectId/manifests/:manifestId/resync-claim', async c => {
+  app.post('/:projectId/manifests/:manifestId/resync-claim', validateParams({ projectId: safeSegment, manifestId: safeSegment }), async c => {
     const identity = requireUser(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const projectId = c.req.param('projectId');
-    const manifestId = c.req.param('manifestId');
-    if (!isSafeSegment(projectId) || !isSafeSegment(manifestId)) {
-      return c.text('Invalid project or manifest id', 400);
-    }
+    const { projectId, manifestId } = c.req.valid('param');
 
     // Only to make sure the project exists on this site before touching any of its tasks.
     await getMadocProject(identity.siteId, projectId);
@@ -360,16 +337,13 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
   // Admin-only debug view: shows, per manifest of a project, which crowdsourcing task(s) hang off
   // it and whether they count as "transcribed" (status 2 or 3, same rule as /:projectId/progress)
   // -- so the percentage on the project page can be verified visually instead of trusted blindly.
-  app.get('/:projectId/task-debug', async c => {
+  app.get('/:projectId/task-debug', validateParams({ projectId: safeSegment }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const projectId = c.req.param('projectId');
-    if (!isSafeSegment(projectId)) {
-      return c.text('Invalid project id', 400);
-    }
+    const { projectId } = c.req.valid('param');
 
     const project = await getMadocProject(identity.siteId, projectId);
     const [structure, tasks] = await Promise.all([
@@ -426,9 +400,9 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
   // ---- manual: public read, admin link ----
 
   app.get('/:projectId/manual', async c => {
-    const siteId = await resolveSiteId(c);
-    if (siteId === null) {
-      return c.text('Could not resolve site', 400);
+    const siteId = await requireSiteId(c);
+    if (siteId instanceof Response) {
+      return siteId;
     }
 
     const manual = await manualsRepository.getManualForProject(siteId, c.req.param('projectId'));
@@ -440,9 +414,9 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
   });
 
   app.get('/:projectId/manual/attachment/:lang', async c => {
-    const siteId = await resolveSiteId(c);
-    if (siteId === null) {
-      return c.text('Could not resolve site', 400);
+    const siteId = await requireSiteId(c);
+    if (siteId instanceof Response) {
+      return siteId;
     }
 
     const lang = c.req.param('lang');
@@ -466,34 +440,31 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
   });
 
   // Link a project to a manual (or unlink with manualId: null).
-  app.put('/:projectId/manual-link', async c => {
+  app.put('/:projectId/manual-link', validateJson(setManualLinkSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const result = setManualLinkSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('Invalid payload', 400);
-    }
+    const input = c.req.valid('json');
 
-    if (result.data.manualId !== null) {
-      const manual = await manualsRepository.getManualById(identity.siteId, result.data.manualId);
+    if (input.manualId !== null) {
+      const manual = await manualsRepository.getManualById(identity.siteId, input.manualId);
       if (!manual) {
-        return c.text('Manual not found', 404);
+        return c.json({ error: 'Manual not found' }, 404);
       }
     }
 
-    await manualsRepository.setProjectLink(identity.siteId, c.req.param('projectId'), result.data.manualId);
+    await manualsRepository.setProjectLink(identity.siteId, c.req.param('projectId'), input.manualId);
     return c.body(null, 204);
   });
 
   // ---- institution: public read, admin link ----
 
   app.get('/:projectId/institution', async c => {
-    const siteId = await resolveSiteId(c);
-    if (siteId === null) {
-      return c.text('Could not resolve site', 400);
+    const siteId = await requireSiteId(c);
+    if (siteId instanceof Response) {
+      return siteId;
     }
 
     const institution = await institutionsRepository.getActiveInstitutionForProjectSlug(siteId, c.req.param('projectId'));
@@ -505,25 +476,22 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
   });
 
   // Link a project to an institution (or unlink with institutionId: null).
-  app.put('/:projectId/institution-link', async c => {
+  app.put('/:projectId/institution-link', validateJson(setInstitutionLinkSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const result = setInstitutionLinkSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('Invalid payload', 400);
-    }
+    const input = c.req.valid('json');
 
-    if (result.data.institutionId !== null) {
-      const institution = await institutionsRepository.getInstitutionById(identity.siteId, result.data.institutionId);
+    if (input.institutionId !== null) {
+      const institution = await institutionsRepository.getInstitutionById(identity.siteId, input.institutionId);
       if (!institution) {
-        return c.text('Institution not found', 404);
+        return c.json({ error: 'Institution not found' }, 404);
       }
     }
 
-    await institutionsRepository.setProjectLink(identity.siteId, c.req.param('projectId'), result.data.institutionId);
+    await institutionsRepository.setProjectLink(identity.siteId, c.req.param('projectId'), input.institutionId);
     return c.body(null, 204);
   });
 

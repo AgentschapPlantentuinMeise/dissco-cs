@@ -30,6 +30,9 @@ export default defineConfig(({ command }) => ({
       // services/gateway/conf.d/services/madoc-api.conf). Without this it would fall through to
       // Vite's own SPA fallback and silently get index.html back.
       '/api/madoc': 'http://localhost:8888',
+      // Madoc's uploaded media (project thumbnails, etc.) come back as relative /public/storage/...
+      // URLs; without this, Vite's SPA fallback answers them with index.html and images stay blank.
+      '/public': 'http://localhost:8888',
       // madoc-ts's auth flows (src/api/madoc-auth/request.ts) go through the gateway at
       // /s/:slug/madoc/api/*. Page paths under /s/:slug/* (e.g. /s/:slug/manage) must stay
       // served by Vite itself so the SPA (and getSiteSlug()) still works when opening the app

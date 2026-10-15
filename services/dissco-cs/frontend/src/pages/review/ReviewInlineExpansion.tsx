@@ -13,7 +13,6 @@ interface ReviewInlineExpansionProps {
   onDocumentChange: (rowId: string, document: MadocAnnotationDocumentDto) => void;
   onRelease: () => void;
   releasing: boolean;
-  releaseError: string | null;
   onClose: () => void;
   /** Mirrors the row's own bulk-selection checkbox — same state, same handler, just reachable
       from the detail view too instead of only from the (possibly scrolled-away) row. */
@@ -64,7 +63,6 @@ export function ReviewInlineExpansion({
   onDocumentChange,
   onRelease,
   releasing,
-  releaseError,
   onClose,
   selected,
   onToggleSelect,
@@ -140,7 +138,6 @@ export function ReviewInlineExpansion({
       }
     >
       <SubmissionFieldsForm model={modelQuery.data} document={currentDocument} onChange={handleChange} />
-      {releaseError && <p className="mt-3 text-[0.78rem] text-red-600">{releaseError}</p>}
       {confirmingRelease && (
         <ConfirmDialog
           title={t('review_detail_release_confirm_title')}

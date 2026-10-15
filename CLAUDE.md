@@ -37,7 +37,8 @@ Before implementing:
 **Minimum code that solves the problem. Nothing speculative.**
 
 - No features beyond what was asked.
-- No abstractions for single-use code.
+- No abstractions for single-use code. (Single use = written once. Code that already repeats is the opposite case, see below.)
+- **Second time = shared helper.** About to write the same block a second time (validation, a fetch, error handling, a piece of UI)? Extract it right away into a shared helper or component and use it in both places. Never copy a neighbouring file's block "because that's how it's done there".
 - No "flexibility" or "configurability" that wasn't requested.
 - No error handling for impossible scenarios.
 - If you write 200 lines and it could be 50, rewrite it.
@@ -98,7 +99,6 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Don't mutate state directly
 - Don't store derived values in state (calculate on render instead)
 
-Ignore TS-fouten nodemodules is not installed in this project
 
 Keep in mind that the structure en code we provide is in a open source context 
 
@@ -126,6 +126,10 @@ Keep in mind that the structure en code we provide is in a open source context
 - Bij elke bugfix in rekenlogica komt er een test bij die de bug reproduceert.
 - Faalt een test: ofwel een echte bug (code fixen), ofwel een bewust gewijzigde regel (test in dezelfde wijziging aanpassen). Een test die herhaaldelijk breekt zonder ooit een bug te vangen, mag weg.
 
+**Conventietests:** `backend/test/conventions.test.ts` en `frontend/test/conventions.test.ts` (scanner in `test-support/conventions.ts`) zoeken in `src/` naar patronen die we bewust opgeruimd hebben (bv. `c.text(`, `console.log`, `refetch`) en zeggen wat je in de plaats doet. De Claude-hook draait ze na elke edit, de pre-commit en Docker-build via `pnpm test`.
+- Elke ronde die een patroon opruimt, voegt er meteen een regel aan toe — een afspraak die enkel in tekst staat, sluipt terug.
+- Faalt een regel: pas de code aan zoals de melding zegt. Een uitzondering (`allowedIn`) komt er enkel bij met een reden.
+
 **Waar (tests):** `<pakket>/test/`, met de mappenstructuur van `src/` gespiegeld (buiten `src/`, zodat `tsc`/`vite build` ze niet meenemen). `.vscode/settings.json` bevat enkel projectinstellingen; persoonlijke instellingen horen in je eigen VS Code User settings.
 
 
@@ -136,8 +140,26 @@ Keep in mind that the structure en code we provide is in a open source context
 1. **Elke request** geeft één regel in stdout (`infrastructure/request-log.ts`). Requests komen niet in de databank.
 2. **Elke fout gaat op één plek naar `app_log`**. Code die een fout tegenkomt, logt niet zelf.
    - Backend: gooi de fout gewoon door; `app.onError` + de middleware leggen ze vast. Geen eigen try/catch die enkel logt en 500 geeft. Een eigen try/catch alleen als je iets anders teruggeeft; is dat een 5xx, geef de fout dan door met `passErrorOn(c, err)`.
-   - Frontend: geen `console.log`/`console.error` in productiecode. Een `useMutation`-fout wordt centraal gerapporteerd en getoond (`api/query-client.ts`); zet `meta: { handlesOwnError: true }` als de pagina zelf een melding toont. Een fout in een eigen handler gaat via `reportActionError(err, key)` (`hooks/use-toast.ts`).
+   - Frontend: geen `console.log`/`console.error` in productiecode. Een `useMutation`-fout wordt centraal gerapporteerd en getoond (`api/query-client.ts`); een andere tekst kies je met `meta: { errorMessage: 'error_delete_failed' }`, en `meta: { handlesOwnError: true }` zet je enkel als de pagina zelf iets anders toont. Een fout in een eigen handler (enkel bij de uitzonderingen hieronder) gaat via `reportActionError(err, key)` (`hooks/use-toast.ts`) of, zonder melding, `reportClientError`.
 3. **De gebruiker** ziet bij een mislukte actie een korte, menselijke melding in de taal van de site: een vaste vertaalsleutel (`ErrorMessageKey`), nooit de technische servermelding. De toast toont enkel fouten bij acties. Kan een hele pagina niet laden, dan toont ze `PageError` (`components/layout/PageError.tsx`) met een uitweg (knop), zonder toast erbij; een verwachte situatie (bv. een volzette taak) krijgt daar een eigen tekst, geen foutmelding.
+
+## Schrijven naar de server (services/dissco-cs frontend)
+
+- **Een actie van de gebruiker die schrijft = `useMutation`**, met `mutationFn: () => xApi.y(...)`. Geen `await xApi.y()` in een eigen try/catch.
+- **Na succes:** in `onSuccess` `invalidateQueries({ queryKey: xKeys.… })` via de factory, zodat ook andere pagina's (bv. de publieke lijst) verversen. Geeft de server het nieuwe object terug, dan mag `setQueryData`. Nooit `refetch()`, en nooit een `refetch`-functie als prop doorgeven.
+- **Laden:** `isPending` (en `variables` voor "welke rij"), geen eigen `useState` voor saving/loading/error.
+- **Fout:** niets doen, de `MutationCache` toont de toast. Een extra stap bij een fout (bv. een schakelaar terugzetten) gaat in `onError` van de mutate-aanroep.
+- **Bewuste uitzonderingen** (blijven een gewone call, fouten via `reportClientError`):
+  - automatische writes zonder klik van de gebruiker: claimen en vrijgeven op de annotatiepagina, `visitForum` en de prune in projectbeheer
+  - bulkacties met een resultaat per item: bulk-accept in review en bulk create
+
+## Schrijfroutes (services/dissco-cs backend)
+
+- **Body valideren:** `validateJson(schema)` (`infrastructure/validate-json.ts`) als middleware op de route, met het gedeelde zod-schema; in de handler `c.req.valid('json')`. Nooit `c.req.json()` + `safeParse` met de hand. Een body die we ongevalideerd aan Madoc doorgeven (Madoc valideert zelf): `forwardJsonBody` of `readJsonBody` (`madoc-client/client.ts`).
+- **Padparameters en site:** `validateParams({ id: intId, projectId: safeSegment, lang: siteLang })` (`infrastructure/validate-params.ts`) op de route, gelezen met `c.req.valid('param')`; nooit `Number(c.req.param(...))` of `isSafeSegment` met de hand. Een route die de site nodig heeft: `requireSiteId(c)` (`auth/auth.ts`), zoals `requireUser`.
+- **Fouten zijn altijd `{ error: string }`-JSON**, net als Madoc: `c.json({ error: '...' }, status)`. Ook 404 (`c.notFound()`, via `app.notFound`) en onverwachte fouten (`errorResponse` in `app.onError`). De tekst is voor ontwikkelaars en logs; de gebruiker ziet een vertaalde sleutel.
+- **Werkwoorden:** `POST` = aanmaken of een actie, `PUT` = een ding volledig vervangen, `PATCH` = een deel wijzigen, `DELETE` = verwijderen.
+- **Antwoord:** aanmaken → `201` + DTO; wijzigen, verwijderen of een actie → `204`. Enkel als de frontend het resultaat echt gebruikt, geef je het terug (bv. forumtopic sluiten → `closedAt`, prune → `{ removed }`).
 
 ## DTO's (services/dissco-cs)
 

@@ -10,6 +10,7 @@ WORKDIR /build
 RUN npm install -g pnpm@9.15.9
 COPY --from=shared-build /build/shared ./shared/
 COPY frontend/ ./frontend/
+COPY test-support/ ./test-support/
 WORKDIR /build/frontend
 RUN pnpm install --frozen-lockfile
 RUN pnpm test
@@ -26,6 +27,7 @@ COPY backend/tsconfig.json ./
 COPY backend/src ./src
 COPY backend/vitest.config.ts ./
 COPY backend/test ./test
+COPY test-support/ /build/test-support/
 RUN pnpm test
 RUN pnpm run build
 RUN pnpm prune --prod

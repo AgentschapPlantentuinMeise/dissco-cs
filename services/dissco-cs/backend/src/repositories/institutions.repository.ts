@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { InstitutionDto, InstitutionInput, SitePageLang } from '@dissco-cs/shared-types';
+import { InstitutionDto, InstitutionInput, SitePageLang, firstFilledLang, slugify } from '@dissco-cs/shared-types';
 
 export type InstitutionRow = {
   id: number;
@@ -16,15 +16,6 @@ export type InstitutionRow = {
   created_at: Date;
   updated_at: Date;
 };
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
 
 export class InstitutionsRepository {
   constructor(
@@ -86,8 +77,7 @@ export class InstitutionsRepository {
   }
 
   async createInstitution(siteId: number, input: InstitutionInput): Promise<InstitutionRow> {
-    const baseName = input.name.nl || input.name.en || input.name.fr || input.name.de || 'instituut';
-    const slug = await this.uniqueInstitutionSlug(siteId, baseName, null);
+    const slug = await this.uniqueInstitutionSlug(siteId, firstFilledLang(input.name) ?? '', null);
 
     const result = await this.pool.query<InstitutionRow>(
       `
@@ -122,8 +112,7 @@ export class InstitutionsRepository {
       return null;
     }
 
-    const baseName = input.name.nl || input.name.en || input.name.fr || input.name.de || 'instituut';
-    const slug = await this.uniqueInstitutionSlug(siteId, baseName, id);
+    const slug = await this.uniqueInstitutionSlug(siteId, firstFilledLang(input.name) ?? '', id);
 
     const result = await this.pool.query<InstitutionRow>(
       `
@@ -214,7 +203,7 @@ export class InstitutionsRepository {
   }
 
   private async uniqueInstitutionSlug(siteId: number, baseName: string, excludeId: number | null): Promise<string> {
-    const base = slugify(baseName) || 'instituut';
+    const base = slugify(baseName, 'instituut');
     let candidate = base;
     let suffix = 2;
 

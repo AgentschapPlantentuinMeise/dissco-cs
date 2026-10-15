@@ -2,9 +2,9 @@ import { Hono } from 'hono';
 
 import { MadocUserIdentity, requestBearerToken, requireUser } from '../auth/auth.js';
 import { forwardJsonBody } from '../madoc-client/client.js';
-import { isSafeSegment } from '../madoc-client/path-segment.js';
 import { getMadocReviewTasks } from '../madoc-client/reviews.js';
 import { getMadocSiteUserRole } from '../madoc-client/users.js';
+import { safeSegment, validateParams } from '../infrastructure/validate-params.js';
 
 // Same condition as the frontend's is-reviewer check: site admins always qualify, anyone else
 // only when their site role is actually 'reviewer'.
@@ -36,7 +36,7 @@ export function reviewController(): Hono {
     }
 
     if (!(await isReviewerOrAdmin(identity))) {
-      return c.text('Forbidden', 403);
+      return c.json({ error: 'Forbidden' }, 403);
     }
 
     return c.json({ tasks: await getMadocReviewTasks(identity.siteId) });
@@ -45,11 +45,8 @@ export function reviewController(): Hono {
   // Accept/reject a submission, forwarded as the reviewer. Deliberately madoc-ts's own
   // crowdsourcing task route, not the generic tasks-api PATCH (/tasks/:taskId): it carries extra
   // domain logic on accept (e.g. blocking when table cells are flagged).
-  app.patch('/tasks/:taskId', async c => {
-    const taskId = c.req.param('taskId');
-    if (!isSafeSegment(taskId)) {
-      return c.text('Invalid task id', 400);
-    }
+  app.patch('/tasks/:taskId', validateParams({ taskId: safeSegment }), async c => {
+    const { taskId } = c.req.valid('param');
 
     return forwardJsonBody(c, `/api/madoc/crowdsourcing/task/${taskId}`, 'PATCH', requestBearerToken(c));
   });

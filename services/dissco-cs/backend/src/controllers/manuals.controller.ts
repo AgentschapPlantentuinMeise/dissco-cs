@@ -1,7 +1,9 @@
 import { Hono } from 'hono';
 import { ManualsRepository, toManualDetailDto, toManualDto, toManualSummaryDto } from '../repositories/manuals.repository.js';
 import { requireSiteAdmin } from '../auth/auth.js';
-import { attachmentFileSchema, isSitePageLang, setManualContentSchema, setManualTitleSchema } from '@dissco-cs/shared-types';
+import { validateJson } from '../infrastructure/validate-json.js';
+import { intId, siteLang, validateParams } from '../infrastructure/validate-params.js';
+import { attachmentFileSchema, setManualContentSchema, setManualTitleSchema } from '@dissco-cs/shared-types';
 
 // The manual library (admin). Reading a project's manual and linking it to a project live in
 // projects.controller.ts (/projects/:projectId/manual).
@@ -18,31 +20,25 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
     return c.json({ manuals: manuals.map(toManualSummaryDto) });
   });
 
-  app.post('/', async c => {
+  app.post('/', validateJson(setManualTitleSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const result = setManualTitleSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('Invalid payload', 400);
-    }
+    const input = c.req.valid('json');
 
-    const manual = await manualsRepository.createManual(identity.siteId, { [result.data.lang]: result.data.title });
+    const manual = await manualsRepository.createManual(identity.siteId, { [input.lang]: input.title });
     return c.json(toManualDto(manual), 201);
   });
 
-  app.get('/:manualId', async c => {
+  app.get('/:manualId', validateParams({ manualId: intId }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const manualId = Number(c.req.param('manualId'));
-    if (!Number.isInteger(manualId)) {
-      return c.notFound();
-    }
+    const { manualId } = c.req.valid('param');
 
     const manual = await manualsRepository.getManualById(identity.siteId, manualId);
     if (!manual) {
@@ -52,16 +48,13 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
     return c.json(toManualDetailDto(manual, await manualsRepository.listAttachmentMeta(manual.id)));
   });
 
-  app.delete('/:manualId', async c => {
+  app.delete('/:manualId', validateParams({ manualId: intId }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const manualId = Number(c.req.param('manualId'));
-    if (!Number.isInteger(manualId)) {
-      return c.notFound();
-    }
+    const { manualId } = c.req.valid('param');
 
     const deleted = await manualsRepository.deleteManual(identity.siteId, manualId);
     if (!deleted) {
@@ -71,24 +64,17 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
     return c.body(null, 204);
   });
 
-  app.put('/:manualId/:lang', async c => {
+  app.put('/:manualId/:lang', validateParams({ manualId: intId, lang: siteLang }), validateJson(setManualContentSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const manualId = Number(c.req.param('manualId'));
-    const lang = c.req.param('lang');
-    if (!Number.isInteger(manualId) || !isSitePageLang(lang)) {
-      return c.notFound();
-    }
+    const { manualId, lang } = c.req.valid('param');
 
-    const result = setManualContentSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('Invalid payload', 400);
-    }
+    const input = c.req.valid('json');
 
-    const updated = await manualsRepository.updateManualContent(identity.siteId, manualId, lang, result.data.content);
+    const updated = await manualsRepository.updateManualContent(identity.siteId, manualId, lang, input.content);
     if (!updated) {
       return c.notFound();
     }
@@ -96,17 +82,13 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
     return c.body(null, 204);
   });
 
-  app.put('/:manualId/:lang/attachment', async c => {
+  app.put('/:manualId/:lang/attachment', validateParams({ manualId: intId, lang: siteLang }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const manualId = Number(c.req.param('manualId'));
-    const lang = c.req.param('lang');
-    if (!Number.isInteger(manualId) || !isSitePageLang(lang)) {
-      return c.notFound();
-    }
+    const { manualId, lang } = c.req.valid('param');
 
     const manual = await manualsRepository.getManualById(identity.siteId, manualId);
     if (!manual) {
@@ -116,11 +98,11 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
     const body = await c.req.parseBody().catch(() => null);
     const file = body?.file;
     if (!(file instanceof File)) {
-      return c.text('Missing file', 400);
+      return c.json({ error: 'Missing file' }, 400);
     }
 
     if (!attachmentFileSchema.safeParse(file).success) {
-      return c.text('File too large', 413);
+      return c.json({ error: 'File too large' }, 413);
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -133,17 +115,13 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
     return c.body(null, 204);
   });
 
-  app.delete('/:manualId/:lang/attachment', async c => {
+  app.delete('/:manualId/:lang/attachment', validateParams({ manualId: intId, lang: siteLang }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const manualId = Number(c.req.param('manualId'));
-    const lang = c.req.param('lang');
-    if (!Number.isInteger(manualId) || !isSitePageLang(lang)) {
-      return c.notFound();
-    }
+    const { manualId, lang } = c.req.valid('param');
 
     const manual = await manualsRepository.getManualById(identity.siteId, manualId);
     if (!manual) {

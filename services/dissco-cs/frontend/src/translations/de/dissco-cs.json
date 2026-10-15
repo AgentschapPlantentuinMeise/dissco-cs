@@ -43,7 +43,6 @@
   "contact_form_message": "Nachricht",
   "contact_form_submit": "Senden",
   "contact_form_success": "Danke, Ihre Nachricht wurde gesendet.",
-  "contact_form_error": "Beim Senden ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
   "sm_pages_contact_email_label": "E-Mail-Adresse für Meldungen",
   "sm_pages_contact_show_form": "Kontaktformular auf dieser Seite anzeigen",
   "sm_pages_contact_email_placeholder": "z. B. info@beispiel.de",
@@ -287,7 +286,6 @@
   "sm_institutions_choose_file": "Datei auswählen",
   "sm_institutions_invalid_email": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
   "sm_institutions_invalid_phone": "Bitte geben Sie eine gültige Telefonnummer ein.",
-  "sm_institutions_save_error": "Speichern fehlgeschlagen. Bitte versuchen Sie es erneut.",
   "sm_tile_projects_desc": "Erstellen Sie neue Projekte und verwalten Sie bestehende.",
   "sm_tile_projects_title": "Projektverwaltung",
   "sm_projects_search_placeholder": "Projekt suchen...",
@@ -359,8 +357,7 @@
   "sm_manuals_attachment_insert_marker": "Anhang hier einfügen",
   "sm_manuals_missing_langs": "Noch nicht vollständig für: {{langs}}. Fügen Sie Text oder eine Anlage für diese Sprachen hinzu, um speichern zu können.",
   "sm_manuals_needs_content": "Füllen Sie Text aus (in allen Sprachen) oder fügen Sie einen Anhang hinzu, um speichern zu können.",
-  "sm_manuals_lang_missing": "Noch nicht ausgefüllt",
-  "sm_manuals_save_error": "Speichern fehlgeschlagen. Bitte versuchen Sie es erneut.",
+  "common_lang_missing": "Noch nicht ausgefüllt",
   "sm_manuals_attachment_replace": "Ersetzen",
   "sm_manuals_attachment_none": "Kein Anhang hinzugefügt",
   "sm_manuals_attachment_add": "Anhang hinzufügen",
@@ -459,5 +456,6 @@
   "error_release_failed": "Die Aufgabe konnte nicht freigegeben werden. Bitte versuchen Sie es erneut.",
   "error_load_failed": "Dies konnte nicht geladen werden. Bitte versuchen Sie es später erneut.",
   "error_upload_failed": "Die Datei wurde nicht hochgeladen. Bitte versuchen Sie es erneut.",
+  "error_send_failed": "Ihre Nachricht wurde nicht gesendet. Bitte versuchen Sie es erneut.",
   "error_generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
 }

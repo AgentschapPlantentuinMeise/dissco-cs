@@ -14,6 +14,7 @@
   "dependencies": {
     "@dissco-cs/shared-types": "file:../shared",
     "@hono/node-server": "^1.19.5",
+    "@hono/zod-validator": "^0.9.1",
     "hono": "^4.10.5",
     "nodemailer": "^6.6.3",
     "pg": "^8.16.3",

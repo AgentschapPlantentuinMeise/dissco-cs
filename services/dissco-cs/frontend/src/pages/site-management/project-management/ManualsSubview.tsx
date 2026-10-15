@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { manualKeys } from '../../../api/queries/manuals';
+import { projectKeys } from '../../../api/queries/projects';
 import { manualsApi } from '../../../api/cs-client/manuals';
 import { SaveButton } from '../../../components/ui/SaveButton';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
@@ -8,13 +11,11 @@ import { manualHasContent } from './manual-content';
 import { localeText } from '../../../utility/locale-text';
 import { defaultLang, siteLangText } from '../../../utility/site-lang-text';
 import { MadocProjectDto, MAX_MANUAL_TITLE_LENGTH, ManualSummaryDto, setManualTitleSchema } from '@dissco-cs/shared-types';
-import { reportActionError } from '../../../hooks/use-toast';
 
 export const ManualsSubview: React.FC<{
   projects: MadocProjectDto[];
   manuals: ManualSummaryDto[];
-  refetchManuals: () => void;
-}> = ({ projects, manuals, refetchManuals }) => {
+}> = ({ projects, manuals }) => {
   const { t, i18n } = useTranslation('dissco-cs');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
@@ -25,34 +26,36 @@ export const ManualsSubview: React.FC<{
     return project ? localeText(project.label, i18n.language) || slug : slug;
   };
 
-  const remove = async (id: number) => {
-    try {
-      await manualsApi.remove(id);
-    } catch (err) {
-      reportActionError(err, 'error_delete_failed');
-      return;
-    }
-    setPendingDeleteId(null);
-    if (editingId === id) {
-      setEditingId(null);
-    }
-    refetchManuals();
-  };
+  const queryClient = useQueryClient();
+
+  const { mutate: remove } = useMutation({
+    mutationFn: (id: number) => manualsApi.remove(id),
+    onSuccess: (_result, id) => {
+      setPendingDeleteId(null);
+      if (editingId === id) {
+        setEditingId(null);
+      }
+      // A linked project's public manual popup disappears with it.
+      queryClient.invalidateQueries({ queryKey: projectKeys.manuals() });
+      return queryClient.invalidateQueries({ queryKey: manualKeys.all });
+    },
+    meta: { errorMessage: 'error_delete_failed' },
+  });
 
   const canCreate = setManualTitleSchema.safeParse({ lang: defaultLang(i18n.language), title: newTitle.trim() }).success;
 
-  const create = async () => {
+  const { mutate: createManual } = useMutation({
+    mutationFn: (title: string) => manualsApi.create(defaultLang(i18n.language), title),
+    onSuccess: manual => {
+      setNewTitle('');
+      setEditingId(manual.id);
+      return queryClient.invalidateQueries({ queryKey: manualKeys.all });
+    },
+  });
+
+  const create = () => {
     if (!canCreate) return;
-    let manual;
-    try {
-      manual = await manualsApi.create(defaultLang(i18n.language), newTitle.trim());
-    } catch (err) {
-      reportActionError(err, 'error_save_failed');
-      return;
-    }
-    setNewTitle('');
-    setEditingId(manual.id);
-    refetchManuals();
+    createManual(newTitle.trim());
   };
 
   return (
@@ -66,7 +69,7 @@ export const ManualsSubview: React.FC<{
           maxLength={MAX_MANUAL_TITLE_LENGTH}
           className="border border-gray-300 rounded-lg p-2 flex-1 max-w-sm"
         />
-        <SaveButton onClick={() => void create()} disabled={!canCreate} />
+        <SaveButton onClick={create} disabled={!canCreate} />
       </div>
 
       {manuals.length === 0 ? (
@@ -138,7 +141,7 @@ export const ManualsSubview: React.FC<{
           message={t('sm_manuals_delete_confirm')}
           confirmLabel={t('common_delete')}
           cancelLabel={t('common_cancel')}
-          onConfirm={() => void remove(pendingDeleteId)}
+          onConfirm={() => remove(pendingDeleteId)}
           onCancel={() => setPendingDeleteId(null)}
         />
       )}

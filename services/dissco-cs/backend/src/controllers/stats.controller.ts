@@ -1,7 +1,7 @@
 import { Context, Hono } from 'hono';
 
 import { InstitutionsRepository } from '../repositories/institutions.repository.js';
-import { requestMadocUserIdentity, resolveSiteId } from '../auth/auth.js';
+import { requestMadocUserIdentity, requireSiteId } from '../auth/auth.js';
 import { HonourBoardRepository, isHonourBoardPeriod } from '../madoc-db/honour-board.repository.js';
 import { StatsRepository } from '../madoc-db/stats.repository.js';
 
@@ -18,9 +18,9 @@ export function statsController(
 
   // Resolves the site and the active institution behind `:slug`, or the error response to return.
   async function resolveInstitution(c: Context): Promise<{ siteId: number; institutionId: number } | Response> {
-    const siteId = await resolveSiteId(c);
-    if (siteId === null) {
-      return c.text('Could not resolve site', 400);
+    const siteId = await requireSiteId(c);
+    if (siteId instanceof Response) {
+      return siteId;
     }
 
     const institution = await institutionsRepository.getActiveInstitutionBySlug(siteId, c.req.param('slug') ?? '');
@@ -45,18 +45,18 @@ export function statsController(
   // ---- site ----
 
   app.get('/', async c => {
-    const siteId = await resolveSiteId(c);
-    if (siteId === null) {
-      return c.text('Could not resolve site', 400);
+    const siteId = await requireSiteId(c);
+    if (siteId instanceof Response) {
+      return siteId;
     }
 
     return c.json(await statsRepository.getSite(siteId));
   });
 
   app.get('/current', async c => {
-    const siteId = await resolveSiteId(c);
-    if (siteId === null) {
-      return c.text('Could not resolve site', 400);
+    const siteId = await requireSiteId(c);
+    if (siteId instanceof Response) {
+      return siteId;
     }
 
     return c.json(await statsRepository.getSiteCurrent(siteId));
@@ -65,12 +65,12 @@ export function statsController(
   app.get('/honour-board/:period', async c => {
     const period = c.req.param('period');
     if (!isHonourBoardPeriod(period)) {
-      return c.text('Unknown period', 400);
+      return c.json({ error: 'Unknown period' }, 400);
     }
 
-    const siteId = await resolveSiteId(c);
-    if (siteId === null) {
-      return c.text('Could not resolve site', 400);
+    const siteId = await requireSiteId(c);
+    if (siteId instanceof Response) {
+      return siteId;
     }
 
     const result = await honourBoardRepository.getSitePeriod(siteId, period, userUrnOf(c));
@@ -80,12 +80,12 @@ export function statsController(
   app.get('/honour-board/:period/current', async c => {
     const period = c.req.param('period');
     if (!isHonourBoardPeriod(period)) {
-      return c.text('Unknown period', 400);
+      return c.json({ error: 'Unknown period' }, 400);
     }
 
-    const siteId = await resolveSiteId(c);
-    if (siteId === null) {
-      return c.text('Could not resolve site', 400);
+    const siteId = await requireSiteId(c);
+    if (siteId instanceof Response) {
+      return siteId;
     }
 
     const userUrn = userUrnOf(c);
@@ -126,7 +126,7 @@ export function statsController(
   app.get('/institutions/:slug/honour-board/:period', async c => {
     const period = c.req.param('period');
     if (!isHonourBoardPeriod(period)) {
-      return c.text('Unknown period', 400);
+      return c.json({ error: 'Unknown period' }, 400);
     }
 
     const scope = await resolveInstitution(c);
@@ -142,7 +142,7 @@ export function statsController(
   app.get('/institutions/:slug/honour-board/:period/current', async c => {
     const period = c.req.param('period');
     if (!isHonourBoardPeriod(period)) {
-      return c.text('Unknown period', 400);
+      return c.json({ error: 'Unknown period' }, 400);
     }
 
     const scope = await resolveInstitution(c);

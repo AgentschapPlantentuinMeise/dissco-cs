@@ -93,7 +93,7 @@ export const Register: React.FC = () => {
     }
   };
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (terms && !termsAccepted) {

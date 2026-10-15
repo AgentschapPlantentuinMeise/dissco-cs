@@ -1,7 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import { announcementQueries } from '../../api/queries/announcements';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { announcementKeys, announcementQueries } from '../../api/queries/announcements';
 import { projectQueries } from '../../api/queries/projects';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/layout/CsPage';
@@ -13,7 +13,9 @@ import { ActiveStatusToggle } from '../../components/ui/ActiveStatusToggle';
 import { ActiveToggleField } from '../../components/ui/ActiveToggleField';
 import { Select } from '../../components/ui/Select';
 import { LuPencil, LuArrowLeft } from 'react-icons/lu';
-import { LANGUAGES, defaultLang, siteLangText } from '../../utility/site-lang-text';
+import { siteLangText } from '../../utility/site-lang-text';
+import { LanguageTabs } from '../../components/ui/LanguageTabs';
+import { useItemEditor } from '../../hooks/use-item-editor';
 import { localeText } from '../../utility/locale-text';
 import { announcementsApi } from '../../api/cs-client/announcements';
 import { MarkdownToolbar } from '../../components/ui/MarkdownToolbar';
@@ -22,10 +24,8 @@ import {
   AnnouncementDto,
   AnnouncementInput,
   AnnouncementTargetType,
-  SitePageLang,
   announcementInputSchema,
 } from '@dissco-cs/shared-types';
-import { reportActionError } from '../../hooks/use-toast';
 
 function toDateInputValue(iso: string | null): string {
   if (!iso) return '';
@@ -36,6 +36,19 @@ function targetLabel(t: (key: string) => string, announcement: AnnouncementDto):
   if (announcement.targetType === 'homepage') return t('sm_announcements_target_homepage');
   if (announcement.targetType === 'projects') return t('sm_announcements_target_projects');
   return `${t('sm_announcements_target_project')}: ${announcement.targetProjectSlug}`;
+}
+
+// An existing announcement as form input (also the base for the active toggle).
+function toAnnouncementInput(announcement: AnnouncementDto): AnnouncementInput {
+  return {
+    title: announcement.title,
+    description: announcement.description,
+    targetType: announcement.targetType,
+    targetProjectSlug: announcement.targetProjectSlug,
+    isActive: announcement.isActive,
+    startDate: announcement.startDate,
+    endDate: announcement.endDate,
+  };
 }
 
 const emptyDraft: AnnouncementInput = {
@@ -50,96 +63,67 @@ const emptyDraft: AnnouncementInput = {
 
 export const Announcements: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data, isLoading, refetch } = useQuery(announcementQueries.admin());
-  const { data: projectsResponse } = useQuery(projectQueries.list({ page: 1 }));
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery(announcementQueries.admin());
+  // 'published' also includes Madoc's status 2 (complete) -- only active projects can be targeted.
+  const { data: publishedProjects } = useQuery(projectQueries.listAll({ published: true }));
   const announcements = data?.announcements ?? [];
-  const projects = (projectsResponse?.projects ?? []).filter((p: MadocProjectDto) => p.status === 1);
+  const projects = (publishedProjects ?? []).filter((p: MadocProjectDto) => p.status === 1);
 
-  const [editingId, setEditingId] = useState<AnnouncementDto['id'] | null>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [draft, setDraft] = useState<AnnouncementInput>(emptyDraft);
-  const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
-  const [pendingDeleteId, setPendingDeleteId] = useState<AnnouncementDto['id'] | null>(null);
+  const {
+    editingId,
+    isFormOpen,
+    draft,
+    setDraft,
+    selectedLang,
+    setSelectedLang,
+    pendingDeleteId,
+    setPendingDeleteId,
+    startCreate,
+    startEdit,
+    cancelForm,
+  } = useItemEditor({ emptyDraft, toDraft: toAnnouncementInput });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const refresh = () => refetch();
+  // Invalidate every announcement query, so the public banners pick up the change too.
+  const onWritten = () => queryClient.invalidateQueries({ queryKey: announcementKeys.all });
 
-  const startCreate = () => {
-    setEditingId(null);
-    setDraft(emptyDraft);
-    setSelectedLang(defaultLang(i18n.language));
-    setIsFormOpen(true);
-  };
+  const { mutate: upsert } = useMutation({
+    mutationFn: async ({ id, input }: { id: AnnouncementDto['id'] | null; input: AnnouncementInput }) => {
+      if (id !== null) {
+        await announcementsApi.update(id, input);
+      } else {
+        await announcementsApi.create(input);
+      }
+    },
+    onSuccess: onWritten,
+  });
 
-  const startEdit = (announcement: AnnouncementDto) => {
-    setEditingId(announcement.id);
-    setDraft({
-      title: announcement.title,
-      description: announcement.description,
-      targetType: announcement.targetType,
-      targetProjectSlug: announcement.targetProjectSlug,
-      isActive: announcement.isActive,
-      startDate: announcement.startDate,
-      endDate: announcement.endDate,
-    });
-    setSelectedLang(defaultLang(i18n.language));
-    setIsFormOpen(true);
-  };
-
-  const cancelForm = () => {
-    setIsFormOpen(false);
-    setEditingId(null);
-    setDraft(emptyDraft);
-  };
+  const { mutate: remove } = useMutation({
+    mutationFn: (id: AnnouncementDto['id']) => announcementsApi.remove(id),
+    onSuccess: () => {
+      setPendingDeleteId(null);
+      return onWritten();
+    },
+    meta: { errorMessage: 'error_delete_failed' },
+  });
 
   const validation = announcementInputSchema.safeParse(draft);
   const canSave = validation.success;
 
-  const save = async () => {
+  const save = () => {
     const result = announcementInputSchema.safeParse(draft);
     if (!result.success) return;
-    try {
-      if (editingId !== null) {
-        await announcementsApi.update(editingId, result.data);
-      } else {
-        await announcementsApi.create(result.data);
-      }
-    } catch (err) {
-      reportActionError(err, 'error_save_failed');
-      return;
-    }
-    cancelForm();
-    refresh();
+    upsert({ id: editingId, input: result.data }, { onSuccess: cancelForm });
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (pendingDeleteId === null) return;
-    try {
-      await announcementsApi.remove(pendingDeleteId);
-    } catch (err) {
-      reportActionError(err, 'error_delete_failed');
-      return;
-    }
-    setPendingDeleteId(null);
-    refresh();
+    remove(pendingDeleteId);
   };
 
-  const toggleActive = async (announcement: AnnouncementDto) => {
-    try {
-      await announcementsApi.update(announcement.id, {
-        title: announcement.title,
-        description: announcement.description,
-        targetType: announcement.targetType,
-        targetProjectSlug: announcement.targetProjectSlug,
-        isActive: !announcement.isActive,
-        startDate: announcement.startDate,
-        endDate: announcement.endDate,
-      });
-    } catch (err) {
-      reportActionError(err, 'error_save_failed');
-      return;
-    }
-    refresh();
+  const toggleActive = (announcement: AnnouncementDto) => {
+    upsert({ id: announcement.id, input: { ...toAnnouncementInput(announcement), isActive: !announcement.isActive } });
   };
 
   return (
@@ -206,7 +190,7 @@ export const Announcements: React.FC = () => {
                     <div className="flex items-center gap-3 shrink-0">
                       <ActiveStatusToggle
                         active={announcement.isActive}
-                        onChange={() => void toggleActive(announcement)}
+                        onChange={() => toggleActive(announcement)}
                         label={siteLangText(announcement.title, i18n.language, announcement.id)}
                       />
                       <button
@@ -229,22 +213,11 @@ export const Announcements: React.FC = () => {
                     {editingId !== null ? t('sm_announcements_edit') : t('sm_announcements_new')}
                   </h2>
 
-                  <div className="flex gap-2 mb-4">
-                    {LANGUAGES.map(lang => (
-                      <button
-                        key={lang.code}
-                        onClick={() => setSelectedLang(lang.code)}
-                        className={`px-3 py-1 rounded-full text-sm font-medium border ${
-                          selectedLang === lang.code
-                            ? 'bg-[var(--cs-primary)] text-white border-[var(--cs-primary)]'
-                            : 'bg-transparent text-gray-600 border-gray-300'
-                        }`}
-                      >
-                        {t(`lang_${lang.code}`)}
-                        {!(draft.title[lang.code] ?? '').trim() && <span className="text-red-500 ml-1">•</span>}
-                      </button>
-                    ))}
-                  </div>
+                  <LanguageTabs
+                    selected={selectedLang}
+                    onSelect={setSelectedLang}
+                    isMissing={lang => !(draft.title[lang] ?? '').trim()}
+                  />
 
                   <label className="flex flex-col gap-1 mb-4">
                     <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_title')} *</span>
@@ -337,7 +310,7 @@ export const Announcements: React.FC = () => {
 
                   <div className="flex items-center gap-3">
                     <SaveButton
-                      onClick={() => void save()}
+                      onClick={save}
                       disabled={!canSave}
                       title={!canSave ? t('common_fill_required_fields') : undefined}
                     />
@@ -355,7 +328,7 @@ export const Announcements: React.FC = () => {
               message={t('sm_announcements_confirm_delete')}
               confirmLabel={t('common_delete')}
               cancelLabel={t('common_cancel')}
-              onConfirm={() => void confirmDelete()}
+              onConfirm={confirmDelete}
               onCancel={() => setPendingDeleteId(null)}
             />
           )}

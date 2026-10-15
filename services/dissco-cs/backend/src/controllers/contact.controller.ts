@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import { NavItemsRepository } from '../repositories/nav-items.repository.js';
-import { resolveSiteId } from '../auth/auth.js';
+import { requireSiteId } from '../auth/auth.js';
 import { mailer } from '../infrastructure/mailer.js';
 import { getClientIp, isRateLimited } from '../infrastructure/rate-limit.js';
 import { passErrorOn } from '../infrastructure/request-log.js';
+import { validateJson } from '../infrastructure/validate-json.js';
 import { contactSubmissionSchema } from '@dissco-cs/shared-types';
 
 const CONTACT_RATE_LIMIT = { maxAttempts: 5, windowMs: 10 * 60 * 1000 };
@@ -15,18 +16,13 @@ function isNonEmptyString(value: unknown): value is string {
 export function contactController(navItemsRepository: NavItemsRepository): Hono {
   const app = new Hono();
 
-  app.post('/', async c => {
-    const siteId = await resolveSiteId(c);
-    if (siteId === null) {
-      return c.text('Could not resolve site', 400);
+  app.post('/', validateJson(contactSubmissionSchema), async c => {
+    const siteId = await requireSiteId(c);
+    if (siteId instanceof Response) {
+      return siteId;
     }
 
-    const result = contactSubmissionSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('name, a valid email and message are required', 400);
-    }
-
-    const payload = result.data;
+    const payload = c.req.valid('json');
 
     // Honeypot: a hidden field real visitors never fill in. If a bot fills it, pretend
     // success without sending anything — no hint that this is what's happening.
@@ -35,12 +31,12 @@ export function contactController(navItemsRepository: NavItemsRepository): Hono 
     }
 
     if (isRateLimited(`contact:${siteId}:${getClientIp(c)}`, CONTACT_RATE_LIMIT.maxAttempts, CONTACT_RATE_LIMIT.windowMs)) {
-      return c.text('Too many requests, please try again later', 429);
+      return c.json({ error: 'Too many requests, please try again later' }, 429);
     }
 
     const contactEmail = await navItemsRepository.getContactEmail(siteId);
     if (!contactEmail) {
-      return c.text('Contact form is not configured for this site', 503);
+      return c.json({ error: 'Contact form is not configured for this site' }, 503);
     }
 
     try {
@@ -51,7 +47,7 @@ export function contactController(navItemsRepository: NavItemsRepository): Hono 
     } catch (err) {
       // E.g. SMTP not configured or unreachable -- stored centrally so it doesn't go unnoticed.
       passErrorOn(c, err);
-      return c.text('Could not send the message, please try again later', 502);
+      return c.json({ error: 'Could not send the message, please try again later' }, 502);
     }
 
     return c.body(null, 204);

@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { ForumRepository, toForumReplyDto, toForumTopicDto } from '../repositories/forum.repository.js';
 import { MadocUserIdentity, requireUser } from '../auth/auth.js';
+import { validateJson } from '../infrastructure/validate-json.js';
+import { intId, validateParams } from '../infrastructure/validate-params.js';
 import { forumReplyInputSchema, forumTopicInputSchema } from '@dissco-cs/shared-types';
 
 // A piece of forum content (topic or reply) can be removed/closed by whoever wrote it, or by
@@ -32,26 +34,23 @@ export function forumController(forumRepository: ForumRepository): Hono {
     return c.body(null, 204);
   });
 
-  app.post('/topics', async c => {
+  app.post('/topics', validateJson(forumTopicInputSchema), async c => {
     const identity = requireUser(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const result = forumTopicInputSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('title and body are required', 400);
-    }
+    const input = c.req.valid('json');
 
     const topic = await forumRepository.createTopic({
       siteId: identity.siteId,
       authorUserId: identity.userId,
       authorName: identity.name,
-      title: result.data.title,
-      taskUrl: result.data.taskUrl,
-      projectSlug: result.data.projectSlug,
-      projectLabel: result.data.projectLabel,
-      body: result.data.body,
+      title: input.title,
+      taskUrl: input.taskUrl,
+      projectSlug: input.projectSlug,
+      projectLabel: input.projectLabel,
+      body: input.body,
     });
 
     await forumRepository.markTopicSeen(identity.userId, topic.id, 0);
@@ -60,16 +59,13 @@ export function forumController(forumRepository: ForumRepository): Hono {
     return c.json(toForumTopicDto({ ...topic, reply_count: 0, last_seen_reply_count: 0 }), 201);
   });
 
-  app.get('/topics/:id/replies', async c => {
+  app.get('/topics/:id/replies', validateParams({ id: intId }), async c => {
     const identity = requireUser(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const topicId = Number(c.req.param('id'));
-    if (!Number.isInteger(topicId)) {
-      return c.notFound();
-    }
+    const { id: topicId } = c.req.valid('param');
 
     const topic = await forumRepository.getTopic(identity.siteId, topicId);
     if (!topic) {
@@ -81,23 +77,20 @@ export function forumController(forumRepository: ForumRepository): Hono {
     return c.json(replies.map(toForumReplyDto));
   });
 
-  app.delete('/topics/:id', async c => {
+  app.delete('/topics/:id', validateParams({ id: intId }), async c => {
     const identity = requireUser(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const topicId = Number(c.req.param('id'));
-    if (!Number.isInteger(topicId)) {
-      return c.notFound();
-    }
+    const { id: topicId } = c.req.valid('param');
 
     const topic = await forumRepository.getTopic(identity.siteId, topicId);
     if (!topic) {
       return c.notFound();
     }
     if (!isOwnerOrAdmin(identity, topic.author_user_id)) {
-      return c.text('Forbidden', 403);
+      return c.json({ error: 'Forbidden' }, 403);
     }
 
     const deleted = await forumRepository.deleteTopic(identity.siteId, topicId);
@@ -108,23 +101,20 @@ export function forumController(forumRepository: ForumRepository): Hono {
     return c.body(null, 204);
   });
 
-  app.post('/topics/:id/close', async c => {
+  app.post('/topics/:id/close', validateParams({ id: intId }), async c => {
     const identity = requireUser(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const topicId = Number(c.req.param('id'));
-    if (!Number.isInteger(topicId)) {
-      return c.notFound();
-    }
+    const { id: topicId } = c.req.valid('param');
 
     const topic = await forumRepository.getTopic(identity.siteId, topicId);
     if (!topic) {
       return c.notFound();
     }
     if (!isOwnerOrAdmin(identity, topic.author_user_id)) {
-      return c.text('Forbidden', 403);
+      return c.json({ error: 'Forbidden' }, 403);
     }
 
     const closed = await forumRepository.closeTopic(identity.siteId, topicId);
@@ -132,23 +122,20 @@ export function forumController(forumRepository: ForumRepository): Hono {
     return c.json(toForumTopicDto({ ...(closed ?? topic), reply_count: replies.length, last_seen_reply_count: replies.length }));
   });
 
-  app.delete('/topics/:id/replies/:replyId', async c => {
+  app.delete('/topics/:id/replies/:replyId', validateParams({ id: intId, replyId: intId }), async c => {
     const identity = requireUser(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const replyId = Number(c.req.param('replyId'));
-    if (!Number.isInteger(replyId)) {
-      return c.notFound();
-    }
+    const { id: topicId, replyId } = c.req.valid('param');
 
     const reply = await forumRepository.getReply(identity.siteId, replyId);
-    if (!reply || Number(reply.topic_id) !== Number(c.req.param('id'))) {
+    if (!reply || Number(reply.topic_id) !== topicId) {
       return c.notFound();
     }
     if (!isOwnerOrAdmin(identity, reply.author_user_id)) {
-      return c.text('Forbidden', 403);
+      return c.json({ error: 'Forbidden' }, 403);
     }
 
     const deleted = await forumRepository.deleteReply(identity.siteId, replyId);
@@ -159,28 +146,22 @@ export function forumController(forumRepository: ForumRepository): Hono {
     return c.body(null, 204);
   });
 
-  app.post('/topics/:id/replies', async c => {
+  app.post('/topics/:id/replies', validateParams({ id: intId }), validateJson(forumReplyInputSchema), async c => {
     const identity = requireUser(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const topicId = Number(c.req.param('id'));
-    if (!Number.isInteger(topicId)) {
-      return c.notFound();
-    }
+    const { id: topicId } = c.req.valid('param');
 
-    const result = forumReplyInputSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('body is required', 400);
-    }
+    const input = c.req.valid('json');
 
     const topic = await forumRepository.getTopic(identity.siteId, topicId);
     if (!topic) {
       return c.notFound();
     }
     if (topic.closed_at) {
-      return c.text('This topic is closed', 403);
+      return c.json({ error: 'This topic is closed' }, 403);
     }
 
     const reply = await forumRepository.createReply({
@@ -188,7 +169,7 @@ export function forumController(forumRepository: ForumRepository): Hono {
       topicId,
       authorUserId: identity.userId,
       authorName: identity.name,
-      body: result.data.body,
+      body: input.body,
     });
 
     if (!reply) {

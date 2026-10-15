@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import { projectQueries } from '../../api/queries/projects';
-import { manualQueries } from '../../api/queries/manuals';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { projectKeys, projectQueries } from '../../api/queries/projects';
+import { manualKeys, manualQueries } from '../../api/queries/manuals';
 import { institutionQueries } from '../../api/queries/institutions';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/layout/CsPage';
@@ -25,32 +25,21 @@ export const ProjectManagement: React.FC = () => {
   const { data: allProjects, status: allProjectsStatus } = useQuery(projectQueries.listAll());
   const projects = allProjects ?? [];
 
-  const {
-    data: manualsResponse,
-    refetch: refetchManuals,
-    status: manualsStatus,
-  } = useQuery(manualQueries.list());
+  const queryClient = useQueryClient();
+
+  const { data: manualsResponse, status: manualsStatus } = useQuery(manualQueries.list());
   const manuals = manualsResponse?.manuals ?? [];
 
   const { data: institutionsResponse } = useQuery(institutionQueries.admin());
   const institutions = institutionsResponse?.institutions ?? [];
 
-  const {
-    data: institutionLinksResponse,
-    refetch: refetchInstitutionLinks,
-    status: institutionLinksStatus,
-  } = useQuery(projectQueries.institutionLinks());
+  const { data: institutionLinksResponse, status: institutionLinksStatus } = useQuery(projectQueries.institutionLinks());
   const institutionLinks = institutionLinksResponse?.links ?? {};
 
-  // Achtergrondvergelijking: Madoc weet niets van dissco-cs, dus als een project in Madoc
-  // verwijderd wordt, blijven de gekoppelde instituut/handleiding-links hier achter. Bij het
-  // laden van deze pagina wordt daarom de volledige (ongefilterde, alle pagina's/statussen)
-  // Madoc-projectenlijst opgehaald en gebruikt om links naar niet meer bestaande projecten
-  // stilzwijgend te verwijderen -- non-blocking en best-effort, breekt de pagina niet bij falen.
-  // Wacht bewust tot beide queries hun EERSTE fetch al hebben afgerond ('success') voordat de
-  // prune-refetch gestart wordt: refetch() op een query die nog in-flight is voor dezelfde key
-  // levert in react-query v2 gewoon de (verouderde, van-vóór-de-prune) al lopende request terug
-  // i.p.v. een nieuwe -- waardoor de UI pas bij een volledige page refresh klopte.
+  // Madoc knows nothing about dissco-cs: when a project is deleted there, its institution/manual
+  // links stay behind here. So once the full project list (every page and status) and both link
+  // lists are loaded, links to projects that no longer exist are removed -- best-effort and
+  // non-blocking, a failure never breaks the page.
   const pruneRanRef = useRef(false);
   useEffect(() => {
     if (pruneRanRef.current) return;
@@ -70,8 +59,8 @@ export const ProjectManagement: React.FC = () => {
         ]);
 
         if (cancelled) return;
-        if (institutionResult.removed > 0) refetchInstitutionLinks();
-        if (manualResult.removed > 0) refetchManuals();
+        if (institutionResult.removed > 0) queryClient.invalidateQueries({ queryKey: projectKeys.institutionLinks() });
+        if (manualResult.removed > 0) queryClient.invalidateQueries({ queryKey: manualKeys.all });
       } catch (err) {
         reportClientError(err, 'action');
       }
@@ -140,13 +129,11 @@ export const ProjectManagement: React.FC = () => {
             <ProjectsSubview
               projects={projects}
               manuals={manuals}
-              refetchManuals={refetchManuals}
               institutions={institutions}
               institutionLinks={institutionLinks}
-              refetchInstitutionLinks={refetchInstitutionLinks}
             />
           )}
-          {tab === 'manuals' && <ManualsSubview projects={projects} manuals={manuals} refetchManuals={refetchManuals} />}
+          {tab === 'manuals' && <ManualsSubview projects={projects} manuals={manuals} />}
           {tab === 'stuck-tasks' && <StuckTasksSubview />}
           {tab === 'task-debug' && <TaskDebugSubview projects={projects} />}
           {tab === 'bulk-create' && <BulkCreateProjectsSubview projects={projects} />}

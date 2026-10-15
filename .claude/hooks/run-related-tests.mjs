@@ -23,11 +23,12 @@ if (!match) {
 }
 
 const [, packageDir, folder] = match;
-// A changed test file runs itself; a changed source file runs every test that imports it.
+// A changed test file runs itself; a changed source file runs every test that imports it, plus the
+// package's conventions test (it scans all of src/, so `related` never picks it up).
 const command =
   folder === 'test'
     ? `pnpm exec vitest run "${normalized}" --passWithNoTests`
-    : `pnpm exec vitest related "${normalized}" --run --passWithNoTests`;
+    : `pnpm exec vitest related "${normalized}" --run --passWithNoTests && pnpm exec vitest run test/conventions.test.ts --passWithNoTests`;
 
 // shell: true so `pnpm` resolves to pnpm.cmd on Windows; the path is quoted in the command above.
 const result = spawnSync(command, {

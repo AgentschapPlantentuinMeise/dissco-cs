@@ -7,6 +7,7 @@ import { DisscoCSDatabase } from './database/database.js';
 import { HonourBoardRepository } from './madoc-db/honour-board.repository.js';
 import { StatsRepository } from './madoc-db/stats.repository.js';
 import { requestLog } from './infrastructure/request-log.js';
+import { errorResponse } from './infrastructure/error-response.js';
 import { announcementsController } from './controllers/announcements.controller.js';
 import { clientErrorsController } from './controllers/client-errors.controller.js';
 import { contactController } from './controllers/contact.controller.js';
@@ -32,13 +33,11 @@ export function createDisscoCSApp(
   app.get('/api/dissco-cs/health', c => c.text('ok'));
 
   // Logging and errors (see infrastructure/request-log.ts): every request is logged once, every
-  // uncaught error becomes a plain 500 here and is stored by the middleware -- controllers only
-  // catch errors when they answer something else.
+  // uncaught error becomes a JSON error answer here (see error-response.ts) and a 5xx is stored by
+  // the middleware -- controllers only catch errors when they answer something else.
   app.use('/api/dissco-cs/*', requestLog(database.appLog));
-  app.onError((err, c) => {
-    console.error(`[http] ${c.req.method} ${c.req.path} failed`, err);
-    return c.text('Internal Server Error', 500);
-  });
+  app.onError(errorResponse);
+  app.notFound(c => c.json({ error: 'Not Found' }, 404));
 
   // Each controller gets exactly the repositories it uses.
   app.route('/api/dissco-cs/client-errors', clientErrorsController(database.appLog));

@@ -9,10 +9,9 @@ interface FeedbackModalProps {
   onSend: (subject: string, body: string) => void;
   onClose: () => void;
   sending: boolean;
-  error: string | null;
 }
 
-export function FeedbackModal({ target, onSend, onClose, sending, error }: FeedbackModalProps) {
+export function FeedbackModal({ target, onSend, onClose, sending }: FeedbackModalProps) {
   const { t } = useTranslation('dissco-cs');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -33,7 +32,6 @@ export function FeedbackModal({ target, onSend, onClose, sending, error }: Feedb
       title={t('feedback_modal_title', { name: target.submitterName })}
       footer={
         <div className="flex items-center justify-end gap-3">
-          {error && <span className="mr-auto text-[0.78rem] text-red-600">{error}</span>}
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-full text-sm font-semibold border border-gray-300 bg-transparent cursor-pointer hover:bg-gray-50"

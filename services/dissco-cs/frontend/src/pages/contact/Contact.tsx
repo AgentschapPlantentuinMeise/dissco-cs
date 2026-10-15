@@ -1,5 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useMutation } from '@tanstack/react-query';
 import { CsPage } from '../../components/layout/CsPage';
 import { CsMarkdown } from '../../components/ui/CsMarkdown';
 import { useNavItems } from '../../hooks/use-nav-items';
@@ -16,21 +17,20 @@ export const Contact: React.FC = () => {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [website, setWebsite] = useState('');
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus('sending');
-    try {
-      await contactApi.send({ name, email, message, website });
-      setStatus('sent');
+  const { mutate: send, isPending: sending, isSuccess: sent } = useMutation({
+    mutationFn: () => contactApi.send({ name, email, message, website }),
+    onSuccess: () => {
       setName('');
       setEmail('');
       setMessage('');
       setWebsite('');
-    } catch {
-      setStatus('error');
-    }
+    },
+    meta: { errorMessage: 'error_send_failed' },
+  });
+
+  const submit = (e: React.SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    send();
   };
 
   return (
@@ -103,15 +103,14 @@ export const Contact: React.FC = () => {
               <div>
                 <button
                   type="submit"
-                  disabled={status === 'sending'}
+                  disabled={sending}
                   className="bg-[var(--cs-primary)] text-white px-5 py-2 rounded-full text-sm font-semibold border-none cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
                 >
                   {t('contact_form_submit')}
                 </button>
               </div>
 
-              {status === 'sent' && <p className="text-green-700">{t('contact_form_success')}</p>}
-              {status === 'error' && <p className="text-red-700">{t('contact_form_error')}</p>}
+              {sent && <p className="text-green-700">{t('contact_form_success')}</p>}
             </form>
           )}
           </div>

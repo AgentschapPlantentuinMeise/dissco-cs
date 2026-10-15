@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { taskKeys, taskQueries } from '../../../api/queries/tasks';
 import { projectKeys } from '../../../api/queries/projects';
 import { tasksApi } from '../../../api/cs-client/tasks';
@@ -11,7 +11,6 @@ import { localeText } from '../../../utility/locale-text';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
 import { reportClientError } from '../../../api/cs-client/client-errors';
-import { reportActionError } from '../../../hooks/use-toast';
 
 function statusLabelKey(status: number): string {
   return status === 0 ? 'sm_stuck_tasks_status_not_started' : 'sm_stuck_tasks_status_in_progress';
@@ -21,17 +20,19 @@ export const StuckTasksSubview: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
   const { data, status: queryStatus } = useQuery(taskQueries.stuck());
-  const [releasingId, setReleasingId] = useState<string | null>(null);
-  const [resyncingId, setResyncingId] = useState<string | null>(null);
   const [confirmTask, setConfirmTask] = useState<MadocCrowdsourcingTaskDto | null>(null);
 
   const tasks = (data?.tasks ?? []).slice().sort((a, b) => (a.modified_at ?? 0) - (b.modified_at ?? 0));
   const manifestCounters = (data?.manifestCounters ?? []).slice().sort((a, b) => (a.modified_at ?? 0) - (b.modified_at ?? 0));
 
-  const release = async (task: MadocCrowdsourcingTaskDto) => {
-    setConfirmTask(null);
-    setReleasingId(task.id);
-    try {
+  // Progress (available manifests) and every task list, this stuck list included.
+  const onWritten = () => {
+    queryClient.invalidateQueries({ queryKey: projectKeys.all });
+    return queryClient.invalidateQueries({ queryKey: taskKeys.all });
+  };
+
+  const release = useMutation({
+    mutationFn: async (task: MadocCrowdsourcingTaskDto) => {
       await tasksApi.release(task.id);
       const projectId = task.metadata?.project?.id;
       const manifestId = task.metadata?.subject?.id;
@@ -40,29 +41,19 @@ export const StuckTasksSubview: React.FC = () => {
         // claim is created, never on a release — same reason AnnotatePage does this after abandon.
         await projectsApi.resyncClaim(projectId, manifestId).catch(err => reportClientError(err, 'action'));
       }
-      // Progress (available manifests) and every task list, this stuck list included.
-      queryClient.invalidateQueries({ queryKey: projectKeys.all });
-      await queryClient.invalidateQueries({ queryKey: taskKeys.all });
-    } catch (err) {
-      reportActionError(err, 'error_release_failed');
-    } finally {
-      setReleasingId(null);
-    }
-  };
+    },
+    onSuccess: onWritten,
+    meta: { errorMessage: 'error_release_failed' },
+  });
 
-  const resyncCounter = async (counter: MadocCrowdsourcingTaskDto) => {
-    setResyncingId(counter.id);
-    try {
-      await tasksApi.resyncManifest(counter.id);
-      // Progress (available manifests) and every task list, this stuck list included.
-      queryClient.invalidateQueries({ queryKey: projectKeys.all });
-      await queryClient.invalidateQueries({ queryKey: taskKeys.all });
-    } catch (err) {
-      reportActionError(err, 'error_generic');
-    } finally {
-      setResyncingId(null);
-    }
-  };
+  const resync = useMutation({
+    mutationFn: (counter: MadocCrowdsourcingTaskDto) => tasksApi.resyncManifest(counter.id),
+    onSuccess: onWritten,
+    meta: { errorMessage: 'error_generic' },
+  });
+
+  const isReleasing = (task: MadocCrowdsourcingTaskDto) => release.isPending && release.variables?.id === task.id;
+  const isResyncing = (counter: MadocCrowdsourcingTaskDto) => resync.isPending && resync.variables?.id === counter.id;
 
   return (
     <div>
@@ -110,7 +101,7 @@ export const StuckTasksSubview: React.FC = () => {
                     <td className="px-4 py-3 border-t border-gray-100 text-right whitespace-nowrap">
                       <button
                         onClick={() => setConfirmTask(task)}
-                        disabled={releasingId === task.id}
+                        disabled={isReleasing(task)}
                         className="text-sm font-semibold text-[var(--cs-primary)] bg-transparent border-none cursor-pointer hover:underline disabled:opacity-50"
                       >
                         {t('sm_stuck_tasks_release')}
@@ -158,8 +149,8 @@ export const StuckTasksSubview: React.FC = () => {
                       <td className="px-4 py-3 border-t border-gray-100 text-sm text-gray-500">{modified}</td>
                       <td className="px-4 py-3 border-t border-gray-100 text-right whitespace-nowrap">
                         <button
-                          onClick={() => void resyncCounter(counter)}
-                          disabled={resyncingId === counter.id}
+                          onClick={() => resync.mutate(counter)}
+                          disabled={isResyncing(counter)}
                           className="text-sm font-semibold text-[var(--cs-primary)] bg-transparent border-none cursor-pointer hover:underline disabled:opacity-50"
                         >
                           {t('sm_stuck_tasks_resync')}
@@ -182,7 +173,10 @@ export const StuckTasksSubview: React.FC = () => {
           })}
           confirmLabel={t('sm_stuck_tasks_release')}
           cancelLabel={t('common_cancel')}
-          onConfirm={() => void release(confirmTask)}
+          onConfirm={() => {
+            setConfirmTask(null);
+            release.mutate(confirmTask);
+          }}
           onCancel={() => setConfirmTask(null)}
         />
       )}

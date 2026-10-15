@@ -1,7 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import { institutionQueries } from '../../api/queries/institutions';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { institutionKeys, institutionQueries } from '../../api/queries/institutions';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/layout/CsPage';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
@@ -13,8 +13,9 @@ import { ActiveToggleField } from '../../components/ui/ActiveToggleField';
 import { LuPencil, LuArrowLeft } from 'react-icons/lu';
 import { institutionsApi } from '../../api/cs-client/institutions';
 import { InstitutionDto, InstitutionInput, SitePageLang, SITE_PAGE_LANGS, institutionInputSchema } from '@dissco-cs/shared-types';
-import { LANGUAGES, defaultLang, siteLangText } from '../../utility/site-lang-text';
-import { reportActionError } from '../../hooks/use-toast';
+import { siteLangText } from '../../utility/site-lang-text';
+import { LanguageTabs } from '../../components/ui/LanguageTabs';
+import { useItemEditor } from '../../hooks/use-item-editor';
 
 const emptyMultilingualText = Object.fromEntries(SITE_PAGE_LANGS.map(lang => [lang, ''])) as Record<SitePageLang, string>;
 
@@ -32,6 +33,19 @@ function toMultilingualDraft(value: Partial<Record<SitePageLang, string>>): Reco
   return Object.fromEntries(SITE_PAGE_LANGS.map(lang => [lang, value[lang] ?? ''])) as Record<SitePageLang, string>;
 }
 
+// An existing institution as form input (also the base for the active toggle).
+function toInstitutionInput(institution: InstitutionDto): InstitutionInput {
+  return {
+    name: toMultilingualDraft(institution.name),
+    description: toMultilingualDraft(institution.description),
+    email: institution.email ?? '',
+    phone: institution.phone ?? '',
+    website: institution.website ?? '',
+    logo: institution.logo ?? '',
+    isActive: institution.isActive,
+  };
+}
+
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -43,51 +57,51 @@ function fileToDataUrl(file: File): Promise<string> {
 
 export const InstitutionManagement: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data, isLoading, refetch } = useQuery(institutionQueries.admin());
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery(institutionQueries.admin());
   const institutions = data?.institutions ?? [];
 
-  const [editingId, setEditingId] = useState<InstitutionDto['id'] | null>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [draft, setDraft] = useState<InstitutionInput>(emptyDraft);
+  const editor = useItemEditor({ emptyDraft, toDraft: toInstitutionInput });
+  const { editingId, isFormOpen, draft, setDraft, selectedLang, setSelectedLang, pendingDeleteId, setPendingDeleteId } = editor;
+  // Name of a logo picked in this form session; not part of the saved institution.
   const [logoFileName, setLogoFileName] = useState<string | null>(null);
-  const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
-  const [pendingDeleteId, setPendingDeleteId] = useState<InstitutionDto['id'] | null>(null);
-  const [saveError, setSaveError] = useState(false);
 
-  const refresh = () => refetch();
+  // Invalidate every institution query, so the public pages pick up the change too.
+  const onWritten = () => queryClient.invalidateQueries({ queryKey: institutionKeys.all });
+
+  const { mutate: upsert } = useMutation({
+    mutationFn: async ({ id, input }: { id: InstitutionDto['id'] | null; input: InstitutionInput }) => {
+      if (id !== null) {
+        await institutionsApi.update(id, input);
+      } else {
+        await institutionsApi.create(input);
+      }
+    },
+    onSuccess: onWritten,
+  });
+
+  const { mutate: remove } = useMutation({
+    mutationFn: (id: InstitutionDto['id']) => institutionsApi.remove(id),
+    onSuccess: () => {
+      setPendingDeleteId(null);
+      return onWritten();
+    },
+    meta: { errorMessage: 'error_delete_failed' },
+  });
 
   const startCreate = () => {
-    setEditingId(null);
-    setDraft(emptyDraft);
+    editor.startCreate();
     setLogoFileName(null);
-    setSelectedLang(defaultLang(i18n.language));
-    setSaveError(false);
-    setIsFormOpen(true);
   };
 
   const startEdit = (institution: InstitutionDto) => {
-    setEditingId(institution.id);
-    setDraft({
-      name: toMultilingualDraft(institution.name),
-      description: toMultilingualDraft(institution.description),
-      email: institution.email ?? '',
-      phone: institution.phone ?? '',
-      website: institution.website ?? '',
-      logo: institution.logo ?? '',
-      isActive: institution.isActive,
-    });
+    editor.startEdit(institution);
     setLogoFileName(null);
-    setSelectedLang(defaultLang(i18n.language));
-    setSaveError(false);
-    setIsFormOpen(true);
   };
 
   const cancelForm = () => {
-    setIsFormOpen(false);
-    setEditingId(null);
-    setDraft(emptyDraft);
+    editor.cancelForm();
     setLogoFileName(null);
-    setSaveError(false);
   };
 
   const validation = institutionInputSchema.safeParse(draft);
@@ -99,51 +113,19 @@ export const InstitutionManagement: React.FC = () => {
   const phoneValid = !issueAt('phone');
   const canSave = validation.success;
 
-  const save = async () => {
+  const save = () => {
     const result = institutionInputSchema.safeParse(draft);
     if (!result.success) return;
-    setSaveError(false);
-    try {
-      if (editingId !== null) {
-        await institutionsApi.update(editingId, result.data);
-      } else {
-        await institutionsApi.create(result.data);
-      }
-      cancelForm();
-      refresh();
-    } catch {
-      setSaveError(true);
-    }
+    upsert({ id: editingId, input: result.data }, { onSuccess: cancelForm });
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (pendingDeleteId === null) return;
-    try {
-      await institutionsApi.remove(pendingDeleteId);
-    } catch (err) {
-      reportActionError(err, 'error_delete_failed');
-      return;
-    }
-    setPendingDeleteId(null);
-    refresh();
+    remove(pendingDeleteId);
   };
 
-  const toggleActive = async (institution: InstitutionDto) => {
-    try {
-      await institutionsApi.update(institution.id, {
-        name: toMultilingualDraft(institution.name),
-        description: toMultilingualDraft(institution.description),
-        email: institution.email ?? '',
-        phone: institution.phone ?? '',
-        website: institution.website ?? '',
-        logo: institution.logo ?? '',
-        isActive: !institution.isActive,
-      });
-    } catch (err) {
-      reportActionError(err, 'error_save_failed');
-      return;
-    }
-    refresh();
+  const toggleActive = (institution: InstitutionDto) => {
+    upsert({ id: institution.id, input: { ...toInstitutionInput(institution), isActive: !institution.isActive } });
   };
 
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -212,7 +194,7 @@ export const InstitutionManagement: React.FC = () => {
                     <div className="flex items-center gap-3 shrink-0">
                       <ActiveStatusToggle
                         active={institution.isActive}
-                        onChange={() => void toggleActive(institution)}
+                        onChange={() => toggleActive(institution)}
                         label={siteLangText(institution.name, i18n.language, institution.slug)}
                       />
                       <button
@@ -235,22 +217,11 @@ export const InstitutionManagement: React.FC = () => {
                     {editingId !== null ? t('sm_institutions_edit') : t('sm_institutions_new')}
                   </h2>
 
-                  <div className="flex gap-2 mb-4">
-                    {LANGUAGES.map(lang => (
-                      <button
-                        key={lang.code}
-                        onClick={() => setSelectedLang(lang.code)}
-                        className={`px-3 py-1 rounded-full text-sm font-medium border ${
-                          selectedLang === lang.code
-                            ? 'bg-[var(--cs-primary)] text-white border-[var(--cs-primary)]'
-                            : 'bg-transparent text-gray-600 border-gray-300'
-                        }`}
-                      >
-                        {t(`lang_${lang.code}`)}
-                        {(issueAt('name', lang.code) || issueAt('description', lang.code)) && <span className="text-red-500 ml-1">•</span>}
-                      </button>
-                    ))}
-                  </div>
+                  <LanguageTabs
+                    selected={selectedLang}
+                    onSelect={setSelectedLang}
+                    isMissing={lang => issueAt('name', lang) || issueAt('description', lang)}
+                  />
 
                   <label className="flex flex-col gap-1 mb-4">
                     <span className="text-sm font-medium text-gray-700">{t('sm_institutions_field_name')} *</span>
@@ -333,7 +304,7 @@ export const InstitutionManagement: React.FC = () => {
 
                   <div className="flex items-center gap-3">
                     <SaveButton
-                      onClick={() => void save()}
+                      onClick={save}
                       disabled={!canSave}
                       title={!canSave ? t('common_fill_required_fields') : undefined}
                     />
@@ -342,7 +313,6 @@ export const InstitutionManagement: React.FC = () => {
                       <span className="text-sm text-gray-500">{t('common_fill_required_fields')}</span>
                     )}
                   </div>
-                  {saveError && <p className="text-sm text-red-700 mt-3">{t('sm_institutions_save_error')}</p>}
                 </div>
               )}
             </div>
@@ -354,7 +324,7 @@ export const InstitutionManagement: React.FC = () => {
               message={t('sm_institutions_confirm_delete')}
               confirmLabel={t('common_delete')}
               cancelLabel={t('common_cancel')}
-              onConfirm={() => void confirmDelete()}
+              onConfirm={confirmDelete}
               onCancel={() => setPendingDeleteId(null)}
             />
           )}

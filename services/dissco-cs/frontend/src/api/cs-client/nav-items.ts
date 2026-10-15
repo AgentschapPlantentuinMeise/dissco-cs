@@ -8,7 +8,7 @@ export const navItemsApi = {
   getContactEmail: () => csFetch<NavItemContactEmailDto>('/nav-items/contact/email'),
 
   setActive: (key: NavItemKey, isActive: boolean) =>
-    csFetch<void>(`/nav-items/${key}`, { method: 'PUT', body: JSON.stringify({ isActive }) }),
+    csFetch<void>(`/nav-items/${key}`, { method: 'PATCH', body: JSON.stringify({ isActive }) }),
 
   setContent: (key: NavItemKey, lang: SitePageLang, contentMd: string) =>
     csFetch<void>(`/nav-items/${key}/content`, { method: 'PUT', body: JSON.stringify({ lang, contentMd }) }),

@@ -15,6 +15,10 @@ check_backend=false
 check_frontend=false
 echo "$staged" | grep -q '^services/dissco-cs/backend/' && check_backend=true
 echo "$staged" | grep -q '^services/dissco-cs/frontend/' && check_frontend=true
+if echo "$staged" | grep -q '^services/dissco-cs/test-support/'; then
+  check_backend=true
+  check_frontend=true
+fi
 if echo "$staged" | grep -q '^services/dissco-cs/shared/'; then
   check_backend=true
   check_frontend=true

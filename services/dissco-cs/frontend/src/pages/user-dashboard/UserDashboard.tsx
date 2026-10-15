@@ -20,7 +20,6 @@ import { TaskTable, tabBtnClass } from './TaskTable';
 import { feedbackApi } from '../../api/cs-client/feedback';
 import { MadocCrowdsourcingTaskDto, ForumTopicDto, FeedbackThreadDto } from '@dissco-cs/shared-types';
 import { useSiteStats } from '../../hooks/use-site-stats';
-import { showError } from '../../hooks/use-toast';
 
 
 
@@ -66,6 +65,7 @@ function FeedbackThreadDetail({ threadId }: { threadId: number }) {
       setReplyBody('');
       queryClient.invalidateQueries({ queryKey: feedbackKeys.all });
     },
+    meta: { errorMessage: 'error_send_failed' },
   });
 
   if (status === 'pending') {
@@ -134,8 +134,7 @@ function FeedbackThreadRow({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: feedbackKeys.threads() });
     },
-    onError: () => showError('error_delete_failed'),
-    meta: { handlesOwnError: true },
+    meta: { errorMessage: 'error_delete_failed' },
   });
 
   return (
@@ -194,8 +193,7 @@ export const UserDashboard: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.all });
       queryClient.invalidateQueries({ queryKey: projectKeys.all });
     },
-    onError: () => showError('error_release_failed'),
-    meta: { handlesOwnError: true },
+    meta: { errorMessage: 'error_release_failed' },
   });
 
   const { data: tasksData, status: tasksStatus } = useQuery(taskQueries.mine(user?.id));

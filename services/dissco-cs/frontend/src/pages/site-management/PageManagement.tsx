@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/layout/CsPage';
 import { ToggleSwitch } from '../../components/ui/ToggleSwitch';
@@ -8,12 +8,12 @@ import { SaveButton } from '../../components/ui/SaveButton';
 import { ActiveStatusToggle } from '../../components/ui/ActiveStatusToggle';
 import { LuPencil, LuArrowUp, LuArrowDown, LuArrowLeft } from 'react-icons/lu';
 import { navItemsApi } from '../../api/cs-client/nav-items';
-import { navItemQueries } from '../../api/queries/nav-items';
+import { navItemKeys, navItemQueries } from '../../api/queries/nav-items';
 import { setContactEmailSchema, NavItemDto, NavItemKey, SitePageLang } from '@dissco-cs/shared-types';
 import { LANGUAGES, defaultLang } from '../../utility/site-lang-text';
+import { LanguageTabs } from '../../components/ui/LanguageTabs';
 import { useNavItems } from '../../hooks/use-nav-items';
 import { MarkdownToolbar } from '../../components/ui/MarkdownToolbar';
-import { reportActionError } from '../../hooks/use-toast';
 
 const CONTENT_PAGE_KEYS: NavItemKey[] = ['about', 'help', 'contact', 'welcome'];
 
@@ -60,43 +60,40 @@ export const PageManagement: React.FC = () => {
 
   const isActive = (key: NavItemKey) => pages.find(p => p.pageKey === key)?.isActive ?? true;
 
-  const toggleActive = async (key: NavItemKey) => {
-    try {
-      await navItemsApi.setActive(key, !isActive(key));
-    } catch (err) {
-      reportActionError(err, 'error_save_failed');
-      return;
-    }
-    refresh();
-  };
+  const queryClient = useQueryClient();
+  const onWritten = () => queryClient.invalidateQueries({ queryKey: navItemKeys.all });
 
-  const toggleShowContactForm = async () => {
+  const { mutate: setActive } = useMutation({
+    mutationFn: ({ key, active }: { key: NavItemKey; active: boolean }) => navItemsApi.setActive(key, active),
+    onSuccess: onWritten,
+  });
+
+  const { mutate: setShowContactForm } = useMutation({
+    mutationFn: (show: boolean) => navItemsApi.setShowContactForm(show),
+    onSuccess: onWritten,
+  });
+
+  const { mutate: setOrder } = useMutation({
+    mutationFn: (keys: NavItemKey[]) => navItemsApi.setOrder(keys),
+    onSuccess: onWritten,
+  });
+
+  const toggleActive = (key: NavItemKey) => setActive({ key, active: !isActive(key) });
+
+  const toggleShowContactForm = () => {
     const next = !draftShowContactForm;
     setDraftShowContactForm(next);
     setSaved(false);
-    try {
-      await navItemsApi.setShowContactForm(next);
-    } catch (err) {
-      setDraftShowContactForm(!next);
-      reportActionError(err, 'error_save_failed');
-      return;
-    }
-    refresh();
+    setShowContactForm(next, { onError: () => setDraftShowContactForm(!next) });
   };
 
-  const movePage = async (index: number, direction: -1 | 1) => {
+  const movePage = (index: number, direction: -1 | 1) => {
     const targetIndex = index + direction;
     if (targetIndex < 0 || targetIndex >= pages.length) return;
 
     const reordered = [...pages];
     [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
-    try {
-      await navItemsApi.setOrder(reordered.map(p => p.pageKey));
-    } catch (err) {
-      reportActionError(err, 'error_save_failed');
-      return;
-    }
-    refresh();
+    setOrder(reordered.map(p => p.pageKey));
   };
 
   const allLangsFilled = LANGUAGES.every(lang => (draftContent[lang.code] ?? '').trim().length > 0);
@@ -105,19 +102,21 @@ export const PageManagement: React.FC = () => {
     !isContact || !draftShowContactForm || setContactEmailSchema.safeParse({ email: draftContactEmail.trim() }).success;
   const canSave = allLangsFilled && emailValid;
 
-  const saveContent = async () => {
-    if (!selectedKey || !canSave) return;
-    try {
-      await Promise.all([
-        ...LANGUAGES.map(lang => navItemsApi.setContent(selectedKey, lang.code, draftContent[lang.code] ?? '')),
+  const { mutate: saveAllContent } = useMutation({
+    mutationFn: (key: NavItemKey) =>
+      Promise.all([
+        ...LANGUAGES.map(lang => navItemsApi.setContent(key, lang.code, draftContent[lang.code] ?? '')),
         ...(isContact && draftShowContactForm ? [navItemsApi.setContactEmail(draftContactEmail.trim())] : []),
-      ]);
-    } catch (err) {
-      reportActionError(err, 'error_save_failed');
-      return;
-    }
-    refresh();
-    setSaved(true);
+      ]),
+    onSuccess: () => {
+      setSaved(true);
+      return onWritten();
+    },
+  });
+
+  const saveContent = () => {
+    if (!selectedKey || !canSave) return;
+    saveAllContent(selectedKey);
   };
 
   return (
@@ -151,7 +150,7 @@ export const PageManagement: React.FC = () => {
                     <span className="flex items-center gap-3 flex-shrink-0">
                       <ActiveStatusToggle
                         active={isActive(key)}
-                        onChange={() => void toggleActive(key)}
+                        onChange={() => toggleActive(key)}
                         label={t(pageLabelKey(key))}
                         labelWidthClassName="w-12"
                       />
@@ -170,7 +169,7 @@ export const PageManagement: React.FC = () => {
 
                       <span className="flex items-center border-l border-gray-200 pl-3 ml-1">
                         <button
-                          onClick={() => void movePage(index, -1)}
+                          onClick={() => movePage(index, -1)}
                           disabled={index === 0}
                           aria-label={t('sm_pages_move_up')}
                           className="flex items-center bg-transparent border-none cursor-pointer text-gray-400 hover:text-[var(--cs-primary)] disabled:opacity-25 disabled:cursor-not-allowed p-1"
@@ -178,7 +177,7 @@ export const PageManagement: React.FC = () => {
                           <LuArrowUp />
                         </button>
                         <button
-                          onClick={() => void movePage(index, 1)}
+                          onClick={() => movePage(index, 1)}
                           disabled={index === pages.length - 1}
                           aria-label={t('sm_pages_move_down')}
                           className="flex items-center bg-transparent border-none cursor-pointer text-gray-400 hover:text-[var(--cs-primary)] disabled:opacity-25 disabled:cursor-not-allowed p-1"
@@ -207,22 +206,11 @@ export const PageManagement: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="flex gap-2 mb-4">
-                  {LANGUAGES.map(lang => (
-                    <button
-                      key={lang.code}
-                      onClick={() => setSelectedLang(lang.code)}
-                      className={`px-3 py-1 rounded-full text-sm font-medium border ${
-                        selectedLang === lang.code
-                          ? 'bg-[var(--cs-primary)] text-white border-[var(--cs-primary)]'
-                          : 'bg-transparent text-gray-600 border-gray-300'
-                      }`}
-                    >
-                      {t(`lang_${lang.code}`)}
-                      {!(draftContent[lang.code] ?? '').trim() && <span className="text-red-500 ml-1">•</span>}
-                    </button>
-                  ))}
-                </div>
+                <LanguageTabs
+                  selected={selectedLang}
+                  onSelect={setSelectedLang}
+                  isMissing={lang => !(draftContent[lang] ?? '').trim()}
+                />
 
                 <MarkdownToolbar
                   textareaRef={textareaRef}
@@ -254,7 +242,7 @@ export const PageManagement: React.FC = () => {
                     <div className="flex items-center gap-3 mt-4">
                       <ToggleSwitch
                         checked={draftShowContactForm}
-                        onChange={() => void toggleShowContactForm()}
+                        onChange={toggleShowContactForm}
                         label={t('sm_pages_contact_show_form')}
                       />
                       <span className="text-sm font-medium text-gray-700">{t('sm_pages_contact_show_form')}</span>
@@ -280,7 +268,7 @@ export const PageManagement: React.FC = () => {
 
                 <div className="flex items-center gap-3 mt-4">
                   <SaveButton
-                    onClick={() => void saveContent()}
+                    onClick={saveContent}
                     disabled={!canSave}
                     title={!canSave ? t('common_fill_required_fields') : undefined}
                   />

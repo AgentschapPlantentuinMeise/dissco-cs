@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { iiifQueries } from '../../api/queries/iiif';
 import { projectKeys, projectQueries } from '../../api/queries/projects';
 import { taskKeys } from '../../api/queries/tasks';
+import { forumKeys } from '../../api/queries/forum';
 import { captureModelQueries } from '../../api/queries/capture-models';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -395,17 +396,16 @@ export function AnnotatePage() {
   // elsewhere (handleSaveAndAdvance) — the task lands in "Saved tasks" and the user proceeds to
   // returnTo (if they came from their saved-tasks list) or the next task, exactly like a normal
   // draft save.
-  const handlePostForumMessage = async (data: ForumTopicInput) => {
-    try {
-      await forumApi.createTopic({ ...data, projectSlug: project?.slug ?? null, projectLabel: projectLabel ?? null });
-    } catch (err) {
-      reportClientError(err, 'action');
-      showError('error_save_failed');
-      return;
-    }
-    setForumOpen(false);
-    await handleSaveAndAdvance('draft');
-  };
+  const { mutate: postForumTopic } = useMutation({
+    mutationFn: (data: ForumTopicInput) =>
+      forumApi.createTopic({ ...data, projectSlug: project?.slug ?? null, projectLabel: projectLabel ?? null }),
+    onSuccess: () => {
+      setForumOpen(false);
+      queryClient.invalidateQueries({ queryKey: forumKeys.all });
+      void handleSaveAndAdvance('draft');
+    },
+    meta: { errorMessage: 'error_send_failed' },
+  });
 
   // Same save as handleSaveAndAdvance('draft') but stays on the current task — no goToNext().
   const handleSaveDraft = async () => {
@@ -600,7 +600,7 @@ export function AnnotatePage() {
           initialTaskUrl={window.location.href}
           taskUrlReadOnly
           fixedProjectLabel={projectLabel}
-          onSubmit={data => void handlePostForumMessage(data)}
+          onSubmit={data => postForumTopic(data)}
           onCancel={() => setForumOpen(false)}
         />
       </Modal>

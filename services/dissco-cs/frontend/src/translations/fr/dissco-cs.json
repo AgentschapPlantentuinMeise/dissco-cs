@@ -43,7 +43,6 @@
   "contact_form_message": "Message",
   "contact_form_submit": "Envoyer",
   "contact_form_success": "Merci, votre message a été envoyé.",
-  "contact_form_error": "Une erreur s'est produite lors de l'envoi. Veuillez réessayer plus tard.",
   "sm_pages_contact_email_label": "Adresse e-mail pour les messages",
   "sm_pages_contact_show_form": "Afficher le formulaire de contact sur cette page",
   "sm_pages_contact_email_placeholder": "par exemple info@exemple.be",
@@ -287,7 +286,6 @@
   "sm_institutions_choose_file": "Choisir un fichier",
   "sm_institutions_invalid_email": "Saisissez une adresse e-mail valide.",
   "sm_institutions_invalid_phone": "Saisissez un numéro de téléphone valide.",
-  "sm_institutions_save_error": "Échec de l'enregistrement. Veuillez réessayer.",
   "sm_tile_projects_desc": "Créez de nouveaux projets et gérez les projets existants.",
   "sm_tile_projects_title": "Gestion des projets",
   "sm_projects_search_placeholder": "Rechercher un projet...",
@@ -359,8 +357,7 @@
   "sm_manuals_attachment_insert_marker": "Insérer la pièce jointe ici",
   "sm_manuals_missing_langs": "Pas encore complet pour : {{langs}}. Ajoutez du texte ou une pièce jointe pour ces langues avant de pouvoir enregistrer.",
   "sm_manuals_needs_content": "Saisissez du texte (dans toutes les langues) ou ajoutez une pièce jointe avant de pouvoir enregistrer.",
-  "sm_manuals_lang_missing": "Pas encore complété",
-  "sm_manuals_save_error": "Échec de l'enregistrement. Veuillez réessayer.",
+  "common_lang_missing": "Pas encore complété",
   "sm_manuals_attachment_replace": "Remplacer",
   "sm_manuals_attachment_none": "Aucune pièce jointe ajoutée",
   "sm_manuals_attachment_add": "Ajouter une pièce jointe",
@@ -459,5 +456,6 @@
   "error_release_failed": "La tâche n'a pas pu être libérée. Veuillez réessayer.",
   "error_load_failed": "Le contenu n'a pas pu être chargé. Veuillez réessayer plus tard.",
   "error_upload_failed": "Le fichier n'a pas été envoyé. Veuillez réessayer.",
+  "error_send_failed": "Votre message n'a pas été envoyé. Veuillez réessayer.",
   "error_generic": "Une erreur est survenue. Veuillez réessayer."
 }

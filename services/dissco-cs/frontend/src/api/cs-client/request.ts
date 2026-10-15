@@ -3,8 +3,9 @@ import { getJwt, redirectToExpiredLogin } from '../jwt';
 
 // The one error type for every API call in the app. Lets callers branch on the status (e.g. 404 =
 // missing site scope on prepare-claim, per madoc-ts's userWithScope, vs. a genuinely missing
-// resource) instead of parsing the message string. `message` is the server's own message when it
-// sent one (Madoc's `{ error }` JSON or a plain-text body), so it can be shown to the user.
+// resource) instead of parsing the message string. `message` is the server's own `{ error }` text
+// (ours and Madoc's), for recognising a specific case (see claim-errors.ts) and for the log -- the
+// user only ever sees a translated message (CLAUDE.md "Fouten en logging").
 export class ApiError extends Error {
   status: number;
   constructor(status: number, path: string, serverMessage?: string) {

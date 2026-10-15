@@ -43,7 +43,6 @@
   "contact_form_message": "Bericht",
   "contact_form_submit": "Versturen",
   "contact_form_success": "Bedankt, je bericht is verstuurd.",
-  "contact_form_error": "Er ging iets mis bij het versturen. Probeer het later opnieuw.",
   "sm_pages_contact_email_label": "E-mailadres voor meldingen",
   "sm_pages_contact_show_form": "Toon contactformulier op deze pagina",
   "sm_pages_contact_email_placeholder": "bijvoorbeeld info@voorbeeld.be",
@@ -287,7 +286,6 @@
   "sm_institutions_choose_file": "Bestand kiezen",
   "sm_institutions_invalid_email": "Vul een geldig e-mailadres in.",
   "sm_institutions_invalid_phone": "Vul een geldig telefoonnummer in.",
-  "sm_institutions_save_error": "Opslaan mislukt. Probeer het opnieuw.",
   "sm_tile_projects_desc": "Maak nieuwe projecten aan en beheer bestaande.",
   "sm_tile_projects_title": "Projectbeheer",
   "sm_projects_search_placeholder": "Zoek een project...",
@@ -359,8 +357,7 @@
   "sm_manuals_attachment_insert_marker": "Bijlage hier invoegen",
   "sm_manuals_missing_langs": "Nog niet volledig voor: {{langs}}. Vul tekst in of voeg een bijlage toe voor deze talen om te kunnen opslaan.",
   "sm_manuals_needs_content": "Vul tekst in (in alle talen) of voeg een bijlage toe om te kunnen opslaan.",
-  "sm_manuals_lang_missing": "Nog niet ingevuld",
-  "sm_manuals_save_error": "Opslaan mislukt. Probeer het opnieuw.",
+  "common_lang_missing": "Nog niet ingevuld",
   "sm_manuals_attachment_replace": "Vervangen",
   "sm_manuals_attachment_none": "Geen bijlage toegevoegd",
   "sm_manuals_attachment_add": "Bijlage toevoegen",
@@ -459,5 +456,6 @@
   "error_release_failed": "De taak kon niet vrijgegeven worden. Probeer het opnieuw.",
   "error_load_failed": "Dit kon niet geladen worden. Probeer het later opnieuw.",
   "error_upload_failed": "Het bestand is niet geüpload. Probeer het opnieuw.",
+  "error_send_failed": "Je bericht is niet verstuurd. Probeer het opnieuw.",
   "error_generic": "Er liep iets mis. Probeer het opnieuw."
 }

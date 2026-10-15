@@ -130,6 +130,13 @@ export async function relayMadocResponse(response: Response): Promise<Response> 
   return new Response(null, { status: response.status });
 }
 
+// A body that is passed on to Madoc unvalidated (Madoc validates it itself): the parsed JSON, or a
+// 400 answer when it is not JSON. Bodies we handle ourselves use validateJson(schema) instead.
+export async function readJsonBody(c: Context): Promise<unknown> {
+  const body: unknown = await c.req.json().catch(() => undefined);
+  return body === undefined ? c.json({ error: 'Invalid JSON' }, 400) : body;
+}
+
 // The common case for a write: forward the request's JSON body to `path` and relay the answer.
 export async function forwardJsonBody(
   c: Context,
@@ -137,9 +144,9 @@ export async function forwardJsonBody(
   method: 'POST' | 'PUT' | 'PATCH',
   userToken: string | undefined
 ): Promise<Response> {
-  const body = await c.req.json().catch(() => undefined);
-  if (body === undefined) {
-    return c.text('Invalid JSON', 400);
+  const body = await readJsonBody(c);
+  if (body instanceof Response) {
+    return body;
   }
 
   return relayMadocResponse(await madocFetch(path, userToken, { method, body }));

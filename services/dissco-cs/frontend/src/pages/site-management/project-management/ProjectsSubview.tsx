@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { projectKeys } from '../../../api/queries/projects';
+import { manualKeys } from '../../../api/queries/manuals';
+import { institutionKeys } from '../../../api/queries/institutions';
 import { projectsApi } from '../../../api/cs-client/projects';
 import { SaveButton } from '../../../components/ui/SaveButton';
 import { Select } from '../../../components/ui/Select';
@@ -11,11 +15,9 @@ import { MadocProjectDto, InstitutionDto, ManualSummaryDto } from '@dissco-cs/sh
 export const ProjectsSubview: React.FC<{
   projects: MadocProjectDto[];
   manuals: ManualSummaryDto[];
-  refetchManuals: () => void;
   institutions: InstitutionDto[];
   institutionLinks: Record<string, number>;
-  refetchInstitutionLinks: () => void;
-}> = ({ projects, manuals, refetchManuals, institutions, institutionLinks, refetchInstitutionLinks }) => {
+}> = ({ projects, manuals, institutions, institutionLinks }) => {
   const { t, i18n } = useTranslation('dissco-cs');
   const projectLabel = (project: MadocProjectDto) => localeText(project.label, i18n.language) || project.slug;
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
@@ -24,8 +26,6 @@ export const ProjectsSubview: React.FC<{
   const [filterManualId, setFilterManualId] = useState<'all' | 'none' | string>('all');
   const [pickedInstitutionId, setPickedInstitutionId] = useState<number | ''>('');
   const [pickedManualId, setPickedManualId] = useState<number | ''>('');
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState(false);
 
   const filteredProjects = projects.filter(project => {
     const matchesSearch = projectLabel(project)
@@ -50,13 +50,11 @@ export const ProjectsSubview: React.FC<{
     : undefined;
 
   // Re-initializes the fields when the edited row changes or after a successful save (which
-  // refreshes institutionLinks/manuals) -- on a failed save, saveError stays put because
-  // nothing gets refreshed then.
+  // refreshes institutionLinks/manuals).
   useEffect(() => {
     if (!editingProject) return;
     setPickedInstitutionId(institutionLinks[editingProject.slug] ?? '');
     setPickedManualId(linkedManual ? linkedManual.id : '');
-    setSaveError(false);
     // Only editingProject.slug and linkedManual.id are read here, not the objects themselves --
     // listing the full objects would re-run this on every projects/manuals refetch that returns a
     // new array reference, even when the actual selection hasn't changed.
@@ -65,22 +63,26 @@ export const ProjectsSubview: React.FC<{
 
   const canSave = pickedInstitutionId !== '' && pickedManualId !== '';
 
-  const save = async () => {
-    if (!editingProject || !canSave) return;
-    setSaving(true);
-    setSaveError(false);
-    try {
-      await projectsApi.setInstitutionLink(editingProject.slug, Number(pickedInstitutionId));
-      await projectsApi.setManualLink(editingProject.slug, Number(pickedManualId));
-
-      refetchInstitutionLinks();
-      refetchManuals();
+  const queryClient = useQueryClient();
+  const { mutate: saveLinks, isPending: saving } = useMutation({
+    mutationFn: async ({ slug, institutionId, manualId }: { slug: string; institutionId: number; manualId: number }) => {
+      await projectsApi.setInstitutionLink(slug, institutionId);
+      await projectsApi.setManualLink(slug, manualId);
+    },
+    onSuccess: (_result, { slug }) => {
       setEditingSlug(null);
-    } catch {
-      setSaveError(true);
-    } finally {
-      setSaving(false);
-    }
+      // The admin lists here plus the public project page (its institution and manual).
+      queryClient.invalidateQueries({ queryKey: projectKeys.institutionLinks() });
+      queryClient.invalidateQueries({ queryKey: projectKeys.institution(slug) });
+      queryClient.invalidateQueries({ queryKey: projectKeys.manual(slug) });
+      queryClient.invalidateQueries({ queryKey: institutionKeys.all });
+      return queryClient.invalidateQueries({ queryKey: manualKeys.all });
+    },
+  });
+
+  const save = () => {
+    if (!editingProject || !canSave) return;
+    saveLinks({ slug: editingProject.slug, institutionId: Number(pickedInstitutionId), manualId: Number(pickedManualId) });
   };
 
   return (
@@ -211,8 +213,7 @@ export const ProjectsSubview: React.FC<{
                   <td className="px-4 py-3 border-t border-gray-100 text-right whitespace-nowrap align-top">
                     {isEditing ? (
                       <div className="flex items-center justify-end gap-3">
-                        {saveError && <span className="text-sm text-red-700">{t('sm_manuals_save_error')}</span>}
-                        <SaveButton onClick={() => void save()} disabled={!canSave} loading={saving} />
+                        <SaveButton onClick={save} disabled={!canSave} loading={saving} />
                       </div>
                     ) : (
                       <button

@@ -43,7 +43,6 @@
   "contact_form_message": "Message",
   "contact_form_submit": "Send",
   "contact_form_success": "Thank you, your message has been sent.",
-  "contact_form_error": "Something went wrong while sending. Please try again later.",
   "sm_pages_contact_email_label": "Email address for submissions",
   "sm_pages_contact_show_form": "Show contact form on this page",
   "sm_pages_contact_email_placeholder": "e.g. info@example.com",
@@ -288,7 +287,6 @@
   "sm_institutions_choose_file": "Choose file",
   "sm_institutions_invalid_email": "Enter a valid email address.",
   "sm_institutions_invalid_phone": "Enter a valid phone number.",
-  "sm_institutions_save_error": "Failed to save. Please try again.",
   "sm_tile_projects_desc": "Create new projects and manage existing ones.",
   "sm_tile_projects_title": "Project management",
   "sm_projects_search_placeholder": "Search a project...",
@@ -360,8 +358,7 @@
   "sm_manuals_attachment_insert_marker": "Insert attachment here",
   "sm_manuals_missing_langs": "Not complete yet for: {{langs}}. Fill in text or add an attachment for these languages before you can save.",
   "sm_manuals_needs_content": "Fill in text (in all languages) or add an attachment before you can save.",
-  "sm_manuals_lang_missing": "Not yet filled in",
-  "sm_manuals_save_error": "Saving failed. Please try again.",
+  "common_lang_missing": "Not yet filled in",
   "sm_manuals_attachment_replace": "Replace",
   "sm_manuals_attachment_none": "No attachment added",
   "sm_manuals_attachment_add": "Add attachment",
@@ -460,5 +457,6 @@
   "error_release_failed": "The task could not be released. Please try again.",
   "error_load_failed": "This could not be loaded. Please try again later.",
   "error_upload_failed": "The file was not uploaded. Please try again.",
+  "error_send_failed": "Your message was not sent. Please try again.",
   "error_generic": "Something went wrong. Please try again."
 }

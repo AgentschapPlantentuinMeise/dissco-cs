@@ -15,8 +15,7 @@ import { disscoCSConfig } from '../../dissco-cs-config';
 import { getSiteSlug } from '../../api/slug';
 import { useNavItems } from '../../hooks/use-nav-items';
 import { NAV_ITEMS } from './nav-config';
-
-const LANGUAGES = disscoCSConfig.supportedLanguages;
+import { LANGUAGES } from '../../utility/site-lang-text';
 
 const navLinkClass = (isActive: boolean) =>
   `no-underline text-base transition-colors duration-200 hover:text-[var(--cs-primary)]
@@ -79,7 +78,7 @@ export const Navbar: React.FC = () => {
     setSearchOpen(false);
   }, [location]);
 
-  const submitSearch = (event: React.FormEvent) => {
+  const submitSearch = (event: React.SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmed = searchQuery.trim();
     if (!trimmed) return;

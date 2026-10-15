@@ -100,11 +100,11 @@ export function requestMadocUserIdentity(context: Context): MadocUserIdentity | 
 export function requireSiteAdmin(context: Context): MadocUserIdentity | Response {
   const identity = requestMadocUserIdentity(context);
   if (!identity) {
-    return context.text('Unauthorized', 401);
+    return context.json({ error: 'Unauthorized' }, 401);
   }
 
   if (!identity.scope.includes('site.admin')) {
-    return context.text('Forbidden', 403);
+    return context.json({ error: 'Forbidden' }, 403);
   }
 
   return identity;
@@ -117,7 +117,7 @@ export function requireSiteAdmin(context: Context): MadocUserIdentity | Response
 export function requireUser(context: Context): MadocUserIdentity | Response {
   const identity = requestMadocUserIdentity(context);
   if (!identity) {
-    return context.text('Unauthorized', 401);
+    return context.json({ error: 'Unauthorized' }, 401);
   }
 
   return identity;
@@ -140,4 +140,17 @@ export async function resolveSiteId(context: Context): Promise<number | null> {
   }
 
   return getSiteIdBySlug(slug);
+}
+
+/**
+ * resolveSiteId for a route that cannot work without a site: the site id, or a 400 Response to
+ * return directly from the route handler.
+ */
+export async function requireSiteId(context: Context): Promise<number | Response> {
+  const siteId = await resolveSiteId(context);
+  if (siteId === null) {
+    return context.json({ error: 'Could not resolve site' }, 400);
+  }
+
+  return siteId;
 }

@@ -6,10 +6,9 @@ import { projectKeys } from '../../../api/queries/projects';
 import { projectsApi } from '../../../api/cs-client/projects';
 import { iiifApi } from '../../../api/cs-client/iiif';
 import { Select } from '../../../components/ui/Select';
-import { slugify } from './slugify';
 import { localeText } from '../../../utility/locale-text';
 import { defaultLang } from '../../../utility/site-lang-text';
-import { MadocProjectDto } from '@dissco-cs/shared-types';
+import { MadocProjectDto, slugify } from '@dissco-cs/shared-types';
 import { reportActionError } from '../../../hooks/use-toast';
 
 // Creates `count` real Madoc projects sequentially, via the exact same route the "New project" /
@@ -41,7 +40,7 @@ export const BulkCreateProjectsSubview: React.FC<{ projects: MadocProjectDto[] }
     stopRef.current = false;
 
     const lang = defaultLang(i18n.language);
-    const slugBase = slugify(title);
+    const slugBase = slugify(title, 'project');
     const runSuffix = Date.now().toString(36);
 
     const sourceProject = sourceSlug ? projects.find(p => p.slug === sourceSlug) : null;

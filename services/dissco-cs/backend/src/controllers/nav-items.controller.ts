@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { NavItemsRepository, toNavItemDto } from '../repositories/nav-items.repository.js';
-import { requireSiteAdmin, resolveSiteId } from '../auth/auth.js';
+import { requireSiteAdmin, requireSiteId } from '../auth/auth.js';
+import { validateJson } from '../infrastructure/validate-json.js';
 import {
   isNavItemContentKey,
   isNavItemKey,
@@ -16,9 +17,9 @@ export function navItemsController(navItemsRepository: NavItemsRepository): Hono
   const app = new Hono();
 
   app.get('/', async c => {
-    const siteId = await resolveSiteId(c);
-    if (siteId === null) {
-      return c.text('Could not resolve site', 400);
+    const siteId = await requireSiteId(c);
+    if (siteId instanceof Response) {
+      return siteId;
     }
 
     const navItems = await navItemsRepository.getNavItems(siteId);
@@ -40,52 +41,43 @@ export function navItemsController(navItemsRepository: NavItemsRepository): Hono
     return c.json(result);
   });
 
-  app.put('/order', async c => {
+  app.put('/order', validateJson(setNavItemsOrderSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const result = setNavItemsOrderSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('order must contain every page key exactly once', 400);
-    }
+    const input = c.req.valid('json');
 
-    await navItemsRepository.setNavItemsOrder(identity.siteId, result.data.order);
+    await navItemsRepository.setNavItemsOrder(identity.siteId, input.order);
     return c.body(null, 204);
   });
 
-  app.put('/contact/email', async c => {
+  app.put('/contact/email', validateJson(setContactEmailSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const result = setContactEmailSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('A valid email is required', 400);
-    }
+    const input = c.req.valid('json');
 
-    await navItemsRepository.setContactEmail(identity.siteId, result.data.email);
+    await navItemsRepository.setContactEmail(identity.siteId, input.email);
     return c.body(null, 204);
   });
 
-  app.put('/contact/show-form', async c => {
+  app.put('/contact/show-form', validateJson(setShowContactFormSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const result = setShowContactFormSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('showContactForm must be a boolean', 400);
-    }
+    const input = c.req.valid('json');
 
-    await navItemsRepository.setShowContactForm(identity.siteId, result.data.showContactForm);
+    await navItemsRepository.setShowContactForm(identity.siteId, input.showContactForm);
     return c.body(null, 204);
   });
 
-  app.put('/:key/content', async c => {
+  app.put('/:key/content', validateJson(setNavItemContentSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
@@ -96,16 +88,13 @@ export function navItemsController(navItemsRepository: NavItemsRepository): Hono
       return c.notFound();
     }
 
-    const result = setNavItemContentSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('lang and contentMd are required', 400);
-    }
+    const input = c.req.valid('json');
 
-    await navItemsRepository.upsertNavItemContent(identity.siteId, pageKey, result.data.lang, result.data.contentMd);
+    await navItemsRepository.upsertNavItemContent(identity.siteId, pageKey, input.lang, input.contentMd);
     return c.body(null, 204);
   });
 
-  app.put('/:key', async c => {
+  app.patch('/:key', validateJson(setNavItemActiveSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
@@ -116,12 +105,9 @@ export function navItemsController(navItemsRepository: NavItemsRepository): Hono
       return c.notFound();
     }
 
-    const result = setNavItemActiveSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('isActive must be a boolean', 400);
-    }
+    const input = c.req.valid('json');
 
-    await navItemsRepository.setNavItemActive(identity.siteId, pageKey, result.data.isActive);
+    await navItemsRepository.setNavItemActive(identity.siteId, pageKey, input.isActive);
     return c.body(null, 204);
   });
 

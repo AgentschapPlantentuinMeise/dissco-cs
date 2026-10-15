@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
-import { requireSiteAdmin, resolveSiteId } from '../auth/auth.js';
+import { requireSiteAdmin, requireSiteId } from '../auth/auth.js';
 import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
+import { validateJson } from '../infrastructure/validate-json.js';
+import { intId, validateParams } from '../infrastructure/validate-params.js';
 import { institutionInputSchema } from '@dissco-cs/shared-types';
 
 // The institution itself. Its numbers live in stats.controller.ts (/stats/institutions/:slug), its
@@ -9,9 +11,9 @@ export function institutionsController(institutionsRepository: InstitutionsRepos
   const app = new Hono();
 
   app.get('/active', async c => {
-    const siteId = await resolveSiteId(c);
-    if (siteId === null) {
-      return c.text('Could not resolve site', 400);
+    const siteId = await requireSiteId(c);
+    if (siteId instanceof Response) {
+      return siteId;
     }
 
     const institutions = await institutionsRepository.listActiveInstitutions(siteId);
@@ -19,9 +21,9 @@ export function institutionsController(institutionsRepository: InstitutionsRepos
   });
 
   app.get('/active/:slug', async c => {
-    const siteId = await resolveSiteId(c);
-    if (siteId === null) {
-      return c.text('Could not resolve site', 400);
+    const siteId = await requireSiteId(c);
+    if (siteId instanceof Response) {
+      return siteId;
     }
 
     const institution = await institutionsRepository.getActiveInstitutionBySlug(siteId, c.req.param('slug'));
@@ -29,13 +31,13 @@ export function institutionsController(institutionsRepository: InstitutionsRepos
       return c.notFound();
     }
 
-    return c.json(toInstitutionDto(institution));
+    return c.body(null, 204);
   });
 
   app.get('/active/:slug/projects', async c => {
-    const siteId = await resolveSiteId(c);
-    if (siteId === null) {
-      return c.text('Could not resolve site', 400);
+    const siteId = await requireSiteId(c);
+    if (siteId instanceof Response) {
+      return siteId;
     }
 
     const institution = await institutionsRepository.getActiveInstitutionBySlug(siteId, c.req.param('slug'));
@@ -57,38 +59,29 @@ export function institutionsController(institutionsRepository: InstitutionsRepos
     return c.json({ institutions: institutions.map(toInstitutionDto) });
   });
 
-  app.post('/', async c => {
+  app.post('/', validateJson(institutionInputSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const result = institutionInputSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('Invalid institution payload', 400);
-    }
+    const input = c.req.valid('json');
 
-    const institution = await institutionsRepository.createInstitution(identity.siteId, result.data);
+    const institution = await institutionsRepository.createInstitution(identity.siteId, input);
     return c.json(toInstitutionDto(institution), 201);
   });
 
-  app.put('/:id', async c => {
+  app.put('/:id', validateParams({ id: intId }), validateJson(institutionInputSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const id = Number(c.req.param('id'));
-    if (!Number.isInteger(id)) {
-      return c.notFound();
-    }
+    const { id } = c.req.valid('param');
 
-    const result = institutionInputSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('Invalid institution payload', 400);
-    }
+    const input = c.req.valid('json');
 
-    const institution = await institutionsRepository.updateInstitution(identity.siteId, id, result.data);
+    const institution = await institutionsRepository.updateInstitution(identity.siteId, id, input);
     if (!institution) {
       return c.notFound();
     }
@@ -96,16 +89,13 @@ export function institutionsController(institutionsRepository: InstitutionsRepos
     return c.json(toInstitutionDto(institution));
   });
 
-  app.delete('/:id', async c => {
+  app.delete('/:id', validateParams({ id: intId }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const id = Number(c.req.param('id'));
-    if (!Number.isInteger(id)) {
-      return c.notFound();
-    }
+    const { id } = c.req.valid('param');
 
     const deleted = await institutionsRepository.deleteInstitution(identity.siteId, id);
     if (!deleted) {

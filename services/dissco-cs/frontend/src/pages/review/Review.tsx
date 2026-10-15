@@ -167,9 +167,8 @@ export const Review: React.FC = () => {
                     row={row}
                     editedDocument={c.editedDocuments[row.id]}
                     onDocumentChange={c.handleDocumentChange}
-                    onRelease={() => void c.handleRelease(row)}
+                    onRelease={() => c.handleRelease(row)}
                     releasing={c.releasing === row.id}
-                    releaseError={c.releaseError}
                     onClose={() => c.setOpenRowId(null)}
                     selected={c.selectedIds.has(row.id)}
                     onToggleSelect={() => c.toggleSelectRow(row.id)}
@@ -211,10 +210,9 @@ export const Review: React.FC = () => {
       {c.feedbackTarget && (
         <FeedbackModal
           target={c.feedbackTarget}
-          onSend={(subject, body) => void c.sendFeedback(subject, body)}
+          onSend={c.sendFeedback}
           onClose={c.closeFeedbackTarget}
           sending={c.sendingFeedback}
-          error={c.feedbackError}
         />
       )}
     </CsPage>

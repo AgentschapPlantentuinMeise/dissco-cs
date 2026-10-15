@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { manualQueries } from '../../../api/queries/manuals';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { manualKeys, manualQueries } from '../../../api/queries/manuals';
 import { projectKeys } from '../../../api/queries/projects';
 import { manualsApi } from '../../../api/cs-client/manuals';
 import { MAX_MANUAL_ATTACHMENT_LENGTH, SitePageLang } from '@dissco-cs/shared-types';
@@ -10,7 +10,7 @@ import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
 import { MarkdownToolbar } from '../../../components/ui/MarkdownToolbar';
 import { LuCheck } from 'react-icons/lu';
 import { LANGUAGES, defaultLang } from '../../../utility/site-lang-text';
-import { reportActionError } from '../../../hooks/use-toast';
+import { LanguageTabs } from '../../../components/ui/LanguageTabs';
 
 // Shared editor for a manual's content (language tabs + markdown toolbar/textarea +
 // attachment). Reused by both the per-project panel and the manual-library "Bewerken" row,
@@ -18,23 +18,57 @@ import { reportActionError } from '../../../hooks/use-toast';
 export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }) => {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
-  const { data: manual, refetch } = useQuery(manualQueries.detail(manualId));
+  const { data: manual } = useQuery(manualQueries.detail(manualId));
   const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
   const [draftContent, setDraftContent] = useState<Partial<Record<SitePageLang, string>>>({});
-  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [uploading, setUploading] = useState(false);
   const [attachmentSaved, setAttachmentSaved] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // This manual's own detail, plus the public manual popup, which reads its own cached query
+  // (projectQueries.manual) and would otherwise only update after its staleTime (5 min).
+  const onWritten = () => {
+    queryClient.invalidateQueries({ queryKey: projectKeys.manuals() });
+    return queryClient.invalidateQueries({ queryKey: manualKeys.detail(manualId) });
+  };
+
+  const {
+    mutate: saveContent,
+    isPending: saving,
+    isSuccess: saved,
+    reset: resetSave,
+  } = useMutation({
+    mutationFn: (content: Partial<Record<SitePageLang, string>>) =>
+      Promise.all(LANGUAGES.map(lang => manualsApi.setContent(manualId, lang.code, content[lang.code] ?? ''))),
+    onSuccess: onWritten,
+  });
+
+  const { mutate: uploadAttachment, isPending: uploading } = useMutation({
+    mutationFn: ({ lang, file }: { lang: SitePageLang; file: File }) => manualsApi.uploadAttachment(manualId, lang, file),
+    onSuccess: () => {
+      setAttachmentSaved(true);
+      return onWritten();
+    },
+    meta: { errorMessage: 'error_upload_failed' },
+  });
+
+  const { mutate: deleteAttachment } = useMutation({
+    mutationFn: (lang: SitePageLang) => manualsApi.deleteAttachment(manualId, lang),
+    onSuccess: () => {
+      setAttachmentSaved(false);
+      return onWritten();
+    },
+    meta: { errorMessage: 'error_delete_failed' },
+  });
+
   useEffect(() => {
     if (manual) {
       setDraftContent(manual.content ?? {});
-      setSaveState('idle');
+      resetSave();
     }
     // Only re-initialise when the manual itself changes -- not on manual.updatedAt, which also
-    // changes after our own successful save (via refetch) and would otherwise reset the 'saved'
-    // status straight back to 'idle'.
+    // changes after our own successful save (via the refetch) and would otherwise reset the
+    // 'saved' status straight back to idle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [manual?.id]);
 
@@ -51,53 +85,21 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
   const missingLangs = hasAnyContent ? LANGUAGES.filter(lang => !langHasContent(lang)) : [];
   const canSave = hasAnyContent && missingLangs.length === 0;
 
-  const save = async () => {
+  const save = () => {
     if (!canSave) return;
-    setSaveState('saving');
-    try {
-      await Promise.all(
-        LANGUAGES.map(lang => manualsApi.setContent(manual.id, lang.code, draftContent[lang.code] ?? ''))
-      );
-      await refetch();
-      // The public manual popup reads its own cached query (projectQueries.manual), which would
-      // otherwise only show the new content after its staleTime (5 min) or a hard refresh.
-      queryClient.invalidateQueries({ queryKey: projectKeys.manuals() });
-      setSaveState('saved');
-    } catch {
-      setSaveState('error');
-    }
+    saveContent(draftContent);
   };
 
-  const onPickFile = async (file: File) => {
+  const onPickFile = (file: File) => {
     if (file.size > MAX_MANUAL_ATTACHMENT_LENGTH) {
       window.alert(t('sm_manuals_attachment_too_large'));
       return;
     }
-    setUploading(true);
     setAttachmentSaved(false);
-    try {
-      await manualsApi.uploadAttachment(manual.id, selectedLang, file);
-      await refetch();
-      queryClient.invalidateQueries({ queryKey: projectKeys.manuals() });
-      setAttachmentSaved(true);
-    } catch (err) {
-      reportActionError(err, 'error_upload_failed');
-    } finally {
-      setUploading(false);
-    }
+    uploadAttachment({ lang: selectedLang, file });
   };
 
-  const removeAttachment = async () => {
-    try {
-      await manualsApi.deleteAttachment(manual.id, selectedLang);
-    } catch (err) {
-      reportActionError(err, 'error_delete_failed');
-      return;
-    }
-    await refetch();
-    queryClient.invalidateQueries({ queryKey: projectKeys.manuals() });
-    setAttachmentSaved(false);
-  };
+  const removeAttachment = () => deleteAttachment(selectedLang);
 
   // Voegt {{attachment}} in op de cursorpositie -- ManualModal bedt de bijlage-galerij
   // daar exact in i.p.v. steeds achteraan alle secties te tonen.
@@ -110,7 +112,7 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
     const marker = '\n\n{{attachment}}\n\n';
     const next = current.slice(0, start) + marker + current.slice(end);
     setDraftContent(prev => ({ ...prev, [selectedLang]: next }));
-    setSaveState('idle');
+    resetSave();
     requestAnimationFrame(() => {
       textarea.focus();
       const pos = start + marker.length;
@@ -120,39 +122,21 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
 
   return (
     <div>
-      <div className="flex gap-2 mb-4">
-        {LANGUAGES.map(lang => (
-          <button
-            key={lang.code}
-            onClick={() => {
-              setSelectedLang(lang.code);
-              setAttachmentSaved(false);
-            }}
-            className={`px-3 py-1 rounded-full text-sm font-medium border flex items-center gap-1.5 ${
-              selectedLang === lang.code
-                ? 'bg-[var(--cs-primary)] text-white border-[var(--cs-primary)]'
-                : 'bg-transparent text-gray-600 border-gray-300'
-            }`}
-          >
-            {t(`lang_${lang.code}`)}
-            {missingLangs.includes(lang) && (
-              <span
-                className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                  selectedLang === lang.code ? 'bg-white' : 'bg-red-500'
-                }`}
-                title={t('sm_manuals_lang_missing')}
-              />
-            )}
-          </button>
-        ))}
-      </div>
+      <LanguageTabs
+        selected={selectedLang}
+        onSelect={lang => {
+          setSelectedLang(lang);
+          setAttachmentSaved(false);
+        }}
+        isMissing={lang => missingLangs.some(missing => missing.code === lang)}
+      />
 
       <MarkdownToolbar
         textareaRef={textareaRef}
         value={draftContent[selectedLang] ?? ''}
         onChange={next => {
           setDraftContent(prev => ({ ...prev, [selectedLang]: next }));
-          setSaveState('idle');
+          resetSave();
         }}
       />
       <textarea
@@ -160,7 +144,7 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
         value={draftContent[selectedLang] ?? ''}
         onChange={e => {
           setDraftContent(prev => ({ ...prev, [selectedLang]: e.target.value }));
-          setSaveState('idle');
+          resetSave();
         }}
         placeholder={t('sm_manuals_content_placeholder')}
         className="w-full min-h-[220px] border border-gray-300 rounded-b-lg p-3 font-mono text-sm"
@@ -195,7 +179,7 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
               >
                 {t('sm_manuals_attachment_replace')}
               </button>
-              <DeleteIconButton onClick={() => void removeAttachment()} />
+              <DeleteIconButton onClick={removeAttachment} />
             </span>
           </>
         ) : (
@@ -217,7 +201,7 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
           onChange={e => {
             const file = e.target.files?.[0];
             if (file) {
-              void onPickFile(file);
+              onPickFile(file);
             }
             e.target.value = '';
           }}
@@ -230,15 +214,10 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
       )}
 
       <div className="flex items-center gap-3 mt-4">
-        <SaveButton onClick={() => void save()} disabled={!canSave} loading={saveState === 'saving'} />
-        {saveState === 'saved' && (
+        <SaveButton onClick={save} disabled={!canSave} loading={saving} />
+        {saved && (
           <span className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">
             <LuCheck aria-hidden="true" /> {t('common_saved')}
-          </span>
-        )}
-        {saveState === 'error' && (
-          <span className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
-            {t('sm_manuals_save_error')}
           </span>
         )}
       </div>

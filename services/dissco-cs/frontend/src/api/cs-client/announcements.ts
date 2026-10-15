@@ -16,7 +16,7 @@ export const announcementsApi = {
     csFetch<AnnouncementDto>('/announcements', { method: 'POST', body: JSON.stringify(data) }),
 
   update: (id: AnnouncementDto['id'], data: AnnouncementInput) =>
-    csFetch<AnnouncementDto>(`/announcements/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    csFetch<void>(`/announcements/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
   remove: (id: AnnouncementDto['id']) => csFetch<void>(`/announcements/${id}`, { method: 'DELETE' }),
 };

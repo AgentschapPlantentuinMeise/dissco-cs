@@ -16,7 +16,7 @@ export const institutionsApi = {
     csFetch<InstitutionDto>('/institutions', { method: 'POST', body: JSON.stringify(data) }),
 
   update: (id: InstitutionDto['id'], data: InstitutionInput) =>
-    csFetch<InstitutionDto>(`/institutions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    csFetch<void>(`/institutions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
   remove: (id: InstitutionDto['id']) => csFetch<void>(`/institutions/${id}`, { method: 'DELETE' }),
 };

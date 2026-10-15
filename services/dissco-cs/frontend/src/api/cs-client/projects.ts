@@ -103,7 +103,7 @@ export const projectsApi = {
 
   pruneManualLinks: (liveSlugs: string[]) =>
     csFetch<{ removed: number }>('/projects/manual-links/prune', {
-      method: 'PUT',
+      method: 'POST',
       body: JSON.stringify({ liveSlugs }),
     }),
 
@@ -120,7 +120,7 @@ export const projectsApi = {
 
   pruneInstitutionLinks: (liveSlugs: string[]) =>
     csFetch<{ removed: number }>('/projects/institution-links/prune', {
-      method: 'PUT',
+      method: 'POST',
       body: JSON.stringify({ liveSlugs }),
     }),
 };

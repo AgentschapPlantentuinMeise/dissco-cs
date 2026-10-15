@@ -8,10 +8,11 @@ import {
   madocFetch,
   madocJson,
   publicSitePath,
+  readJsonBody,
   relayMadocResponse,
 } from '../madoc-client/client.js';
 import { collectAllPages } from '../madoc-client/pagination.js';
-import { isSafeSegment } from '../madoc-client/path-segment.js';
+import { safeSegment, validateParams } from '../infrastructure/validate-params.js';
 import { MadocCollectionSummaryDto, MadocPagination } from '@dissco-cs/shared-types';
 
 // IIIF resources (canvases, manifests, collections), forwarded to Madoc as the requesting user.
@@ -21,21 +22,21 @@ export function iiifController(): Hono {
 
   // ---- public (Madoc's site API) ----
 
-  app.get('/canvases/:canvasId', async c => {
-    const canvasId = c.req.param('canvasId');
-    const path = isSafeSegment(canvasId) ? publicSitePath(c, `/canvases/${canvasId}${forwardQuery(c)}`) : null;
+  app.get('/canvases/:canvasId', validateParams({ canvasId: safeSegment }), async c => {
+    const { canvasId } = c.req.valid('param');
+    const path = publicSitePath(c, `/canvases/${canvasId}${forwardQuery(c)}`);
     if (!path) {
-      return c.text('Invalid slug or canvas id', 400);
+      return c.json({ error: 'Invalid slug' }, 400);
     }
 
     return relayMadocResponse(await madocFetch(path, requestBearerToken(c)));
   });
 
-  app.get('/manifests/:manifestId/structure', async c => {
-    const manifestId = c.req.param('manifestId');
-    const path = isSafeSegment(manifestId) ? publicSitePath(c, `/manifests/${manifestId}/structure`) : null;
+  app.get('/manifests/:manifestId/structure', validateParams({ manifestId: safeSegment }), async c => {
+    const { manifestId } = c.req.valid('param');
+    const path = publicSitePath(c, `/manifests/${manifestId}/structure`);
     if (!path) {
-      return c.text('Invalid slug or manifest id', 400);
+      return c.json({ error: 'Invalid slug' }, 400);
     }
 
     return relayMadocResponse(await madocFetch(path, requestBearerToken(c)));
@@ -71,20 +72,17 @@ export function iiifController(): Hono {
 
   // Full desired `item_ids` list for a project's flat collection -- this replaces the whole list
   // (not an append), see update-collection-structure.ts in madoc-ts.
-  app.put('/collections/:collectionId/structure', async c => {
+  app.put('/collections/:collectionId/structure', validateParams({ collectionId: safeSegment }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const collectionId = c.req.param('collectionId');
-    if (!isSafeSegment(collectionId)) {
-      return c.text('Invalid collection id', 400);
-    }
+    const { collectionId } = c.req.valid('param');
 
-    const body = await c.req.json().catch(() => undefined);
-    if (body === undefined) {
-      return c.text('Invalid JSON', 400);
+    const body = await readJsonBody(c);
+    if (body instanceof Response) {
+      return body;
     }
 
     return relayMadocResponse(

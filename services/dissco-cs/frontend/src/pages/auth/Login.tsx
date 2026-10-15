@@ -25,7 +25,7 @@ export const Login: React.FC = () => {
     window.location.href = redirect && redirect.startsWith('/') ? redirect : '/';
   };
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setStatus('sending');
     try {

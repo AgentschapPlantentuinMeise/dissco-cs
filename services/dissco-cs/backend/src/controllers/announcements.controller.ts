@@ -1,25 +1,27 @@
 import { Hono } from 'hono';
-import { requireSiteAdmin, resolveSiteId } from '../auth/auth.js';
+import { requireSiteAdmin, requireSiteId } from '../auth/auth.js';
 import { AnnouncementsRepository, toAnnouncementDto } from '../repositories/announcements.repository.js';
+import { validateJson } from '../infrastructure/validate-json.js';
+import { intId, validateParams } from '../infrastructure/validate-params.js';
 import { announcementInputSchema, isAnnouncementTargetType } from '@dissco-cs/shared-types';
 
 export function announcementsController(announcementsRepository: AnnouncementsRepository): Hono {
   const app = new Hono();
 
   app.get('/active', async c => {
-    const siteId = await resolveSiteId(c);
-    if (siteId === null) {
-      return c.text('Could not resolve site', 400);
+    const siteId = await requireSiteId(c);
+    if (siteId instanceof Response) {
+      return siteId;
     }
 
     const targetType = c.req.query('target');
     if (!isAnnouncementTargetType(targetType)) {
-      return c.text('target must be one of homepage, projects, project', 400);
+      return c.json({ error: 'target must be one of homepage, projects, project' }, 400);
     }
 
     const targetProjectSlug = c.req.query('projectSlug') ?? null;
     if (targetType === 'project' && !targetProjectSlug) {
-      return c.text('projectSlug is required when target is project', 400);
+      return c.json({ error: 'projectSlug is required when target is project' }, 400);
     }
 
     const announcements = await announcementsRepository.listActiveAnnouncements(
@@ -40,55 +42,43 @@ export function announcementsController(announcementsRepository: AnnouncementsRe
     return c.json({ announcements: announcements.map(toAnnouncementDto) });
   });
 
-  app.post('/', async c => {
+  app.post('/', validateJson(announcementInputSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const result = announcementInputSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('Invalid announcement payload', 400);
-    }
+    const input = c.req.valid('json');
 
-    const announcement = await announcementsRepository.createAnnouncement({ siteId: identity.siteId, ...result.data });
+    const announcement = await announcementsRepository.createAnnouncement({ siteId: identity.siteId, ...input });
     return c.json(toAnnouncementDto(announcement), 201);
   });
 
-  app.put('/:id', async c => {
+  app.put('/:id', validateParams({ id: intId }), validateJson(announcementInputSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const id = Number(c.req.param('id'));
-    if (!Number.isInteger(id)) {
-      return c.notFound();
-    }
+    const { id } = c.req.valid('param');
 
-    const result = announcementInputSchema.safeParse(await c.req.json().catch(() => null));
-    if (!result.success) {
-      return c.text('Invalid announcement payload', 400);
-    }
+    const input = c.req.valid('json');
 
-    const announcement = await announcementsRepository.updateAnnouncement(identity.siteId, id, result.data);
+    const announcement = await announcementsRepository.updateAnnouncement(identity.siteId, id, input);
     if (!announcement) {
       return c.notFound();
     }
 
-    return c.json(toAnnouncementDto(announcement));
+    return c.body(null, 204);
   });
 
-  app.delete('/:id', async c => {
+  app.delete('/:id', validateParams({ id: intId }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const id = Number(c.req.param('id'));
-    if (!Number.isInteger(id)) {
-      return c.notFound();
-    }
+    const { id } = c.req.valid('param');
 
     const deleted = await announcementsRepository.deleteAnnouncement(identity.siteId, id);
     if (!deleted) {

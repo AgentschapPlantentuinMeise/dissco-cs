@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { projectQueries } from '../../api/queries/projects';
 import { forumKeys, forumQueries } from '../../api/queries/forum';
 import { CsPage } from '../../components/layout/CsPage';
@@ -14,7 +14,7 @@ import { DeleteIconButton } from '../../components/ui/DeleteIconButton';
 import { localeText } from '../../utility/locale-text';
 import { formatDate } from '../../utility/format-date';
 import { LuChevronDown, LuSearch, LuUser, LuClock, LuFolder, LuLink, LuCheck } from 'react-icons/lu';
-import { reportActionError } from '../../hooks/use-toast';
+import { reportClientError } from '../../api/cs-client/client-errors';
 
 const btnPrimary = 'bg-[var(--cs-primary)] text-white border-none px-[18px] py-[10px] rounded text-[0.95rem] font-medium cursor-pointer transition-colors duration-200 hover:bg-[var(--cs-dark)]';
 const btnGhost = 'bg-transparent border border-gray-300 px-3 py-1.5 rounded text-[0.85rem] text-gray-600 cursor-pointer whitespace-nowrap transition-[border-color,color] duration-200 hover:border-[var(--cs-primary)] hover:text-[var(--cs-primary)]';
@@ -75,7 +75,7 @@ export const Forum: React.FC = () => {
     forumApi
       .visitForum()
       .then(() => queryClient.invalidateQueries({ queryKey: forumKeys.unreadCount() }))
-      .catch(() => {});
+      .catch(err => reportClientError(err, 'action'));
   }, [topicsQuery.isFetchedAfterMount, queryClient]);
 
   // Open het topic uit de ?topic=<id> deep-link (vanaf de dashboard-widget) automatisch, één keer,
@@ -140,31 +140,26 @@ export const Forum: React.FC = () => {
     setExpandedId(topicId);
   };
 
-  const confirmDeleteTopic = () => {
-    if (pendingDeleteTopicId === null) return;
-    const topicId = pendingDeleteTopicId;
-
-    forumApi.deleteTopic(topicId).then(() => {
+  const { mutate: deleteTopic } = useMutation({
+    mutationFn: (topicId: number) => forumApi.deleteTopic(topicId),
+    onSuccess: (_result, topicId) => {
       setTopics(prev => prev.filter(m => m.id !== topicId));
       setPendingDeleteTopicId(null);
-    }).catch(err => reportActionError(err, 'error_delete_failed'));
-  };
+    },
+    meta: { errorMessage: 'error_delete_failed' },
+  });
 
-  const confirmCloseTopic = () => {
-    if (pendingCloseTopicId === null) return;
-    const topicId = pendingCloseTopicId;
-
-    forumApi.closeTopic(topicId).then(closed => {
+  const { mutate: closeTopic } = useMutation({
+    mutationFn: (topicId: number) => forumApi.closeTopic(topicId),
+    onSuccess: (closed, topicId) => {
       setTopics(prev => prev.map(m => (m.id === topicId ? { ...m, closedAt: closed.closedAt } : m)));
       setPendingCloseTopicId(null);
-    }).catch(err => reportActionError(err, 'error_save_failed'));
-  };
+    },
+  });
 
-  const confirmDeleteReply = () => {
-    if (pendingDeleteReply === null) return;
-    const { topicId, replyId } = pendingDeleteReply;
-
-    forumApi.deleteReply(topicId, replyId).then(() => {
+  const { mutate: deleteReply } = useMutation({
+    mutationFn: ({ topicId, replyId }: { topicId: number; replyId: number }) => forumApi.deleteReply(topicId, replyId),
+    onSuccess: (_result, { topicId, replyId }) => {
       setReplies(topicId, prev => prev.filter(r => r.id !== replyId));
       setTopics(prev => prev.map(m =>
         m.id === topicId
@@ -176,22 +171,22 @@ export const Forum: React.FC = () => {
           : m
       ));
       setPendingDeleteReply(null);
-    }).catch(err => reportActionError(err, 'error_delete_failed'));
-  };
+    },
+    meta: { errorMessage: 'error_delete_failed' },
+  });
 
-  const handleSubmitMessage = (data: ForumTopicInput) => {
-    forumApi.createTopic(data).then(topic => {
+  const { mutate: createTopic } = useMutation({
+    mutationFn: (data: ForumTopicInput) => forumApi.createTopic(data),
+    onSuccess: topic => {
       setTopics(prev => [topic, ...prev]);
       setShowNewForm(false);
-    }).catch(err => reportActionError(err, 'error_save_failed'));
-  };
+    },
+    meta: { errorMessage: 'error_send_failed' },
+  });
 
-  const handleSubmitReply = (e: React.FormEvent, topicId: number) => {
-    e.preventDefault();
-    const body = replyDrafts[topicId] || '';
-    if (!body.trim()) return;
-
-    forumApi.createReply(topicId, body).then(reply => {
+  const { mutate: createReply } = useMutation({
+    mutationFn: ({ topicId, body }: { topicId: number; body: string }) => forumApi.createReply(topicId, body),
+    onSuccess: (reply, { topicId }) => {
       setReplies(topicId, prev => [...prev, reply]);
       setTopics(prev => prev.map(m =>
         m.id === topicId
@@ -199,7 +194,32 @@ export const Forum: React.FC = () => {
           : m
       ));
       setReplyDrafts(prev => ({ ...prev, [topicId]: '' }));
-    });
+    },
+    meta: { errorMessage: 'error_send_failed' },
+  });
+
+  const confirmDeleteTopic = () => {
+    if (pendingDeleteTopicId === null) return;
+    deleteTopic(pendingDeleteTopicId);
+  };
+
+  const confirmCloseTopic = () => {
+    if (pendingCloseTopicId === null) return;
+    closeTopic(pendingCloseTopicId);
+  };
+
+  const confirmDeleteReply = () => {
+    if (pendingDeleteReply === null) return;
+    deleteReply(pendingDeleteReply);
+  };
+
+  const handleSubmitMessage = (data: ForumTopicInput) => createTopic(data);
+
+  const handleSubmitReply = (e: React.SubmitEvent<HTMLFormElement>, topicId: number) => {
+    e.preventDefault();
+    const body = replyDrafts[topicId] || '';
+    if (!body.trim()) return;
+    createReply({ topicId, body });
   };
 
   return (

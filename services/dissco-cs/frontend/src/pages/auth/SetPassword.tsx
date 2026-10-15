@@ -47,7 +47,7 @@ export const SetPassword: React.FC = () => {
   const passwordValid = passwordRequirements.every(req => req.met);
   const canSubmit = passwordValid && password === confirmPassword && password.length > 0;
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!canSubmit) {
       return;

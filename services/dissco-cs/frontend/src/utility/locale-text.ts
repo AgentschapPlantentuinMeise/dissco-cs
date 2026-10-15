@@ -1,4 +1,4 @@
-import { MadocInternationalString } from '../components/ui/LocaleString';
+import { MadocInternationalString } from '@dissco-cs/shared-types';
 
 export function localeText(label: MadocInternationalString | string | undefined, language: string): string {
   if (!label) return '';

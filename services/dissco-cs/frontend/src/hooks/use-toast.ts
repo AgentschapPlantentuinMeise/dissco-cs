@@ -9,6 +9,7 @@ export type ErrorMessageKey =
   | 'error_claim_failed'
   | 'error_release_failed'
   | 'error_upload_failed'
+  | 'error_send_failed'
   | 'error_load_failed'
   | 'error_generic';
 
