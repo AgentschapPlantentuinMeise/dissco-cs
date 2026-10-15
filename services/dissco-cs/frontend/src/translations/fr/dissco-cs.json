@@ -455,6 +455,7 @@
   "error_claim_failed": "Cette tâche n'a pas pu vous être réservée. Veuillez réessayer.",
   "error_release_failed": "La tâche n'a pas pu être libérée. Veuillez réessayer.",
   "error_load_failed": "Le contenu n'a pas pu être chargé. Veuillez réessayer plus tard.",
+  "error_no_access": "Vous n'avez pas accès à cette page.",
   "error_upload_failed": "Le fichier n'a pas été envoyé. Veuillez réessayer.",
   "error_send_failed": "Votre message n'a pas été envoyé. Veuillez réessayer.",
   "error_generic": "Une erreur est survenue. Veuillez réessayer."

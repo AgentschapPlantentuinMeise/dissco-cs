@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { reviewQueries } from '../../api/queries/review';
 import { useCurrentUser } from '../../hooks/use-current-user';
+import { NoAccessRedirect } from './NoAccessRedirect';
 
 export const AuthGate: React.FC<{ requireAdmin?: boolean; requireReviewer?: boolean; children: React.ReactNode }> = ({
   requireAdmin,
@@ -29,12 +30,12 @@ export const AuthGate: React.FC<{ requireAdmin?: boolean; requireReviewer?: bool
   }
 
   if (requireAdmin && !isAdmin) {
-    return <Navigate to="/" />;
+    return <NoAccessRedirect />;
   }
 
   if (requireReviewer && !isAdmin) {
     if (reviewerLoading) return null;
-    if (!reviewerCheck?.isReviewer) return <Navigate to="/" />;
+    if (!reviewerCheck?.isReviewer) return <NoAccessRedirect />;
   }
 
   return <>{children}</>;

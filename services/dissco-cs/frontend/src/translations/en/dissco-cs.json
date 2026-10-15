@@ -456,6 +456,7 @@
   "error_claim_failed": "This task could not be reserved for you. Please try again.",
   "error_release_failed": "The task could not be released. Please try again.",
   "error_load_failed": "This could not be loaded. Please try again later.",
+  "error_no_access": "You do not have access to this page.",
   "error_upload_failed": "The file was not uploaded. Please try again.",
   "error_send_failed": "Your message was not sent. Please try again.",
   "error_generic": "Something went wrong. Please try again."

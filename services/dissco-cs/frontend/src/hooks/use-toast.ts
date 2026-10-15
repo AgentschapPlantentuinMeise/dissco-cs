@@ -11,6 +11,7 @@ export type ErrorMessageKey =
   | 'error_upload_failed'
   | 'error_send_failed'
   | 'error_load_failed'
+  | 'error_no_access'
   | 'error_generic';
 
 type ToastState = { id: number; key: ErrorMessageKey } | null;

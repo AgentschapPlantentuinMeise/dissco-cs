@@ -455,6 +455,7 @@
   "error_claim_failed": "Deze taak kon niet voor jou gereserveerd worden. Probeer het opnieuw.",
   "error_release_failed": "De taak kon niet vrijgegeven worden. Probeer het opnieuw.",
   "error_load_failed": "Dit kon niet geladen worden. Probeer het later opnieuw.",
+  "error_no_access": "Je hebt geen toegang tot deze pagina.",
   "error_upload_failed": "Het bestand is niet geüpload. Probeer het opnieuw.",
   "error_send_failed": "Je bericht is niet verstuurd. Probeer het opnieuw.",
   "error_generic": "Er liep iets mis. Probeer het opnieuw."
