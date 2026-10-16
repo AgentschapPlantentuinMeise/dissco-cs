@@ -2,7 +2,8 @@ import { Context, Hono } from 'hono';
 
 import { InstitutionsRepository } from '../repositories/institutions.repository.js';
 import { requestMadocUserIdentity, requireSiteId } from '../auth/auth.js';
-import { HonourBoardRepository, isHonourBoardPeriod } from '../madoc-db/honour-board.repository.js';
+import { HonourBoardRepository } from '../madoc-db/honour-board.repository.js';
+import { isHonourBoardPeriod } from '../madoc-db/honour-board.logic.js';
 import { StatsRepository } from '../madoc-db/stats.repository.js';
 
 // Every number has two routes. The normal route answers with the cached value right away and then

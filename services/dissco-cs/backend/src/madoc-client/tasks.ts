@@ -2,6 +2,7 @@ import { serviceJson } from './client.js';
 import { collectAllPages } from './pagination.js';
 import { madocPath } from './path-segment.js';
 import { listAllMadocProjects } from './projects.js';
+import { shouldReopenManifest } from './tasks.logic.js';
 import { MadocCrowdsourcingTaskDto, MadocInternationalString, MadocPagination } from '@dissco-cs/shared-types';
 
 /**
@@ -18,22 +19,6 @@ export function fetchAllTasks<T = MadocCrowdsourcingTaskDto>(siteId: number, que
       query: { ...query, per_page: '100', page: String(page) },
     });
     return { items: data.tasks, totalPages: data.pagination?.totalPages };
-  });
-}
-
-/**
- * How many tasks of a project have each status, counting one task per subject (manifest or
- * image). Uses the service token.
- * @param taskId the project's root task (MadocProjectDto.task_id)
- * Returns: { statuses: status -> count, total }.
- */
-export function getMadocTaskStats(
-  siteId: number,
-  taskId: string
-): Promise<{ statuses: Record<string, number>; total: number }> {
-  return serviceJson(madocPath`/api/tasks/${taskId}/stats`, {
-    siteId,
-    query: { type: 'crowdsourcing-task', root: 'true', distinct_subjects: 'true' },
   });
 }
 
@@ -110,14 +95,7 @@ export function getMadocProjectTasks(siteId: number, rootTaskId: string): Promis
  */
 export async function resyncManifestTaskCounter(siteId: number, containerTaskId: string): Promise<boolean> {
   const detail = await getMadocTaskDetail(siteId, containerTaskId);
-
-  const maximum = detail.state?.maxContributors ? Number(detail.state.maxContributors) : undefined;
-  if (!maximum || detail.status === 3 || detail.status === -1 || detail.status === 1) {
-    return false;
-  }
-
-  const validCount = (detail.subtasks ?? []).filter(t => t.type === 'crowdsourcing-task' && t.status !== -1).length;
-  if (validCount >= maximum) {
+  if (!shouldReopenManifest(detail)) {
     return false;
   }
 

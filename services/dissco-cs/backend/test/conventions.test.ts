@@ -78,6 +78,12 @@ const rules: ConventionRule[] = [
     instead: "firstFilledLang(field) from '@dissco-cs/shared-types' (order of SITE_PAGE_LANGS)",
   },
   {
+    name: 'A .logic.ts file stays pure, so its tests need no env vars, database or Madoc',
+    pattern: /from ['"](hono|.*\/config\.js|.*\/client\.js|.*\/pools\.js|.*repositories\/.*)['"]/,
+    instead: "pass the data in as arguments; fetch it in the controller, madoc-client or repository that calls the logic -- CLAUDE.md 'Tests'",
+    onlyIn: /\.logic\.ts$/,
+  },
+  {
     name: 'No silently swallowed errors',
     pattern: /\.catch\(\(\) => \{\s*\}\)|catch\s*(\(\w*\))?\s*\{\s*\}/,
     instead: 'let the error through, or handle it visibly',

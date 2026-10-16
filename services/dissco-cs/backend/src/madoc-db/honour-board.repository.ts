@@ -1,42 +1,9 @@
 import { MadocDbPools } from './pools.js';
 import { SwrCache } from './swr-cache.js';
-import { HONOUR_BOARD_PERIODS, HonourBoardEntryDto, HonourBoardPeriodDto, HonourBoardPeriodKey } from '@dissco-cs/shared-types';
+import { rankingToPeriod, sinceForPeriod } from './honour-board.logic.js';
+import { HonourBoardEntryDto, HonourBoardPeriodDto, HonourBoardPeriodKey } from '@dissco-cs/shared-types';
 
 type RankedHonourBoardEntry = HonourBoardEntryDto;
-
-const TOP_N = 3;
-
-function startOfDay(now: Date): Date {
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
-
-function startOfWeek(now: Date): Date {
-  const start = startOfDay(now);
-  const mondayOffset = (start.getDay() + 6) % 7; // getDay(): 0=Sunday..6=Saturday -> 0=Monday..6=Sunday
-  start.setDate(start.getDate() - mondayOffset);
-  return start;
-}
-
-function startOfMonth(now: Date): Date {
-  return new Date(now.getFullYear(), now.getMonth(), 1);
-}
-
-export function isHonourBoardPeriod(value: string): value is HonourBoardPeriodKey {
-  return (HONOUR_BOARD_PERIODS as string[]).includes(value);
-}
-
-function sinceForPeriod(period: HonourBoardPeriodKey, now: Date): Date | null {
-  switch (period) {
-    case 'today':
-      return startOfDay(now);
-    case 'week':
-      return startOfWeek(now);
-    case 'month':
-      return startOfMonth(now);
-    case 'legend':
-      return null;
-  }
-}
 
 // A ranking is either scoped to an entire site (context contains the site urn) or to one
 // institution's projects (root_task in that institution's set of project task ids) -- same
@@ -117,23 +84,17 @@ export class HonourBoardRepository {
     }));
   }
 
-  private toPeriod(ranking: RankedHonourBoardEntry[], userUrn: string | null): HonourBoardPeriodDto {
-    const top = ranking.filter(entry => entry.rank <= TOP_N);
-    const you = userUrn ? (ranking.find(entry => entry.userUrn === userUrn) ?? null) : null;
-    return { top, you };
-  }
-
   // Returns null only if this period has never been cached yet for this scope.
   private peekPeriod(scope: LeaderboardScope, period: HonourBoardPeriodKey, userUrn: string | null): HonourBoardPeriodDto | null {
     const ranking = this.rankings.peek(cacheKey(scope, period));
-    return ranking ? this.toPeriod(ranking, userUrn) : null;
+    return ranking ? rankingToPeriod(ranking, userUrn) : null;
   }
 
   private async getPeriod(scope: LeaderboardScope, period: HonourBoardPeriodKey, userUrn: string | null): Promise<HonourBoardPeriodDto> {
     const ranking = await this.rankings.get(cacheKey(scope, period), () =>
       this.fetchPeriodRanking(scope, sinceForPeriod(period, new Date()))
     );
-    return this.toPeriod(ranking, userUrn);
+    return rankingToPeriod(ranking, userUrn);
   }
 
   peekSitePeriod(siteId: number, period: HonourBoardPeriodKey, userUrn: string | null): HonourBoardPeriodDto | null {

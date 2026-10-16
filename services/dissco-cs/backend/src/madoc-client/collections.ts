@@ -1,7 +1,6 @@
 import { serviceJson } from './client.js';
 import { collectAllPages } from './pagination.js';
 import { madocPath } from './path-segment.js';
-import { getMadocTaskStats } from './tasks.js';
 import { MadocPagination } from '@dissco-cs/shared-types';
 
 /**
@@ -42,31 +41,21 @@ export async function getMadocCollectionManifestThumbnails(
 }
 
 /**
- * The manifests of a project's collection, and how many of its tasks have each status -- what a
- * project's progress is computed from. Uses the service token.
+ * The manifests of a project's collection, in order, with their labels -- what a project's
+ * progress and task-debug are computed over. Uses the service token.
  * @param siteId the site
  * @param collectionId the project's collection (MadocProjectDto.collection_id)
- * @param taskId the project's root task (MadocProjectDto.task_id)
- * Returns: manifestItems (manifests only, no sub-collections) and taskStats (status -> count, and
- *   the total).
+ * Returns: the manifests only, no sub-collections. Throws a MadocHttpError when Madoc answers
+ *   with an error.
  */
-export async function getMadocProjectManifestsAndTaskStats(
+export async function getMadocProjectManifests(
   siteId: number,
-  collectionId: number,
-  taskId: string
-): Promise<{
-  manifestItems: Array<{ id: number; label: unknown; type?: string }>;
-  taskStats: { statuses: Record<string, number>; total: number };
-}> {
-  const [structure, taskStats] = await Promise.all([
-    getMadocCollectionStructure(siteId, collectionId),
-    getMadocTaskStats(siteId, taskId),
-  ]);
+  collectionId: number
+): Promise<Array<{ id: number; label: unknown; type?: string }>> {
+  const structure = await getMadocCollectionStructure(siteId, collectionId);
 
   // The structure endpoint doesn't filter by type -- it also returns nested sub-collections.
-  const manifestItems = (structure.items as Array<{ id: number; label: unknown; type?: string }>).filter(
+  return (structure.items as Array<{ id: number; label: unknown; type?: string }>).filter(
     item => item.type?.toLowerCase() === 'manifest'
   );
-
-  return { manifestItems, taskStats };
 }

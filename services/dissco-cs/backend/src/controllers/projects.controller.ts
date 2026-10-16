@@ -14,28 +14,19 @@ import {
 } from '../madoc-client/client.js';
 import { collectAllPages } from '../madoc-client/pagination.js';
 import { getMadocProject } from '../madoc-client/projects.js';
-import {
-  getMadocCollectionManifestThumbnails,
-  getMadocCollectionStructure,
-  getMadocProjectManifestsAndTaskStats,
-} from '../madoc-client/collections.js';
+import { getMadocCollectionManifestThumbnails, getMadocProjectManifests } from '../madoc-client/collections.js';
 import { getMadocProjectTasks, getMadocTasksBySubjectAndType, resyncManifestTaskCounter } from '../madoc-client/tasks.js';
 import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
 import { validateJson } from '../infrastructure/validate-json.js';
 import { safeSegment, validateParams } from '../infrastructure/validate-params.js';
+import { computeProjectProgress, computeTaskDebug } from './projects.logic.js';
 import {
   isSitePageLang,
-  MadocCrowdsourcingTaskDto,
-  MadocInternationalString,
   MadocProjectListPageDto,
-  ProjectDebugDto,
-  ProjectProgressDto,
   pruneProjectLinksSchema,
   setInstitutionLinkSchema,
   setManualLinkSchema,
 } from '@dissco-cs/shared-types';
-
-type CollectionStructureItem = { id: number; label?: unknown };
 
 // Routes with a fixed path (such as /institution-links) are registered before the routes with a
 // /:projectId placeholder. Hono tries routes in the order they are registered, so otherwise
@@ -215,72 +206,13 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     const { projectId } = c.req.valid('param');
 
     const project = await getMadocProject(siteId, projectId);
-    const [{ manifestItems: rawManifestItems, taskStats }, canvasTasks, thumbnails] = await Promise.all([
-      getMadocProjectManifestsAndTaskStats(siteId, project.collection_id, project.task_id),
+    const [manifestItems, tasks, thumbnails] = await Promise.all([
+      getMadocProjectManifests(siteId, project.collection_id),
       getMadocProjectTasks(siteId, project.task_id),
       getMadocCollectionManifestThumbnails(siteId, project.collection_id),
     ]);
-    const manifestItems = rawManifestItems.map(item => ({
-      ...item,
-      thumbnail: thumbnails.get(item.id),
-    }));
-    const manifestCount = manifestItems.length;
 
-    const taskStatuses = taskStats.statuses || {};
-    const inReview = taskStatuses['2'] || 0;
-    const completed = taskStatuses['3'] || 0;
-
-    const transcribedPercentage =
-      manifestCount === 0
-        ? 0
-        : Math.round(((Math.max(inReview, 0) + Math.max(completed, 0)) / manifestCount) * 100);
-
-    // Which manifests can still be picked -- the same for every visitor, not per user. A manifest
-    // is no longer offered when:
-    // - it is done: status 3 (accepted), or status 2 (submitted) when the project is in
-    //   'transcription' mode. This is the rule Madoc itself uses (assign-random-resource.ts).
-    // - enough volunteers already work on it (the project's maxContributionsPerResource).
-    // A task points to its manifest through `subject` when the project hands out whole manifests,
-    // or through `subject_parent` (the manifest of the image) when it hands out single images.
-    const config = project.config ?? {};
-    const maxContributors = config.maxContributionsPerResource;
-    const isTranscriberMode = config.contributionMode === 'transcription';
-    const claimGranularity = config.claimGranularity || 'canvas';
-
-    const manifestStats = new Map<string, { contributors: Set<string>; done: boolean }>();
-    for (const task of canvasTasks) {
-      if (task.status === -1) continue;
-      const manifestUrn = claimGranularity === 'manifest' ? task.subject : task.subject_parent;
-      if (!manifestUrn) continue;
-
-      let stats = manifestStats.get(manifestUrn);
-      if (!stats) {
-        stats = { contributors: new Set(), done: false };
-        manifestStats.set(manifestUrn, stats);
-      }
-      if (task.assignee) stats.contributors.add(task.assignee.id);
-      if (task.status === 3 || (isTranscriberMode && task.status === 2)) stats.done = true;
-    }
-
-    const availableManifests = manifestItems.filter(item => {
-      const stats = manifestStats.get(`urn:madoc:manifest:${item.id}`);
-      if (!stats) return true;
-      if (stats.done) return false;
-      if (maxContributors && stats.contributors.size >= maxContributors) return false;
-      return true;
-    });
-
-    const result: ProjectProgressDto = {
-      transcribedPercentage,
-      totalTasks: manifestCount,
-      allTasksTaken: manifestCount > 0 && availableManifests.length === 0,
-      availableManifests: availableManifests.map(item => ({
-        id: item.id,
-        label: item.label,
-        thumbnail: item.thumbnail,
-      })),
-    };
-    return c.json(result);
+    return c.json(computeProjectProgress({ manifestItems, thumbnails, tasks, config: project.config ?? {} }));
   });
 
   // ---- logged-in user: manifest claim resync ----
@@ -325,55 +257,12 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     const { projectId } = c.req.valid('param');
 
     const project = await getMadocProject(identity.siteId, projectId);
-    const [structure, tasks] = await Promise.all([
-      getMadocCollectionStructure(identity.siteId, project.collection_id) as Promise<{ items: CollectionStructureItem[] }>,
+    const [manifestItems, tasks] = await Promise.all([
+      getMadocProjectManifests(identity.siteId, project.collection_id),
       getMadocProjectTasks(identity.siteId, project.task_id),
     ]);
 
-    // A task points to a manifest, or to a single image whose parent is the manifest -- depending on
-    // whether the project hands out whole manifests or single images.
-    const tasksByManifestId = new Map<string, MadocCrowdsourcingTaskDto[]>();
-    for (const task of tasks) {
-      const manifestUrn =
-        task.subject && task.subject.startsWith('urn:madoc:manifest:')
-          ? task.subject
-          : task.subject_parent?.startsWith('urn:madoc:manifest:')
-            ? task.subject_parent
-            : null;
-      if (!manifestUrn) continue;
-
-      const manifestId = manifestUrn.replace('urn:madoc:manifest:', '');
-      const existing = tasksByManifestId.get(manifestId);
-      if (existing) {
-        existing.push(task);
-      } else {
-        tasksByManifestId.set(manifestId, [task]);
-      }
-    }
-
-    const manifests = structure.items.map(item => {
-      const manifestTasks = tasksByManifestId.get(String(item.id)) ?? [];
-      return {
-        manifestId: item.id,
-        label: item.label as MadocInternationalString | string | undefined,
-        countsAsTranscribed: manifestTasks.some(t => t.status === 2 || t.status === 3),
-        tasks: manifestTasks.map(t => ({
-          id: t.id,
-          status: t.status,
-          statusText: t.status_text,
-          assignee: t.assignee?.name,
-          // Madoc always fills this in for a real task; the shared type marks it optional only
-          // because other calls may lack it.
-          modifiedAt: t.modified_at ?? 0,
-        })),
-      };
-    });
-
-    const transcribedCount = manifests.filter(m => m.countsAsTranscribed).length;
-    const transcribedPercentage = manifests.length === 0 ? 0 : Math.round((transcribedCount / manifests.length) * 100);
-
-    const result: ProjectDebugDto = { totalManifests: manifests.length, transcribedPercentage, manifests };
-    return c.json(result);
+    return c.json(computeTaskDebug(manifestItems, tasks));
   });
 
   // ---- manual: public read, admin link ----

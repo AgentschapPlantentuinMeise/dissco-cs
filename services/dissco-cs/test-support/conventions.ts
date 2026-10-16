@@ -11,6 +11,8 @@ export interface ConventionRule {
   instead: string;
   // Path relative to src/ (a folder ends with '/') -> why this file may use the pattern.
   allowedIn?: Record<string, string>;
+  // Only check files whose path (relative to src/) matches, e.g. /\.logic\.ts$/.
+  onlyIn?: RegExp;
 }
 
 function sourceFiles(dir: string): string[] {
@@ -55,6 +57,7 @@ function withoutComments(line: string, inBlock: { value: boolean }): string {
 }
 
 function isAllowed(file: string, rule: ConventionRule): boolean {
+  if (rule.onlyIn && !rule.onlyIn.test(file)) return true;
   return Object.keys(rule.allowedIn ?? {}).some(allowed => (allowed.endsWith('/') ? file.startsWith(allowed) : file === allowed));
 }
 
