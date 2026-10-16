@@ -53,6 +53,11 @@ const rules: ConventionRule[] = [
     instead: "function X({ a, b }: XProps) { ... } -- CLAUDE.md §6",
   },
   {
+    name: 'One cookie library',
+    pattern: /from 'browser-cookies'/,
+    instead: "import Cookies from 'js-cookie' (a name with '/' is written by hand, see clearJwt in api/jwt.ts)",
+  },
+  {
     name: 'One way to build a query string',
     pattern: /from 'query-string'/,
     instead: "withQuery(path, params) from api/url.ts",

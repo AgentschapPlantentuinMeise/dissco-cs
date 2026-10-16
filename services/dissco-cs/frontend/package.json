@@ -15,9 +15,8 @@
   "dependencies": {
     "@dissco-cs/shared-types": "file:../shared",
     "@tanstack/react-query": "^5",
-    "browser-cookies": "^1.2.0",
     "i18next": "^19.7.0",
-    "js-cookie": "^2.2.1",
+    "js-cookie": "^3.0.8",
     "openseadragon": "^4.1.1",
     "pdfjs-dist": "^4.6.82",
     "react": "19.2.4",
@@ -30,7 +29,7 @@
     "recharts": "^2.15.4"
   },
   "devDependencies": {
-    "@types/js-cookie": "^2.2.7",
+    "@types/js-cookie": "^3.0.6",
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",

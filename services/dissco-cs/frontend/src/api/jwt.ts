@@ -1,20 +1,20 @@
-import cookies from 'browser-cookies';
+import Cookies from 'js-cookie';
 import { getSiteSlug } from './slug';
 import { currentLocation, withQuery } from './url';
 
 export function getJwt(): string | undefined {
-  return cookies.get(`madoc/${getSiteSlug()}`) || undefined;
+  return Cookies.get(`madoc/${getSiteSlug()}`) || undefined;
 }
 
 // Client-side equivalent of Madoc's /logout route: erases the (non-httpOnly) JWT cookie
 // so getJwt()/getCurrentUser() see the user as logged out again. Used when a user cancels
 // out of the post-login terms gate instead of accepting the new terms.
 //
-// Deliberately not using cookies.erase() here: browser-cookies encodeURIComponent's the
-// cookie *name* when writing (via its internal set()), turning our "madoc/{slug}" name into
-// "madoc%2F{slug}" -- a different cookie than the one the server actually set. Its get() does
-// NOT encode the name, so reads still work; only erase()/set() are affected. Setting the
-// expiry directly avoids that asymmetry.
+// Deliberately not using Cookies.remove() here: js-cookie encodeURIComponent's the cookie *name*
+// when writing (set() and remove(), see `name = encodeURIComponent(name)` in its source), turning
+// our "madoc/{slug}" name into "madoc%2F{slug}" -- a different cookie than the one the server
+// actually set. Its get() decodes names before comparing, so reads still work. Setting the expiry
+// directly avoids that asymmetry.
 export function clearJwt(): void {
   const slug = getSiteSlug();
   document.cookie = `madoc/${slug}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/s/${slug}`;
