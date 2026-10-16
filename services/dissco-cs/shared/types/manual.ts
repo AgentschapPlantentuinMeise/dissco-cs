@@ -1,9 +1,6 @@
 import { z } from 'zod';
 import { MultilingualText, PerLanguage, SitePageLang, sitePageLangSchema } from './common.js';
 
-// Wire shape, built by toManualDetailDto() at the bottom of manuals.repository.ts from the
-// `ManualAttachmentMeta` row -- `lang` is dropped (it's the record key) and
-// `mime_type`/`file_size` are renamed to `mimeType`/`size`.
 export type ManualAttachmentDto = { filename: string; mimeType: string; size: number };
 
 export type ManualDto = {
@@ -15,8 +12,6 @@ export type ManualDto = {
 
 export type ManualSummaryDto = ManualDto & { linkedProjectSlugs: string[]; attachmentLangs: SitePageLang[] };
 
-// Shared detail shape for both the admin (GET /manuals/:manualId) and the volunteer-facing
-// (GET /projects/:projectId/manual) response.
 export type ManualDetailDto = {
   id: number;
   title: MultilingualText;

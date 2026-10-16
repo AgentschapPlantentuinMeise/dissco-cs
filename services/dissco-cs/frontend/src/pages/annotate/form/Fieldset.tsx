@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { LuChevronDown } from 'react-icons/lu';
 
-// `collapsible` distinguishes the two uses: entity groups keep a static frame (a border showing
-// the fields belong together, no click-to-toggle — a real "section" concept didn't exist when
-// entities were pressed into that role, so it looked like one), while the tabs-profile model
-// sections are meant to be genuinely collapsible.
+// `collapsible` separates two uses: an entity group gets a fixed frame (a border to show its fields
+// belong together, no open/close), while the sections of a 'tabs' model can be opened and closed.
 export function Fieldset({
   label,
   required,

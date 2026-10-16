@@ -131,10 +131,8 @@ export function AnnotatePage() {
     setConfirmation(t('annotate_saved_draft_24h'));
   };
 
-  // Posts the forum topic, then hands off to the same save-as-draft-and-advance flow used
-  // elsewhere (handleSaveAndAdvance) — the task lands in "Saved tasks" and the user proceeds to
-  // returnTo (if they came from their saved-tasks list) or the next task, exactly like a normal
-  // draft save.
+  // Posts the forum topic, then saves the task as draft and moves on, exactly like a normal draft
+  // save (handleSaveAndAdvance).
   const { mutate: postForumTopic } = useMutation({
     mutationFn: (data: ForumTopicInput) =>
       forumApi.createTopic({ ...data, projectSlug: project?.slug ?? null, projectLabel: projectLabel ?? null }),

@@ -15,15 +15,11 @@ import { MadocCrowdsourcingTaskDto, MadocPagination } from '@dissco-cs/shared-ty
 import { getStuckMadocTasks, getStuckManifestCounters, resyncManifestTaskCounter, updateMadocTask } from '../madoc-client/tasks.js';
 import { safeSegment, validateParams } from '../infrastructure/validate-params.js';
 
-// Crowdsourcing tasks: the user's own tasks (forwarded to tasks-api as that user, so it only ever
-// returns what they may see) and the admin's site-wide stuck-task tools. `/stuck` is registered
-// before `/:taskId` on purpose -- Hono matches in registration order.
+// /stuck is registered before /:taskId on purpose: Hono tries routes in the order they are
+// registered, so otherwise /:taskId would treat 'stuck' as a task id.
 export function tasksController(): Hono {
   const app = new Hono();
 
-  // Site-wide list of stuck crowdsourcing tasks (status 0/1, never finished or abandoned) -- the
-  // only place a site admin can see and fix these, instead of having to work it out through a
-  // direct database query every time.
   app.get('/stuck', async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
@@ -62,8 +58,6 @@ export function tasksController(): Hono {
 
   // ---- the user's own tasks ----
 
-  // With `all=true` this walks every page itself and returns `{ tasks }` (same as GET /projects);
-  // otherwise it relays the requested page as-is.
   app.get('/', async c => {
     const userToken = requestBearerToken(c);
     if (c.req.query('all') !== 'true') {

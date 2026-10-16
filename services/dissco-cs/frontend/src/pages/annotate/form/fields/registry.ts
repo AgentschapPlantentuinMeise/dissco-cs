@@ -15,7 +15,7 @@ export type FieldProps = {
   onChange: (path: DocumentPath, value: unknown) => void;
 };
 
-/** type-string -> component, the mechanism that makes the form renderer generic. Fase 2 adds more entries here. */
+/** Field type -> the component that renders it; this keeps the form generic. A type missing here is shown as "not supported yet". */
 export const fieldRegistry: Record<string, ComponentType<FieldProps>> = {
   'text-field': TextField,
   'html-field': HtmlField,

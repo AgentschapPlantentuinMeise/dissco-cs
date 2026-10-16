@@ -26,11 +26,9 @@ export function clearJwt(): void {
 export function redirectToExpiredLogin<T>(): Promise<T> {
   const slug = getSiteSlug();
 
-  // getCurrentUser() doesn't check the JWT's exp claim, so a server-side-expired cookie
-  // still looks "logged in" client-side. That means gated calls made from the login page
-  // itself (e.g. Navbar's unread-count fetch) can also 401. Without this guard, each one
-  // would re-encode the already-redirected-to URL into a new `redirect` param, nesting
-  // deeper forever instead of just staying put.
+  // Already on the login page: stay. A call made from the login page itself can still answer 401
+  // (e.g. the server ended the session before the token expired); without this guard, each such
+  // call would wrap the login URL in a new `redirect` parameter, nesting deeper every time.
   if (window.location.pathname === `/s/${slug}/login`) {
     return new Promise<T>(() => {});
   }
@@ -73,10 +71,9 @@ export function getCurrentUser(): CurrentUser | undefined {
       return undefined;
     }
 
-    // exp is in seconds since epoch. Without this check, a server-side-expired cookie still
-    // looks "logged in" client-side, so pages fire gated background calls (Navbar's unread
-    // counts, ProjectDetail's own-tasks query) that 401 and force an "expired" login redirect
-    // on plain navigation instead of only when the user actually needs to be authenticated.
+    // exp is in seconds since 1970. Without this check, an expired cookie still looks "logged in",
+    // so pages fire calls that need a login (the navbar's unread counts, ProjectDetail's own tasks)
+    // that answer 401 and send the user to login on plain navigation.
     if (typeof payload.exp === 'number' && Date.now() >= payload.exp * 1000) {
       return undefined;
     }

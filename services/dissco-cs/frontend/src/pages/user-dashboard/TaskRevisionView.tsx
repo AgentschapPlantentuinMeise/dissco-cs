@@ -9,11 +9,10 @@ interface TaskRevisionViewProps {
   taskId: string;
 }
 
-// Toont de ingediende data van een afgewerkte taak, alleen-lezen. Gaat bewust niet via
-// prepareClaim (zoals AnnotatePage) -- Madoc's eigen getTaskFromClaim sluit taken met
-// status 3 ("Accepted") uit als "bestaande claim", waardoor prepare-claim voor precies deze taken
-// "Maximum number of contributors reached" teruggeeft. In plaats daarvan hergebruiken we hetzelfde
-// ophaal-patroon als de Review-module: taak -> revisie -> capture model, via revisionId.
+// Shows what was submitted for a finished task, read-only. Not through prepareClaim (like the
+// annotate page): Madoc does not see an accepted task (status 3) as an existing claim, so
+// prepare-claim would answer "Maximum number of contributors reached" for exactly these tasks.
+// Instead the same route as the review page: task -> revision -> capture model.
 export function TaskRevisionView({ taskId }: TaskRevisionViewProps) {
   const { t } = useTranslation('dissco-cs');
 

@@ -5,8 +5,6 @@ import { validateJson } from '../infrastructure/validate-json.js';
 import { intId, siteLang, validateParams } from '../infrastructure/validate-params.js';
 import { attachmentFileSchema, setManualContentSchema, setManualTitleSchema } from '@dissco-cs/shared-types';
 
-// The manual library (admin). Reading a project's manual and linking it to a project live in
-// projects.controller.ts (/projects/:projectId/manual).
 export function manualsController(manualsRepository: ManualsRepository): Hono {
   const app = new Hono();
 

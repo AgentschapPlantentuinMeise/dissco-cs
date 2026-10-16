@@ -1,7 +1,14 @@
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { ConventionRule, findViolations, violationMessage } from '../../test-support/conventions';
+import {
+  commentRules,
+  ConventionRule,
+  findCommentViolations,
+  findUndocumented,
+  findViolations,
+  violationMessage,
+} from '../../test-support/conventions';
 
 // Patterns we cleaned up on purpose (see CLAUDE.md). A failing rule means: change the code as the
 // message says. Extend an allowedIn list only with a reason.
@@ -79,9 +86,25 @@ const rules: ConventionRule[] = [
 
 describe('backend conventions', () => {
   const srcDir = join(__dirname, '..', 'src');
+  const sharedDir = join(__dirname, '..', '..', 'shared', 'types');
 
   it.each(rules.map(rule => [rule.name, rule] as const))('%s', (_name, rule) => {
     const violations = findViolations(srcDir, rule);
     expect(violations, violationMessage(rule, violations)).toEqual([]);
+  });
+
+  // shared/types has no test setup of its own, so its comments are checked from here.
+  it.each(commentRules.map(rule => [rule.name, rule] as const))('%s', (_name, rule) => {
+    const violations = [...findCommentViolations(srcDir, rule), ...findCommentViolations(sharedDir, rule)];
+    expect(violations, violationMessage(rule, violations)).toEqual([]);
+  });
+
+  it('Every Madoc call and shared helper has a contract (JSDoc)', () => {
+    const missing = [
+      ...findUndocumented(join(srcDir, 'madoc-client'), { members: false }),
+      ...findUndocumented(sharedDir, { members: false }),
+    ];
+    const instead = 'a /** */ block: what it does, @param per input, Returns: -- CLAUDE.md §7';
+    expect(missing, `Every Madoc call and shared helper has a contract\nInstead: ${instead}\nFound:\n  ${missing.join('\n  ')}`).toEqual([]);
   });
 });

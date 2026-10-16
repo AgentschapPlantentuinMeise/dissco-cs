@@ -14,13 +14,13 @@ function getServiceJwt(): string {
 export interface MadocRequest {
   method?: string;
   body?: unknown;
-  // Sent as x-madoc-site-id -- with the service JWT, Madoc needs it to know which site is meant.
+  // Sent as x-madoc-site-id: with the service token, Madoc needs it to know which site is meant.
   siteId?: number;
   query?: Record<string, string> | URLSearchParams;
   headers?: Record<string, string>;
 }
 
-// A non-2xx answer from Madoc, keeping its status and body so a controller can still pass them on.
+/** A non-2xx answer from Madoc. Keeps Madoc's status and body, so a route can still pass them on. */
 export class MadocHttpError extends Error {
   constructor(
     readonly status: number,
@@ -61,25 +61,45 @@ async function parseJsonOrThrow<T>(response: Response, method: string | undefine
   return response.json() as Promise<T>;
 }
 
-// ---- this backend's own calls to Madoc (service JWT) ----
-//
-// For this backend's own computations (stats, progress, stuck tasks, ...), never for forwarding
-// something a user does. Build `path` with madocPath (path-segment.ts) so every id is validated.
+// ---- this backend's own calls to Madoc (service token) ----
 
+// The service token may do everything in Madoc. Use it only for this backend's own work (stats,
+// progress, stuck tasks, ...), never to carry out something a user asked for: Madoc would then
+// skip its permission checks and credit the wrong person.
+
+/**
+ * Calls Madoc with the service token and returns the raw answer.
+ * @param path the Madoc path, built with madocPath so every id is checked
+ * @param req optional method, JSON body, siteId (which site is meant), query and headers
+ * Returns: Madoc's Response, whatever its status.
+ */
 export function serviceFetch(path: string, req: MadocRequest = {}): Promise<Response> {
   return gatewayFetch(path, getServiceJwt(), req);
 }
 
+/**
+ * Calls Madoc with the service token and reads the JSON answer.
+ * @param path the Madoc path, built with madocPath so every id is checked
+ * @param req optional method, JSON body, siteId (which site is meant), query and headers
+ * Returns: the JSON body as T. Throws a MadocHttpError on a non-2xx answer.
+ */
 export async function serviceJson<T>(path: string, req: MadocRequest = {}): Promise<T> {
   return parseJsonOrThrow<T>(await serviceFetch(path, req), req.method, path);
 }
 
-// ---- forwarding user-initiated calls to Madoc ----
-//
-// The frontend only ever talks to this backend; everything a user or admin does in Madoc is
-// forwarded from here *as that user* (their own JWT), so Madoc applies its own permission checks
-// and attributes contributions to the right person.
+// ---- passing on what a user does ----
 
+// The frontend only talks to this backend. Everything a user or admin does in Madoc is passed on
+// from here with that user's own token, so Madoc applies its own permission checks and credits
+// the work to the right person.
+
+/**
+ * Calls Madoc with the user's own token and returns the raw answer.
+ * @param path the Madoc path; every id in it must already be checked (validateParams)
+ * @param userToken the user's token (requestBearerToken), or undefined for a visitor
+ * @param init optional method and JSON body
+ * Returns: Madoc's Response, whatever its status.
+ */
 export function madocFetch(
   path: string,
   userToken: string | undefined,
@@ -88,13 +108,23 @@ export function madocFetch(
   return gatewayFetch(path, userToken, init);
 }
 
-// For when this backend combines several answers (e.g. walking every page) instead of relaying one.
+/**
+ * Like madocFetch, but reads the JSON answer -- for when this backend combines several answers
+ * (e.g. every page of a list) instead of passing one on.
+ * @param path the Madoc path; every id in it must already be checked
+ * @param userToken the user's token, or undefined for a visitor
+ * Returns: the JSON body as T. Throws a MadocHttpError on a non-2xx answer.
+ */
 export async function madocJson<T>(path: string, userToken: string | undefined): Promise<T> {
   return parseJsonOrThrow<T>(await madocFetch(path, userToken), 'GET', path);
 }
 
-// Relays a MadocHttpError's status and body as-is; anything else is rethrown for app.onError
-// (logged and stored centrally, see infrastructure/request-log.ts).
+/**
+ * Turns a caught error into the answer for the browser: a MadocHttpError keeps Madoc's status and
+ * body; any other error is thrown again, so app.onError logs it and answers 500.
+ * @param err the caught error
+ * Returns: the Response to send (only for a MadocHttpError).
+ */
 export function madocErrorResponse(err: unknown): Response {
   if (err instanceof MadocHttpError) {
     return new Response(err.body, { status: err.status, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
@@ -102,10 +132,14 @@ export function madocErrorResponse(err: unknown): Response {
   throw err;
 }
 
-// Passes Madoc's status code and body through unchanged, so the frontend can still branch on
-// e.g. a 404 (missing site scope on prepare-claim) or show Madoc's own `{ error }` message. Some
-// madoc-ts routes set 201 without a JSON body (Koa then fills in plain-text "Created") -- a
-// successful non-JSON body is dropped, a failed one is passed on as text.
+/**
+ * Passes Madoc's answer on unchanged: same status, same body. The frontend relies on that, e.g.
+ * on the 404 that prepare-claim gives when the user has no access, and on Madoc's own
+ * `{ error }` messages. Some Madoc routes answer 201 with a plain-text "Created" instead of JSON:
+ * a successful answer that is not JSON is sent on without body; a failed one is sent on as text.
+ * @param response Madoc's answer (from madocFetch)
+ * Returns: the Response to send to the browser.
+ */
 export async function relayMadocResponse(response: Response): Promise<Response> {
   const contentType = response.headers.get('content-type') ?? '';
 
@@ -130,14 +164,26 @@ export async function relayMadocResponse(response: Response): Promise<Response> 
   return new Response(null, { status: response.status });
 }
 
-// A body that is passed on to Madoc unvalidated (Madoc validates it itself): the parsed JSON, or a
-// 400 answer when it is not JSON. Bodies we handle ourselves use validateJson(schema) instead.
+/**
+ * Reads a request body that is passed on to Madoc without our own check (Madoc checks it).
+ * Bodies we handle ourselves use validateJson(schema) instead.
+ * @param c the request context
+ * Returns: the parsed JSON, or a 400 Response to return when the body is not JSON.
+ */
 export async function readJsonBody(c: Context): Promise<unknown> {
   const body: unknown = await c.req.json().catch(() => undefined);
   return body === undefined ? c.json({ error: 'Invalid JSON' }, 400) : body;
 }
 
-// The common case for a write: forward the request's JSON body to `path` and relay the answer.
+/**
+ * The usual write: passes the request's JSON body on to Madoc with the user's token, and passes
+ * Madoc's answer back unchanged (relayMadocResponse).
+ * @param c the request context
+ * @param path the Madoc path; every id in it must already be checked
+ * @param method POST, PUT or PATCH
+ * @param userToken the user's token (requestBearerToken)
+ * Returns: Madoc's answer, or 400 when the body is not JSON.
+ */
 export async function forwardJsonBody(
   c: Context,
   path: string,
@@ -152,14 +198,24 @@ export async function forwardJsonBody(
   return relayMadocResponse(await madocFetch(path, userToken, { method, body }));
 }
 
-// Madoc's site-scoped public API (/s/:slug/madoc/api/...), for data anonymous visitors may see.
-// The site comes from the `slug` query param every public dissco-cs call already sends.
+/**
+ * The path in Madoc's public API of a site (/s/:slug/madoc/api/...), for data that visitors who
+ * are not logged in may see too. The site comes from the `slug` query parameter that every public
+ * call from the frontend sends.
+ * @param c the request context (its `slug` query parameter is used)
+ * @param endpoint the part after /madoc/api, e.g. '/projects/12'
+ * Returns: the full path, or null when the slug is missing or not safe.
+ */
 export function publicSitePath(c: Context, endpoint: string): string | null {
   const slug = c.req.query('slug');
   return isSafeSegment(slug) ? `/s/${slug}/madoc/api${endpoint}` : null;
 }
 
-// The incoming query string minus our own `slug` param, for passing filters on to Madoc as-is.
+/**
+ * The request's query string without our own `slug` parameter, to pass filters on to Madoc.
+ * @param c the request context
+ * Returns: '?a=1&b=2', or '' when nothing is left.
+ */
 export function forwardQuery(c: Context): string {
   const params = new URLSearchParams(c.req.query());
   params.delete('slug');

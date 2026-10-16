@@ -41,8 +41,8 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
       body: input.body,
     });
 
-    // The creator is always the reviewer (gated above), with the one message just inserted --
-    // nothing to count via an extra query.
+    // The thread was just created by this reviewer with one message, so the counts are known
+    // (1 message, 0 unread) without asking the database.
     return c.json(toFeedbackThreadDto({ ...thread, role: 'reviewer', message_count: 1, unread_count: 0 }), 201);
   });
 
@@ -60,8 +60,8 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
     }
 
     await feedbackRepository.markThreadSeen(identity.userId, threadId);
-    // markThreadSeen above just cleared this user's unread messages, so unread_count is 0 here --
-    // no extra query needed.
+    // markThreadSeen has just marked every message as read, so the unread count is 0 without
+    // asking the database.
     const role = identity.userId === result.thread.recipient_user_id ? 'recipient' : 'reviewer';
     return c.json({
       thread: toFeedbackThreadDto({ ...result.thread, role, message_count: result.messages.length, unread_count: 0 }),

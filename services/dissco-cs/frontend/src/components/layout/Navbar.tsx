@@ -45,7 +45,7 @@ export const Navbar: React.FC = () => {
         <button
           className="md:hidden flex flex-col justify-between w-6 h-[18px] bg-transparent border-none cursor-pointer p-0"
           onClick={() => setMenuOpen(o => !o)}
-          aria-label="Menu"
+          aria-label={t('nav_menu_label')}
           aria-expanded={menuOpen}
         >
           <span className={`block h-0.5 w-full bg-gray-600 rounded-sm transition-transform duration-200 ${menuOpen ? 'translate-y-2 rotate-45' : ''}`} />

@@ -4,8 +4,8 @@ import { requestBearerToken } from '../auth/auth.js';
 import { forwardJsonBody, madocFetch, relayMadocResponse } from '../madoc-client/client.js';
 import { safeSegment, validateParams } from '../infrastructure/validate-params.js';
 
-// Capture models and their revisions (a volunteer's saved annotations), forwarded to Madoc as the
-// requesting user -- Madoc decides who may read or change which revision.
+// No permission checks of our own here: every call goes to Madoc with the user's own token, and
+// Madoc decides who may read or change which revision.
 export function captureModelsController(): Hono {
   const app = new Hono();
 

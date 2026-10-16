@@ -19,10 +19,9 @@ function taskDebugStatusLabel(status: number): string {
   }
 }
 
-// DEBUG-ONLY tab, opzettelijk niet vertaald (t()) zodat dit blok later in één keer weg te
-// halen is. Toont per manifest van een gekozen project welke crowdsourcing-task(s) eraan
-// hangen en of ze meetellen in het getranscribeerd-percentage (status "in review" of "done")
-// -- zodat dat percentage op de projectpagina visueel te controleren is.
+// Debug-only tab, deliberately not translated (no t()), so it can later be removed in one go.
+// Shows, per manifest of a chosen project, its volunteer tasks and whether they count for the
+// transcribed percentage (status 2 or 3), so that percentage on the project page can be checked.
 export const TaskDebugSubview: React.FC<{ projects: MadocProjectDto[] }> = ({ projects }) => {
   const { i18n } = useTranslation('dissco-cs');
   const [selectedSlug, setSelectedSlug] = useState<string>('');

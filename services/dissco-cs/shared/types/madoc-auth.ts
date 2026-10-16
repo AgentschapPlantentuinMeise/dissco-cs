@@ -1,6 +1,7 @@
 import { MadocInternationalString } from './common.js';
 
-// Payload of GET /auth/invitation (services/madoc-ts/src/routes/dissco-cs-auth.ts's invitationJson).
+// What Madoc's GET /s/:slug/madoc/api/auth/invitation returns (invitationJson in madoc-ts's
+// routes/dissco-cs-auth.ts).
 export type InvitationDto =
   | { expired: true }
   | { id: string; message: MadocInternationalString; role: string; site_role: string };

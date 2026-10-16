@@ -2,10 +2,8 @@ import { z } from 'zod';
 
 export type FeedbackThreadRole = 'recipient' | 'reviewer';
 
-// Wire shape (camelCase, dates as ISO strings), built by the mappers at the bottom of
-// feedback.repository.ts. `role`/`messageCount`/`unreadCount` are always computed relative to
-// the requesting user -- every route that returns a thread is responsible for supplying accurate
-// values, not just the list endpoint.
+// role, messageCount and unreadCount depend on who asks: they are computed for the requesting
+// user. Every route that returns a thread must fill them in for that user, not only the list.
 export type FeedbackThreadDto = {
   id: number;
   reviewerUserId: number;

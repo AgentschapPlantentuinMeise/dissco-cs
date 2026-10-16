@@ -21,8 +21,8 @@ export function useAnnotationDocument({
 }) {
   const [annotationDocument, setAnnotationDocument] = useState<MadocAnnotationDocumentDto | null>(null);
   const [activeStructure, setActiveStructure] = useState<(MadocStructureNodeDto & { type: 'model' }) | null>(null);
-  // Path of the field currently being drawn on the image, if any — coordinates are only valid for
-  // the canvas shown when drawing started, so switching canvas mid-draw cancels it (effect below).
+  // The field whose region is being drawn on the image, if any. Its coordinates only fit the image
+  // shown when drawing started, so switching to another image cancels the drawing (effect below).
   const [drawingPath, setDrawingPath] = useState<DocumentPath | null>(null);
 
   useEffect(() => {

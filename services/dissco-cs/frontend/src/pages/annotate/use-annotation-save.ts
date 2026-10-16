@@ -54,22 +54,20 @@ export function useAnnotationSave({
       claim.markSaved();
       await captureModelsApi.createRevision(
         {
-          // A model fetched via captureModelsApi.get() always carries its own id back -- id is only
-          // optional on MadocCaptureModelDto because a freshly-built local model (never seen here) wouldn't.
+          // A model from Madoc always has its id; it is only optional in the type for models built
+          // locally.
           captureModelId: model.id!,
           document: annotationDocument,
-          // Same id reused across saves (see use-task-claim) — the server upserts a revision row
-          // by id, so re-submitting with this id updates the same draft instead of creating a new
-          // one each time.
+          // The same revision id on every save (see use-task-claim): Madoc then updates that
+          // revision instead of adding a new one.
           revision: { id: claim.revisionId(), structureId: activeStructure.id, fields: activeStructure.fields, status },
         },
         status
       );
       isDirty.current = false;
 
-      // createCaptureModelRevision only writes the model-api revision — the task itself (what the
-      // dashboard's task list queries) stays at its initial "assigned" status (0) unless we update
-      // it here too, same as releaseClaim does for abandoned claims.
+      // Saving a revision does not change the task: it would stay at status 0 (assigned), and the
+      // dashboard reads the task. So the task status is updated here as well.
       const claimId = await claim.getClaimId();
       if (claimId) {
         await tasksApi.update(claimId, {
@@ -101,10 +99,9 @@ export function useAnnotationSave({
     }, 2000);
   };
 
-  // Takes over once the first autosave has landed — catches edits made without a natural pause
-  // (e.g. typing continuously in one field) that the 2s-inactivity debounce above would otherwise
-  // miss. Cleared automatically when firstSaveDone flips back to false on task switch (see the
-  // reset effect above), so it never keeps saving into a task the user has left.
+  // After the first autosave: save every 30 s while there are unsaved edits. This catches typing
+  // without a pause, which the 2 s wait above would miss. It stops when firstSaveDone goes back to
+  // false on a task switch, so it never saves into a task the user has left.
   useEffect(() => {
     if (!enableAutoSave) return;
     if (!firstSaveDone) return;

@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-// Wire shape (camelCase, dates as ISO strings), built by the mappers at the bottom of
-// forum.repository.ts from the snake_case rows.
 export type ForumTopicDto = {
   id: number;
   authorUserId: number;

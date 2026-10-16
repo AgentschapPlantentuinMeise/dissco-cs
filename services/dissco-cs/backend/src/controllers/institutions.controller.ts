@@ -5,8 +5,6 @@ import { validateJson } from '../infrastructure/validate-json.js';
 import { intId, validateParams } from '../infrastructure/validate-params.js';
 import { institutionInputSchema } from '@dissco-cs/shared-types';
 
-// The institution itself. Its numbers live in stats.controller.ts (/stats/institutions/:slug), its
-// project links in projects.controller.ts (/projects/:projectId/institution).
 export function institutionsController(institutionsRepository: InstitutionsRepository): Hono {
   const app = new Hono();
 
@@ -31,7 +29,7 @@ export function institutionsController(institutionsRepository: InstitutionsRepos
       return c.notFound();
     }
 
-    return c.body(null, 204);
+    return c.json(toInstitutionDto(institution));
   });
 
   app.get('/active/:slug/projects', async c => {
@@ -86,7 +84,7 @@ export function institutionsController(institutionsRepository: InstitutionsRepos
       return c.notFound();
     }
 
-    return c.json(toInstitutionDto(institution));
+    return c.body(null, 204);
   });
 
   app.delete('/:id', validateParams({ id: intId }), async c => {

@@ -180,9 +180,8 @@ export class FeedbackRepository {
         [input.threadId, input.authorUserId, input.authorName, input.body]
       );
 
-      // Een nieuwe reply haalt de thread terug in de lijst van de andere deelnemer als die 'm
-      // eerder verborgen had (zie deleteThreadForUser) -- enkel de kolom van de niet-auteur wordt
-      // gereset, de eigen kolom van de auteur (die zou sowieso al leeg moeten zijn) blijft ongemoeid.
+      // A new message brings the thread back for the other participant if they had hidden it (see
+      // deleteThreadForUser): only the other participant's hidden column is reset.
       await client.query(
         `
         UPDATE ${this.table('feedback_threads')}
@@ -204,10 +203,10 @@ export class FeedbackRepository {
     }
   }
 
-  // "Verwijderen" is per deelnemer: de eerste keer verbergt enkel je eigen kant (de ander blijft
-  // de thread gewoon zien en kan nog antwoorden). Had de andere deelnemer 'm al verborgen, dan
-  // willen nu beide partijen 'm weg -- dan pas een echte DELETE (cascadeert naar de berichten).
-  // SELECT ... FOR UPDATE voorkomt dat twee gelijktijdige deletes elkaars hidden-kolom missen.
+  // Deleting is per participant: the first delete only hides the thread for you; the other still
+  // sees it and can reply. If the other had already hidden it, both want it gone, and only then is
+  // it really deleted (its messages go with it). SELECT ... FOR UPDATE stops two deletes at the
+  // same moment from missing each other's hidden column.
   async deleteThreadForUser(siteId: number, threadId: number, userId: number): Promise<'hidden' | 'deleted' | null> {
     const client = await this.pool.connect();
 
@@ -269,9 +268,6 @@ export class FeedbackRepository {
 }
 
 // ---- DTO mapping ----
-//
-// The row above is the database's shape (snake_case, Date objects); the DTO is the API's shape
-// (camelCase, ISO strings). Every field is listed explicitly, so a new column never leaks out.
 
 // Both *_hidden_at columns (the other participant's hide state) stay server-side.
 export function toFeedbackThreadDto(thread: FeedbackThreadWithMeta): FeedbackThreadDto {

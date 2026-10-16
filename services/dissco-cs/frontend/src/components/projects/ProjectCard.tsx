@@ -18,7 +18,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ projectSummaryData }) 
 
   const imageUrl = typeof projectSummaryData.thumbnail === 'string'
     ? projectSummaryData.thumbnail
-    : projectSummaryData.thumbnail?.id || projectSummaryData.templateOptions?.image || null;
+    : projectSummaryData.thumbnail?.id || null;
 
   const projectLink = `/explore/${projectSummaryData.slug || projectSummaryData.id}`;
 

@@ -1,7 +1,15 @@
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { ConventionRule, findOversizedFiles, findViolations, violationMessage } from '../../test-support/conventions';
+import {
+  commentRules,
+  ConventionRule,
+  findCommentViolations,
+  findOversizedFiles,
+  findUndocumented,
+  findViolations,
+  violationMessage,
+} from '../../test-support/conventions';
 
 // Patterns we cleaned up on purpose (see CLAUDE.md). A failing rule means: change the code as the
 // message says. Extend an allowedIn list only with a reason.
@@ -91,5 +99,19 @@ describe('frontend conventions', () => {
     const instead =
       "split it like pages/review/: logic in a use-<page>.ts hook, calculation rules as pure functions with a test, parts as components next to it -- CLAUDE.md 'React'";
     expect(oversized, `A component file stays at most 300 lines\nInstead: ${instead}\nFound:\n  ${oversized.join('\n  ')}`).toEqual([]);
+  });
+
+  it.each(commentRules.map(rule => [rule.name, rule] as const))('%s', (_name, rule) => {
+    const violations = findCommentViolations(srcDir, rule);
+    expect(violations, violationMessage(rule, violations)).toEqual([]);
+  });
+
+  it('Every call to the backend or Madoc has a contract (JSDoc)', () => {
+    const missing = [
+      ...findUndocumented(join(srcDir, 'api', 'cs-client'), { members: true }),
+      ...findUndocumented(join(srcDir, 'api', 'madoc-auth'), { members: false }).filter(line => !line.startsWith('request.ts')),
+    ];
+    const instead = 'a /** */ block: what it does, @param per input (or "Input: none."), Who:, Returns: -- CLAUDE.md §7';
+    expect(missing, `Every call to the backend or Madoc has a contract\nInstead: ${instead}\nFound:\n  ${missing.join('\n  ')}`).toEqual([]);
   });
 });

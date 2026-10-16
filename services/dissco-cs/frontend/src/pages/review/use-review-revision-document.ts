@@ -3,9 +3,8 @@ import { captureModelQueries } from '../../api/queries/capture-models';
 import { ReviewTaskDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
 import { cloneModelDocument, setFieldValue, DocumentPath } from '../../utility/annotation-document';
 
-// Gebruikt door ReviewInlineExpansion: haalt de revisie + het capture model op en levert het
-// document dat getoond moet worden (lokale correctie indien aanwezig, anders een leeg document
-// op basis van het model).
+// The document to show for a review row: fetches the revision and the capture model, and returns
+// the reviewer's local correction when there is one, otherwise the submitted document.
 export function useReviewRevisionDocument(
   row: ReviewTaskDto,
   editedDocument: MadocAnnotationDocumentDto | undefined,

@@ -37,10 +37,9 @@ import {
 
 type CollectionStructureItem = { id: number; label?: unknown };
 
-// Everything about one Madoc project: progress, claim resync, the admin task-debug view, and the
-// project's links to a manual and an institution. Static paths (`/institution-links`,
-// `/*-links/prune`) are registered before the `/:projectId/...` routes on purpose -- Hono matches
-// in registration order, so a param route registered first would swallow them.
+// Routes with a fixed path (such as /institution-links) are registered before the routes with a
+// /:projectId placeholder. Hono tries routes in the order they are registered, so otherwise
+// /:projectId would also catch 'institution-links', as if it were a project id.
 export function projectsController(institutionsRepository: InstitutionsRepository, manualsRepository: ManualsRepository): Hono {
   const app = new Hono();
 
@@ -56,9 +55,6 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     return c.json({ links });
   });
 
-  // Cleans up links to projects that no longer appear in the given live Madoc list (e.g. because
-  // the project was deleted in Madoc) -- called in the background by the frontend as soon as the
-  // project management page has fetched the current project list.
   app.post('/institution-links/prune', validateJson(pruneProjectLinksSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
@@ -71,7 +67,6 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     return c.json({ removed });
   });
 
-  // Same background cleanup as /institution-links/prune, for manual links.
   app.post('/manual-links/prune', validateJson(pruneProjectLinksSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
@@ -86,10 +81,6 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
 
   // ---- public: project list + detail (Madoc's site API, forwarded as the visitor) ----
 
-  // `published` maps straight to Madoc's own filter (status 1 or 2) -- for a site-admin viewer
-  // Madoc otherwise returns every project regardless of status unless it is sent explicitly. With
-  // `all=true` this walks every page itself (on Madoc's own totalPages) and returns
-  // `{ projects }`; otherwise it relays the requested page as-is.
   app.get('/', async c => {
     const query = new URLSearchParams();
     const published = c.req.query('published');
@@ -139,13 +130,12 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
   });
 
   // ---- admin: project lifecycle (bulk create), forwarded as the admin ----
-  //
-  // requireSiteAdmin is only a fast early exit here: POST /projects shares its URL with the public
-  // list, where the gateway does not validate the JWT. The real check is Madoc's own, on the
-  // forwarded user token -- which is why these must never be sent with the service JWT.
 
-  // Real project-creation route (same one the "New project" / "Duplicate" admin UI uses), so
-  // seeded projects go through Madoc's own logic (collection + capture model + root task).
+  // The site-admin check in these routes is only a quick early stop. POST /projects has the same
+  // URL as the public project list, and for that URL the gateway does not check the login token.
+  // The real permission check is Madoc's, on the user's own token that we pass on -- so never
+  // send these calls with the service token, which is allowed to do everything.
+
   app.post('/', async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
@@ -160,8 +150,6 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     return relayMadocResponse(await madocFetch('/api/madoc/projects', requestBearerToken(c), { method: 'POST', body }));
   });
 
-  // Exports a project's capture model (+ config) as a reusable template -- same payload shape the
-  // "Duplicate project" button passes as `remote_template` when creating a new one.
   app.get('/:projectId/export', validateParams({ projectId: safeSegment }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
@@ -173,7 +161,6 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     return relayMadocResponse(await madocFetch(`/api/madoc/projects/${projectId}/export`, requestBearerToken(c)));
   });
 
-  // The project's own flat collection id, needed to link manifests/collections to it.
   app.get('/:projectId/structure', validateParams({ projectId: safeSegment }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
@@ -185,8 +172,6 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     return relayMadocResponse(await madocFetch(`/api/madoc/projects/${projectId}/structure`, requestBearerToken(c)));
   });
 
-  // Same transition as the admin Pause/Resume/Complete/Archive buttons (0 paused, 1 active,
-  // 2 published/complete, 3 archived, 4 prepared).
   app.put('/:projectId/status', validateParams({ projectId: safeSegment }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
@@ -206,10 +191,11 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
   });
 
   // ---- logged-in user: picking and claiming work, forwarded as the volunteer ----
-  //
-  // Madoc's claim routes, unchanged: the body is passed through as-is and Madoc's status codes
-  // reach the frontend unchanged (e.g. prepare-claim answers 404, not 403, when the user lacks
-  // the site scope -- the annotate page branches on exactly that).
+
+  // These four routes pass the request to Madoc unchanged and return Madoc's answer unchanged,
+  // status code included. Keep it that way: the annotate page reacts to Madoc's own codes. For
+  // example, Madoc answers 404 (not 403) when the user has no access to the project, and the page
+  // then shows its "no access" message.
   for (const action of ['random', 'prepare-claim', 'claim', 'revoke-claim'] as const) {
     app.post(`/:projectId/${action}`, validateParams({ projectId: safeSegment }), async c => {
       const { projectId } = c.req.valid('param');
@@ -234,7 +220,6 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
       getMadocProjectTasks(siteId, project.task_id),
       getMadocCollectionManifestThumbnails(siteId, project.collection_id),
     ]);
-    // navigateToFirstCanvas expects a manifest id, hence the manifest filter in the shared helper.
     const manifestItems = rawManifestItems.map(item => ({
       ...item,
       thumbnail: thumbnails.get(item.id),
@@ -250,13 +235,13 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
         ? 0
         : Math.round(((Math.max(inReview, 0) + Math.max(completed, 0)) / manifestCount) * 100);
 
-    // Site-wide (not user-specific) status per manifest, so "available" is the same for every
-    // visitor. Two independent reasons to stop offering a manifest:
-    // (1) already submitted/accepted -- same rule as madoc-ts's own assign-random-resource.ts
-    //     (status 3 always, status 2 only with contributionMode 'transcription'), and
-    // (2) the contributor maximum has been reached (maxContributionsPerResource, project-wide).
-    // claimGranularity decides which field we group on: with 'manifest' the task itself already
-    // targets the manifest (subject), with 'canvas' (default) via the canvas's subject_parent.
+    // Which manifests can still be picked -- the same for every visitor, not per user. A manifest
+    // is no longer offered when:
+    // - it is done: status 3 (accepted), or status 2 (submitted) when the project is in
+    //   'transcription' mode. This is the rule Madoc itself uses (assign-random-resource.ts).
+    // - enough volunteers already work on it (the project's maxContributionsPerResource).
+    // A task points to its manifest through `subject` when the project hands out whole manifests,
+    // or through `subject_parent` (the manifest of the image) when it hands out single images.
     const config = project.config ?? {};
     const maxContributors = config.maxContributionsPerResource;
     const isTranscriberMode = config.contributionMode === 'transcription';
@@ -300,12 +285,9 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
 
   // ---- logged-in user: manifest claim resync ----
 
-  // madoc-ts only recalculates the shared manifest counter (max-contributors) when a NEW claim is
-  // created (subtask_created event in madoc-ts's gateway/tasks/crowdsourcing-manifest-task.ts),
-  // never when an existing claim is abandoned. With maxContributors:1 a manifest can therefore
-  // stay blocked for everyone (including the user who just abandoned it), potentially forever.
-  // This endpoint recalculates the counter right after an abandon, using the same rule as
-  // madoc-ts's syncManifestTaskStatus.
+  // Madoc only recounts how many volunteers work on a manifest when someone claims it, not when
+  // someone lets it go. Without this route, a manifest that was full would stay blocked for
+  // everyone after a volunteer released it.
   app.post('/:projectId/manifests/:manifestId/resync-claim', validateParams({ projectId: safeSegment, manifestId: safeSegment }), async c => {
     const identity = requireUser(c);
     if (identity instanceof Response) {
@@ -314,7 +296,8 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
 
     const { projectId, manifestId } = c.req.valid('param');
 
-    // Only to make sure the project exists on this site before touching any of its tasks.
+    // Called only to check that the project exists on this site (it throws otherwise), before any
+    // of its tasks is touched.
     await getMadocProject(identity.siteId, projectId);
 
     const { tasks } = await getMadocTasksBySubjectAndType(
@@ -324,7 +307,6 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     );
     const containerTaskId = tasks[0]?.id;
     if (!containerTaskId) {
-      // No manifest task created yet for this manifest -- nothing to resync.
       return c.json({ resynced: false });
     }
 
@@ -334,9 +316,6 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
 
   // ---- admin: task debug ----
 
-  // Admin-only debug view: shows, per manifest of a project, which crowdsourcing task(s) hang off
-  // it and whether they count as "transcribed" (status 2 or 3, same rule as /:projectId/progress)
-  // -- so the percentage on the project page can be verified visually instead of trusted blindly.
   app.get('/:projectId/task-debug', validateParams({ projectId: safeSegment }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
@@ -351,8 +330,8 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
       getMadocProjectTasks(identity.siteId, project.task_id),
     ]);
 
-    // Subject is a manifest or canvas urn depending on the project's claimGranularity -- with
-    // canvas granularity we group via subject_parent (the manifest urn).
+    // A task points to a manifest, or to a single image whose parent is the manifest -- depending on
+    // whether the project hands out whole manifests or single images.
     const tasksByManifestId = new Map<string, MadocCrowdsourcingTaskDto[]>();
     for (const task of tasks) {
       const manifestUrn =
@@ -383,8 +362,8 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
           status: t.status,
           statusText: t.status_text,
           assignee: t.assignee?.name,
-          // tasks-api always returns this for a real task (see MadocCrowdsourcingTaskDto's comment) --
-          // the field is only optional in the shared type for other call sites.
+          // Madoc always fills this in for a real task; the shared type marks it optional only
+          // because other calls may lack it.
           modifiedAt: t.modified_at ?? 0,
         })),
       };
@@ -439,7 +418,6 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     return c.body(new Uint8Array(file.buffer));
   });
 
-  // Link a project to a manual (or unlink with manualId: null).
   app.put('/:projectId/manual-link', validateJson(setManualLinkSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
@@ -475,7 +453,6 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     return c.json(toInstitutionDto(institution));
   });
 
-  // Link a project to an institution (or unlink with institutionId: null).
   app.put('/:projectId/institution-link', validateJson(setInstitutionLinkSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {

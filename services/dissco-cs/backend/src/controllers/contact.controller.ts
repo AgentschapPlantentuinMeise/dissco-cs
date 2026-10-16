@@ -24,8 +24,8 @@ export function contactController(navItemsRepository: NavItemsRepository): Hono 
 
     const payload = c.req.valid('json');
 
-    // Honeypot: a hidden field real visitors never fill in. If a bot fills it, pretend
-    // success without sending anything — no hint that this is what's happening.
+    // The hidden "website" field is a trap for bots: people never see it. When it is filled in, we
+    // act as if the message was sent, without sending it and without telling the bot why.
     if (isNonEmptyString(payload.website)) {
       return c.body(null, 204);
     }
@@ -45,7 +45,8 @@ export function contactController(navItemsRepository: NavItemsRepository): Hono 
         text: `From: ${payload.name} <${payload.email}>\n\n${payload.message}`,
       });
     } catch (err) {
-      // E.g. SMTP not configured or unreachable -- stored centrally so it doesn't go unnoticed.
+      // The mail could not be sent (e.g. the mail server is down): the error is logged centrally and
+      // the visitor gets a 502.
       passErrorOn(c, err);
       return c.json({ error: 'Could not send the message, please try again later' }, 502);
     }

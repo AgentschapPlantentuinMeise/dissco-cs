@@ -24,9 +24,9 @@ export function useTaskNavigation({
     navigate(to);
   };
 
-  // Asks for another random assignment (same endpoint as ProjectDetail's "Start" button) and goes
-  // there — falling back to the project page once none are left. Records the manifest we're
-  // leaving so "Vorige taak" has somewhere to go back to.
+  // Asks for another random task (the same request as the "Start" button on the project page)
+  // and goes there, or to the project page when none is left. Remembers the manifest we leave,
+  // for "previous task".
   const goToNext = async () => {
     // A failed lookup lands on the project page, same as when no tasks are left.
     const url = await requestNextUrl(undefined).catch(() => null);

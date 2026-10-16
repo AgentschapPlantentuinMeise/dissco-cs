@@ -4,7 +4,13 @@ import { madocPath } from './path-segment.js';
 import { listAllMadocProjects } from './projects.js';
 import { MadocCrowdsourcingTaskDto, MadocInternationalString, MadocPagination } from '@dissco-cs/shared-types';
 
-// Every page of an /api/tasks query, one page after the other (service JWT, so kept sequential).
+/**
+ * Every page of a query on Madoc's task list, one page after the other (100 tasks per page).
+ * Uses the service token.
+ * @param siteId the site
+ * @param query Madoc's /api/tasks filters, e.g. { type, status: '0,1', root_task_id }
+ * Returns: the tasks of all pages.
+ */
 export function fetchAllTasks<T = MadocCrowdsourcingTaskDto>(siteId: number, query: Record<string, string>): Promise<T[]> {
   return collectAllPages(async page => {
     const data = await serviceJson<{ tasks: T[]; pagination?: MadocPagination }>('/api/tasks', {
@@ -15,6 +21,12 @@ export function fetchAllTasks<T = MadocCrowdsourcingTaskDto>(siteId: number, que
   });
 }
 
+/**
+ * How many tasks of a project have each status, counting one task per subject (manifest or
+ * image). Uses the service token.
+ * @param taskId the project's root task (MadocProjectDto.task_id)
+ * Returns: { statuses: status -> count, total }.
+ */
 export function getMadocTaskStats(
   siteId: number,
   taskId: string
@@ -25,6 +37,13 @@ export function getMadocTaskStats(
   });
 }
 
+/**
+ * The tasks of one type about one subject, e.g. the manifest task of a manifest. Uses the
+ * service token.
+ * @param subject the subject's urn, e.g. 'urn:madoc:manifest:12'
+ * @param type the task type, e.g. 'crowdsourcing-manifest-task'
+ * Returns: { tasks } with their ids.
+ */
 export function getMadocTasksBySubjectAndType(
   siteId: number,
   subject: string,
@@ -33,14 +52,18 @@ export function getMadocTasksBySubjectAndType(
   return serviceJson('/api/tasks', { siteId, query: { subject, type, all_tasks: 'true' } });
 }
 
+/**
+ * One task with its state and subtasks. Uses the service token.
+ * @param taskId Madoc task id
+ * Returns: the task. Throws a MadocHttpError when Madoc answers with an error.
+ */
 export function getMadocTaskDetail(siteId: number, taskId: string): Promise<{
   id: string;
   status: number;
   assignee?: { id: string; name?: string };
   state?: { maxContributors?: number; revisionId?: string };
-  // The container task's own `metadata` is always empty — only its subtasks (the individual
-  // claims) carry the resolved project/manifest metadata, which is why getStuckManifestCounters
-  // borrows it from here instead.
+  // A manifest task's own metadata is always empty; only its subtasks (the claims) carry the
+  // project, which is why getStuckManifestCounters reads it from here.
   subtasks?: Array<{
     type: string;
     status: number;
@@ -50,13 +73,23 @@ export function getMadocTaskDetail(siteId: number, taskId: string): Promise<{
   return serviceJson(madocPath`/api/tasks/${taskId}`, { siteId, query: { all: 'true', detail: 'true' } });
 }
 
+/**
+ * Changes a task with the service token -- for this backend's own fixes (releasing a stuck
+ * task, reopening a manifest), never for something a user does.
+ * @param taskId Madoc task id
+ * @param body the fields to change, e.g. { status: -1, status_text: 'abandoned' }
+ * Returns: nothing. Throws a MadocHttpError when Madoc answers with an error.
+ */
 export async function updateMadocTask(siteId: number, taskId: string, body: Record<string, unknown>): Promise<void> {
   await serviceJson(madocPath`/api/tasks/${taskId}`, { siteId, method: 'PATCH', body });
 }
 
-// All crowdsourcing-task subtasks of a project (same root_task_id + type as the /progress
-// calculation in projects.controller.ts /:projectId/progress) -- for the admin debug page that makes the
-// per-manifest transcribed percentage verifiable.
+/**
+ * Every volunteer task (crowdsourcing-task) of a project, with details -- the same tasks the
+ * progress percentage counts. Uses the service token.
+ * @param rootTaskId the project's root task (MadocProjectDto.task_id)
+ * Returns: MadocCrowdsourcingTaskDto[].
+ */
 export function getMadocProjectTasks(siteId: number, rootTaskId: string): Promise<MadocCrowdsourcingTaskDto[]> {
   return fetchAllTasks(siteId, {
     root_task_id: rootTaskId,
@@ -66,11 +99,15 @@ export function getMadocProjectTasks(siteId: number, rootTaskId: string): Promis
   });
 }
 
-// Madoc-ts only re-computes a manifest-task's shared max-contributors counter when a NEW claim
-// is created, never when an existing one is abandoned/released — so a manifest can stay stuck
-// on status 2 ("max contributors") forever even once every underlying claim is -1. Shared by
-// the resync-claim route (looked up by subject) and the stuck-tasks admin list (looked up by
-// container task id directly).
+/**
+ * Reopens a full manifest when there is room again. Madoc only recounts how many volunteers work
+ * on a manifest when someone claims it, not when someone lets it go, so a manifest can stay
+ * marked full (status 2) after all its claims were abandoned. This sets it back to status 1
+ * ('accepting contributions') when fewer claims than its maximum are still active.
+ * @param containerTaskId the manifest task's id (type crowdsourcing-manifest-task)
+ * Returns: true when it was reopened; false when nothing had to change (no maximum set, already
+ *   open, done or rejected, or still full).
+ */
 export async function resyncManifestTaskCounter(siteId: number, containerTaskId: string): Promise<boolean> {
   const detail = await getMadocTaskDetail(siteId, containerTaskId);
 
@@ -88,10 +125,9 @@ export async function resyncManifestTaskCounter(siteId: number, containerTaskId:
   return true;
 }
 
-// Unscoped (no root_task_id), all_tasks=true queries on type=crowdsourcing-task force a full
-// table scan that gets dramatically slower as the site accumulates tasks over time — scoping by
-// root_task_id (like getMadocProjectTasks already does for the task-debug tab) turns each call
-// back into an indexed, near-instant lookup.
+// Always filtered on one project (root_task_id): a query on every crowdsourcing-task of the site
+// makes Madoc scan the whole task table, which gets slower as tasks pile up. Per project it is
+// a fast, indexed lookup.
 function fetchCrowdsourcingTasksByStatus(
   siteId: number,
   status: 0 | 1,
@@ -113,11 +149,13 @@ function fetchCrowdsourcingTasksByStatus(
 
 const STUCK_IN_PROGRESS_AFTER_DAYS = 14;
 
-// Crowdsourcing tasks, per project, that block their manifest for the rest of the team (see
-// AnnotatePage/manifest-claims discussion). A claimed-but-never-started task (status 0) is
-// stuck the moment it exists — nothing is going to make it move on its own. An in-progress
-// task (status 1) is only stuck once it's gone stale for a while; otherwise this would just
-// list every bit of normal, ongoing work.
+/**
+ * Volunteer tasks that block their manifest for others: claimed but never started (status 0),
+ * or in progress (status 1) without any change for STUCK_IN_PROGRESS_AFTER_DAYS (14) days.
+ * Normal ongoing work is not listed. Asked per project. Uses the service token.
+ * @param siteId the site
+ * Returns: MadocCrowdsourcingTaskDto[].
+ */
 export async function getStuckMadocTasks(siteId: number): Promise<MadocCrowdsourcingTaskDto[]> {
   const staleCutoff = new Date(Date.now() - STUCK_IN_PROGRESS_AFTER_DAYS * 24 * 60 * 60 * 1000);
   const projects = await listAllMadocProjects(siteId);
@@ -135,9 +173,13 @@ export async function getStuckMadocTasks(siteId: number): Promise<MadocCrowdsour
   return perProject.flat();
 }
 
-// Site-wide manifest-tasks stuck on status 2 ("max contributors") whose underlying claims are
-// ALL already resolved (-1/abandoned) — no single task to release, just a stale counter that
-// resyncManifestTaskCounter() would fix, but nothing ever triggers that automatically.
+/**
+ * Manifests marked full (status 2) while fewer claims than their maximum are still active --
+ * no task to release, only a count that is out of date. resyncManifestTaskCounter fixes one;
+ * nothing does that automatically. Uses the service token.
+ * @param siteId the site
+ * Returns: the manifest tasks, with maxContributors, validCount and their project.
+ */
 export async function getStuckManifestCounters(siteId: number): Promise<MadocCrowdsourcingTaskDto[]> {
   const containers = await fetchAllTasks<{ id: string; name?: string; subject: string; modified_at: number }>(siteId, {
     type: 'crowdsourcing-manifest-task',
@@ -155,15 +197,14 @@ export async function getStuckManifestCounters(siteId: number): Promise<MadocCro
     const subtasks = detail.subtasks ?? [];
     const validCount = subtasks.filter(t => t.type === 'crowdsourcing-task' && t.status !== -1).length;
     if (validCount < maximum) {
-      // The container's own metadata is always empty — only its subtasks (the individual
-      // claims) carry the resolved project metadata, so borrow it from whichever one has it.
+      // The manifest task's own metadata is empty; take the project from one of its claims.
       const project = subtasks.find(t => t.metadata?.project)?.metadata?.project;
       results.push({
         id: container.id,
         name: container.name,
         subject: container.subject,
         modified_at: container.modified_at,
-        // Known true -- the fetch above filters on status: '2' already.
+        // The query above only asks for status 2.
         status: 2,
         maxContributors: maximum,
         validCount,

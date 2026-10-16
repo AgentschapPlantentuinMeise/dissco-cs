@@ -15,12 +15,11 @@ interface ReviewTableProps {
   toggleSelectAllVisible: () => void;
   selectedIds: Set<string>;
   toggleSelectRow: (id: string) => void;
-  isOwnTask: (row: ReviewTaskDto) => boolean;
   filterBySubmitter: (name: string) => void;
   onPreview: (row: ReviewTaskDto) => void;
   openRowId: string | null;
   onRowClick: (row: ReviewTaskDto) => void;
-  /** Rendert een extra rij vlak onder de aangeklikte rij (inline-uitklap-weergave). */
+  /** Renders an extra row right under the clicked row (the opened row). */
   renderRowExpansion?: (row: ReviewTaskDto) => React.ReactNode;
 }
 
@@ -33,7 +32,6 @@ export function ReviewTable({
   toggleSelectAllVisible,
   selectedIds,
   toggleSelectRow,
-  isOwnTask,
   filterBySubmitter,
   onPreview,
   openRowId,
@@ -85,7 +83,6 @@ export function ReviewTable({
           const subjectLabel = localeText(row.subject.label, i18n.language) || row.id;
           const modified = row.modifiedAt ? new Date(row.modifiedAt).toLocaleString(i18n.language) : '—';
           const canPreview = !!row.subjectRaw;
-          const selectable = isOwnTask(row);
           const isOpen = openRowId === row.id;
 
           return (
@@ -100,8 +97,6 @@ export function ReviewTable({
                     type="checkbox"
                     checked={selectedIds.has(row.id)}
                     onChange={() => toggleSelectRow(row.id)}
-                    disabled={!selectable}
-                    title={selectable ? undefined : t('review_not_own_task')}
                     aria-label={subjectLabel}
                   />
                 </td>

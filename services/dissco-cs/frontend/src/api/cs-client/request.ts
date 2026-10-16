@@ -1,11 +1,11 @@
 import { addBreadcrumb, withoutQuery } from '../breadcrumbs';
 import { getJwt, redirectToExpiredLogin } from '../jwt';
 
-// The one error type for every API call in the app. Lets callers branch on the status (e.g. 404 =
-// missing site scope on prepare-claim, per madoc-ts's userWithScope, vs. a genuinely missing
-// resource) instead of parsing the message string. `message` is the server's own `{ error }` text
-// (ours and Madoc's), for recognising a specific case (see claim-errors.ts) and for the log -- the
-// user only ever sees a translated message (CLAUDE.md "Fouten en logging").
+/**
+ * The one error type of every API call. Callers branch on `status` (e.g. 404 on prepare-claim =
+ * no access) instead of parsing text. `message` is the server's own `{ error }` text (ours or
+ * Madoc's), for recognising a specific case and for the log -- never shown to the user.
+ */
 export class ApiError extends Error {
   status: number;
   constructor(status: number, path: string, serverMessage?: string) {
@@ -28,6 +28,13 @@ async function readServerMessage(response: Response): Promise<string | undefined
   }
 }
 
+/**
+ * Calls our backend: adds the user's JWT and a breadcrumb, sends an expired session to the login
+ * page, and throws an ApiError on any other non-2xx answer.
+ * @param path the path after /api/dissco-cs, with its query
+ * @param init optional fetch options (method, body, signal)
+ * Returns: the JSON body as T; undefined for 204 or a non-JSON answer.
+ */
 export async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const jwt = getJwt();
   const call = `${init?.method ?? 'GET'} ${withoutQuery(path)}`;

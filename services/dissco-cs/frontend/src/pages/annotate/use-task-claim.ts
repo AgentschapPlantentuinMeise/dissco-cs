@@ -37,22 +37,19 @@ export function useTaskClaim({
   const onLeaveRef = useRef(onLeave);
   onLeaveRef.current = onLeave;
 
-  // One id per editing session, reused across every edit AND every save of this document — the
-  // server only merges a field's new value into the canonical document when that field carries
-  // `revision === revision.id` of the submitted revision (extract-valid-revision-changes.ts), so
-  // edits must be tagged with the SAME id that's later submitted as `revision.id`. A fresh id per
-  // save (e.g. crypto.randomUUID() at save time) would never match what was tagged on the fields.
+  // One id for the whole editing session, used on every edit AND every save. Madoc only stores a
+  // field's new value when the field carries the id of the revision being saved
+  // (extract-valid-revision-changes.ts in madoc-ts). A new id per save would never match, and the
+  // edits would be dropped without any error.
   const revisionIdRef = useRef<string>(generateUUID());
   const hasSaved = useRef(false);
   const claimIdRef = useRef<string | undefined>(undefined);
-  // Holds the in-flight claim request itself, not just its resolved id — needed because a user
-  // can leave faster than the claim POST round-trips. Without awaiting this, releaseClaim would
-  // see claimIdRef.current still undefined, skip the abandon entirely, and the claim that finishes
-  // arriving moments later (after this component already unmounted) would never get released.
+  // The claim request itself, not just its result: a user can leave before the claim request has
+  // returned. releaseClaim waits for it; otherwise it would see no claim id yet, skip the release,
+  // and the claim arriving a moment later would never be released.
   const claimPromiseRef = useRef<Promise<MadocCreateResourceClaimDto> | null>(null);
 
-  // Resolves the claim's task id, waiting on the in-flight claim request if it hasn't landed yet
-  // (a user can act faster than the claim POST round-trips) — shared by releaseClaim and save.
+  // The claim's task id, waiting for the claim request if it has not returned yet.
   const getClaimId = async (): Promise<string | undefined> => {
     if (claimIdRef.current) return claimIdRef.current;
     if (!claimPromiseRef.current) return undefined;
@@ -75,15 +72,14 @@ export function useTaskClaim({
     if (!claimId) return;
 
     try {
-      // Deletes the claim task outright (upstream madoc-ts route), instead of leaving an
-      // 'abandoned' row behind — see AnnotatePage/manifest-claims discussion.
+      // Deletes the claim task entirely (Madoc's revoke-claim route, delete-resource-claim.ts)
+      // instead of leaving an 'abandoned' task behind.
       await projectsApi.revokeClaim(projectId, { manifestId });
-      // Best-effort: madoc-ts only re-syncs the shared max-contributors counter when a NEW claim
-      // is created, never on an abandon — without this, a manifest that hit its contributor
-      // limit stays blocked for everyone (incl. this user) once its only active claim is released.
+      // Madoc only recounts a manifest's volunteers on a new claim, not on a release: without this
+      // a full manifest would stay blocked for everyone, this user included. Best effort.
       await projectsApi.resyncClaim(projectId, manifestId).catch(err => reportClientError(err, 'action'));
-      // After the resync, so the refetch sees the recalculated counter: ProjectDetail's "Choose where
-      // to start" grid (project progress) shows the manifest as available again.
+      // After the resync, so the project page reloads the recounted progress and shows the
+      // manifest as free again.
       queryClient.invalidateQueries({ queryKey: projectKeys.progress(projectId) });
       queryClient.invalidateQueries({ queryKey: taskKeys.all });
     } catch (err) {
@@ -106,11 +102,9 @@ export function useTaskClaim({
 
     const existingStatus = prepared.claim?.status as number | undefined;
 
-    // Existing claim (saved or submitted): use the existing claim id and set hasSaved so
-    // releaseClaim does nothing -- the task status stays untouched. Reuse the revisionId stored on
-    // the task (if any) so a next autosave updates the same capture_model_revision row instead of
-    // adding a new one -- older tasks from before this change have no stored revisionId, hence the
-    // fallback.
+    // Existing claim (saved or submitted): reuse its id, and set hasSaved so releaseClaim leaves it
+    // alone. Reuse the revision id stored on the task, so the next autosave updates the same
+    // revision; a task claimed before revision ids were stored gets a new one.
     if (existingStatus !== undefined && existingStatus >= 1) {
       const existingRevisionId = prepared.claim?.state?.revisionId as string | undefined;
       claimIdRef.current = prepared.claim?.id;
@@ -140,7 +134,7 @@ export function useTaskClaim({
       onLeaveRef.current();
       releaseClaim();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- releaseClaim is a new function every render; listing it would claim and release on every render
   }, [projectId, manifestId, prepared]);
 
   // The explicit, user-requested variant of releaseClaim: that one deliberately does NOTHING once

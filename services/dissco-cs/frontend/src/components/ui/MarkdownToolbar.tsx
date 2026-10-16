@@ -40,9 +40,8 @@ function insertAtLineStart(textarea: HTMLTextAreaElement, value: string, onChang
   });
 }
 
-// Reusable opmaak-werkbalk boven een Markdown-<textarea> — voegt syntax in op de
-// cursorpositie i.p.v. een volledige WYSIWYG-editor te zijn, zodat de opslag een
-// veilige platte Markdown-string blijft (geen HTML-sanitisatie nodig).
+// Formatting buttons above a Markdown <textarea>: they insert Markdown at the cursor instead of being
+// a WYSIWYG editor, so what is stored stays plain Markdown (no HTML to clean).
 export const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ textareaRef, value, onChange }) => {
   const { t } = useTranslation('dissco-cs');
 

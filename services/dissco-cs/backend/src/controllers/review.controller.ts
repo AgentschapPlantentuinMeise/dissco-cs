@@ -6,16 +6,13 @@ import { getMadocReviewTasks } from '../madoc-client/reviews.js';
 import { getMadocSiteUserRole } from '../madoc-client/users.js';
 import { safeSegment, validateParams } from '../infrastructure/validate-params.js';
 
-// Same condition as the frontend's is-reviewer check: site admins always qualify, anyone else
-// only when their site role is actually 'reviewer'.
 export async function isReviewerOrAdmin(identity: MadocUserIdentity): Promise<boolean> {
   if (identity.scope.includes('site.admin')) return true;
   const role = await getMadocSiteUserRole(identity.siteId, identity.userId);
   return role === 'reviewer';
 }
 
-// Our own reviewer overview: every site-wide task up for review, with the assigned reviewer as a
-// column -- instead of Madoc's own /reviews page.
+// Our own overview of all open review tasks of the site, with the assigned reviewer per task,
 export function reviewController(): Hono {
   const app = new Hono();
 
@@ -42,9 +39,9 @@ export function reviewController(): Hono {
     return c.json({ tasks: await getMadocReviewTasks(identity.siteId) });
   });
 
-  // Accept/reject a submission, forwarded as the reviewer. Deliberately madoc-ts's own
-  // crowdsourcing task route, not the generic tasks-api PATCH (/tasks/:taskId): it carries extra
-  // domain logic on accept (e.g. blocking when table cells are flagged).
+  // Goes through Madoc's crowdsourcing route on purpose, not the general task update
+  // (PATCH /tasks/:taskId): on accept, only this route runs Madoc's extra checks -- for example,
+  // it refuses while table cells are still flagged.
   app.patch('/tasks/:taskId', validateParams({ taskId: safeSegment }), async c => {
     const { taskId } = c.req.valid('param');
 

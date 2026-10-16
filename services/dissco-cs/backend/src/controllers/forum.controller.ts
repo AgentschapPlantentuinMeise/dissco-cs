@@ -5,8 +5,6 @@ import { validateJson } from '../infrastructure/validate-json.js';
 import { intId, validateParams } from '../infrastructure/validate-params.js';
 import { forumReplyInputSchema, forumTopicInputSchema } from '@dissco-cs/shared-types';
 
-// A piece of forum content (topic or reply) can be removed/closed by whoever wrote it, or by
-// any site admin -- same rule for both content types and both actions (delete, close).
 function isOwnerOrAdmin(identity: MadocUserIdentity, authorUserId: number): boolean {
   return identity.userId === authorUserId || identity.scope.includes('site.admin');
 }
@@ -55,7 +53,7 @@ export function forumController(forumRepository: ForumRepository): Hono {
 
     await forumRepository.markTopicSeen(identity.userId, topic.id, 0);
 
-    // A freshly created topic trivially has no replies yet -- no extra query needed.
+    // A new topic has no replies yet, so both counts are 0 without asking the database.
     return c.json(toForumTopicDto({ ...topic, reply_count: 0, last_seen_reply_count: 0 }), 201);
   });
 

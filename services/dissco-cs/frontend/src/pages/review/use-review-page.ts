@@ -15,9 +15,8 @@ export type SortKey = 'project' | 'subject' | 'status' | 'submitter' | 'reviewer
 export type SortDir = 'asc' | 'desc';
 export type BulkResult = { id: string; label: string; success: boolean; error?: string };
 
-// Draagt enkel nog de indiener mee -- de taken zelf worden niet meer gekoppeld aan de
-// feedback-thread (zie sendFeedback), enkel gebruikt om vóór het kiezen van een ontvanger te
-// bepalen of een selectie/batch wel van één indiener is.
+// Only the submitter: used to check, before a recipient is chosen, that a selection or batch
+// comes from one single submitter.
 type BatchSubmitterRef = { submitterId?: number; submitterName?: string };
 export type FeedbackComposeTarget = { submitterId: number; submitterName: string };
 
@@ -28,8 +27,8 @@ function submitterRefFromRow(row: ReviewTaskDto): BatchSubmitterRef {
   };
 }
 
-// Geeft de gedeelde indiener terug als élke taak in de lijst dezelfde submitterId heeft, anders
-// null -- gebruikt om zowel de bulk-selectie als de "laatste batch" na een accept te bewaken.
+// The common submitter when every task in the list has the same submitterId, otherwise null --
+// guards both the bulk selection and the "last batch" after an accept.
 function singleSubmitter(refs: BatchSubmitterRef[]): { id: number; name: string } | null {
   if (refs.length === 0) return null;
   const ids = new Set(refs.map(ref => ref.submitterId).filter((id): id is number => id !== undefined));
@@ -39,7 +38,7 @@ function singleSubmitter(refs: BatchSubmitterRef[]): { id: number; name: string 
   return match?.submitterName ? { id, name: match.submitterName } : null;
 }
 
-// Alle data, filter/sort-, selectie- en accept-logica voor de review-pagina zit hier.
+// All data, filtering, sorting, selection and accept logic of the review page.
 export function useReviewPage() {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useCurrentUser();
@@ -57,26 +56,25 @@ export function useReviewPage() {
   const [bulkResults, setBulkResults] = useState<BulkResult[] | null>(null);
   const [previewRow, setPreviewRow] = useState<ReviewTaskDto | null>(null);
 
-  // Welke rij het detail toont, en de nog-niet-geaccepteerde correcties per
-  // rij -- bewust NIET auto-saved, blijft lokale state tot de taak (los of in bulk) geaccepteerd
-  // wordt.
+  // Which row is open, and the corrections per row not yet accepted -- on purpose NOT saved
+  // automatically: they stay local until the task is accepted (alone or in bulk).
   const [openRowId, setOpenRowId] = useState<string | null>(null);
   const [editedDocuments, setEditedDocuments] = useState<Record<string, MadocAnnotationDocumentDto>>({});
 
-  // Compose-doel voor de feedback-modal (vóór een accept, vanaf rij-icoon/actiebalk/selectie), en
-  // de single-slot "laatste verwerkte batch" die na een accept overleeft zolang er niet opnieuw
-  // geaccepteerd wordt -- zie Review.tsx voor de sticky balk die dit toont.
+  // Who the feedback modal is for (before an accept, from a row icon, the bar or the selection),
+  // and the "last processed batch", kept after an accept until the next one (shown in the bar
+  // of Review.tsx).
   const [feedbackTarget, setFeedbackTarget] = useState<FeedbackComposeTarget | null>(null);
   const [lastBatchTasks, setLastBatchTasks] = useState<BatchSubmitterRef[] | null>(null);
 
-  // Taken die net vrijgegeven zijn maar nog niet uit de server-lijst verdwenen -- madoc-ts zet de
-  // gekoppelde reviewtaak pas asynchroon (via zijn eigen achtergrond-jobqueue) op status -1, dus
-  // een refetch meteen na het vrijgeven toont de rij nog gewoon. Lokaal verbergen i.p.v. wachten.
+  // Tasks just released but still in the server list: Madoc sets the linked review task to -1
+  // later, through its own background events, so a reload right after the release still shows
+  // the row. Hidden locally instead of waiting.
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
-  // Enkel taken waarvan de ingelogde gebruiker zelf de toegewezen reviewer is -- de backend
-  // levert nog steeds alle site-brede review-taken aan (zie review.controller.ts), maar deze
-  // pagina's tonen voortaan enkel de eigen wachtrij.
+  // A reviewer only ever sees the tasks assigned to them: the backend returns every open review
+  // task of the site, this page keeps only your own queue. So every row can be selected and
+  // accepted (Madoc would also refuse someone else's task, its "limited reviewer" check).
   const rows = (data?.tasks ?? []).filter(row => !!user && row.reviewerId === user.id && !dismissedIds.has(row.id));
 
   const toggleSort = (key: SortKey) => {
@@ -136,17 +134,10 @@ export function useReviewPage() {
     return sorted;
   }, [rows, searchQuery, statusFilter, sortKey, sortDir, i18n.language]);
 
-  // Enkel taken die effectief aan de ingelogde gebruiker toegewezen zijn mogen geselecteerd/
-  // geaccepteerd worden -- Madoc's eigen "limited-reviewer"-check zou dit server-side ook
-  // blokkeren, maar we willen het hier al duidelijk maken i.p.v. pas na een mislukte poging.
-  const isOwnTask = (row: ReviewTaskDto) => !!user && row.reviewerId === user.id;
+  const allVisibleSelected = visibleRows.length > 0 && visibleRows.every(row => selectedIds.has(row.id));
 
-  const selectableVisibleRows = visibleRows.filter(isOwnTask);
-  const allVisibleSelected = selectableVisibleRows.length > 0 && selectableVisibleRows.every(row => selectedIds.has(row.id));
-
-  // Selectie kan over meerdere indieners lopen (checkboxes filteren daar niet op) -- feedback
-  // versturen mag enkel als de hele selectie van dezelfde indiener is; bulk-accepteren zelf blijft
-  // hier los van staan.
+  // A selection can span several submitters; feedback can only be sent when the whole selection
+  // is from one submitter. Bulk accept does not depend on this.
   const selectedRowsForFeedback = rows.filter(row => selectedIds.has(row.id));
   const bulkFeedbackSubmitter = singleSubmitter(selectedRowsForFeedback.map(submitterRefFromRow));
   const canSendBulkFeedback = selectedIds.size > 0 && bulkFeedbackSubmitter !== null;
@@ -158,18 +149,17 @@ export function useReviewPage() {
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (allVisibleSelected) {
-        selectableVisibleRows.forEach(row => next.delete(row.id));
+        visibleRows.forEach(row => next.delete(row.id));
       } else {
-        selectableVisibleRows.forEach(row => next.add(row.id));
+        visibleRows.forEach(row => next.add(row.id));
       }
       return next;
     });
   };
 
-  // Aanvinken van de opengeklapte rij betekent "akkoord, deze mag geaccepteerd worden" -- sluit
-  // de rij en open meteen de eerstvolgende zichtbare rij zodat de reviewer rij per rij kan
-  // doorwerken. Ontvinken, of aanvinken van een niet-opengeklapte rij (bv. "select all"), laat
-  // openRowId ongemoeid.
+  // Ticking the open row means "fine, this may be accepted": it closes that row and opens the
+  // next visible one, so the reviewer can work through the list row by row. Unticking, or
+  // ticking a row that is not open (e.g. "select all"), leaves the open row alone.
   const toggleSelectRow = (id: string) => {
     const isChecking = !selectedIds.has(id);
     setSelectedIds(prev => {
@@ -188,9 +178,9 @@ export function useReviewPage() {
 
   const filterBySubmitter = (name: string) => setSearchQuery(name);
 
-  // Gedeeld door bulk-accept en de losse "Accepteer taak"-actie: haalt de revisie vers op (zoals
-  // voorheen), maar overschrijft het document met de lokale correctie indien de reviewer die
-  // gemaakt heeft -- structureId/fields komen ongewijzigd mee via revisionRequest.revision.
+  // Shared by bulk accept and the single "accept task" action: fetches the revision fresh, and
+  // replaces its document with the reviewer's local correction when there is one. structureId
+  // and fields come along unchanged in revisionRequest.revision.
   const acceptOneRow = async (row: ReviewTaskDto, editedDocument: MadocAnnotationDocumentDto | undefined) => {
     if (!row.revisionId || !row.originalTaskId) {
       throw new Error(t('review_bulk_error_no_revision'));
@@ -265,10 +255,9 @@ export function useReviewPage() {
     setEditedDocuments(prev => ({ ...prev, [rowId]: document }));
   };
 
-  // Zet de originele taak op status -1 ("afgewezen"). Dit verwijdert geen data, maar zorgt ervoor
-  // dat de resource nergens meer als "al gecontribueerd" meetelt (resourceTaskCountsAsContribution
-  // in madoc-ts sluit status -1 expliciet uit) -- de opdracht komt dus vrij voor eender welke
-  // gebruiker om opnieuw te claimen, met een leeg formulier (zie AnnotatePage.tsx).
+  // Sets the original task to -1 ("rejected"). No data is deleted, but the manifest no longer
+  // counts as contributed (madoc-ts's resourceTaskCountsAsContribution skips -1), so any
+  // volunteer can claim it again, with an empty form.
   const releaseMutation = useMutation({
     mutationFn: ({ taskId }: { rowId: string; taskId: string }) =>
       reviewApi.updateTask(taskId, { status: -1, status_text: 'Rejected' }),
@@ -329,8 +318,8 @@ export function useReviewPage() {
     });
   };
 
-  // Pijltje omhoog/omlaag doorloopt visibleRows -- enkel als de focus niet in een formulierveld
-  // staat, zodat normale tekst-cursornavigatie tijdens het corrigeren niet gekaapt wordt.
+  // Arrow up/down moves through the rows -- only when the focus is not in a form field, so moving
+  // the text cursor while correcting keeps working.
   useEffect(() => {
     if (queryStatus !== 'success' || visibleRows.length === 0) return;
 
@@ -375,7 +364,6 @@ export function useReviewPage() {
     allVisibleSelected,
     toggleSelectAllVisible,
     toggleSelectRow,
-    isOwnTask,
     filterBySubmitter,
     previewRow,
     setPreviewRow,

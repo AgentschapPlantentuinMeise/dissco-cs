@@ -1,12 +1,13 @@
 import { z } from 'zod';
 
-// render = error boundary, query/mutation = react-query caches, action = a caught error in a
-// page's own handler (e.g. a claim or upload that failed).
+// Where a browser error happened: 'render' = a crash caught by the error boundary, 'query' and
+// 'mutation' = a failed server call reported by react-query, 'action' = an error caught in a
+// page's own handler (e.g. a failed claim or upload).
 export const clientErrorKinds = ['render', 'query', 'mutation', 'action'] as const;
 export type ClientErrorKind = (typeof clientErrorKinds)[number];
 
-// The last few things that happened in the browser before the error -- page changes and API calls
-// (method, path, status), never any request or response content.
+// The last few things that happened in the browser before the error: page changes and API calls
+// (method, path without its query, status) -- never the content of a request or response.
 export const breadcrumbSchema = z.object({
   at: z.string().max(40),
   type: z.enum(['route', 'api']),

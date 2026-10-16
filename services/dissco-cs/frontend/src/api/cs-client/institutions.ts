@@ -3,20 +3,64 @@ import { getSiteSlug } from '../slug';
 import { InstitutionDto, InstitutionInput } from '@dissco-cs/shared-types';
 
 export const institutionsApi = {
+  /**
+   * The active institutions of this site, in their set order -- for the public pages.
+   * Input: none.
+   * Who: anyone.
+   * Returns: { institutions: InstitutionDto[] }.
+   */
   listActive: () => csFetch<{ institutions: InstitutionDto[] }>(`/institutions/active?slug=${getSiteSlug()}`),
 
+  /**
+   * One active institution.
+   * @param slug the institution's slug (InstitutionDto.slug), from the URL
+   * Who: anyone.
+   * Returns: InstitutionDto; 404 when it does not exist or is inactive.
+   */
   getActive: (slug: string) => csFetch<InstitutionDto>(`/institutions/active/${slug}?slug=${getSiteSlug()}`),
 
+  /**
+   * Slugs of the projects linked to an active institution.
+   * @param slug the institution's slug (InstitutionDto.slug)
+   * Who: anyone.
+   * Returns: { projectSlugs: string[] }; 404 when the institution does not exist or is inactive.
+   */
   getActiveProjectSlugs: (slug: string) =>
     csFetch<{ projectSlugs: string[] }>(`/institutions/active/${slug}/projects?slug=${getSiteSlug()}`),
 
+  /**
+   * Every institution of this site, active or not -- for the management page.
+   * Input: none.
+   * Who: site admin.
+   * Returns: { institutions: InstitutionDto[] }.
+   */
   listAdmin: () => csFetch<{ institutions: InstitutionDto[] }>('/institutions'),
 
+  /**
+   * Creates an institution; its slug is made from the name (first filled language) and kept unique.
+   * @param data name and description filled in every language; email; phone (at least 6 digits);
+   *   website; logo as an image data URI; isActive. Validated by institutionInputSchema.
+   * Who: site admin.
+   * Returns: the new InstitutionDto (201).
+   */
   create: (data: InstitutionInput) =>
     csFetch<InstitutionDto>('/institutions', { method: 'POST', body: JSON.stringify(data) }),
 
+  /**
+   * Replaces an institution completely; the slug follows the (new) name.
+   * @param id the institution (InstitutionDto.id)
+   * @param data the full institution, same fields and rules as create
+   * Who: site admin.
+   * Returns: nothing (204); 404 when it is not on this site.
+   */
   update: (id: InstitutionDto['id'], data: InstitutionInput) =>
     csFetch<void>(`/institutions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
+  /**
+   * Deletes an institution.
+   * @param id the institution (InstitutionDto.id)
+   * Who: site admin.
+   * Returns: nothing (204); 404 when it is not on this site.
+   */
   remove: (id: InstitutionDto['id']) => csFetch<void>(`/institutions/${id}`, { method: 'DELETE' }),
 };

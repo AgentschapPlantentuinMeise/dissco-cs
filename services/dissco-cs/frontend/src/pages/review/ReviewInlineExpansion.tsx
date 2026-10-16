@@ -14,11 +14,9 @@ interface ReviewInlineExpansionProps {
   onRelease: () => void;
   releasing: boolean;
   onClose: () => void;
-  /** Mirrors the row's own bulk-selection checkbox — same state, same handler, just reachable
-      from the detail view too instead of only from the (possibly scrolled-away) row. */
+  /** The row's own selection checkbox, also shown in the opened row (the row itself may be scrolled away). */
   selected: boolean;
   onToggleSelect: () => void;
-  selectable: boolean;
 }
 
 function ExpansionChrome({
@@ -54,9 +52,8 @@ function ExpansionChrome({
   );
 }
 
-// Inline-uitklap-variant: verschijnt als een extra rij direct onder de aangeklikte tabelrij (zie
-// ReviewTable's renderRowExpansion) i.p.v. een zijpaneel. Velden staan in een grid die zelf
-// herschikt naar het aantal secties -- zie SubmissionFieldsForm.
+// The opened row: an extra table row right under the clicked one (ReviewTable renderRowExpansion),
+// with the fields in a grid that adapts to the number of sections (see SubmissionFieldsForm).
 export function ReviewInlineExpansion({
   row,
   editedDocument,
@@ -66,7 +63,6 @@ export function ReviewInlineExpansion({
   onClose,
   selected,
   onToggleSelect,
-  selectable,
 }: ReviewInlineExpansionProps) {
   const { t, i18n } = useTranslation('dissco-cs');
   const [confirmingRelease, setConfirmingRelease] = useState(false);
@@ -77,9 +73,8 @@ export function ReviewInlineExpansion({
 
   const { revisionQuery, modelQuery, currentDocument, handleChange } = useReviewRevisionDocument(row, editedDocument, onDocumentChange);
 
-  // Pas centreren zodra het volledige formulier gemonteerd is -- vóór dat moment toont de rij nog
-  // enkel een korte "laden..."-placeholder, en scrollIntoView daarop geeft de verkeerde positie
-  // zodra het formulier daarna groeit.
+  // Scroll the row into view only once the whole form is shown: before that the row only holds a
+  // short "loading" text, and scrolling to that gives the wrong position once the form grows.
   useEffect(() => {
     if (revisionQuery.status !== 'success' || modelQuery.status !== 'success') return;
     document.querySelector(`tr[data-expansion-row-id="${row.id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -120,10 +115,9 @@ export function ReviewInlineExpansion({
             type="checkbox"
             checked={selected}
             onChange={onToggleSelect}
-            disabled={!selectable}
-            title={selectable ? t('review_select_to_accept') : t('review_not_own_task')}
+            title={t('review_select_to_accept')}
             aria-label={title}
-            className="cursor-pointer disabled:cursor-not-allowed"
+            className="cursor-pointer"
           />
           <button
             onClick={() => setConfirmingRelease(true)}

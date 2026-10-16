@@ -1,9 +1,9 @@
 import { ApiError } from '../../api/cs-client/request';
 
-// Madoc refuses a claim on a manifest that already has its maximum number of contributors with a
-// plain 400 and this fixed text (create-resource-claim.ts in madoc-ts, thrown as a RequestError).
-// A 400 alone isn't enough to tell it apart from other validation errors, hence the text match. If
-// Madoc ever rewords it, the annotate page falls back to its general "could not load" page.
+// When a manifest already has its maximum number of volunteers, Madoc refuses the claim with a 400
+// and exactly this text (create-resource-claim.ts in madoc-ts). A 400 alone cannot be told apart
+// from other errors, hence the text check. If Madoc ever changes the text, the annotate page shows
+// its general "could not load" screen instead of "this task is full".
 const CONTRIBUTOR_LIMIT_MESSAGE = 'Maximum number of contributors reached';
 
 export function isContributorLimitReached(err: unknown): boolean {

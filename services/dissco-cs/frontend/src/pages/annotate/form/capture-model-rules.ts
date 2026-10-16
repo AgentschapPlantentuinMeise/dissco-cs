@@ -1,7 +1,7 @@
 import { MadocAnnotationDocumentDto, MadocBaseFieldDto, MadocModelFields, MadocNestedModelFields, MadocStructureNodeDto } from '@dissco-cs/shared-types';
 
 // Rules of a capture model: which fields are visible, required and filled in. They decide whether
-// the required legend shows and whether "Indienen" is allowed.
+// the "required field" legend shows and whether the task may be submitted.
 
 export function isEntityList(entry: Array<MadocBaseFieldDto> | Array<MadocAnnotationDocumentDto>): entry is Array<MadocAnnotationDocumentDto> {
   return entry.length > 0 && (entry[0] as MadocAnnotationDocumentDto).type === 'entity';
@@ -48,9 +48,8 @@ export function isFieldEmpty(field: MadocBaseFieldDto): boolean {
   return false;
 }
 
-// Walks the same fields/document the renderer walks (skipping fields hidden by a
-// dependent-on condition) to find whether any visible field/entity is required — used to
-// decide whether the "* verplicht veld" legend is shown at all.
+// Walks the same fields as the form (skipping fields hidden by a dependent-on condition) to find
+// whether any visible field or entity is required -- only then is the "required field" legend shown.
 export function hasVisibleRequiredField(fields: MadocModelFields, document: MadocAnnotationDocumentDto): boolean {
   return fields.some(entry => {
     const isNested = Array.isArray(entry);
@@ -69,8 +68,8 @@ export function hasVisibleRequiredField(fields: MadocModelFields, document: Mado
   });
 }
 
-// Same walk, but collects the labels of required fields/entities that are still empty —
-// used to block "Indienen" until they're filled in.
+// Same walk, but collects the labels of required fields and entities that are still empty -- the
+// task cannot be submitted until they are filled in.
 export function collectMissingRequiredLabels(fields: MadocModelFields, document: MadocAnnotationDocumentDto): string[] {
   const labels: string[] = [];
   for (const entry of fields) {
@@ -110,11 +109,9 @@ export function resolveSingleChoice(node: MadocStructureNodeDto): MadocStructure
   return node;
 }
 
-// A choice's items are only rendered as sections when its own `profile` opts in via 'tabs' — the
-// same profile Madoc's own model editor exposes (StructureMetadataEditor's "tabs" toggle), reused
-// here as the "these are not real alternatives, show them together" signal instead of introducing
-// a separate custom flag. Each item is unwrapped through resolveSingleChoice first so an
-// accidental single-item nested choice still resolves to its model instead of being skipped.
+// A choice whose own profile includes 'tabs' (the "tabs" toggle in Madoc's model editor) is not a
+// real choice: its models are shown together, as sections. Each item first goes through
+// resolveSingleChoice, so a nested choice with a single item still counts as its model.
 export function resolveSectionModels(node: MadocStructureNodeDto): Array<MadocStructureNodeDto & { type: 'model' }> | null {
   if (node.type !== 'choice' || !node.profile?.includes('tabs')) return null;
   return node.items

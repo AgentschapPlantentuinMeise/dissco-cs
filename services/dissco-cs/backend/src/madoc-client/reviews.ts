@@ -16,10 +16,15 @@ function fetchMadocReviewTasks(siteId: number): Promise<MadocCrowdsourcingTaskDt
   });
 }
 
-// All still-open review tasks on the site (-1 rejected, 3 accepted and 4/5 handled don't
-// count -- 0 not started, 1 to handle ("todo"), 2 in review do, see Madoc's own
-// REVIEW_STATUS_MAP in review-listing-page.tsx), site-wide rather than per project: the
-// reviewer overview just shows everything up for review, with the assigned reviewer as a column.
+/**
+ * Every open review task of the site, across all projects, with its submitter, reviewer and
+ * project. Open = status 0 (not started), 1 (to handle) or 2 (in review), as in Madoc's own
+ * REVIEW_STATUS_MAP. Per task this also asks Madoc for the original task (the submitter and the
+ * revision) and, once per project, the project. Uses the service token.
+ * @param siteId the site
+ * Returns: ReviewTaskDto[]. A failed lookup of a submitter or project leaves those fields empty
+ *   instead of failing the whole list.
+ */
 export async function getMadocReviewTasks(siteId: number): Promise<ReviewTaskDto[]> {
   const tasks = await fetchMadocReviewTasks(siteId);
   const projectByRootTask = new Map<string, MadocProjectDto | null>();
@@ -49,8 +54,8 @@ export async function getMadocReviewTasks(siteId: number): Promise<ReviewTaskDto
       }
     }
 
-    // task.metadata.project isn't filled in for crowdsourcing-review tasks (unlike
-    // crowdsourcing-task) -- looked up via root_task_id instead, once per unique project.
+    // Madoc does not fill in task.metadata.project for review tasks, so the project is looked up
+    // through root_task -- once per project.
     let project: MadocProjectDto | null = null;
     if (task.root_task) {
       if (projectByRootTask.has(task.root_task)) {
@@ -79,8 +84,7 @@ export async function getMadocReviewTasks(siteId: number): Promise<ReviewTaskDto
       reviewerId: parseUserId(task.assignee?.id),
       originalTaskId,
       revisionId,
-      // tasks-api always returns this for a real task (see MadocCrowdsourcingTaskDto's comment) --
-      // the field is only optional in the shared type for other call sites.
+      // Madoc always fills this in for a real task; the shared type marks it optional only for other calls.
       modifiedAt: task.modified_at ?? 0,
     });
   }

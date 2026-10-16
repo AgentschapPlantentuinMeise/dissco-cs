@@ -48,15 +48,14 @@ function runQueued<T>(task: (signal: AbortSignal) => Promise<T>, signal: AbortSi
   });
 }
 
-// staleTime: 0 zodat elke pagina/kaart die de voortgang toont bij het tonen altijd een verse
-// stand ophaalt, i.p.v. tot 60s oude data te tonen na een submit/accept elders in de app.
-// refetchOnWindowFocus staat uit: anders herhaalt dat bij elke focus-wissel, vermenigvuldigd
-// per zichtbare kaart, zonder dat er iets veranderd is.
+// staleTime 0: every page or card that shows the progress fetches it fresh, instead of showing
+// data up to 60 s old after a submit or accept elsewhere in the app. refetchOnWindowFocus is off:
+// otherwise every focus switch would repeat it, once per visible card, without anything changed.
 export function useProjectProgress(projectId: number | string | undefined) {
   const controllerRef = useRef<AbortController | null>(null);
 
-  // Unmount (bv. bij paginawissel) of gewijzigd projectId annuleert deze kaart z'n eigen call --
-  // nog-niet-gestarte calls verlaten meteen de wachtrij, lopende calls worden echt geannuleerd.
+  // Unmounting (e.g. a page change) or a new projectId cancels this card's own request: a request
+  // still waiting leaves the queue right away, a running one is aborted.
   useEffect(() => {
     return () => controllerRef.current?.abort();
   }, [projectId]);

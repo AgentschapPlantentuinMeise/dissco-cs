@@ -26,8 +26,9 @@ export function navItemsController(navItemsRepository: NavItemsRepository): Hono
     return c.json({ navItems: navItems.map(toNavItemDto) });
   });
 
-  // Admin-only: unlike getContactEmail() (used for sending), this returns the stored address even
-  // while the contact page is inactive, so page management can show and edit it.
+  // Reads the stored address itself instead of using getContactEmail(): that function is meant
+  // for sending mail and returns nothing while the contact page is switched off, but the admin
+  // must still be able to see and edit the address.
   app.get('/contact/email', async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {

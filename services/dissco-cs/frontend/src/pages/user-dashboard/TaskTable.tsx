@@ -35,10 +35,10 @@ interface TaskTableProps {
   language: string;
   t: (key: string) => string;
   linkable?: boolean;
-  /** Taaknaam klapt in plaats van te navigeren een rij open met de ingediende data (alleen-lezen). */
+  /** Clicking the task name opens a row with the submitted data (read-only) instead of navigating. */
   expandable?: boolean;
   onRelease?: (task: MadocCrowdsourcingTaskDto) => void;
-  /** Na opslaan/indienen op AnnotatePage terug naar dit pad i.p.v. door te gaan naar de volgende taak. */
+  /** After saving or submitting on the annotate page, return to this path instead of going to the next task. */
   returnPath?: string;
 }
 

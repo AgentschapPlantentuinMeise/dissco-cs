@@ -148,7 +148,8 @@ export class ManualsRepository {
     );
   }
 
-  // Ruimt links op naar projecten die in Madoc verwijderd zijn -- zie InstitutionsRepository.pruneOrphanedProjectLinks.
+  // Removes links to projects that were deleted in Madoc (see
+  // InstitutionsRepository.pruneOrphanedProjectLinks).
   async pruneOrphanedProjectLinks(siteId: number, liveSlugs: string[]): Promise<number> {
     const result = await this.pool.query(
       `DELETE FROM ${this.table('project_manual_links')} WHERE site_id = $1 AND project_slug <> ALL($2::text[])`,
@@ -209,9 +210,6 @@ export class ManualsRepository {
 }
 
 // ---- DTO mapping ----
-//
-// The row above is the database's shape (snake_case, Date objects); the DTO is the API's shape
-// (camelCase, ISO strings). Every field is listed explicitly, so a new column never leaks out.
 
 export function toManualDto(row: ManualRow): ManualDto {
   return { id: row.id, title: row.title, content: row.content, updatedAt: row.updated_at.toISOString() };
@@ -221,8 +219,6 @@ export function toManualSummaryDto(summary: ManualSummary): ManualSummaryDto {
   return { ...toManualDto(summary), linkedProjectSlugs: summary.linkedProjectSlugs, attachmentLangs: summary.attachmentLangs };
 }
 
-// Shared by the admin (GET /manuals/:manualId) and volunteer-facing (GET /projects/:projectId/manual)
-// detail routes.
 export function toManualDetailDto(manual: ManualRow, attachmentMeta: ManualAttachmentMeta[]): ManualDetailDto {
   const attachments: PerLanguage<ManualAttachmentDto> = {};
   for (const meta of attachmentMeta) {

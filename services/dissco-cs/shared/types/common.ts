@@ -1,12 +1,18 @@
 import { z } from 'zod';
 
-// Madoc's own wire format for internationalized strings -- used across many Madoc-doorgeeftypes
-// (project, manifest, collection, task metadata, ...), not specific to any one of them.
+// Madoc's format for text in several languages: per language code a list of strings, e.g.
+// { en: ['Leaf'], nl: ['Blad'] }. Used by many Madoc types (project, manifest, collection, task).
 export type MadocInternationalString = { [lang: string]: string[] };
 
 export const SITE_PAGE_LANGS = ['nl', 'en', 'fr', 'de'] as const;
 export type SitePageLang = (typeof SITE_PAGE_LANGS)[number];
 
+/**
+ * Whether a value is one of the site languages (SITE_PAGE_LANGS).
+ * E.g. a URL or query parameter that still has to be checked.
+ * @param value anything
+ * Returns: true, and narrows the type, when it is.
+ */
 export function isSitePageLang(value: unknown): value is SitePageLang {
   return typeof value === 'string' && (SITE_PAGE_LANGS as readonly string[]).includes(value);
 }
@@ -14,12 +20,15 @@ export function isSitePageLang(value: unknown): value is SitePageLang {
 export type PerLanguage<T> = Partial<Record<SitePageLang, T>>;
 export type MultilingualText = PerLanguage<string>;
 
-// Zod's eigen ingebouwde e-mailvalidator i.p.v. een handgeschreven regex -- geen eigen regex meer
-// om te onderhouden. Iets strenger dan de oude losse regex (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`), bewust
-// aanvaard: niemand kon een concreet geval noemen waarbij de oude regex iets doorliet dat de
-// nieuwe zou weigeren.
+// Zod's built-in email check, so there is no hand-written regex to maintain.
 export const emailSchema = z.string().trim().pipe(z.email());
 
+/**
+ * The zod schema of a text in every site language (nl, en, fr, de), each one trimmed.
+ * @param requireFilled true: every language must be filled in; false: every language is
+ *   optional, but a language that is sent may not be empty
+ * Returns: a zod object schema with one key per language.
+ */
 export function multilingualTextSchema(requireFilled: boolean) {
   if (requireFilled) {
     const shape = Object.fromEntries(SITE_PAGE_LANGS.map(lang => [lang, z.string().trim().min(1)])) as Record<

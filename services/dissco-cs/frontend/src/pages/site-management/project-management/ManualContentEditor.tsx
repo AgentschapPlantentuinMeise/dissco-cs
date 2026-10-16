@@ -12,9 +12,8 @@ import { LuCheck } from 'react-icons/lu';
 import { LANGUAGES, defaultLang } from '../../../utility/site-lang-text';
 import { LanguageTabs } from '../../../components/ui/LanguageTabs';
 
-// Shared editor for a manual's content (language tabs + markdown toolbar/textarea +
-// attachment). Reused by both the per-project panel and the manual-library "Bewerken" row,
-// so editing behaves identically no matter where it's opened from.
+// The editor of a manual's content: language tabs, markdown toolbar and text, attachment. Used in
+// the per-project panel and in the manual library, so editing works the same everywhere.
 export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }) => {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
@@ -77,8 +76,8 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
   }
 
   const attachment = manual.attachments[selectedLang];
-  // Elke taal telt als ingevuld zodra ze tekst OF een bijlage heeft -- gemengd (tekst in de ene
-  // taal, bijlage in de andere) moet dus ook kunnen. Pas opslaan zodra geen enkele taal nog leeg is.
+  // A language counts as filled in when it has text OR an attachment, so a mix (text in one
+  // language, an attachment in another) is fine. Saving is only possible once no language is empty.
   const langHasContent = (lang: (typeof LANGUAGES)[number]) =>
     !!(draftContent[lang.code] ?? '').trim() || !!manual.attachments[lang.code];
   const hasAnyContent = LANGUAGES.some(langHasContent);
@@ -101,8 +100,8 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
 
   const removeAttachment = () => deleteAttachment(selectedLang);
 
-  // Voegt {{attachment}} in op de cursorpositie -- ManualModal bedt de bijlage-galerij
-  // daar exact in i.p.v. steeds achteraan alle secties te tonen.
+  // Inserts {{attachment}} at the cursor: ManualModal shows the attachment gallery exactly there,
+  // instead of after all sections.
   const insertAttachmentMarker = () => {
     const textarea = textareaRef.current;
     if (!textarea) return;

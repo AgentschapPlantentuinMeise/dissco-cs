@@ -69,7 +69,7 @@ export const ProjectManagement: React.FC = () => {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once all three lists are loaded; the data itself is read inside
   }, [allProjectsStatus, manualsStatus, institutionLinksStatus]);
 
   return (

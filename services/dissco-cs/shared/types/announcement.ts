@@ -4,12 +4,16 @@ import { MultilingualText, multilingualTextSchema } from './common.js';
 export const ANNOUNCEMENT_TARGET_TYPES = ['homepage', 'projects', 'project'] as const;
 export type AnnouncementTargetType = (typeof ANNOUNCEMENT_TARGET_TYPES)[number];
 
+/**
+ * Whether a value is one of the announcement targets (ANNOUNCEMENT_TARGET_TYPES).
+ * E.g. a URL or query parameter that still has to be checked.
+ * @param value anything
+ * Returns: true, and narrows the type, when it is.
+ */
 export function isAnnouncementTargetType(value: unknown): value is AnnouncementTargetType {
   return typeof value === 'string' && (ANNOUNCEMENT_TARGET_TYPES as readonly string[]).includes(value);
 }
 
-// Wire shape (camelCase, dates as ISO strings), built by toAnnouncementDto() at the bottom of
-// announcements.repository.ts from the snake_case AnnouncementRow.
 export type AnnouncementDto = {
   id: string;
   title: MultilingualText;

@@ -20,7 +20,8 @@ export function passErrorOn(c: Context, err: unknown): void {
 // - every request: one line on stdout (method, path, status, duration, site, user)
 // - every 5xx: one app_log row -- with the thrown error (Hono's onError leaves it on c.error) or
 //   the one passed on, otherwise the start of the response body (e.g. a relayed Madoc failure).
-// Site/user come from the JWT payload as-is (the gateway validates it; anonymous: the slug).
+// Site and user come from the JWT payload as it is: the gateway validates it, except on the
+// public paths (see dissco-cs-api.conf), where it is only what the browser sent. Anonymous: the slug.
 export function requestLog(appLog: AppLogRepository): MiddlewareHandler {
   return async (c, next) => {
     const start = Date.now();

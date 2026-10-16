@@ -53,10 +53,10 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div
-      // top-[70px]: houdt het centreer-gebied onder de vaste site-navbar (70px, z-200) i.p.v.
-      // eroverheen -- anders kan een hoge kaart tegen/achter de navbar aan komen te zitten.
-      // coverNavbar tilt de backdrop over de navbar heen (inset-0, z boven 200) voor gates
-      // die niet via de navbar omzeild mogen kunnen worden -- zie ModalProps.coverNavbar.
+      // top-[70px]: the centring area starts below the fixed site navbar (70px, z-200) instead of
+      // covering it, so a tall card never ends up against or behind the navbar. coverNavbar puts
+      // the backdrop over the navbar too (inset-0, z above 200), for steps the user may not skip
+      // through the navbar -- see ModalProps.coverNavbar.
       className={`fixed flex items-center justify-center bg-black/50 p-4 ${
         coverNavbar ? 'inset-0 z-[210]' : 'inset-x-0 bottom-0 top-[70px] z-50'
       }`}

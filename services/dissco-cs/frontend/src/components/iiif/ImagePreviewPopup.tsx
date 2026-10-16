@@ -19,10 +19,9 @@ export const ImagePreviewPopup: React.FC<ImagePreviewPopupProps> = ({ subject, l
   const parsed = parseUrn(subject);
   const isManifest = parsed?.type === 'manifest';
 
-  // Bij een manifest-subject (project op manifest-granulariteit, geen losse canvas per taak)
-  // eerst de structuur ophalen zodat er iets te tonen valt -- default op de eerste canvas, met
-  // vorige/volgende via OpenSeadragonViewer's eigen ingebouwde navigatie (zelfde patroon als
-  // AnnotatePage.tsx bij manifest-granulariteit-projecten).
+  // When the subject is a whole manifest (a project that hands out whole manifests), first fetch its
+  // structure so there is an image to show: the first one, with previous/next through
+  // OpenSeadragonViewer's own navigation (as on the annotate page).
   const { data: structure } = useQuery({
     ...iiifQueries.manifestStructure(parsed?.id),
     enabled: isManifest,

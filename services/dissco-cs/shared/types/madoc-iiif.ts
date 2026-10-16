@@ -8,8 +8,8 @@ export type MadocCollectionSummaryDto = {
   itemCount?: number;
 };
 
-// One entry of a IIIF manifest's flat canvas structure (GET /manifests/:id/structure) --
-// only the fields AnnotatePage/ImagePreviewPopup actually read.
+// One canvas (image) in a manifest's structure (GET /manifests/:id/structure), only the fields
+// dissco-cs reads.
 export type MadocManifestStructureItemDto = {
   id: number;
   label?: MadocInternationalString;

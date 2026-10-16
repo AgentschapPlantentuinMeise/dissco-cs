@@ -102,6 +102,44 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Don't let a `.tsx` file grow beyond 300 lines (`frontend/test/conventions.test.ts` checks it)
 - Do give every page its own folder, named after the component in kebab-case, with the page itself inside (`pages/forum/Forum.tsx`, `pages/site-management/announcements/Announcements.tsx`) — also a page that is a single file today
 
+## 7. Comments
+
+- Always in English.
+- A comment explains *why*, and only what the code cannot show itself:
+  - a quirk from outside (Madoc stores "required" as `['on']`, not `true`)
+  - an order or race you cannot see (`hasSaved` is set before the network call, or a release could abandon a task being saved)
+  - a workaround (React's `onWheel` cannot `preventDefault()`, hence a real DOM listener)
+  - a deliberate exception to a rule: every `eslint-disable` and every `allowedIn` gets a reason
+- One or two lines at the top of a hook, component or module saying what it is for: allowed, not required.
+- Not in a comment:
+  - what the code does — if that is unclear, improve the name or the code
+  - history and project management (phases, ACs, "used to…", "see discussion") — that goes in the commit or PR
+  - who calls it ("used by X and Y") — it goes stale
+  - commented-out code
+- A comment that stays must be clear to someone who does not know Madoc: full sentences saying what happens, why, and what breaks if you change it. Explain a Madoc term (scope, claim, subject_parent, …) or give an example. Clear beats short.
+- A long story (history, a design discussion) belongs in the commit, CLAUDE.md or `docs/` — or the code can be simpler.
+
+**Contract on functions between two layers.** Every method in `frontend/src/api/cs-client/`, every exported function of `backend/src/madoc-client/` and every exported helper in `shared/types/` gets a JSDoc block (`/** */`, shown when hovering a call in VS Code):
+
+```ts
+/**
+ * Adds a reply in the caller's name; the topic then counts as fully read for the caller.
+ * @param topicId id of the topic (ForumTopicDto.id)
+ * @param body the reply text, not empty. Validated by forumReplyInputSchema.
+ * Who: logged-in user.
+ * Returns: the new ForumReplyDto (201); 404 unknown topic; 403 when the topic is closed.
+ */
+```
+
+In this order:
+- What it does, in one sentence, including side effects (marks as read, sends a mail, releases a claim).
+- Input, always: one `@param` per parameter — what it is, where the value comes from (`ForumTopicDto.id`), its limits. A body object: its required and optional fields, and the zod schema that validates it (or "passed on to Madoc unchecked"). No parameters: `Input: none.`
+- `Who:` who may call it (anyone, logged in, reviewer, site admin) — only for cs-client.
+- `Returns:` what comes back, plus the error statuses the caller acts on (404, 409, …). Not the usual 400/401/500.
+- The contract lives on the cs-client method, not on the controller route: the cs-client mirrors the controller 1:1, and the route already shows its guard, validation and status. A controller only keeps *why* comments.
+- Before writing or rewriting a comment or contract, check the claim against the code (and madoc-ts's source for Madoc behaviour). Never rephrase an existing comment without checking it.
+- The conventions tests check what a test can see: comments in English, no phases/ACs/"see … discussion", and a JSDoc on every cs-client, madoc-auth and madoc-client function and shared helper.
+
 
 Keep in mind that the structure en code we provide is in a open source context 
 

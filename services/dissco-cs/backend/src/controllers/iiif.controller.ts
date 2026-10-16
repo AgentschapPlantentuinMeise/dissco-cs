@@ -15,8 +15,8 @@ import { collectAllPages } from '../madoc-client/pagination.js';
 import { safeSegment, validateParams } from '../infrastructure/validate-params.js';
 import { MadocCollectionSummaryDto, MadocPagination } from '@dissco-cs/shared-types';
 
-// IIIF resources (canvases, manifests, collections), forwarded to Madoc as the requesting user.
-// Image tiles themselves are not proxied -- the viewer loads those straight from the image server.
+// Only the IIIF descriptions (JSON) go through here. The images themselves do not: the viewer
+// loads them directly from the image server.
 export function iiifController(): Hono {
   const app = new Hono();
 
@@ -44,17 +44,16 @@ export function iiifController(): Hono {
 
   // ---- admin (gated Madoc API, forwarded as the admin) ----
 
-  // All top-level IIIF collections on the site, for the bulk-create picker -- same gated route the
-  // admin "browse collections" page uses, so unpublished ones show up too. Empty collections
-  // (itemCount 0) are left out since linking them would be pointless.
+  // Uses Madoc's admin-only collection list (the one behind Madoc's own collection browser),
+  // because the public list leaves out unpublished collections.
   app.get('/collections', async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    // Madoc pages this list 5 at a time, so a site with thousands of collections means hundreds of
-    // pages -- requested a few at once (madocPageConcurrency), not all concurrently.
+    // Madoc returns this list 5 collections per page, so a big site has hundreds of pages. We fetch
+    // a few pages at a time (madocPageConcurrency) instead of all at once, so Madoc is not flooded.
     const userToken = requestBearerToken(c);
     try {
       const collections = await collectAllPages(async page => {
@@ -70,8 +69,6 @@ export function iiifController(): Hono {
     }
   });
 
-  // Full desired `item_ids` list for a project's flat collection -- this replaces the whole list
-  // (not an append), see update-collection-structure.ts in madoc-ts.
   app.put('/collections/:collectionId/structure', validateParams({ collectionId: safeSegment }), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {

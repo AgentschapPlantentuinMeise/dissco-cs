@@ -1,25 +1,35 @@
 import { z } from 'zod';
 import { emailSchema, MultilingualText, sitePageLangSchema } from './common.js';
 
-// Order here is the default display order (navbar + page management) for sites that
-// haven't customized it yet — see `sort_order` on the `nav_items` table.
+// The order of this list is the default menu order, for sites that never changed it
+// (nav_items.sort_order).
 export const NAV_ITEM_KEYS = ['institutions', 'forum', 'about', 'help', 'contact', 'welcome'] as const;
 export type NavItemKey = (typeof NAV_ITEM_KEYS)[number];
 
 export const NAV_ITEM_CONTENT_KEYS = ['about', 'help', 'contact', 'welcome'] as const;
 export type NavItemContentKey = (typeof NAV_ITEM_CONTENT_KEYS)[number];
 
+/**
+ * Whether a value is one of the optional pages (NAV_ITEM_KEYS).
+ * E.g. a URL or query parameter that still has to be checked.
+ * @param value anything
+ * Returns: true, and narrows the type, when it is.
+ */
 export function isNavItemKey(value: unknown): value is NavItemKey {
   return typeof value === 'string' && (NAV_ITEM_KEYS as readonly string[]).includes(value);
 }
 
+/**
+ * Whether a value is one of the pages with editable content (NAV_ITEM_CONTENT_KEYS).
+ * E.g. a URL or query parameter that still has to be checked.
+ * @param value anything
+ * Returns: true, and narrows the type, when it is.
+ */
 export function isNavItemContentKey(value: unknown): value is NavItemContentKey {
   return typeof value === 'string' && (NAV_ITEM_CONTENT_KEYS as readonly string[]).includes(value);
 }
 
-// Wire shape of the public nav-items list, built by toNavItemDto() at the bottom of
-// nav-items.repository.ts; the contact email is admin-only and served separately as
-// NavItemContactEmailDto.
+// No contact email in here on purpose: that is for admins only (NavItemContactEmailDto).
 export type NavItemDto = {
   pageKey: NavItemKey;
   isActive: boolean;

@@ -6,10 +6,8 @@ interface ReviewCountSummaryProps {
   className?: string;
 }
 
-// Werkt ook als overzicht bij een indiener-filter, aangezien filterBySubmitter gewoon de zoekopdracht instelt --
-// visibleCount daalt dan mee, totalCount blijft het totaal aantal eigen review-taken. Staat naast
-// de zoek/filterbalk (niet onderaan de pagina) zodat hij bij een lange wachtrij meteen zichtbaar
-// blijft zonder scrollen.
+// With a submitter filter, visibleCount goes down while totalCount stays the number of the
+// reviewer's own tasks. Shown next to the search bar, so it stays in view with a long list.
 export function ReviewCountSummary({ visibleCount, totalCount, className = '' }: ReviewCountSummaryProps) {
   const { t } = useTranslation('dissco-cs');
   return (

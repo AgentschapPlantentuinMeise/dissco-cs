@@ -11,11 +11,10 @@ import { defaultLang } from '../../../utility/site-lang-text';
 import { MadocProjectDto, slugify } from '@dissco-cs/shared-types';
 import { reportActionError } from '../../../hooks/use-toast';
 
-// Creates `count` real Madoc projects sequentially, via the exact same route the "New project" /
-// "Duplicate" admin UI uses (createProject) -- so each one gets a proper collection, capture
-// model and root task, unlike hand-rolled SQL seeding. Sequential (not Promise.all): each
-// createProject call already does several steps server-side, and firing many at once is what
-// caused a prior outage when load-testing with raw SQL-seeded projects instead.
+// Creates `count` real Madoc projects one after the other, through Madoc's own project creation
+// (projectsApi.create, the same route as Madoc's "New project" button), so each gets a proper
+// collection, capture model and root task. One at a time, not all at once: each creation does
+// several steps on the server, and many at the same moment can overload Madoc.
 export const BulkCreateProjectsSubview: React.FC<{ projects: MadocProjectDto[] }> = ({ projects }) => {
   const { t, i18n } = useTranslation('dissco-cs');
   const [count, setCount] = useState(5);

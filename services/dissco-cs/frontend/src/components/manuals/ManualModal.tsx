@@ -57,7 +57,7 @@ export const ManualModal: React.FC<ManualModalProps> = ({
   const attachmentUrl = attachment ? projectsApi.manualAttachmentUrl(projectSlug, lang) : null;
   const isPdf = attachment?.mimeType === 'application/pdf';
 
-  // Geen tekst, enkel een PDF -- de tussenpop voegt dan niets toe, dus meteen de galerij tonen.
+  // No text, only a PDF: the modal would add nothing, so the gallery opens right away.
   const directToGallery = isPdf && attachmentUrl !== null && content.trim().length === 0;
 
   const attachmentNode =
@@ -74,16 +74,16 @@ export const ManualModal: React.FC<ManualModalProps> = ({
       )
     ) : null;
 
-  // Beheerder kan {{attachment}} in een sectie plaatsen om de bijlage daar in te bedden; komt
-  // het token nergens voor, dan blijft het oude gedrag (bijlage achteraan alle secties) gelden.
+  // An admin can put {{attachment}} in a section to show the attachment exactly there; without it
+  // the attachment comes after all sections.
   const markerUsed = attachmentNode !== null && content.includes(ATTACHMENT_MARKER);
 
   if (!open || !manual) {
     return null;
   }
 
-  // Enkel een PDF, geen tekst -- de tussenpop (titel + lege sectie-melding) voegt dan niets
-  // toe, dus meteen de galerij op pagina 1 tonen i.p.v. eerst de Modal.
+  // Only a PDF, no text: the modal (title and an empty-sections message) adds nothing, so open the
+  // gallery on page 1 right away.
   if (directToGallery) {
     return attachment && attachmentUrl ? (
       <PdfGallery url={attachmentUrl} filename={attachment.filename} openDirectly onClose={onClose} />
@@ -103,8 +103,8 @@ export const ManualModal: React.FC<ManualModalProps> = ({
       ) : (
         <div className="flex flex-col gap-2.5">
           {sections.map((section, index) => {
-            // Een koploze sectie (introtekst vóór de eerste "##") heeft geen klikbare header
-            // om ze terug open te klappen, dus die moet altijd zichtbaar blijven.
+            // A section without heading (the intro before the first "##") has no header to open it
+            // again, so it always stays open.
             const isOpen = section.heading === null || sections.length === 1 || openSectionIndex === index;
             return (
               <div key={index} className="overflow-hidden rounded-lg border border-gray-200">

@@ -173,7 +173,7 @@ export function OpenSeadragonViewer({
             max={150}
             value={brightness}
             onChange={e => setBrightness(Number(e.target.value))}
-            aria-label="Helderheid"
+            aria-label={t('viewer_brightness')}
             className="w-[80px]"
           />
         </div>

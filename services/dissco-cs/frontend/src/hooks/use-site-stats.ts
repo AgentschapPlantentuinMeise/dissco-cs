@@ -2,11 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { statsQueries } from '../api/queries/stats';
 import { usePollingWindow } from './use-polling-window';
 
-// One triggering fetch on page load (starts a background recompute if the cache is stale) plus
-// a separate, side-effect-free poll every 15s for 2 minutes after mount, then stopping -- that
-// only reads whatever the cache currently holds and must never cause a recompute, so it hits a
-// different, pure-read endpoint. refetchOnWindowFocus is off on the triggering query so
-// tab-switching doesn't also trigger SQL.
+// The site counters: one normal fetch when the page opens (the backend answers from its cache and
+// recalculates in the background), plus a cache-only poll every 15 s during the first 2 minutes,
+// which never starts a recalculation. refetchOnWindowFocus is off on the normal fetch, so
+// switching browser tabs does not start database queries.
 export function useSiteStats() {
   const initial = useQuery({ ...statsQueries.site(), refetchOnWindowFocus: false });
   const refetchInterval = usePollingWindow();

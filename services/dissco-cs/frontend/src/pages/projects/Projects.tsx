@@ -12,8 +12,8 @@ import { useGridColumnCount } from './use-grid-column-count';
 import { formatNumber } from '../../utility/format-number';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
 
-// Rijen i.p.v. een vast aantal kaarten, zodat elke pagina een volledig gevulde grid toont ongeacht
-// hoeveel kolommen er op het scherm passen (zie useGridColumnCount).
+// Rows instead of a fixed number of cards, so every page shows a full grid whatever the number of
+// columns that fit on the screen (see useGridColumnCount).
 const ROWS_PER_PAGE = 2;
 
 export const Projects: React.FC = () => {
@@ -34,9 +34,9 @@ export const Projects: React.FC = () => {
   const totalPages = Math.max(1, Math.ceil(projects.length / pageSize));
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Alleen begrenzen (niet hard resetten naar 1): anders duwt elke kolomherberekening -- bv. een
-  // scrollbar die na een paginawissel verschijnt/verdwijnt -- de gebruiker terug naar pagina 1,
-  // wat de net geannuleerde kaarten van die pagina meteen opnieuw zou mounten en ophalen.
+  // Only cap the page (never reset it to 1): otherwise every recount of the columns -- e.g. a
+  // scrollbar appearing after a page change -- would send the user back to page 1, mounting and
+  // fetching that page's cards again right away.
   useEffect(() => {
     setCurrentPage(p => Math.min(p, totalPages));
   }, [totalPages]);

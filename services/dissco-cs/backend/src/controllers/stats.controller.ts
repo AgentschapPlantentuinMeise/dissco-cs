@@ -5,10 +5,12 @@ import { requestMadocUserIdentity, requireSiteId } from '../auth/auth.js';
 import { HonourBoardRepository, isHonourBoardPeriod } from '../madoc-db/honour-board.repository.js';
 import { StatsRepository } from '../madoc-db/stats.repository.js';
 
-// All public numbers (counters and honour board), for the whole site or scoped to one active
-// institution. Every `/current` variant is a pure cache read for the frontend's periodic poll --
-// it never triggers a recompute itself, and only falls back to the triggering path if nothing has
-// ever been cached yet.
+// Every number has two routes. The normal route answers with the cached value right away and then
+// recalculates it in the background, so the next request sees fresh numbers; only the very first
+// request, with nothing cached yet, waits for the calculation. The /current twin is for the
+// frontend's polling every few seconds: it returns the cached value without recalculating, so
+// polling cannot overload the database (with nothing cached yet, it calculates once).
+// Exception: the site's volunteer count is recalculated at most every 5 minutes, also via /current.
 export function statsController(
   institutionsRepository: InstitutionsRepository,
   statsRepository: StatsRepository,
@@ -16,7 +18,6 @@ export function statsController(
 ): Hono {
   const app = new Hono();
 
-  // Resolves the site and the active institution behind `:slug`, or the error response to return.
   async function resolveInstitution(c: Context): Promise<{ siteId: number; institutionId: number } | Response> {
     const siteId = await requireSiteId(c);
     if (siteId instanceof Response) {

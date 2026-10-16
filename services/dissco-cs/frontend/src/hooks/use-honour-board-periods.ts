@@ -3,14 +3,13 @@ import { statsQueries } from '../api/queries/stats';
 import { HonourBoardPeriodKey } from '@dissco-cs/shared-types';
 import { usePollingWindow } from './use-polling-window';
 
-// One independent query per period instead of one bundled call, so each period can render as
-// soon as its own data resolves instead of all 4 waiting on the slowest (legend, unfiltered).
-// Per-period pattern otherwise unchanged: one triggering fetch on page load (starts a background
-// recompute if the cache is stale) plus a separate, side-effect-free poll every 15s for 2 minutes
-// after mount, then stopping -- that only reads whatever the cache currently holds and must never
-// cause a recompute, so it hits a different, pure-read endpoint. refetchOnWindowFocus is off on
-// the triggering query so tab-switching doesn't also trigger SQL.
-// Without a slug the board covers the whole site; with one it's scoped to that institution.
+// One query per period instead of one combined call, so each period shows as soon as its own data
+// is in, instead of all four waiting for the slowest (the all-time legend).
+// Per period: one normal fetch when the page opens (the backend answers from its cache and
+// recalculates in the background), plus a cache-only poll every 15 s during the first 2 minutes,
+// which never starts a recalculation. refetchOnWindowFocus is off on the normal fetch, so
+// switching browser tabs does not start database queries.
+// Without a slug the board covers the whole site; with one, that institution.
 function usePeriod(slug: string | undefined, enabled: boolean, period: HonourBoardPeriodKey, refetchInterval: number | false) {
   const initial = useQuery({ ...statsQueries.honourBoard(period, slug), enabled, refetchOnWindowFocus: false });
   const peek = useQuery({ ...statsQueries.honourBoardCurrent(period, slug), enabled, refetchInterval });

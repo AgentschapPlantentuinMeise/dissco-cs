@@ -21,15 +21,15 @@ export interface CaptureModelFormProps {
   onActiveStructureChange?: (node: MadocStructureNodeDto & { type: 'model' }) => void;
   /** Path of the field currently being drawn on the image, if any — drives the "draw"/"cancel" control on that field's row. */
   drawingPath?: DocumentPath | null;
-  /** User clicked "Teken op het beeld" for a field that has a selector configured. */
+  /** User clicked the draw button of a field that has a selector. */
   onRequestDraw?: (path: DocumentPath) => void;
   /** User cancelled the in-progress draw. */
   onCancelDraw?: () => void;
   /** User cleared a previously drawn region. */
   onClearSelector?: (path: DocumentPath) => void;
-  /** Toont het formulier als niet-bewerkbaar met een banner. */
+  /** Shows the form read-only, with a banner. */
   readOnly?: boolean;
-  /** Banner-tekst die bovenaan het formulier verschijnt als readOnly true is. */
+  /** Text of the banner at the top of the form when readOnly is true. */
   readOnlyBanner?: string;
 }
 

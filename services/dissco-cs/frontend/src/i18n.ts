@@ -7,9 +7,8 @@ import fr from './translations/fr/dissco-cs.json';
 import de from './translations/de/dissco-cs.json';
 import { disscoCSConfig } from './dissco-cs-config';
 
-// Madoc bewaart de gekozen taal in dezelfde cookie/localStorage-keys (zie
-// LanguageSwitcher.tsx in madoc-ts), zodat een taalwissel in Madoc of dissco-cs
-// hier ook herkend wordt.
+// Madoc stores the chosen language under the same cookie and localStorage keys (LanguageSwitcher.tsx
+// in madoc-ts), so a language switch in Madoc or in dissco-cs is picked up here too.
 function getStoredLanguage(): string | undefined {
   const supportedCodes: readonly string[] = disscoCSConfig.supportedLanguages.map(l => l.code);
   const stored = Cookies.get('i18next') || localStorage.getItem('i18nextLng') || undefined;

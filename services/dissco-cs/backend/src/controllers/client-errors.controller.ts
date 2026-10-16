@@ -7,11 +7,10 @@ import { clientErrorSchema } from '@dissco-cs/shared-types';
 
 const CLIENT_ERROR_RATE_LIMIT = { maxAttempts: 20, windowMs: 10 * 60 * 1000 };
 
-// Errors from the browser (crashes, failed actions) end up in the same app_log as the backend's.
-// Public on purpose (see the gateway allowlist): a crash for an anonymous visitor counts too. That
-// also means the user/site in the row are what the browser claims -- the gateway doesn't validate
-// the JWT on this path. Always answers 204, also when rate-limited or invalid, so a broken page
-// can't get into a loop over its own error reports.
+// This route is public on purpose: a crash for a visitor who is not logged in matters too. As a
+// result, the user and site stored with a report are whatever the browser sends; nothing checks
+// them. It always answers 204, even when a report is rejected, so a broken page never gets stuck
+// re-sending its own failed reports.
 export function clientErrorsController(appLog: AppLogRepository): Hono {
   const app = new Hono();
 

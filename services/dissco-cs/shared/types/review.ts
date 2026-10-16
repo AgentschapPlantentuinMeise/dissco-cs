@@ -1,7 +1,5 @@
 import { MadocInternationalString } from './common.js';
 
-// Built by getMadocReviewTasks() (madoc-client/reviews.ts) from Madoc tasks -- our own shape, so
-// camelCase, even for the fields taken over from Madoc.
 export type ReviewTaskDto = {
   id: string;
   project: { id?: number; slug?: string; label?: MadocInternationalString | string };

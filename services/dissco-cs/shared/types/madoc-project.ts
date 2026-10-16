@@ -1,12 +1,11 @@
-// Field shapes modeled on madoc-ts's own Project/ProjectFull/ProjectListItem types
-// (services/madoc-ts/src/types/project-full.ts, .../schemas/project-list-item.ts),
-// limited to the fields dissco-cs actually reads. Not imported from madoc-ts directly --
+// Shapes of Madoc's project responses (modeled on madoc-ts's types/project-full.ts and
+// schemas/project-list-item.ts), limited to the fields dissco-cs reads. Copied, not imported:
 // dissco-cs and madoc-ts are separate services.
 import { MadocInternationalString } from './common.js';
 
-// 0 paused, 1 active, 2 published/complete, 3 archived, 4 prepared; -1 draft/unpublished
-// (see updateProjectStatus in frontend/src/api/madoc-client/projects.ts).
-export type MadocProjectStatus = -1 | 0 | 1 | 2 | 3 | 4;
+// 0 paused, 1 active, 2 completed, 3 archived, 4 prepared -- the values Madoc's
+// update-project-status.ts accepts.
+export type MadocProjectStatus = 0 | 1 | 2 | 3 | 4;
 
 export type MadocProjectThumbnail = string | { id: string };
 
@@ -17,10 +16,8 @@ export type MadocProjectConfig = {
   modelPageOptions?: { enableAutoSave?: boolean };
 } & Record<string, unknown>;
 
-// Payload shape of Madoc's project endpoints -- both the project-list endpoint
-// (GET /api/madoc/projects, one entry in `projects`) and the single-project endpoint
-// (GET /api/madoc/projects/:id) return this same shape; the list endpoint just never
-// populates `placeholderImage`/`config`.
+// Both the project list (one entry of `projects`) and a single project have this shape; only a
+// single project includes `config`, and the list sends the image as `thumbnail`.
 export type MadocProjectDto = {
   id: number;
   collection_id: number;
@@ -31,15 +28,10 @@ export type MadocProjectDto = {
   status: MadocProjectStatus;
   thumbnail?: MadocProjectThumbnail;
   placeholderImage?: string;
-  // Read by ProjectCard.tsx but not present in madoc-ts's own Project/ProjectFull types --
-  // kept optional, worth verifying against a live response.
-  templateOptions?: { image?: string };
   config?: MadocProjectConfig;
 };
 
-// Shared pagination envelope shape seen on multiple Madoc list endpoints (projects, admin
-// collections, tasks) -- only `totalPages` has ever been read across those call sites.
+// The paging info of Madoc's list endpoints; dissco-cs only reads totalPages.
 export type MadocPagination = { totalPages?: number };
 
-// Payload shape of Madoc's project-list endpoint's response envelope.
 export type MadocProjectListPageDto = { projects: MadocProjectDto[]; pagination?: MadocPagination };

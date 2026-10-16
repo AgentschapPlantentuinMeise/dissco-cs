@@ -181,9 +181,8 @@ export class InstitutionsRepository {
     );
   }
 
-  // Ruimt links op naar projecten die in Madoc verwijderd zijn -- dissco-cs heeft geen weet van
-  // een Madoc-projectverwijdering, dus dit vergelijkt tegen de actuele projectenlijst die de
-  // aanroeper meegeeft (projects.controller.ts).
+  // Removes links to projects that were deleted in Madoc. dissco-cs is not told when Madoc deletes
+  // a project, so this compares against the current project list that the caller passes in.
   async pruneOrphanedProjectLinks(siteId: number, liveSlugs: string[]): Promise<number> {
     const result = await this.pool.query(
       `DELETE FROM ${this.table('project_institution_links')} WHERE site_id = $1 AND project_slug <> ALL($2::text[])`,
@@ -207,7 +206,7 @@ export class InstitutionsRepository {
     let candidate = base;
     let suffix = 2;
 
-    // eslint-disable-next-line no-constant-condition
+    // eslint-disable-next-line no-constant-condition -- ends with the return once a slug is free
     while (true) {
       const result = await this.pool.query(
         `SELECT id FROM ${this.table('institutions')} WHERE site_id = $1 AND slug = $2 AND id <> $3`,
@@ -225,9 +224,6 @@ export class InstitutionsRepository {
 }
 
 // ---- DTO mapping ----
-//
-// The row above is the database's shape (snake_case, Date objects); the DTO is the API's shape
-// (camelCase, ISO strings). Every field is listed explicitly, so a new column never leaks out.
 
 export function toInstitutionDto(row: InstitutionRow): InstitutionDto {
   return {

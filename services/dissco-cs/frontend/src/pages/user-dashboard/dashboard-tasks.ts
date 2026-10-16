@@ -11,8 +11,8 @@ export interface TaskSummary {
   doneTasks: MadocCrowdsourcingTaskDto[];
   // Every task the user worked on, one per object (saved, submitted, reviewed, ...).
   contributedTasks: MadocCrowdsourcingTaskDto[];
-  // Matches the backend's own definition of "completed" (status 2/3 only, see
-  // site-task-totals.repository.ts) so it lines up with siteStats.tasksCompleted.
+  // The backend's own definition of "completed" (status 2 or 3, see fetchSiteTaskTotals in
+  // madoc-db/stats.repository.ts), so it lines up with siteStats.tasksCompleted.
   userDoneCount: number;
   projectCount: number;
   projectTaskCounts: ProjectTaskCount[];

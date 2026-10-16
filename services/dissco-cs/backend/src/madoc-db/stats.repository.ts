@@ -114,8 +114,7 @@ export class StatsRepository {
 
   // ---- institution ----
 
-  // Resolves a set of project slugs (from dissco_cs's own institution links) to their Madoc
-  // project rows -- also used by the institution honour-board route, which only needs task_id.
+  // Turns project slugs (from dissco-cs's own institution links) into Madoc's project rows.
   async resolveProjects(siteId: number, projectSlugs: string[]): Promise<InstitutionProjectRow[]> {
     if (projectSlugs.length === 0) {
       return [];

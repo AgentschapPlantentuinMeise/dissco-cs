@@ -32,7 +32,7 @@ export const AnnotateToolbar: React.FC<{
 
   return (
     <div className="px-4 py-2 border-b border-gray-300 flex items-center justify-between flex-shrink-0">
-      <nav className="text-[0.85rem] text-gray-500 flex items-center" aria-label="Breadcrumb">
+      <nav className="text-[0.85rem] text-gray-500 flex items-center" aria-label={t('annotate_breadcrumb_label')}>
         <Link to="/explore" onClick={leaveLink('/explore')} className="text-[var(--cs-primary)] no-underline hover:underline">
           {t('nav_projects')}
         </Link>

@@ -1,11 +1,7 @@
 import { MadocInternationalString } from './common.js';
 
-/**
- * Minimal subset of Madoc's MadocCrowdsourcingTaskDto type — only the fields dissco-cs reads. Shared by
- * the citizen-science UI (claim/task payloads) and the API's own raw task-list fetches
- * (project-debug, review, stuck-tasks) — those used to each redeclare their own near-identical
- * copy of this same shape; `parameters` exists only for the review-task copy's needs.
- */
+// Madoc's task, limited to the fields dissco-cs reads. `parameters` is only read for review
+// tasks: its first entry is the id of the task under review.
 export type MadocCrowdsourcingTaskDto = {
   id: string;
   name?: string;
@@ -15,15 +11,11 @@ export type MadocCrowdsourcingTaskDto = {
   subject_parent?: string;
   root_task?: string;
   parameters?: unknown[];
-  // tasks-api actually returns this as an epoch-ms number, not a string — the existing
-  // `(a.modified_at ?? '') > (b.modified_at ?? '')` sort comparisons in UserDashboard/Dashboard
-  // still work either way since JS compares numbers-as-strings the same direction, but a real
-  // numeric subtraction (as used for sorting here) needs the accurate type.
+  // Madoc sends this as a number (milliseconds since 1970), not as a date string.
   modified_at?: number;
   assignee?: { id: string; name?: string };
-  // dissco-cs-computed, not part of Madoc's own wire format -- only populated by the
-  // stuck-manifest-counter feature (getStuckManifestCounters), which resolves these from a
-  // separate task-detail call + a local count of non-abandoned subtasks.
+  // Not from Madoc: we fill these in ourselves for the stuck-tasks page (getStuckManifestCounters),
+  // from the task's details and a count of its subtasks that were not abandoned.
   maxContributors?: number;
   validCount?: number;
   // Server-resolved project this task belongs to — present whenever Madoc could trace the task's
@@ -43,8 +35,8 @@ export type MadocCrowdsourcingTaskDto = {
   };
 };
 
-// Resource claim, as embedded in prepare-claim/claim/random responses -- `state.revisionId` is
-// only present once a claim has an in-progress revision attached to it.
+// A claim, as in the prepare-claim, claim and random responses. `state.revisionId` is set when
+// dissco-cs creates the claim (use-task-claim); older claims, or ones made in Madoc, lack it.
 export type MadocResourceClaimDto = {
   id: string;
   status: number;

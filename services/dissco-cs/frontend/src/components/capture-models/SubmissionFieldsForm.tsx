@@ -44,9 +44,8 @@ function fieldToText(value: unknown): string {
   return JSON.stringify(value);
 }
 
-// Niet-string velden (checkbox/dropdown/...) proberen we als JSON terug te lezen zodat een
-// ongewijzigd veld zijn oorspronkelijke vorm behoudt; lukt dat niet, dan wordt het gewoon tekst --
-// de reviewer kent zelf het verwachte formaat.
+// A field that is not text (checkbox, dropdown, ...) is read back as JSON, so an unchanged field
+// keeps its original shape; if that fails it simply becomes text -- the reviewer knows the format.
 function textToFieldValue(text: string, original: unknown): unknown {
   if (original === undefined || original === null || typeof original === 'string') return text;
   try {
@@ -77,10 +76,9 @@ function FieldRow({ field, path, onChange, readOnly }: { field: MadocBaseFieldDt
 // its own record) from a section/ungrouped block (a plain heading, no frame).
 type Block = { key: string; label: string | null; fields: React.ReactNode[]; boxed?: boolean };
 
-// Grid-layout geeft elk blok een eigen kolom -- een blok met veel velden (bv. een plat formulier
-// zonder secties) zou anders als één lange kolom renderen terwijl de andere kolommen leeg
-// blijven. Splits zulke blokken op in stukken van 6 velden, elk als eigen kolom; enkel het eerste
-// stuk krijgt het sectielabel.
+// The grid gives every block its own column, so a block with many fields (e.g. a flat form without
+// sections) would become one long column while the others stay empty. Such blocks are split into
+// pieces of 6 fields, each its own column; only the first piece gets the section label.
 const GRID_CHUNK_SIZE = 6;
 
 function chunkForGrid(blocks: Block[]): Block[] {
@@ -138,11 +136,9 @@ function collectBlocks(fields: MadocModelFields, doc: MadocAnnotationDocumentDto
   return blocks;
 }
 
-// Vereenvoudigde vorm van CaptureModelForm, specifiek voor de review-context: elk veldtype
-// (datum, checkbox, dropdown, ...) wordt hetzelfde weergegeven -- een label plus één tekstvak --
-// zodat een reviewer ingediende data snel kan nalezen en corrigeren zonder per-type widgets.
-// Secties staan altijd naast elkaar in 3 vaste kolommen (valt terug naar 1 kolom op smalle
-// schermen); bij >3 secties valt de rest gewoon naar een nieuwe rij van 3.
+// A simpler CaptureModelForm for reviewing: every field type (date, checkbox, dropdown, ...) is shown
+// the same way -- a label and one text box -- so a reviewer can read and correct submitted data
+// quickly. Sections sit side by side in 3 columns (1 on narrow screens); more than 3 wrap to a new row.
 export function SubmissionFieldsForm({ model, document, onChange, readOnly }: SubmissionFieldsFormProps) {
   const models = resolveDisplayModels(model.structure);
   if (models.length === 0) {

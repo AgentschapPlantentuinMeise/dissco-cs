@@ -1,5 +1,5 @@
-// Plain data shape copied from madoc-ts's MadocBaseSelectorDto (services/madoc-ts/src/frontend/shared/capture-models/types/selector-types.ts).
-// Only the wire-format data shape is copied here, not madoc-ts's React-component plumbing.
+// Data shapes copied from madoc-ts's capture model types (frontend/shared/capture-models/types/):
+// only the JSON that goes over the wire, not Madoc's React components.
 export type MadocBaseSelectorDto = {
   id: string;
   type: string;
@@ -15,18 +15,14 @@ export type MadocBoxSelectorState = {
   height: number;
 } | null;
 
-// Plain data shapes copied from madoc-ts's MadocBasePropertyDto/MadocBaseFieldDto
-// (services/madoc-ts/src/frontend/shared/capture-models/types/base-property.ts, field-types.ts).
-// Only the parts needed to read/write field values are kept; madoc-ts's React Component/Editor
-// plumbing is intentionally left out.
 export interface MadocBasePropertyDto {
   label: string;
   description?: string;
   term?: string;
   selector?: MadocBaseSelectorDto;
   allowMultiple?: boolean;
-  // The admin model-editor's checkbox controls (required, clearable, ...) save their "checked"
-  // state as the array ['on'] rather than a boolean true — confirmed by inspecting a real model.
+  // The model editor saves a ticked checkbox (required, clearable, ...) as the array ['on'], not
+  // as true -- seen in a real model.
   required?: boolean | string[];
   // The model-editor saves the "depends on" setting under the key "dependent" (American spelling)
   // on the field itself, even though madoc-ts's own TS types/hooks elsewhere use "dependant" —
@@ -39,20 +35,17 @@ export interface MadocBasePropertyDto {
   revision?: string;
 }
 
-// Option entry as used by dropdown/checkbox-list fields -- the two widgets read different subsets
-// (dropdown: value+text, checkbox-list: value+label+description), kept together since both live
-// under the same field.options key.
+// One choice of a dropdown or checkbox-list field. A dropdown reads value and text, a checkbox
+// list reads value, label and description.
 export type MadocFieldOptionDto = { value: string; label?: string; text?: string; description?: string };
 
 export interface MadocBaseFieldDto extends MadocBasePropertyDto {
   id: string;
   type: string;
-  // The field's actual runtime shape (string, boolean, string[], {uri,label}, ...) depends
-  // entirely on `type`, which none of the field components (TextField, CheckboxField, ...)
-  // discriminate on structurally -- each just reads field.value assuming its own shape.
+  // The real shape of the value (text, true/false, a list, { uri, label }, ...) depends on `type`;
+  // each field component reads it in its own shape, hence `any`.
   value: any;
-  // Present only on specific field types -- Madoc's model-editor stores these directly on the
-  // field config rather than through a discriminated union.
+  // Only set on some field types: the model editor stores them directly on the field.
   dataSource?: string;
   placeholder?: string;
   options?: MadocFieldOptionDto[];
@@ -107,9 +100,9 @@ export type MadocCaptureModelRevisionDto = {
   accepted?: boolean;
 };
 
-// Body sent to (and shape returned by) the create/update/get-revision endpoints -- `status` at
-// the top level is only sent on accept (see useReviewPage's acceptOneRow), the actual
-// draft/submitted/accepted status normally lives on `revision.status`.
+// What the create, update and get revision endpoints take and return. The status normally lives
+// in revision.status ('draft', 'submitted'); the top-level status is only sent when a reviewer
+// accepts.
 export type MadocCaptureModelRevisionRequestDto = {
   captureModelId: string;
   document: MadocAnnotationDocumentDto;

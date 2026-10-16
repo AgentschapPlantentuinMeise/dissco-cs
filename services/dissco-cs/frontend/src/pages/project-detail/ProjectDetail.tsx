@@ -27,10 +27,9 @@ export const ProjectDetail: React.FC = () => {
   const navigate = useNavigate();
   const [manualOpen, setManualOpen] = useState(false);
 
-  // Auto-opens once per project per browser (AC2/AC3): only actually shows if the project
-  // has a manual linked — ManualModal renders nothing otherwise, and markManualSeen
-  // is only called from its onShown callback, so a project without a manual (yet) keeps
-  // trying next visit instead of silently marking itself "seen".
+  // The manual opens by itself once per project per browser. It only counts as seen once it was
+  // really shown (markManualSeen runs from ManualModal's onShown), so a project that has no manual
+  // yet keeps trying on the next visit instead of being marked "seen" silently.
   useEffect(() => {
     if (!project) return;
     if (localStorage.getItem(manualSeenKey(project.slug)) !== '1') {
@@ -45,10 +44,9 @@ export const ProjectDetail: React.FC = () => {
   };
 
 
-  // "Kies zelf waar je aan wilt starten" verbergt manifesten met status 1/2/3 zodat twee
-  // gebruikers hetzelfde manifest niet tegelijk kunnen claimen (zie docs/MANIFEST-CLAIMS.md) —
-  // maar dat verbergt ook de eigen opgeslagen taken (status 1) van de ingelogde gebruiker voor
-  // zichzelf. Aparte query zodat die apart getoond kunnen worden i.p.v. te verdwijnen.
+  // The "choose where to start" grid leaves out manifests that are done or have their maximum of
+  // volunteers (see projectsApi.getProgress) -- with a maximum of 1 that includes the user's own
+  // saved task. This separate query shows those saved tasks instead of letting them disappear.
   const { data: ownTasksData } = useQuery({ ...taskQueries.mineSaved(user?.id), enabled: !!project && !!user });
   const ownSavedTasks = (ownTasksData?.tasks ?? []).filter(task => task.metadata?.project?.slug === project?.slug);
 

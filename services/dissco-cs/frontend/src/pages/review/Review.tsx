@@ -12,8 +12,8 @@ import { ReviewSearchInput } from './ReviewSearchInput';
 import { ReviewTable } from './ReviewTable';
 import { useReviewPage } from './use-review-page';
 
-// De tabel verandert nooit van breedte of positie -- een aangeklikte rij klapt zelf open met de
-// velden in een responsieve grid (zie ReviewInlineExpansion).
+// The table never changes width or position: a clicked row opens underneath itself, with the
+// fields in a responsive grid (see ReviewInlineExpansion).
 export const Review: React.FC = () => {
   const c = useReviewPage();
   const { t, i18n } = c;
@@ -41,11 +41,9 @@ export const Review: React.FC = () => {
             )}
           </div>
 
-          {/* Vaste balk onderaan de viewport voor selectie, bezig-status en resultaat (bulk of
-              los) -- position: fixed (niet sticky!) want de balk staat vóór de tabel in de DOM en
-              moet zichtbaar blijven terwijl je door een lange lijst ná haar scrollt; bottom-sticky
-              zou hier niets doen, dat reageert enkel op omhoog scrollen. Inhoud staat gecentreerd
-              in één cluster i.p.v. over de volle breedte gespreid (ml-auto). */}
+          {/* Bar at the bottom of the screen for the selection, progress and results. It is
+              position: fixed, not sticky: it comes before the table in the page, and a sticky
+              bar would only stay in view when scrolling up, not while scrolling down the list. */}
           {(c.selectedIds.size > 0 || c.bulkRunning || c.bulkResults || c.lastBatchTasks) && (
             <div className="fixed inset-x-0 bottom-0 z-30 pointer-events-none">
             <div className="cs-container cs-container--wide pointer-events-none flex justify-center">
@@ -157,7 +155,6 @@ export const Review: React.FC = () => {
                 toggleSelectAllVisible={c.toggleSelectAllVisible}
                 selectedIds={c.selectedIds}
                 toggleSelectRow={c.toggleSelectRow}
-                isOwnTask={c.isOwnTask}
                 filterBySubmitter={c.filterBySubmitter}
                 onPreview={c.setPreviewRow}
                 openRowId={c.openRowId}
@@ -172,15 +169,14 @@ export const Review: React.FC = () => {
                     onClose={() => c.setOpenRowId(null)}
                     selected={c.selectedIds.has(row.id)}
                     onToggleSelect={() => c.toggleSelectRow(row.id)}
-                    selectable={c.isOwnTask(row)}
                   />
                 )}
               />
             </div>
           )}
 
-          {/* Reserveert ruimte onderaan zodat de laatste tabelrijen niet achter de vaste balk
-              hierboven verdwijnen -- hoogte is een ruwe schatting van de balk, niet exact gemeten. */}
+          {/* Room at the bottom so the last rows do not disappear behind the fixed bar above
+              (a rough estimate of its height, not measured). */}
           {(c.selectedIds.size > 0 || c.bulkRunning || c.bulkResults || c.lastBatchTasks) && (
             <div className="h-20" aria-hidden="true" />
           )}

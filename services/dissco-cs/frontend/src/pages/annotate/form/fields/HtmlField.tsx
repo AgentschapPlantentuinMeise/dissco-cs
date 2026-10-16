@@ -1,6 +1,6 @@
 import { FieldProps } from './registry';
 
-// Fase 1: a plain textarea editing raw HTML. A WYSIWYG toolbar is Fase 2 scope.
+// A plain textarea for the raw HTML; there is no WYSIWYG editor yet.
 export function HtmlField({ field, path, onChange }: FieldProps) {
   return (
     <textarea

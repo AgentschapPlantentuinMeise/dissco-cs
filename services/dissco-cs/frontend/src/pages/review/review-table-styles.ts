@@ -1,5 +1,5 @@
-// Statusbetekenis volgt Madoc's eigen REVIEW_STATUS_MAP (review-listing-page.tsx):
-// 1 = "todo" (toegewezen, nog niet actief opgepakt), 2 = "in_review" (actief in behandeling).
+// Status meanings follow Madoc's own REVIEW_STATUS_MAP (review-listing-page.tsx): 0 = not started,
+// 1 = "todo" (assigned, not picked up yet), 2 = "in_review" (being handled).
 export function reviewStatusKey(status: number): string {
   switch (status) {
     case 0: return 'review_status_not_started';
@@ -9,9 +9,8 @@ export function reviewStatusKey(status: number): string {
   }
 }
 
-// Zelfde badge-kleuren als UserDashboard.tsx (BADGE_CLASSES) voor consistentie: blauw = actief
-// bezig, geel = wachtend, grijs = nog niet toegewezen -- zo is bij meerdere reviewers per
-// project in één oogopslag te zien wie waarmee bezig is.
+// Badge colours: blue = being handled, yellow = waiting, grey = not started -- so it is clear at a
+// glance who is working on what.
 export const STATUS_BADGE_CLASSES: Record<number, string> = {
   0: 'bg-gray-100 text-gray-600',
   1: 'bg-[#fff3cd] text-[#856404]',

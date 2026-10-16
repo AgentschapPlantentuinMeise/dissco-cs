@@ -238,7 +238,7 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
       ON ${schemaRef}.feedback_messages (thread_id, created_at ASC)
     `);
 
-    // Errors only for now (level 'error'); requests go to stdout. No retention yet, see TODO.md.
+    // Errors only (level 'error'); requests go to stdout. Old rows are not cleaned up yet.
     await client.query(`
       CREATE TABLE IF NOT EXISTS ${schemaRef}.app_log (
         id BIGSERIAL PRIMARY KEY,

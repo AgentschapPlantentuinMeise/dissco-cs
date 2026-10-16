@@ -228,9 +228,6 @@ export class ForumRepository {
 }
 
 // ---- DTO mapping ----
-//
-// The row above is the database's shape (snake_case, Date objects); the DTO is the API's shape
-// (camelCase, ISO strings). Every field is listed explicitly, so a new column never leaks out.
 
 export function toForumTopicDto(topic: ForumTopicWithReplyCount): ForumTopicDto {
   return {

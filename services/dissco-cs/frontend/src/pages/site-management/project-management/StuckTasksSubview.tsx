@@ -37,8 +37,8 @@ export const StuckTasksSubview: React.FC = () => {
       const projectId = task.metadata?.project?.id;
       const manifestId = task.metadata?.subject?.id;
       if (projectId && manifestId) {
-        // Best-effort: madoc-ts only re-syncs the shared max-contributors counter when a NEW
-        // claim is created, never on a release — same reason AnnotatePage does this after abandon.
+        // Best effort: Madoc only recounts a manifest's volunteers on a new claim, not on a release
+        // (the annotate page does the same after a release, see use-task-claim).
         await projectsApi.resyncClaim(projectId, manifestId).catch(err => reportClientError(err, 'action'));
       }
     },

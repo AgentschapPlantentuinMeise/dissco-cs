@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import { MultilingualText, multilingualTextSchema, emailSchema } from './common.js';
 
-// Wire shape (camelCase), built by toInstitutionDto() at the bottom of institutions.repository.ts
-// from the snake_case InstitutionRow.
 export type InstitutionDto = {
   id: number;
   slug: string;
@@ -16,11 +14,12 @@ export type InstitutionDto = {
   sortOrder: number;
 };
 
-// Lives here because the schema enforces the limit both client- and server-side.
+// Max length of the logo as a data URI (an image of about 2 MB). Part of the schema, so it is
+// checked in the form and again in the backend.
 export const INSTITUTION_LOGO_MAX_LENGTH = 3_000_000;
 
-// Copied verbatim from the frontend's old isValidPhone -- keep permissive, a stricter regex once
-// broke Belgian phone notation.
+// Deliberately permissive (digits, spaces and + - ( ) . /): a stricter check once rejected Belgian
+// notation such as 02/123 45 67.
 const PHONE_CHARS_REGEX = /^[0-9+\-\s().\/]+$/;
 
 export const institutionInputSchema = z.object({

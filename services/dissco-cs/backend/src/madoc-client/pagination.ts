@@ -3,9 +3,15 @@ export interface Page<T> {
   totalPages?: number;
 }
 
-// Walks every page of a paginated Madoc list: page 1 first (to learn totalPages), then pages
-// 2..totalPages in groups of at most `concurrency` concurrent requests. Every page is fetched;
-// `concurrency` only caps how many are in flight at once. Results keep page order.
+/**
+ * Fetches every page of a paged Madoc list: page 1 first (to learn totalPages), then the other
+ * pages in groups of at most `concurrency` requests at the same time. Every page is fetched;
+ * `concurrency` only limits how many run at once.
+ * @param fetchPage fetches one page (from 1) and returns its items and, at least for page 1,
+ *   totalPages
+ * @param concurrency how many pages may be requested at the same time (default 1: one by one)
+ * Returns: the items of all pages, in page order.
+ */
 export async function collectAllPages<T>(
   fetchPage: (page: number) => Promise<Page<T>>,
   concurrency = 1
