@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '../../components/ui/Button';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/layout/CsPage';
 import { setPassword as submitSetPassword, checkReset } from '../../api/madoc-auth/auth';
@@ -147,13 +148,12 @@ export function SetPassword() {
             {status === 'error' && <p className="text-red-700">{error}</p>}
 
             <div>
-              <button
+              <Button
                 type="submit"
                 disabled={!canSubmit || status === 'sending'}
-                className="bg-cs-primary text-white px-5 py-2 rounded-full text-sm font-semibold border-none cursor-pointer hover:bg-cs-dark disabled:opacity-50"
               >
                 {t('set_password_form_submit')}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '../../components/ui/Modal';
+import { Button } from '../../components/ui/Button';
+import { CancelButton } from '../../components/ui/CancelButton';
 import { LuMail } from 'react-icons/lu';
 import { FeedbackComposeTarget } from './use-review-page';
 
@@ -32,20 +34,11 @@ export function FeedbackModal({ target, onSend, onClose, sending }: FeedbackModa
       title={t('feedback_modal_title', { name: target.submitterName })}
       footer={
         <div className="flex items-center justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-full text-sm font-semibold border border-gray-300 bg-transparent cursor-pointer hover:bg-gray-50"
-          >
-            {t('common_cancel')}
-          </button>
-          <button
-            onClick={submit}
-            disabled={!canSend}
-            className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-none text-white cursor-pointer bg-cs-tertiary hover:brightness-90 disabled:opacity-50"
-          >
-            <LuMail aria-hidden="true" />
+          <CancelButton onClick={onClose} />
+          <Button variant="tertiary" size="sm" onClick={submit} disabled={!canSend} loading={sending}>
+            {!sending && <LuMail aria-hidden="true" />}
             {sending ? t('feedback_sending') : t('feedback_send')}
-          </button>
+          </Button>
         </div>
       }
     >

@@ -1,6 +1,7 @@
 import React from 'react';
 import { CsMarkdown } from '../ui/CsMarkdown';
 import { Modal } from '../ui/Modal';
+import { Button } from '../ui/Button';
 import { MadocSiteTermsDto } from '@dissco-cs/shared-types';
 
 type TermsModalProps = {
@@ -34,23 +35,13 @@ export function TermsModal({
       size="lg"
       coverNavbar
       footer={
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={onAccept}
-            className="px-4 py-2 rounded-full text-sm font-semibold border-none bg-cs-primary text-white cursor-pointer hover:bg-cs-dark disabled:opacity-50"
-          >
-            {acceptLabel}
-          </button>
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={onCancel}
-            className="px-4 py-2 rounded-full text-sm font-semibold border border-gray-300 bg-transparent cursor-pointer hover:bg-gray-50 disabled:opacity-50"
-          >
+        <div className="flex items-center justify-end gap-3">
+          <Button variant="secondary" size="sm" disabled={disabled} onClick={onCancel}>
             {cancelLabel}
-          </button>
+          </Button>
+          <Button size="sm" disabled={disabled} onClick={onAccept}>
+            {acceptLabel}
+          </Button>
         </div>
       }
     >

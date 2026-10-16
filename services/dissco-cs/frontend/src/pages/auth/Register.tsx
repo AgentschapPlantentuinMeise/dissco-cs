@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '../../components/ui/Button';
 import { useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/layout/CsPage';
 import { TermsModal } from '../../components/auth/TermsModal';
@@ -184,13 +185,12 @@ export function Register() {
             {status === 'error' && <p className="text-red-700">{error}</p>}
 
             <div>
-              <button
+              <Button
                 type="submit"
                 disabled={status === 'sending'}
-                className="bg-cs-primary text-white px-5 py-2 rounded-full text-sm font-semibold border-none cursor-pointer hover:bg-cs-dark disabled:opacity-50"
               >
                 {t('register_form_submit')}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

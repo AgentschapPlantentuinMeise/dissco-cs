@@ -6,6 +6,7 @@ import { CsPage } from '../../../components/layout/CsPage';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { SaveButton } from '../../../components/ui/SaveButton';
 import { CancelButton } from '../../../components/ui/CancelButton';
+import { Button } from '../../../components/ui/Button';
 import { HrefLink } from '../../../utility/href-link';
 import { useSiteColors } from './use-site-colors';
 import { ColorRow } from './ColorRow';
@@ -48,14 +49,9 @@ export function SiteColors() {
                   <SaveButton onClick={() => save.mutate()} disabled={!isDirty || !isValid} loading={save.isPending} />
                   {isDirty && <CancelButton onClick={discard} />}
                   {hasOwnPalette && (
-                    <button
-                      type="button"
-                      onClick={() => setConfirmReset(true)}
-                      disabled={reset.isPending}
-                      className="ml-auto bg-transparent border-none p-0 text-sm text-cs-primary underline underline-offset-2 cursor-pointer"
-                    >
+                    <Button variant="text" size="sm" className="ml-auto" onClick={() => setConfirmReset(true)} loading={reset.isPending}>
                       {t('sm_colors_reset')}
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>

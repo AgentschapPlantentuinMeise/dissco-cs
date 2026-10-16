@@ -1,5 +1,6 @@
 import { CsPage } from '../../components/layout/CsPage';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { LuMail } from 'react-icons/lu';
 import { localeText } from '../../utility/locale-text';
@@ -48,56 +49,51 @@ export function Review() {
             <div className="cs-container cs-container--wide pointer-events-none flex justify-center">
             <div className="pointer-events-auto mb-4 max-w-full">
               {c.selectedIds.size > 0 ? (
-                <div className="flex items-center gap-1 p-1.5 bg-[#f3f8f8] rounded-full border-2 border-cs-accent/35">
+                <div className="flex items-center gap-2 p-1.5 bg-[#f3f8f8] rounded border-2 border-cs-accent/35">
                   <span className="px-3 text-sm text-gray-600 whitespace-nowrap">{t('review_bulk_selected_count', { count: c.selectedIds.size })}</span>
                   <span className="w-px self-stretch bg-gray-200" />
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={c.openFeedbackForSelection}
                     disabled={!c.canSendBulkFeedback}
                     title={c.canSendBulkFeedback ? undefined : t('feedback_multi_submitter_hint')}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-none bg-transparent text-cs-tertiary cursor-pointer hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <LuMail aria-hidden="true" />
                     {t('feedback_button')}
-                  </button>
-                  <button
-                    onClick={() => c.setConfirmingAccept(true)}
-                    disabled={c.bulkRunning}
-                    className="px-5 py-2 rounded-full text-sm font-semibold border-none bg-cs-primary text-white cursor-pointer hover:bg-cs-dark disabled:opacity-50"
-                  >
+                  </Button>
+                  <Button size="sm" onClick={() => c.setConfirmingAccept(true)} disabled={c.bulkRunning}>
                     {t('review_bulk_accept_button')}
-                  </button>
+                  </Button>
                 </div>
               ) : c.bulkRunning ? (
-                <div className="flex items-center px-5 py-3 bg-[#f3f8f8] rounded-full border-2 border-cs-accent/35">
+                <div className="flex items-center px-5 py-3 bg-[#f3f8f8] rounded border-2 border-cs-accent/35">
                   <p className="text-sm text-gray-500 m-0 whitespace-nowrap">
                     {t('review_bulk_progress', { current: c.bulkProgress.current, total: c.bulkProgress.total })}
                   </p>
                 </div>
               ) : c.bulkResults ? (
-                <div className="p-3 bg-[#f3f8f8] rounded-2xl border-2 border-cs-accent/35">
+                <div className="p-3 bg-[#f3f8f8] rounded border-2 border-cs-accent/35">
                   <div className="flex flex-wrap items-center justify-center gap-3">
                     <p className="text-sm text-gray-700 m-0 whitespace-nowrap">
                       {t('review_bulk_results_summary', { success: c.successCount, failed: c.failedResults.length })}
                     </p>
                     {c.canSendLastBatchFeedback && (
-                      <button
-                        onClick={c.openFeedbackForLastBatch}
-                        className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border border-cs-tertiary bg-white text-cs-tertiary cursor-pointer hover:bg-gray-50"
-                      >
+                      <Button variant="secondary" size="sm" onClick={c.openFeedbackForLastBatch}>
                         <LuMail aria-hidden="true" />
                         {t('feedback_button')}
-                      </button>
+                      </Button>
                     )}
-                    <button
+                    <Button
+                      variant="text"
+                      size="sm"
                       onClick={() => {
                         c.setBulkResults(null);
                         c.dismissLastBatch();
                       }}
-                      className="text-sm text-cs-primary bg-transparent border-none cursor-pointer hover:underline"
                     >
                       {t('common_close')}
-                    </button>
+                    </Button>
                   </div>
                   {c.failedResults.length > 0 && (
                     <ul className="mt-2 mb-0 pl-4 text-sm text-red-700 space-y-1">
@@ -110,26 +106,20 @@ export function Review() {
                   )}
                 </div>
               ) : c.lastBatchTasks ? (
-                <div className="flex items-center gap-1 p-1.5 bg-[#f3f8f8] rounded-full border-2 border-cs-accent/35">
+                <div className="flex items-center gap-2 p-1.5 bg-[#f3f8f8] rounded border-2 border-cs-accent/35">
                   <span className="flex items-center gap-2 px-3 text-sm text-gray-700 whitespace-nowrap">
                     <span className="w-2 h-2 rounded-full bg-cs-secondary" />
                     {t('feedback_last_batch_summary', { count: c.lastBatchTasks.length })}
                   </span>
                   {c.canSendLastBatchFeedback && (
-                    <button
-                      onClick={c.openFeedbackForLastBatch}
-                      className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-none bg-transparent text-cs-tertiary cursor-pointer hover:bg-gray-50"
-                    >
+                    <Button variant="secondary" size="sm" onClick={c.openFeedbackForLastBatch}>
                       <LuMail aria-hidden="true" />
                       {t('feedback_button')}
-                    </button>
+                    </Button>
                   )}
-                  <button
-                    onClick={c.dismissLastBatch}
-                    className="px-3 text-sm text-cs-primary bg-transparent border-none cursor-pointer hover:underline"
-                  >
+                  <Button variant="text" size="sm" className="px-3" onClick={c.dismissLastBatch}>
                     {t('common_close')}
-                  </button>
+                  </Button>
                 </div>
               ) : null}
             </div>

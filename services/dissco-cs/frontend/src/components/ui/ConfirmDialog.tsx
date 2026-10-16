@@ -1,4 +1,5 @@
 import { Modal } from './Modal';
+import { Button } from './Button';
 import { LuTriangleAlert, LuCheck } from 'react-icons/lu';
 
 export function ConfirmDialog({ title, message, confirmLabel, cancelLabel, tone = 'warn', onConfirm, onCancel }: {
@@ -11,10 +12,6 @@ export function ConfirmDialog({ title, message, confirmLabel, cancelLabel, tone 
   onCancel: () => void;
 }) {
   const toneColor = tone === 'affirm' ? 'text-cs-secondary' : 'text-red-600';
-  const confirmButtonColor =
-    tone === 'affirm'
-      ? 'bg-cs-secondary hover:brightness-90'
-      : 'bg-red-600 hover:bg-red-700';
 
   return (
     <Modal
@@ -23,18 +20,12 @@ export function ConfirmDialog({ title, message, confirmLabel, cancelLabel, tone 
       size="md"
       footer={
         <div className="flex items-center justify-end gap-3">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 rounded-full text-sm font-semibold border border-gray-300 bg-transparent cursor-pointer hover:bg-gray-50"
-          >
+          <Button variant="secondary" size="sm" onClick={onCancel}>
             {cancelLabel}
-          </button>
-          <button
-            onClick={onConfirm}
-            className={`px-4 py-2 rounded-full text-sm font-semibold border-none text-white cursor-pointer ${confirmButtonColor}`}
-          >
+          </Button>
+          <Button variant={tone === 'affirm' ? 'primary' : 'danger'} size="sm" onClick={onConfirm}>
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       }
     >

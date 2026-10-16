@@ -88,6 +88,20 @@ const rules: ConventionRule[] = [
     },
   },
   {
+    name: 'Action buttons are <Button>, not a class string of their own',
+    pattern: /\b(btnPrimary|btnGhost|outlineButtonClass|pageError(Primary|Secondary)Button)\b/,
+    instead: "<Button variant size loading> from components/ui/Button.tsx (buttonClass() for a link that looks like a button)",
+  },
+  {
+    name: 'No pill-shaped buttons: the style guide uses 4px corners',
+    pattern: /rounded-full[^"'`]*cursor-pointer|cursor-pointer[^"'`]*rounded-full/,
+    instead: "<Button variant size> (components/ui/Button.tsx); a round icon button gets an allowedIn with a reason",
+    allowedIn: {
+      'components/manuals/PdfLightbox.tsx': 'round icon buttons (previous, next, close) on the dark lightbox',
+      'components/ui/Modal.tsx': 'the round close icon of a modal',
+    },
+  },
+  {
     name: 'No refetch: after a write, invalidate',
     pattern: /\brefetch\b/,
     instead: "useMutation with invalidateQueries({ queryKey: xKeys... }) in onSuccess -- CLAUDE.md 'Schrijven naar de server'",

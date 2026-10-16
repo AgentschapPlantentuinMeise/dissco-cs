@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePdfPages } from './use-pdf-pages';
 import { PdfLightbox } from './PdfLightbox';
+import { Button } from '../ui/Button';
 
 // A PDF attachment as a page-image gallery, so a volunteer sees the manual immediately instead of
 // having to download it first. Clicking a page opens it in the lightbox. With openDirectly there
@@ -85,13 +86,9 @@ export function PdfGallery({
         ))}
       </div>
       {totalPages !== null && totalPages > pages.length && (
-        <button
-          type="button"
-          onClick={loadRest}
-          className="mt-2 border-none bg-transparent p-0 text-xs font-semibold text-cs-primary cursor-pointer hover:underline"
-        >
+        <Button variant="text" size="sm" className="mt-2" onClick={loadRest}>
           {t('manual_pdf_show_more', { count: totalPages - pages.length })}
-        </button>
+        </Button>
       )}
 
       {lightbox}

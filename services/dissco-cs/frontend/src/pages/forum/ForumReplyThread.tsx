@@ -2,7 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { ForumReplyDto } from '@dissco-cs/shared-types';
 import { DeleteIconButton } from '../../components/ui/DeleteIconButton';
 import { formatDate } from '../../utility/format-date';
-import { btnPrimary, inputClass } from './forum-styles';
+import { inputClass } from './forum-styles';
+import { Button } from '../../components/ui/Button';
 
 // The opened part of a topic: its replies, then a reply box (or a notice when the topic is closed).
 export function ForumReplyThread({ replies, closed, canDeleteReply, onDeleteReply, replyDraft, onReplyDraftChange, onSubmitReply }: {
@@ -50,7 +51,7 @@ export function ForumReplyThread({ replies, closed, canDeleteReply, onDeleteRepl
             rows={2}
             required
           />
-          <button type="submit" className={btnPrimary}>{t('forum_form_submit_reply')}</button>
+          <Button type="submit" size="sm" className="self-start">{t('forum_form_submit_reply')}</Button>
         </form>
       )}
     </div>

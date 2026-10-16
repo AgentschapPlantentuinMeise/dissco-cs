@@ -8,6 +8,7 @@ import { AnnouncementBanner } from '../../components/announcements/AnnouncementB
 import { WelcomeModal } from './WelcomeModal';
 import { LuArrowDown, LuArrowRight } from 'react-icons/lu';
 import { StatBanner } from '../../components/ui/StatBanner';
+import { Button } from '../../components/ui/Button';
 import { HonourBoardSpotlight } from '../../components/stats/HonourBoardSpotlight';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { useSiteStats } from '../../hooks/use-site-stats';
@@ -50,12 +51,12 @@ export function Homepage() {
             <h1 className="text-[32px] font-light leading-tight mb-3 text-white mt-0" dangerouslySetInnerHTML={{ __html: t('hero_title') }} />
             <p className="text-[20px] text-white/90 max-w-[650px] mb-5 leading-[1.5]" dangerouslySetInnerHTML={{ __html: t('hero_lead') }} />
             <div className="flex gap-4 items-center">
-              <button className="inline-flex items-center gap-1 bg-cs-secondary text-white border-none px-6 py-2.5 rounded-full font-medium cursor-pointer text-base no-underline">
+              <Button variant="on-dark">
                 {t('btn_active')} <LuArrowDown aria-hidden="true" />
-              </button>
-              <button className="bg-transparent text-white border border-white/60 px-6 py-2.5 rounded-full font-medium cursor-pointer text-base no-underline">
+              </Button>
+              <Button variant="on-dark-line">
                 {t('btn_read_more')}
-              </button>
+              </Button>
             </div>
             <span className="absolute bottom-0 right-0 opacity-50 text-xs italic text-white">
               {t('hero_bg_credit', disscoCSConfig.heroBgCredit)}

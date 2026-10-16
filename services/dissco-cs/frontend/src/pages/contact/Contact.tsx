@@ -1,5 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '../../components/ui/Button';
 import { useMutation } from '@tanstack/react-query';
 import { CsPage } from '../../components/layout/CsPage';
 import { CsMarkdown } from '../../components/ui/CsMarkdown';
@@ -101,13 +102,12 @@ export function Contact() {
               </label>
 
               <div>
-                <button
+                <Button
                   type="submit"
                   disabled={sending}
-                  className="bg-cs-primary text-white px-5 py-2 rounded-full text-sm font-semibold border-none cursor-pointer hover:bg-cs-dark disabled:opacity-50"
                 >
                   {t('contact_form_submit')}
-                </button>
+                </Button>
               </div>
 
               {sent && <p className="text-green-700">{t('contact_form_success')}</p>}

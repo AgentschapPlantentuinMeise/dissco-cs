@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { addBreadcrumb } from '../../api/breadcrumbs';
 import { reportClientError } from '../../api/cs-client/client-errors';
-import { PageError, pageErrorPrimaryButton } from './PageError';
+import { PageError } from './PageError';
+import { Button } from '../ui/Button';
 
 // No Navbar on purpose: if the Navbar itself is what crashed, the fallback must not crash too.
 function ErrorFallback() {
@@ -11,9 +12,7 @@ function ErrorFallback() {
   return (
     <div className="cs-bootstrap-wrapper">
       <PageError title={t('error_boundary_title')} text={t('error_boundary_text')}>
-        <button type="button" onClick={() => window.location.reload()} className={pageErrorPrimaryButton}>
-          {t('error_boundary_reload')}
-        </button>
+        <Button onClick={() => window.location.reload()}>{t('error_boundary_reload')}</Button>
       </PageError>
     </div>
   );

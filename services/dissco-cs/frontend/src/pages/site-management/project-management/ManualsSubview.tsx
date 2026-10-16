@@ -5,6 +5,7 @@ import { manualKeys } from '../../../api/queries/manuals';
 import { projectKeys } from '../../../api/queries/projects';
 import { manualsApi } from '../../../api/cs-client/manuals';
 import { SaveButton } from '../../../components/ui/SaveButton';
+import { Button } from '../../../components/ui/Button';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { ManualContentEditor } from './ManualContentEditor';
 import { manualHasContent } from './manual-content';
@@ -107,12 +108,9 @@ export function ManualsSubview({ projects, manuals }: {
                   {new Date(manual.updatedAt).toLocaleDateString(i18n.language)}
                 </td>
                 <td className="px-4 py-3 border-t border-gray-100 text-right whitespace-nowrap">
-                  <button
-                    onClick={() => setEditingId(editingId === manual.id ? null : manual.id)}
-                    className="text-sm font-semibold text-cs-primary bg-transparent border-none cursor-pointer hover:underline mr-4"
-                  >
+                  <Button variant="text" size="sm" className="mr-4" onClick={() => setEditingId(editingId === manual.id ? null : manual.id)}>
                     {editingId === manual.id ? t('sm_manuals_close_edit') : t('sm_manuals_edit')}
-                  </button>
+                  </Button>
                   <button
                     onClick={() => setPendingDeleteId(manual.id)}
                     className="text-sm font-semibold text-red-700 bg-transparent border-none cursor-pointer hover:underline"

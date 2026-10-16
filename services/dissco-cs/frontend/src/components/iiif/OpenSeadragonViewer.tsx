@@ -178,7 +178,7 @@ export function OpenSeadragonViewer({
           />
         </div>
         {drawingSelector && (
-          <button className={btnClass} onClick={onCancelDrawing}>Annuleer</button>
+          <button className={btnClass} onClick={onCancelDrawing}>{t('common_cancel')}</button>
         )}
       </div>
       <div ref={containerRef} style={{ height }} className="flex-1 bg-[#1e1e1e]" />

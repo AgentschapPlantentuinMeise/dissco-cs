@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SaveButton } from '../../../components/ui/SaveButton';
 import { CancelButton } from '../../../components/ui/CancelButton';
+import { buttonClass } from '../../../components/ui/Button';
 import { ActiveToggleField } from '../../../components/ui/ActiveToggleField';
 import { LanguageTabs } from '../../../components/ui/LanguageTabs';
 import { InstitutionInput, SitePageLang, institutionInputSchema } from '@dissco-cs/shared-types';
@@ -128,7 +129,7 @@ export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, i
                 style={{ backgroundImage: `url(${draft.logo})` }}
               />
             )}
-            <label className="px-4 py-2 rounded-full text-sm font-semibold border border-gray-300 bg-transparent cursor-pointer hover:bg-gray-50 inline-block">
+            <label className={buttonClass({ variant: 'secondary', size: 'sm' })}>
               {t('sm_institutions_choose_file')}
               <input type="file" accept="image/*" className="hidden" onChange={e => void handleLogoChange(e)} />
             </label>

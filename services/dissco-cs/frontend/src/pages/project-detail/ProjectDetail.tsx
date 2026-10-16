@@ -12,6 +12,7 @@ import { MadocInternationalString } from '@dissco-cs/shared-types';
 import { buildTaskLink } from '../../utility/build-task-link';
 import { HrefLink } from '../../utility/href-link';
 import { LocaleString } from '../../components/ui/LocaleString';
+import { Button } from '../../components/ui/Button';
 import { CsPage } from '../../components/layout/CsPage';
 import { currentLocation, withQuery } from '../../api/url';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
@@ -147,19 +148,12 @@ export function ProjectDetail() {
                 {project.summary}
               </LocaleString>
               <div className="flex flex-wrap gap-3">
-                <button
-                  className="inline-block py-[11px] px-[26px] bg-cs-primary text-white text-[0.95rem] font-semibold border-none rounded cursor-pointer no-underline transition-[background-color,transform] duration-200 hover:bg-cs-dark hover:-translate-y-[1px] disabled:opacity-65 disabled:cursor-not-allowed"
-                  onClick={() => startRandom()}
-                  disabled={isStarting || allTasksTaken}
-                >
+                <Button onClick={() => startRandom()} loading={isStarting} disabled={allTasksTaken}>
                   {isStarting ? t('pdp_starting') : t('pdp_btn_start')}
-                </button>
-                <button
-                  className="inline-block py-[11px] px-[26px] bg-transparent text-cs-primary text-[0.95rem] font-semibold border-2 border-cs-primary rounded cursor-pointer no-underline transition-[background-color,color,transform] duration-200 hover:bg-cs-primary hover:text-white hover:-translate-y-[1px]"
-                  onClick={() => setManualOpen(true)}
-                >
+                </Button>
+                <Button variant="secondary" onClick={() => setManualOpen(true)}>
                   {t('pdp_btn_guide')}
-                </button>
+                </Button>
               </div>
             </div>
 

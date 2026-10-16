@@ -9,6 +9,7 @@ import { HrefLink } from '../../../utility/href-link';
 import { buildTaskLink } from '../../../utility/build-task-link';
 import { localeText } from '../../../utility/locale-text';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
+import { Button } from '../../../components/ui/Button';
 import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
 import { reportClientError } from '../../../api/cs-client/client-errors';
 
@@ -99,13 +100,9 @@ export function StuckTasksSubview() {
                     </td>
                     <td className="px-4 py-3 border-t border-gray-100 text-sm text-gray-500">{modified}</td>
                     <td className="px-4 py-3 border-t border-gray-100 text-right whitespace-nowrap">
-                      <button
-                        onClick={() => setConfirmTask(task)}
-                        disabled={isReleasing(task)}
-                        className="text-sm font-semibold text-cs-primary bg-transparent border-none cursor-pointer hover:underline disabled:opacity-50"
-                      >
+                      <Button variant="text" size="sm" onClick={() => setConfirmTask(task)} loading={isReleasing(task)}>
                         {t('sm_stuck_tasks_release')}
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 );
@@ -148,13 +145,9 @@ export function StuckTasksSubview() {
                       </td>
                       <td className="px-4 py-3 border-t border-gray-100 text-sm text-gray-500">{modified}</td>
                       <td className="px-4 py-3 border-t border-gray-100 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => resync.mutate(counter)}
-                          disabled={isResyncing(counter)}
-                          className="text-sm font-semibold text-cs-primary bg-transparent border-none cursor-pointer hover:underline disabled:opacity-50"
-                        >
+                        <Button variant="text" size="sm" onClick={() => resync.mutate(counter)} loading={isResyncing(counter)}>
                           {t('sm_stuck_tasks_resync')}
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   );

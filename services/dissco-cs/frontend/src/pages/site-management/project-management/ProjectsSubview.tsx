@@ -6,6 +6,7 @@ import { manualKeys } from '../../../api/queries/manuals';
 import { institutionKeys } from '../../../api/queries/institutions';
 import { projectsApi } from '../../../api/cs-client/projects';
 import { SaveButton } from '../../../components/ui/SaveButton';
+import { Button } from '../../../components/ui/Button';
 import { Select } from '../../../components/ui/Select';
 import { manualHasContent } from './manual-content';
 import { localeText } from '../../../utility/locale-text';
@@ -216,12 +217,9 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
                         <SaveButton onClick={save} disabled={!canSave} loading={saving} />
                       </div>
                     ) : (
-                      <button
-                        onClick={() => setEditingSlug(project.slug)}
-                        className="text-sm font-semibold text-cs-primary bg-transparent border-none cursor-pointer hover:underline"
-                      >
+                      <Button variant="text" size="sm" onClick={() => setEditingSlug(project.slug)}>
                         {t('sm_manuals_edit')}
-                      </button>
+                      </Button>
                     )}
                   </td>
                 </tr>

@@ -23,9 +23,3 @@ export function PageError({
     </div>
   );
 }
-
-// The two button looks from the style guide, for PageError's actions.
-export const pageErrorPrimaryButton =
-  'px-4 py-2 rounded text-sm font-semibold border-2 border-cs-primary bg-cs-primary text-white cursor-pointer hover:bg-cs-dark hover:border-cs-dark disabled:opacity-60 disabled:cursor-not-allowed';
-export const pageErrorSecondaryButton =
-  'px-4 py-2 rounded text-sm font-semibold border-2 border-cs-primary bg-transparent text-cs-primary cursor-pointer hover:bg-cs-primary hover:text-white';

@@ -4,7 +4,7 @@ import { CsPage } from '../../components/layout/CsPage';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { ForumTopicForm } from '../../components/forum/ForumTopicForm';
 import { isUnread } from './forum-topics';
-import { btnPrimary } from './forum-styles';
+import { Button } from '../../components/ui/Button';
 import { useForumPage } from './use-forum-page';
 import { ForumTopicCard } from './ForumTopicCard';
 import { ForumReplyThread } from './ForumReplyThread';
@@ -20,9 +20,9 @@ export function Forum() {
       <div className="cs-container cs-container--wide pt-10 pb-16">
         <header className="flex justify-between items-center mb-4">
           <h1 className="text-4xl text-cs-primary m-0">{t('nav_forum')}</h1>
-          <button className={btnPrimary} onClick={() => c.setShowNewForm(v => !v)}>
+          <Button size="sm" onClick={() => c.setShowNewForm(v => !v)}>
             {c.showNewForm ? t('common_cancel') : t('forum_btn_new_message')}
-          </button>
+          </Button>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 items-start">

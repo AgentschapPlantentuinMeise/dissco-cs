@@ -5,6 +5,7 @@ import { projectQueries } from '../../../api/queries/projects';
 import { HrefLink } from '../../../utility/href-link';
 import { CsPage } from '../../../components/layout/CsPage';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
+import { Button } from '../../../components/ui/Button';
 import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
 import { ActiveStatusToggle } from '../../../components/ui/ActiveStatusToggle';
 import { LuPencil, LuArrowLeft } from 'react-icons/lu';
@@ -110,12 +111,9 @@ export function Announcements() {
 
           <div className="flex items-center justify-between mt-4 mb-8">
             <h1 className="text-4xl text-cs-primary m-0">{t('sm_tile_announcements_title')}</h1>
-            <button
-              onClick={startCreate}
-              className="px-4 py-2 rounded-full text-sm font-semibold border-none bg-cs-primary text-white cursor-pointer hover:bg-cs-dark"
-            >
+            <Button size="sm" onClick={startCreate}>
               {t('sm_announcements_new')}
-            </button>
+            </Button>
           </div>
 
           {isLoading && <p className="text-center py-5">{t('loading_announcements')}</p>}

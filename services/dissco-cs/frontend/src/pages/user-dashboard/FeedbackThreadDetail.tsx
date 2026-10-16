@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { feedbackKeys, feedbackQueries } from '../../api/queries/feedback';
 import { feedbackApi } from '../../api/cs-client/feedback';
+import { Button } from '../../components/ui/Button';
 
 // An opened feedback thread: its messages and a reply box.
 export function FeedbackThreadDetail({ threadId }: { threadId: number }) {
@@ -56,13 +57,14 @@ export function FeedbackThreadDetail({ threadId }: { threadId: number }) {
           placeholder={t('dashboard_feedback_reply_placeholder')}
           className="flex-1 border border-gray-300 rounded-lg p-2 text-sm resize-none focus:outline-none focus:border-cs-primary"
         />
-        <button
+        <Button
+          size="sm"
           onClick={() => replyBody.trim() && postReply(replyBody.trim())}
-          disabled={!replyBody.trim() || replyStatus === 'pending'}
-          className="px-4 py-2 rounded-full text-sm font-semibold border-none bg-cs-primary text-white cursor-pointer hover:bg-cs-dark disabled:opacity-50"
+          disabled={!replyBody.trim()}
+          loading={replyStatus === 'pending'}
         >
           {t('dashboard_feedback_reply_send')}
-        </button>
+        </Button>
       </div>
     </div>
   );

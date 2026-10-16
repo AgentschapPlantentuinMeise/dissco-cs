@@ -92,6 +92,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 - Do keep hook signatures focused on a single domain
 - Do declare a component as `function X({ a, b }: XProps)`, not `const X: React.FC<XProps>` (`frontend/test/conventions.test.ts` checks it)
+- Do make every action button with a label a `<Button variant size loading>` (`components/ui/Button.tsx`, `buttonClass()` for a link that looks like one), never own button classes or a pill shape; icon buttons, tabs, menu items and toggles are not Buttons (style guide, section "Bedieningselementen")
 - Do use `React.memo()` for expensive components
 - Do use `useMemo()` and `useCallback()` for expensive calculations
 - Do expose imperative handlers via callbacks rather than mutating shared state

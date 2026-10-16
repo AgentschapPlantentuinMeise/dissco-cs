@@ -6,6 +6,7 @@ import { projectKeys } from '../../../api/queries/projects';
 import { projectsApi } from '../../../api/cs-client/projects';
 import { iiifApi } from '../../../api/cs-client/iiif';
 import { Select } from '../../../components/ui/Select';
+import { Button } from '../../../components/ui/Button';
 import { localeText } from '../../../utility/locale-text';
 import { defaultLang } from '../../../utility/site-lang-text';
 import { MadocProjectDto, slugify } from '@dissco-cs/shared-types';
@@ -166,26 +167,19 @@ export function BulkCreateProjectsSubview({ projects }: { projects: MadocProject
 
       <div className="flex items-center gap-3">
         {!running ? (
-          <button
-            onClick={() => void run()}
-            disabled={!canSubmit}
-            className={`text-sm font-semibold px-4 py-2 rounded-full border-none ${
-              canSubmit
-                ? 'bg-cs-primary text-white cursor-pointer hover:bg-cs-dark'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
-          >
+          <Button size="sm" onClick={() => void run()} disabled={!canSubmit}>
             {t('sm_bulk_submit')}
-          </button>
+          </Button>
         ) : (
-          <button
+          <Button
+            variant="danger"
+            size="sm"
             onClick={() => {
               stopRef.current = true;
             }}
-            className="text-sm font-semibold text-red-700 border border-red-200 bg-red-50 rounded-lg px-4 py-2 cursor-pointer hover:bg-red-100"
           >
             {t('sm_bulk_stop')}
-          </button>
+          </Button>
         )}
         {progress.total > 0 && (running || finished) && (
           <span className="text-sm text-gray-600">

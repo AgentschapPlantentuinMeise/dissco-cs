@@ -1,6 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select } from '../ui/Select';
+import { Button } from '../ui/Button';
 import { ForumTopicInput } from '@dissco-cs/shared-types';
 
 type ProjectOption = { slug: string; label: string };
@@ -113,20 +114,13 @@ export function ForumTopicForm({
         />
       </label>
       <div className="flex gap-2">
-        <button
-          type="submit"
-          className="bg-cs-primary text-white border-none px-[18px] py-[10px] rounded text-[0.95rem] font-medium cursor-pointer transition-colors duration-200 hover:bg-cs-dark"
-        >
+        <Button type="submit" size="sm">
           {t('forum_form_submit') || 'Verstuur'}
-        </button>
+        </Button>
         {onCancel && (
-          <button
-            type="button"
-            className="bg-transparent border border-gray-300 px-3 py-1.5 rounded text-[0.85rem] text-gray-600 cursor-pointer whitespace-nowrap transition-[border-color,color] duration-200 hover:border-cs-primary hover:text-cs-primary"
-            onClick={onCancel}
-          >
+          <Button variant="secondary" size="sm" onClick={onCancel}>
             {t('common_cancel') || 'Annuleren'}
-          </button>
+          </Button>
         )}
       </div>
     </form>

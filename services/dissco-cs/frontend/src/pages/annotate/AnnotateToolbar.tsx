@@ -4,9 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { LuArrowLeft, LuArrowRight, LuBookOpen, LuChevronRight, LuMail } from 'react-icons/lu';
 import { MadocInternationalString } from '@dissco-cs/shared-types';
 import { LocaleString } from '../../components/ui/LocaleString';
-
-const outlineButtonClass =
-  'text-[0.85rem] text-cs-primary border border-cs-primary rounded px-2 py-1 inline-flex items-center gap-1.5 leading-none';
+import { Button } from '../../components/ui/Button';
 
 // The bar above the annotate screen: breadcrumb, manual, forum message, previous and next task.
 // Every way out goes through onLeave, so the claim is released before navigating.
@@ -44,28 +42,20 @@ export function AnnotateToolbar({ projectSlug, projectLabel, canvasLabel, onLeav
         <LocaleString>{canvasLabel ?? { en: ['...'] }}</LocaleString>
       </nav>
       <div className="flex items-center gap-2">
-        <button className={`${outlineButtonClass} cursor-pointer bg-white`} onClick={onOpenManual}>
-          <LuBookOpen aria-hidden="true" className="translate-y-px" /> {t('annotate_manual_button')}
-        </button>
+        <Button variant="secondary" size="sm" onClick={onOpenManual}>
+          <LuBookOpen aria-hidden="true" /> {t('annotate_manual_button')}
+        </Button>
         {onOpenForum && (
-          <button className={`${outlineButtonClass} cursor-pointer bg-white`} onClick={onOpenForum}>
-            <LuMail aria-hidden="true" className="translate-y-px" /> {t('annotate_forum_button')}
-          </button>
+          <Button variant="secondary" size="sm" onClick={onOpenForum}>
+            <LuMail aria-hidden="true" /> {t('annotate_forum_button')}
+          </Button>
         )}
-        <button
-          className={`${outlineButtonClass} disabled:opacity-40 disabled:cursor-not-allowed`}
-          disabled={!canGoPrevious}
-          onClick={onPrevious}
-        >
+        <Button variant="secondary" size="sm" disabled={!canGoPrevious} onClick={onPrevious}>
           <LuArrowLeft aria-hidden="true" /> {t('annotate_prev_task')}
-        </button>
-        <button
-          className={`${outlineButtonClass} disabled:opacity-40 disabled:cursor-not-allowed`}
-          disabled={isLoadingNext}
-          onClick={onNext}
-        >
+        </Button>
+        <Button variant="secondary" size="sm" loading={isLoadingNext} onClick={onNext}>
           {t('annotate_next_task')} <LuArrowRight aria-hidden="true" />
-        </button>
+        </Button>
       </div>
     </div>
   );

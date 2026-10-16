@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { CsPage } from '../../components/layout/CsPage';
-import { PageError, pageErrorPrimaryButton, pageErrorSecondaryButton } from '../../components/layout/PageError';
+import { PageError } from '../../components/layout/PageError';
+import { Button } from '../../components/ui/Button';
 
 export type AnnotatePageErrorKind =
   // Not an error: enough volunteers already work on this one -- offer the next task instead.
@@ -23,18 +24,18 @@ export function AnnotatePageError({ projectSlug, error }: { projectSlug: string 
   const navigate = useNavigate();
 
   const backToProject = (
-    <button type="button" onClick={() => navigate(`/explore/${projectSlug}`)} className={pageErrorSecondaryButton}>
+    <Button variant="secondary" onClick={() => navigate(`/explore/${projectSlug}`)}>
       {t('annotate_back_to_project')}
-    </button>
+    </Button>
   );
 
   return (
     <CsPage>
       {error.kind === 'full' ? (
         <PageError role="status" title={t('annotate_full_title')} text={t('annotate_full_text')}>
-          <button type="button" onClick={error.onNext} disabled={error.isLoadingNext} className={pageErrorPrimaryButton}>
+          <Button onClick={error.onNext} loading={error.isLoadingNext}>
             {t('annotate_next_task')}
-          </button>
+          </Button>
           {backToProject}
         </PageError>
       ) : (

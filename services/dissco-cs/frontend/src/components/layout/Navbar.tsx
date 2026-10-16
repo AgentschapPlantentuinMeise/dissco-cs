@@ -11,6 +11,7 @@ import { NAV_ITEMS } from './nav-config';
 import { NavSearch } from './NavSearch';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { UserMenu } from './UserMenu';
+import { buttonClass } from '../ui/Button';
 
 const navLinkClass = (isActive: boolean) =>
   `no-underline text-base transition-colors duration-200 hover:text-cs-primary
@@ -106,7 +107,7 @@ export function Navbar() {
             ) : (
               <HrefLink
                 href="/login"
-                className="no-underline font-semibold whitespace-nowrap transition-colors duration-200 bg-cs-primary text-white text-[0.9rem] px-[18px] py-[6px] rounded-full inline-block hover:bg-cs-dark max-[768px]:block max-[768px]:py-[10px] max-[768px]:px-0 max-[768px]:bg-transparent max-[768px]:text-cs-primary max-[768px]:text-base max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:rounded-none hover:max-[768px]:bg-transparent hover:max-[768px]:text-cs-dark"
+                className={`${buttonClass({ size: 'sm' })} whitespace-nowrap max-[768px]:flex max-[768px]:justify-start max-[768px]:py-[10px] max-[768px]:px-0 max-[768px]:bg-transparent max-[768px]:text-cs-primary max-[768px]:text-base max-[768px]:border-0 max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:rounded-none hover:max-[768px]:bg-transparent hover:max-[768px]:text-cs-dark hover:max-[768px]:translate-y-0`}
               >
                 {t('nav_login')}
               </HrefLink>

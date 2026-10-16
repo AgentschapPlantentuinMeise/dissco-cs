@@ -6,6 +6,7 @@ import { projectKeys } from '../../../api/queries/projects';
 import { manualsApi } from '../../../api/cs-client/manuals';
 import { MAX_MANUAL_ATTACHMENT_LENGTH, SitePageLang } from '@dissco-cs/shared-types';
 import { SaveButton } from '../../../components/ui/SaveButton';
+import { Button } from '../../../components/ui/Button';
 import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
 import { MarkdownToolbar } from '../../../components/ui/MarkdownToolbar';
 import { LuCheck } from 'react-icons/lu';
@@ -166,31 +167,21 @@ export function ManualContentEditor({ manualId }: { manualId: number }) {
               {attachment.filename} · {(attachment.size / 1_000_000).toFixed(1)} MB
             </span>
             <span className="flex items-center gap-2 flex-shrink-0">
-              <button
-                onClick={insertAttachmentMarker}
-                className="text-xs font-semibold border border-cs-primary text-cs-primary rounded px-2.5 py-1 bg-white cursor-pointer hover:bg-gray-50"
-              >
+              <Button variant="secondary" size="sm" onClick={insertAttachmentMarker}>
                 {t('sm_manuals_attachment_insert_marker')}
-              </button>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="text-xs font-semibold border border-cs-primary text-cs-primary rounded px-2.5 py-1 bg-white cursor-pointer hover:bg-gray-50"
-              >
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()}>
                 {t('sm_manuals_attachment_replace')}
-              </button>
+              </Button>
               <DeleteIconButton onClick={removeAttachment} />
             </span>
           </>
         ) : (
           <>
             <span className="text-gray-500">{t('sm_manuals_attachment_none')}</span>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="text-xs font-semibold border border-cs-primary text-cs-primary rounded px-2.5 py-1 bg-white cursor-pointer hover:bg-gray-50 disabled:opacity-50"
-            >
+            <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()} loading={uploading}>
               {uploading ? t('sm_manuals_attachment_uploading') : t('sm_manuals_attachment_add')}
-            </button>
+            </Button>
           </>
         )}
         <input

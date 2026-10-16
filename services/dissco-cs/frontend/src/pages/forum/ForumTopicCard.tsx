@@ -5,7 +5,10 @@ import { ForumTopicDto } from '@dissco-cs/shared-types';
 import { DeleteIconButton } from '../../components/ui/DeleteIconButton';
 import { formatDate } from '../../utility/format-date';
 import { LuChevronDown, LuUser, LuClock, LuFolder, LuLink, LuCheck } from 'react-icons/lu';
-import { btnGhost } from './forum-styles';
+
+// Opens and closes the replies, so a disclosure toggle rather than an action Button.
+const replyToggleClass =
+  'bg-transparent border border-gray-300 px-3 py-1.5 rounded text-[0.85rem] text-gray-600 cursor-pointer whitespace-nowrap transition-[border-color,color] duration-200 hover:border-cs-primary hover:text-cs-primary';
 
 // One topic in the list: title with unread/closed markers, actions, meta line and body. When open,
 // `thread` (replies and reply box) is shown below the body.
@@ -68,7 +71,7 @@ export function ForumTopicCard({ topic, unread, isExpanded, canModerate, onToggl
                 </span>
               )
             ) : (
-              <button className={`${btnGhost} flex items-center gap-1`} onClick={onToggle}>
+              <button className={`${replyToggleClass} flex items-center gap-1`} onClick={onToggle}>
                 {topic.replyCount > 0 ? replyCountLabel : t('forum_btn_reply')}
                 <LuChevronDown className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
               </button>
