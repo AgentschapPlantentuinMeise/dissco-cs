@@ -20,7 +20,7 @@ export function SearchResults() {
         <div className="cs-container cs-container--wide">
 
           <header className="mb-8">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">
+            <h1 className="text-4xl text-cs-primary mb-3">
               {t('search_results_title', { query })}
             </h1>
             {isActive && !isLoading && (
@@ -42,7 +42,7 @@ export function SearchResults() {
             <div className="mb-10">
               <h2 className="text-2xl text-gray-800 mb-4 flex items-center gap-2">
                 {t('search_projects_heading')}
-                <span className="text-sm font-bold text-white bg-[var(--cs-secondary)] rounded-full px-2.5 py-0.5">
+                <span className="text-sm font-bold text-white bg-cs-secondary rounded-full px-2.5 py-0.5">
                   {projects.length}
                 </span>
               </h2>
@@ -58,7 +58,7 @@ export function SearchResults() {
             <div>
               <h2 className="text-2xl text-gray-800 mb-4 flex items-center gap-2">
                 {t('search_institutions_heading')}
-                <span className="text-sm font-bold text-white bg-[var(--cs-secondary)] rounded-full px-2.5 py-0.5">
+                <span className="text-sm font-bold text-white bg-cs-secondary rounded-full px-2.5 py-0.5">
                   {institutions.length}
                 </span>
               </h2>

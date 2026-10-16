@@ -10,7 +10,7 @@ export function ToggleSwitch({ checked, onChange, label }: {
       <input type="checkbox" checked={checked} onChange={onChange} className="sr-only peer" />
       <span
         className={`relative w-10 h-6 rounded-full transition-colors duration-200 ${
-          checked ? 'bg-[var(--cs-primary)]' : 'bg-gray-300'
+          checked ? 'bg-cs-primary' : 'bg-gray-300'
         }`}
       >
         <span

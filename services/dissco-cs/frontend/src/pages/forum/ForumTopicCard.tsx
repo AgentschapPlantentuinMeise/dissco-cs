@@ -25,15 +25,15 @@ export function ForumTopicCard({ topic, unread, isExpanded, canModerate, onToggl
   const replyCountLabel = `${topic.replyCount} ${t(topic.replyCount === 1 ? 'forum_btn_replies_one' : 'forum_btn_replies_many')}`;
 
   return (
-    <div id={`topic-${topic.id}`} className={`flex bg-white rounded-lg shadow-sm border border-gray-100 border-l-4 ${unread ? 'border-l-[var(--cs-secondary)]' : 'border-l-transparent'} px-4 py-3.5`}>
+    <div id={`topic-${topic.id}`} className={`flex bg-white rounded-lg shadow-sm border border-gray-100 border-l-4 ${unread ? 'border-l-cs-secondary' : 'border-l-transparent'} px-4 py-3.5`}>
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start gap-3 mb-1">
           {/* Clicking the title/meta/body reads the full message — same toggle as
               "Antwoord", so opening it to just read doesn't require hitting the
               reply button specifically. */}
           <div className="min-w-0 flex-1 cursor-pointer" onClick={onToggle}>
-            <h3 className={`m-0 text-[0.95rem] text-[var(--cs-primary)] flex items-center gap-[6px] min-w-0 ${unread ? 'font-bold' : 'font-medium'}`}>
-              {unread && <span className="inline-block w-2 h-2 rounded-full bg-[var(--cs-secondary)] flex-shrink-0" aria-label={t('forum_unread_label')} />}
+            <h3 className={`m-0 text-[0.95rem] text-cs-primary flex items-center gap-[6px] min-w-0 ${unread ? 'font-bold' : 'font-medium'}`}>
+              {unread && <span className="inline-block w-2 h-2 rounded-full bg-cs-secondary flex-shrink-0" aria-label={t('forum_unread_label')} />}
               {topic.title}
               {closed && (
                 <span className="text-[0.68rem] font-semibold text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 flex-shrink-0">
@@ -52,7 +52,7 @@ export function ForumTopicCard({ topic, unread, isExpanded, canModerate, onToggl
                 onClick={onClose}
                 aria-label={t('forum_btn_close')}
                 title={t('forum_btn_close')}
-                className="bg-transparent border-none cursor-pointer text-gray-600 text-base px-1 flex items-center hover:text-[var(--cs-primary)] transition-colors duration-200"
+                className="bg-transparent border-none cursor-pointer text-gray-600 text-base px-1 flex items-center hover:text-cs-primary transition-colors duration-200"
               >
                 <LuCheck />
               </button>
@@ -89,7 +89,7 @@ export function ForumTopicCard({ topic, unread, isExpanded, canModerate, onToggl
             <Link
               to={`/explore/${topic.projectSlug}`}
               onClick={e => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--cs-primary)] no-underline hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-cs-primary no-underline hover:underline"
             >
               <LuFolder aria-hidden="true" /> {topic.projectLabel || topic.projectSlug}
             </Link>
@@ -100,7 +100,7 @@ export function ForumTopicCard({ topic, unread, isExpanded, canModerate, onToggl
               target="_blank"
               rel="noopener noreferrer"
               onClick={e => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-xs text-[var(--cs-primary)] no-underline hover:underline"
+              className="inline-flex items-center gap-1 text-xs text-cs-primary no-underline hover:underline"
             >
               <LuLink aria-hidden="true" /> {t('forum_view_task')}
             </a>

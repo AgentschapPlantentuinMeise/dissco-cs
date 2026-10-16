@@ -42,7 +42,7 @@ function ExpansionChrome({
         </div>
         <div className="flex items-center gap-3">
           {headerAction}
-          <button onClick={onClose} className="bg-transparent border-none text-gray-500 hover:text-[var(--cs-primary)] cursor-pointer text-[0.8rem] font-semibold">
+          <button onClick={onClose} className="bg-transparent border-none text-gray-500 hover:text-cs-primary cursor-pointer text-[0.8rem] font-semibold">
             {t('review_detail_close')}
           </button>
         </div>
@@ -124,7 +124,7 @@ export function ReviewInlineExpansion({
             disabled={releasing}
             aria-label={t('review_detail_release_button')}
             title={t('review_detail_release_button')}
-            className="bg-transparent border-none text-gray-600 hover:text-[var(--cs-primary)] transition-colors duration-200 cursor-pointer p-1 disabled:opacity-50"
+            className="bg-transparent border-none text-gray-600 hover:text-cs-primary transition-colors duration-200 cursor-pointer p-1 disabled:opacity-50"
           >
             <LuTrash2 />
           </button>

@@ -66,7 +66,7 @@ function FieldRow({ field, path, onChange, readOnly }: { field: MadocBaseFieldDt
         placeholder={t('review_detail_field_empty')}
         readOnly={readOnly}
         onChange={e => onChange?.(path, textToFieldValue(e.target.value, field.value))}
-        className={`w-full px-[10px] py-2 rounded-md border border-gray-300 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[var(--cs-accent)] focus:border-[var(--cs-accent)] ${readOnly ? 'bg-gray-50 text-gray-600 cursor-default' : ''}`}
+        className={`w-full px-[10px] py-2 rounded-md border border-gray-300 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-cs-accent focus:border-cs-accent ${readOnly ? 'bg-gray-50 text-gray-600 cursor-default' : ''}`}
       />
     </div>
   );
@@ -163,7 +163,7 @@ export function SubmissionFieldsForm({ model, document, onChange, readOnly }: Su
         block.boxed ? (
           <fieldset key={block.key} className="border border-gray-200 rounded-md p-3">
             {block.label && (
-              <legend className="px-1 text-[0.68rem] font-bold uppercase tracking-wide text-[var(--cs-tertiary)]">
+              <legend className="px-1 text-[0.68rem] font-bold uppercase tracking-wide text-cs-tertiary">
                 {block.label}
               </legend>
             )}
@@ -172,7 +172,7 @@ export function SubmissionFieldsForm({ model, document, onChange, readOnly }: Su
         ) : (
           <div key={block.key}>
             {block.label && (
-              <h3 className="text-[0.68rem] font-bold uppercase tracking-wide text-[var(--cs-tertiary)] mb-2.5 pb-1.5 border-b border-gray-200">
+              <h3 className="text-[0.68rem] font-bold uppercase tracking-wide text-cs-tertiary mb-2.5 pb-1.5 border-b border-gray-200">
                 {block.label}
               </h3>
             )}

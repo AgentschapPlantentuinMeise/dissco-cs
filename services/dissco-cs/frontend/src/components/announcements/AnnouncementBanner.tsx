@@ -15,7 +15,7 @@ const descriptionMarkdownComponents = {
     <p className="text-sm text-gray-700 mt-1 mb-0 last:mb-0">{children}</p>
   ),
   a: ({ href, children }: { href?: string; children?: React.ReactNode }) => (
-    <a href={href} target="_blank" rel="noreferrer" className="text-[var(--cs-primary)] underline">
+    <a href={href} target="_blank" rel="noreferrer" className="text-cs-primary underline">
       {children}
     </a>
   ),

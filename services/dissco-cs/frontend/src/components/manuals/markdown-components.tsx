@@ -19,16 +19,16 @@ export const markdownComponents = {
       );
     }
     return (
-      <a href={href} target="_blank" rel="noreferrer" className="text-[var(--cs-primary)] underline">
+      <a href={href} target="_blank" rel="noreferrer" className="text-cs-primary underline">
         {children}
       </a>
     );
   },
   h1: ({ children }: { children?: React.ReactNode }) => (
-    <h4 className="mb-2 mt-0 text-base font-semibold text-[var(--cs-primary)]">{children}</h4>
+    <h4 className="mb-2 mt-0 text-base font-semibold text-cs-primary">{children}</h4>
   ),
   h3: ({ children }: { children?: React.ReactNode }) => (
-    <h5 className="mb-2 mt-3 text-sm font-semibold text-[var(--cs-primary)]">{children}</h5>
+    <h5 className="mb-2 mt-3 text-sm font-semibold text-cs-primary">{children}</h5>
   ),
   p: ({ children }: { children?: React.ReactNode }) => (
     <p className="mb-3 text-[0.87rem] leading-relaxed text-gray-700 last:mb-0">{children}</p>

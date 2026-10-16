@@ -21,7 +21,7 @@ export function Review() {
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container cs-container--wide">
-          <h1 className="text-3xl text-[var(--cs-primary)] mt-4 mb-6">{t('review_title')}</h1>
+          <h1 className="text-3xl text-cs-primary mt-4 mb-6">{t('review_title')}</h1>
 
           <div className="flex flex-wrap items-center gap-3 mb-5">
             <ReviewSearchInput value={c.searchQuery} onChange={c.setSearchQuery} />
@@ -48,14 +48,14 @@ export function Review() {
             <div className="cs-container cs-container--wide pointer-events-none flex justify-center">
             <div className="pointer-events-auto mb-4 max-w-full">
               {c.selectedIds.size > 0 ? (
-                <div className="flex items-center gap-1 p-1.5 bg-[var(--cs-light,#f3f8f8)] rounded-full border-2 border-[rgba(19,155,148,0.35)]">
+                <div className="flex items-center gap-1 p-1.5 bg-[#f3f8f8] rounded-full border-2 border-[rgba(19,155,148,0.35)]">
                   <span className="px-3 text-sm text-gray-600 whitespace-nowrap">{t('review_bulk_selected_count', { count: c.selectedIds.size })}</span>
                   <span className="w-px self-stretch bg-gray-200" />
                   <button
                     onClick={c.openFeedbackForSelection}
                     disabled={!c.canSendBulkFeedback}
                     title={c.canSendBulkFeedback ? undefined : t('feedback_multi_submitter_hint')}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-none bg-transparent text-[var(--cs-tertiary)] cursor-pointer hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-none bg-transparent text-cs-tertiary cursor-pointer hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <LuMail aria-hidden="true" />
                     {t('feedback_button')}
@@ -63,19 +63,19 @@ export function Review() {
                   <button
                     onClick={() => c.setConfirmingAccept(true)}
                     disabled={c.bulkRunning}
-                    className="px-5 py-2 rounded-full text-sm font-semibold border-none bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
+                    className="px-5 py-2 rounded-full text-sm font-semibold border-none bg-cs-primary text-white cursor-pointer hover:bg-cs-dark disabled:opacity-50"
                   >
                     {t('review_bulk_accept_button')}
                   </button>
                 </div>
               ) : c.bulkRunning ? (
-                <div className="flex items-center px-5 py-3 bg-[var(--cs-light,#f3f8f8)] rounded-full border-2 border-[rgba(19,155,148,0.35)]">
+                <div className="flex items-center px-5 py-3 bg-[#f3f8f8] rounded-full border-2 border-[rgba(19,155,148,0.35)]">
                   <p className="text-sm text-gray-500 m-0 whitespace-nowrap">
                     {t('review_bulk_progress', { current: c.bulkProgress.current, total: c.bulkProgress.total })}
                   </p>
                 </div>
               ) : c.bulkResults ? (
-                <div className="p-3 bg-[var(--cs-light,#f3f8f8)] rounded-2xl border-2 border-[rgba(19,155,148,0.35)]">
+                <div className="p-3 bg-[#f3f8f8] rounded-2xl border-2 border-[rgba(19,155,148,0.35)]">
                   <div className="flex flex-wrap items-center justify-center gap-3">
                     <p className="text-sm text-gray-700 m-0 whitespace-nowrap">
                       {t('review_bulk_results_summary', { success: c.successCount, failed: c.failedResults.length })}
@@ -83,7 +83,7 @@ export function Review() {
                     {c.canSendLastBatchFeedback && (
                       <button
                         onClick={c.openFeedbackForLastBatch}
-                        className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border border-[var(--cs-tertiary)] bg-white text-[var(--cs-tertiary)] cursor-pointer hover:bg-gray-50"
+                        className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border border-cs-tertiary bg-white text-cs-tertiary cursor-pointer hover:bg-gray-50"
                       >
                         <LuMail aria-hidden="true" />
                         {t('feedback_button')}
@@ -94,7 +94,7 @@ export function Review() {
                         c.setBulkResults(null);
                         c.dismissLastBatch();
                       }}
-                      className="text-sm text-[var(--cs-primary)] bg-transparent border-none cursor-pointer hover:underline"
+                      className="text-sm text-cs-primary bg-transparent border-none cursor-pointer hover:underline"
                     >
                       {t('common_close')}
                     </button>
@@ -110,15 +110,15 @@ export function Review() {
                   )}
                 </div>
               ) : c.lastBatchTasks ? (
-                <div className="flex items-center gap-1 p-1.5 bg-[var(--cs-light,#f3f8f8)] rounded-full border-2 border-[rgba(19,155,148,0.35)]">
+                <div className="flex items-center gap-1 p-1.5 bg-[#f3f8f8] rounded-full border-2 border-[rgba(19,155,148,0.35)]">
                   <span className="flex items-center gap-2 px-3 text-sm text-gray-700 whitespace-nowrap">
-                    <span className="w-2 h-2 rounded-full bg-[var(--cs-secondary)]" />
+                    <span className="w-2 h-2 rounded-full bg-cs-secondary" />
                     {t('feedback_last_batch_summary', { count: c.lastBatchTasks.length })}
                   </span>
                   {c.canSendLastBatchFeedback && (
                     <button
                       onClick={c.openFeedbackForLastBatch}
-                      className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-none bg-transparent text-[var(--cs-tertiary)] cursor-pointer hover:bg-gray-50"
+                      className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-none bg-transparent text-cs-tertiary cursor-pointer hover:bg-gray-50"
                     >
                       <LuMail aria-hidden="true" />
                       {t('feedback_button')}
@@ -126,7 +126,7 @@ export function Review() {
                   )}
                   <button
                     onClick={c.dismissLastBatch}
-                    className="px-3 text-sm text-[var(--cs-primary)] bg-transparent border-none cursor-pointer hover:underline"
+                    className="px-3 text-sm text-cs-primary bg-transparent border-none cursor-pointer hover:underline"
                   >
                     {t('common_close')}
                   </button>

@@ -13,10 +13,10 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { UserMenu } from './UserMenu';
 
 const navLinkClass = (isActive: boolean) =>
-  `no-underline text-base transition-colors duration-200 hover:text-[var(--cs-primary)]
+  `no-underline text-base transition-colors duration-200 hover:text-cs-primary
    block py-[10px] border-t border-[#f0f0f0]
    md:inline md:py-0 md:border-t-0
-   ${isActive ? 'font-medium text-[var(--cs-accent)]' : 'font-[380] text-gray-600'}`;
+   ${isActive ? 'font-medium text-cs-accent' : 'font-[380] text-gray-600'}`;
 
 export function Navbar() {
   const { t } = useTranslation('dissco-cs');
@@ -83,7 +83,7 @@ export function Navbar() {
                 >
                   {t(nav.labelKey)}
                   {navItem.pageKey === 'forum' && newMsgCount > 0 && (
-                    <span className="inline-block bg-[var(--cs-accent)] text-white rounded-[10px] px-[6px] py-[1px] text-[0.7rem] font-bold ml-[5px] align-middle leading-[1.4]">
+                    <span className="inline-block bg-cs-accent text-white rounded-[10px] px-[6px] py-[1px] text-[0.7rem] font-bold ml-[5px] align-middle leading-[1.4]">
                       {newMsgCount}
                     </span>
                   )}
@@ -106,7 +106,7 @@ export function Navbar() {
             ) : (
               <HrefLink
                 href="/login"
-                className="no-underline font-semibold whitespace-nowrap transition-colors duration-200 bg-[var(--cs-primary)] text-white text-[0.9rem] px-[18px] py-[6px] rounded-full inline-block hover:bg-[var(--cs-dark)] max-[768px]:block max-[768px]:py-[10px] max-[768px]:px-0 max-[768px]:bg-transparent max-[768px]:text-[var(--cs-primary)] max-[768px]:text-base max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:rounded-none hover:max-[768px]:bg-transparent hover:max-[768px]:text-[var(--cs-dark)]"
+                className="no-underline font-semibold whitespace-nowrap transition-colors duration-200 bg-cs-primary text-white text-[0.9rem] px-[18px] py-[6px] rounded-full inline-block hover:bg-cs-dark max-[768px]:block max-[768px]:py-[10px] max-[768px]:px-0 max-[768px]:bg-transparent max-[768px]:text-cs-primary max-[768px]:text-base max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:rounded-none hover:max-[768px]:bg-transparent hover:max-[768px]:text-cs-dark"
               >
                 {t('nav_login')}
               </HrefLink>

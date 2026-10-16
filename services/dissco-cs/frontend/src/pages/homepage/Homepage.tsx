@@ -39,7 +39,7 @@ export function Homepage() {
       <WelcomeModal />
       <div className="cs-main-wrapper">
 
-        <header className="bg-[var(--cs-primary)] text-left text-white relative mt-0">
+        <header className="bg-cs-primary text-left text-white relative mt-0">
           <div
             className="cs-container cs-container--wide relative bg-[length:auto_160%] bg-no-repeat py-8"
             style={{
@@ -50,7 +50,7 @@ export function Homepage() {
             <h1 className="text-[32px] font-light leading-tight mb-3 text-white mt-0" dangerouslySetInnerHTML={{ __html: t('hero_title') }} />
             <p className="text-[20px] text-white/90 max-w-[650px] mb-5 leading-[1.5]" dangerouslySetInnerHTML={{ __html: t('hero_lead') }} />
             <div className="flex gap-4 items-center">
-              <button className="inline-flex items-center gap-1 bg-[var(--cs-secondary)] text-white border-none px-6 py-2.5 rounded-full font-medium cursor-pointer text-base no-underline">
+              <button className="inline-flex items-center gap-1 bg-cs-secondary text-white border-none px-6 py-2.5 rounded-full font-medium cursor-pointer text-base no-underline">
                 {t('btn_active')} <LuArrowDown aria-hidden="true" />
               </button>
               <button className="bg-transparent text-white border border-white/60 px-6 py-2.5 rounded-full font-medium cursor-pointer text-base no-underline">
@@ -92,7 +92,7 @@ export function Homepage() {
                 {isClient && !isLoadingList && latestProjects.length > 0 && (
                   <HrefLink
                     href="/explore"
-                    className="inline-flex items-center gap-1 text-sm text-[var(--cs-primary)] font-semibold no-underline hover:underline mt-4"
+                    className="inline-flex items-center gap-1 text-sm text-cs-primary font-semibold no-underline hover:underline mt-4"
                   >
                     {t('homepage_view_all_projects')} <LuArrowRight aria-hidden="true" />
                   </HrefLink>

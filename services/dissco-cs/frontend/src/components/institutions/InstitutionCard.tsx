@@ -21,7 +21,7 @@ export function InstitutionCard({ institution }: InstitutionCardProps) {
         className="h-[100px] w-full bg-contain bg-center bg-no-repeat mb-4"
         style={{ backgroundImage: institution.logo ? `url(${institution.logo})` : undefined }}
       />
-      <h3 className="text-lg text-center text-[var(--cs-primary)] m-0">{name}</h3>
+      <h3 className="text-lg text-center text-cs-primary m-0">{name}</h3>
     </Link>
   );
 }

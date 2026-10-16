@@ -45,7 +45,7 @@ export function HonourBoardSpotlight({ className = '' }: { className?: string })
   // confirmed-empty message once every period has settled with nothing, or a loading placeholder
   // in between.
   return (
-    <div className={`bg-[var(--cs-dark)] rounded-[4px] p-6 flex flex-col ${className}`}>
+    <div className={`bg-cs-dark rounded-[4px] p-6 flex flex-col ${className}`}>
       <div className="flex items-center justify-center gap-2 mb-4">
         <div className="text-xs font-bold uppercase tracking-wider text-[#9fc9c4]">{t('honour_board_spotlight_title')}</div>
       </div>

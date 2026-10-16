@@ -168,13 +168,13 @@ export function ManualContentEditor({ manualId }: { manualId: number }) {
             <span className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={insertAttachmentMarker}
-                className="text-xs font-semibold border border-[var(--cs-primary)] text-[var(--cs-primary)] rounded px-2.5 py-1 bg-white cursor-pointer hover:bg-gray-50"
+                className="text-xs font-semibold border border-cs-primary text-cs-primary rounded px-2.5 py-1 bg-white cursor-pointer hover:bg-gray-50"
               >
                 {t('sm_manuals_attachment_insert_marker')}
               </button>
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="text-xs font-semibold border border-[var(--cs-primary)] text-[var(--cs-primary)] rounded px-2.5 py-1 bg-white cursor-pointer hover:bg-gray-50"
+                className="text-xs font-semibold border border-cs-primary text-cs-primary rounded px-2.5 py-1 bg-white cursor-pointer hover:bg-gray-50"
               >
                 {t('sm_manuals_attachment_replace')}
               </button>
@@ -187,7 +187,7 @@ export function ManualContentEditor({ manualId }: { manualId: number }) {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="text-xs font-semibold border border-[var(--cs-primary)] text-[var(--cs-primary)] rounded px-2.5 py-1 bg-white cursor-pointer hover:bg-gray-50 disabled:opacity-50"
+              className="text-xs font-semibold border border-cs-primary text-cs-primary rounded px-2.5 py-1 bg-white cursor-pointer hover:bg-gray-50 disabled:opacity-50"
             >
               {uploading ? t('sm_manuals_attachment_uploading') : t('sm_manuals_attachment_add')}
             </button>

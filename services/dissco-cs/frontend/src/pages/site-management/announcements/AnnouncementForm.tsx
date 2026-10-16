@@ -38,7 +38,7 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
 
   return (
     <div className="w-full lg:flex-[0_0_55%] lg:min-w-[420px] bg-white border border-gray-200 rounded-[10px] p-6">
-      <h2 className="text-xl font-semibold text-[var(--cs-primary)] mb-4">
+      <h2 className="text-xl font-semibold text-cs-primary mb-4">
         {isEditing ? t('sm_announcements_edit') : t('sm_announcements_new')}
       </h2>
 

@@ -19,12 +19,12 @@ export function HonourBoardPeriodCard({ titleKey, icon, period, formatNumber, da
   }
 
   return (
-    <div className={`rounded-[4px] p-5 ${dark ? 'bg-[var(--cs-dark)]' : 'bg-white border border-gray-100'}`}>
+    <div className={`rounded-[4px] p-5 ${dark ? 'bg-cs-dark' : 'bg-white border border-gray-100'}`}>
       <div className="flex items-center gap-2.5 mb-4">
-        <div className={`w-[30px] h-[30px] rounded-[4px] flex items-center justify-center flex-shrink-0 ${dark ? 'bg-white/10 text-[#eafcf9]' : 'bg-[#eaf3f2] text-[var(--cs-accent)]'}`}>
+        <div className={`w-[30px] h-[30px] rounded-[4px] flex items-center justify-center flex-shrink-0 ${dark ? 'bg-white/10 text-[#eafcf9]' : 'bg-[#eaf3f2] text-cs-accent'}`}>
           {icon}
         </div>
-        <h3 className={`text-sm font-bold ${dark ? 'text-white' : 'text-[var(--cs-primary)]'}`}>{t(titleKey)}</h3>
+        <h3 className={`text-sm font-bold ${dark ? 'text-white' : 'text-cs-primary'}`}>{t(titleKey)}</h3>
       </div>
 
       {loading ? (
@@ -38,8 +38,8 @@ export function HonourBoardPeriodCard({ titleKey, icon, period, formatNumber, da
               key={entry.userUrn}
               className={`flex items-baseline gap-2.5 py-1.5 text-sm border-b last:border-b-0 ${dark ? 'border-white/10' : 'border-gray-100'} ${isYou ? (dark ? 'bg-white/10 rounded-[4px] px-1.5' : 'bg-[#eaf3f2] rounded-[4px] px-1.5') : ''}`}
             >
-              <span className={`font-mono w-5 ${isYou ? (dark ? 'text-[#7fe0d4]' : 'text-[var(--cs-secondary)]') : (dark ? 'text-[#82a19c]' : 'text-gray-400')}`}>{entry.rank}</span>
-              <span className={`flex-1 ${isYou ? `font-bold ${dark ? 'text-[#7fe0d4]' : 'text-[var(--cs-secondary)]'}` : (dark ? 'text-[#d3e8e5]' : 'text-gray-800')}`}>
+              <span className={`font-mono w-5 ${isYou ? (dark ? 'text-[#7fe0d4]' : 'text-cs-secondary') : (dark ? 'text-[#82a19c]' : 'text-gray-400')}`}>{entry.rank}</span>
+              <span className={`flex-1 ${isYou ? `font-bold ${dark ? 'text-[#7fe0d4]' : 'text-cs-secondary'}` : (dark ? 'text-[#d3e8e5]' : 'text-gray-800')}`}>
                 {isYou ? t('honour_board_you') : entry.name}
               </span>
               <span className={`tabular-nums ${dark ? 'text-[#82a19c]' : 'text-gray-500'}`}>{formatNumber(entry.count)}</span>

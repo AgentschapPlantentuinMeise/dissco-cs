@@ -51,7 +51,7 @@ export function InstitutionDetail() {
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container cs-container--wide">
-          <HrefLink href="/institutions" className="inline-flex items-center gap-1 text-[var(--cs-primary)] no-underline font-medium hover:underline">
+          <HrefLink href="/institutions" className="inline-flex items-center gap-1 text-cs-primary no-underline font-medium hover:underline">
             <LuArrowLeft aria-hidden="true" /> {t('institution_back_to_list')}
           </HrefLink>
 
@@ -67,7 +67,7 @@ export function InstitutionDetail() {
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-x-14 mt-6">
                 {/* Hero: title/description */}
                 <div className="min-w-0 max-w-[720px] lg:col-start-1 lg:row-start-1">
-                  <h1 className="text-4xl text-[var(--cs-primary)] mt-0 mb-5">{siteLangText(institution.name, i18n.language, '')}</h1>
+                  <h1 className="text-4xl text-cs-primary mt-0 mb-5">{siteLangText(institution.name, i18n.language, '')}</h1>
                   {description && (
                     <>
                       <p className={`text-base leading-relaxed text-gray-700 m-0 whitespace-pre-line ${!descExpanded && isLongDescription ? 'line-clamp-4' : ''}`}>
@@ -77,7 +77,7 @@ export function InstitutionDetail() {
                         <button
                           type="button"
                           onClick={() => setDescExpanded(e => !e)}
-                          className="mt-2 text-sm font-semibold text-[var(--cs-primary)] bg-transparent border-none p-0 cursor-pointer hover:underline"
+                          className="mt-2 text-sm font-semibold text-cs-primary bg-transparent border-none p-0 cursor-pointer hover:underline"
                         >
                           {descExpanded ? t('institution_read_less') : t('institution_read_more')}
                         </button>
@@ -96,18 +96,18 @@ export function InstitutionDetail() {
                       />
                     )}
                     {institution.email && (
-                      <a className="flex items-center gap-2.5 text-sm text-gray-700 no-underline hover:text-[var(--cs-primary)] whitespace-nowrap" href={`mailto:${institution.email}`}>
-                        <LuMail aria-hidden="true" className="text-[var(--cs-primary)] flex-shrink-0" /> {institution.email}
+                      <a className="flex items-center gap-2.5 text-sm text-gray-700 no-underline hover:text-cs-primary whitespace-nowrap" href={`mailto:${institution.email}`}>
+                        <LuMail aria-hidden="true" className="text-cs-primary flex-shrink-0" /> {institution.email}
                       </a>
                     )}
                     {institution.phone && (
                       <span className="flex items-center gap-2.5 text-sm text-gray-700 whitespace-nowrap">
-                        <LuPhone aria-hidden="true" className="text-[var(--cs-primary)] flex-shrink-0" /> {institution.phone}
+                        <LuPhone aria-hidden="true" className="text-cs-primary flex-shrink-0" /> {institution.phone}
                       </span>
                     )}
                     {institution.website && (
-                      <a className="flex items-center gap-2.5 text-sm text-gray-700 no-underline hover:text-[var(--cs-primary)] whitespace-nowrap" href={institution.website} target="_blank" rel="noreferrer">
-                        <LuGlobe aria-hidden="true" className="text-[var(--cs-primary)] flex-shrink-0" /> {displayUrl(institution.website)}
+                      <a className="flex items-center gap-2.5 text-sm text-gray-700 no-underline hover:text-cs-primary whitespace-nowrap" href={institution.website} target="_blank" rel="noreferrer">
+                        <LuGlobe aria-hidden="true" className="text-cs-primary flex-shrink-0" /> {displayUrl(institution.website)}
                       </a>
                     )}
                   </div>

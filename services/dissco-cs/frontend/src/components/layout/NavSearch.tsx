@@ -41,7 +41,7 @@ export function NavSearch({ onSearched }: { onSearched: () => void }) {
               if (!searchQuery.trim()) setSearchOpen(false);
             }}
             placeholder={t('search_placeholder')}
-            className="text-[0.9rem] border border-[#ddd] rounded-full pl-3 pr-7 py-1 outline-none focus:border-[var(--cs-primary)] w-[180px] max-[768px]:w-full"
+            className="text-[0.9rem] border border-[#ddd] rounded-full pl-3 pr-7 py-1 outline-none focus:border-cs-primary w-[180px] max-[768px]:w-full"
           />
           {searchQuery && (
             <button
@@ -51,7 +51,7 @@ export function NavSearch({ onSearched }: { onSearched: () => void }) {
                 searchInputRef.current?.focus();
               }}
               aria-label={t('search_clear')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-400 p-0 flex items-center hover:text-[var(--cs-primary)]"
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-400 p-0 flex items-center hover:text-cs-primary"
             >
               <LuX style={{ fontSize: '0.75em' }} />
             </button>
@@ -62,7 +62,7 @@ export function NavSearch({ onSearched }: { onSearched: () => void }) {
         type="button"
         onClick={() => setSearchOpen(o => !o)}
         aria-label={t('search_nav_label')}
-        className="bg-transparent border-none cursor-pointer text-gray-600 p-0 flex items-center hover:text-[var(--cs-primary)] transition-colors duration-200"
+        className="bg-transparent border-none cursor-pointer text-gray-600 p-0 flex items-center hover:text-cs-primary transition-colors duration-200"
       >
         <LuSearch style={{ fontSize: '1.1em' }} />
       </button>

@@ -26,8 +26,8 @@ const thClass = 'bg-gray-50 px-4 py-3 text-left text-[0.8rem] font-semibold text
 const tdClass = 'px-4 py-[14px] text-[0.9rem] text-[#343a40] align-middle max-[600px]:block max-[600px]:px-0 max-[600px]:py-[2px]';
 
 export const tabBtnClass = (isActive: boolean) =>
-  `bg-transparent border-0 border-b-2 border-solid mb-[-2px] px-5 py-[10px] text-[0.9rem] cursor-pointer transition-[color,border-color] duration-[0.15s] hover:text-[var(--cs-primary)] ` +
-  (isActive ? 'font-semibold text-[var(--cs-primary)] border-b-[var(--cs-primary)]' : 'font-medium text-gray-500 border-b-transparent');
+  `bg-transparent border-0 border-b-2 border-solid mb-[-2px] px-5 py-[10px] text-[0.9rem] cursor-pointer transition-[color,border-color] duration-[0.15s] hover:text-cs-primary ` +
+  (isActive ? 'font-semibold text-cs-primary border-b-cs-primary' : 'font-medium text-gray-500 border-b-transparent');
 
 interface TaskTableProps {
   tasks: MadocCrowdsourcingTaskDto[];
@@ -75,7 +75,7 @@ export function TaskTable({ tasks, userName, language, t, linkable = true, expan
                     {expandable ? (
                       <button
                         onClick={() => setExpandedId(isExpanded ? null : task.id)}
-                        className="bg-transparent border-0 p-0 text-[var(--cs-primary)] font-medium cursor-pointer hover:underline"
+                        className="bg-transparent border-0 p-0 text-cs-primary font-medium cursor-pointer hover:underline"
                       >
                         {displayName}
                       </button>
@@ -83,7 +83,7 @@ export function TaskTable({ tasks, userName, language, t, linkable = true, expan
                       <HrefLink
                         href={href}
                         state={returnPath ? { returnTo: returnPath } : undefined}
-                        className="text-[var(--cs-primary)] no-underline font-medium hover:underline"
+                        className="text-cs-primary no-underline font-medium hover:underline"
                       >
                         {displayName}
                       </HrefLink>
@@ -107,7 +107,7 @@ export function TaskTable({ tasks, userName, language, t, linkable = true, expan
                           onClick={() => setPreviewTask(task)}
                           aria-label={t('review_view_image')}
                           title={t('review_view_image')}
-                          className="bg-transparent border-none text-gray-400 cursor-pointer hover:text-[var(--cs-primary)] p-1"
+                          className="bg-transparent border-none text-gray-400 cursor-pointer hover:text-cs-primary p-1"
                         >
                           <LuEye />
                         </button>
@@ -122,7 +122,7 @@ export function TaskTable({ tasks, userName, language, t, linkable = true, expan
                         <span className="text-[0.8rem] font-semibold text-gray-700">{displayName}</span>
                         <button
                           onClick={() => setExpandedId(null)}
-                          className="bg-transparent border-none p-0 text-[0.78rem] font-semibold text-gray-500 cursor-pointer hover:text-[var(--cs-primary)]"
+                          className="bg-transparent border-none p-0 text-[0.78rem] font-semibold text-gray-500 cursor-pointer hover:text-cs-primary"
                         >
                           {t('review_detail_close')}
                         </button>

@@ -15,7 +15,7 @@ export function LanguageSwitcher() {
   return (
     <div className="relative">
       <button
-        className="bg-transparent border-none cursor-pointer text-gray-600 font-[380] text-base p-0 inline-flex items-center gap-1 hover:text-[var(--cs-primary)] transition-colors duration-200 max-[768px]:py-[10px]"
+        className="bg-transparent border-none cursor-pointer text-gray-600 font-[380] text-base p-0 inline-flex items-center gap-1 hover:text-cs-primary transition-colors duration-200 max-[768px]:py-[10px]"
         {...buttonProps}
       >
         {currentLang.code.toUpperCase()} <LuChevronDown aria-hidden="true" />

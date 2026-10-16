@@ -28,7 +28,7 @@ export function SiteManagement() {
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container cs-container--wide">
           <header className="mb-8">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('sm_title')}</h1>
+            <h1 className="text-4xl text-cs-primary mb-3">{t('sm_title')}</h1>
             <p className="text-lg text-gray-600">{t('sm_intro')}</p>
           </header>
 
@@ -36,12 +36,12 @@ export function SiteManagement() {
             {TILES.map(tile => {
               const tileContent = (
                 <>
-                  <h2 className="text-xl font-semibold text-[var(--cs-primary)] mb-2">{t(tile.titleKey)}</h2>
+                  <h2 className="text-xl font-semibold text-cs-primary mb-2">{t(tile.titleKey)}</h2>
                   <p className="text-sm text-gray-600 m-0">{t(tile.descKey)}</p>
                 </>
               );
               const tileClassName =
-                'block no-underline bg-white border border-gray-200 rounded-[10px] p-6 transition-all duration-150 hover:border-[var(--cs-primary)] hover:shadow-[0_4px_14px_rgba(26,91,102,0.14)] hover:-translate-y-px';
+                'block no-underline bg-white border border-gray-200 rounded-[10px] p-6 transition-all duration-150 hover:border-cs-primary hover:shadow-[0_4px_14px_rgba(26,91,102,0.14)] hover:-translate-y-px';
 
               return tile.external ? (
                 <a key={tile.href} href={tile.href} className={tileClassName}>
@@ -56,9 +56,9 @@ export function SiteManagement() {
 
             <a
               href={`/s/${siteSlug}/admin`}
-              className="block no-underline bg-white border border-gray-200 rounded-[10px] p-6 transition-all duration-150 hover:border-[var(--cs-primary)] hover:shadow-[0_4px_14px_rgba(26,91,102,0.14)] hover:-translate-y-px"
+              className="block no-underline bg-white border border-gray-200 rounded-[10px] p-6 transition-all duration-150 hover:border-cs-primary hover:shadow-[0_4px_14px_rgba(26,91,102,0.14)] hover:-translate-y-px"
             >
-              <h2 className="text-xl font-semibold text-[var(--cs-primary)] mb-2">{t('sm_tile_madoc_title')}</h2>
+              <h2 className="text-xl font-semibold text-cs-primary mb-2">{t('sm_tile_madoc_title')}</h2>
               <p className="text-sm text-gray-600 m-0">{t('sm_tile_madoc_desc')}</p>
             </a>
           </div>

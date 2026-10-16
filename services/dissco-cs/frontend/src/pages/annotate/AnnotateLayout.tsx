@@ -33,7 +33,7 @@ export function AnnotateLayout({ osdViewer, form }: AnnotateLayoutProps) {
       </div>
 
       <div
-        className="group w-[6px] flex-shrink-0 cursor-col-resize bg-gray-300 flex items-center justify-center transition-colors duration-150 select-none hover:bg-[var(--cs-primary)] active:bg-[var(--cs-primary)]"
+        className="group w-[6px] flex-shrink-0 cursor-col-resize bg-gray-300 flex items-center justify-center transition-colors duration-150 select-none hover:bg-cs-primary active:bg-cs-primary"
         onMouseDown={handleDividerMouseDown}
       >
         <span className="block w-[2px] h-8 bg-black/25 rounded-sm group-hover:bg-white/50" />

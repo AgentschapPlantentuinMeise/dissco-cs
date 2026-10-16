@@ -19,7 +19,7 @@ export function Forum() {
     <CsPage>
       <div className="cs-container cs-container--wide pt-10 pb-16">
         <header className="flex justify-between items-center mb-4">
-          <h1 className="text-4xl text-[var(--cs-primary)] m-0">{t('nav_forum')}</h1>
+          <h1 className="text-4xl text-cs-primary m-0">{t('nav_forum')}</h1>
           <button className={btnPrimary} onClick={() => c.setShowNewForm(v => !v)}>
             {c.showNewForm ? t('common_cancel') : t('forum_btn_new_message')}
           </button>

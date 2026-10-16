@@ -90,7 +90,7 @@ export function ReviewTable({
               <tr
                 data-row-id={row.id}
                 onClick={() => onRowClick(row)}
-                className={`cursor-pointer border-l-4 ${isOpen ? 'bg-gray-50 border-l-[var(--cs-primary)]' : 'border-l-transparent'}`}
+                className={`cursor-pointer border-l-4 ${isOpen ? 'bg-gray-50 border-l-cs-primary' : 'border-l-transparent'}`}
               >
                 <td className={tdClass} onClick={e => e.stopPropagation()}>
                   <input
@@ -111,7 +111,7 @@ export function ReviewTable({
                   {row.submitter ? (
                     <button
                       onClick={() => filterBySubmitter(row.submitter as string)}
-                      className="bg-transparent border-none p-0 text-[var(--cs-primary)] cursor-pointer hover:underline"
+                      className="bg-transparent border-none p-0 text-cs-primary cursor-pointer hover:underline"
                     >
                       {row.submitter}
                     </button>
@@ -127,7 +127,7 @@ export function ReviewTable({
                       onClick={() => onPreview(row)}
                       aria-label={t('review_view_image')}
                       title={t('review_view_image')}
-                      className="bg-transparent border-none text-gray-400 cursor-pointer hover:text-[var(--cs-primary)] p-1"
+                      className="bg-transparent border-none text-gray-400 cursor-pointer hover:text-cs-primary p-1"
                     >
                       <LuEye />
                     </button>

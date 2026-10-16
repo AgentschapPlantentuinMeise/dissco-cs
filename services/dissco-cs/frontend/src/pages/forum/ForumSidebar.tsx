@@ -7,8 +7,8 @@ import { inputClass } from './forum-styles';
 const filterRowClass = (isActive: boolean) =>
   'block w-full text-left px-[10px] py-2 rounded-md text-[0.85rem] cursor-pointer transition-colors duration-200 ' +
   (isActive
-    ? 'bg-[var(--cs-primary)]/10 text-[var(--cs-primary)] font-semibold'
-    : 'text-gray-600 hover:bg-gray-100 hover:text-[var(--cs-primary)]');
+    ? 'bg-cs-primary/10 text-cs-primary font-semibold'
+    : 'text-gray-600 hover:bg-gray-100 hover:text-cs-primary');
 
 const FILTER_LABEL_KEYS: Record<ForumFilter, string> = {
   mine: 'forum_filter_mine',

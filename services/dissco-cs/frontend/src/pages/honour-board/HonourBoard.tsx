@@ -19,7 +19,7 @@ export function HonourBoard() {
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container">
           <header className="mb-8">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('honour_board_page_title')}</h1>
+            <h1 className="text-4xl text-cs-primary mb-3">{t('honour_board_page_title')}</h1>
             <p className="text-lg text-gray-600">{t('honour_board_page_intro')}</p>
           </header>
 

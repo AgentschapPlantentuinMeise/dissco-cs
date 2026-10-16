@@ -8,6 +8,17 @@ type SiteTaskTotals = { completed: number; total: number };
 
 const VOLUNTEERS_CACHE_TTL_MS = 5 * 60 * 1000;
 
+// The manifest a volunteer task is about: `subject` when the project hands out whole manifests,
+// otherwise `subject_parent` (the manifest of the single image). "Completed" counts each manifest
+// once, however many of its images or volunteers have a task on it -- counting per `subject` made
+// the total higher than the number of manifests in projects that hand out single images. Same rule
+// as manifestUrnOfTask in controllers/projects.logic.ts; NULL when the task points to no manifest.
+const MANIFEST_URN_SQL = `
+  CASE
+    WHEN subject LIKE 'urn:madoc:manifest:%' THEN subject
+    WHEN subject_parent LIKE 'urn:madoc:manifest:%' THEN subject_parent
+  END`;
+
 const EMPTY_INSTITUTION_STATS: InstitutionStatsDto = {
   volunteers: 0,
   tasksCompleted: 0,
@@ -97,9 +108,10 @@ export class StatsRepository {
             `
               SELECT COUNT(*) AS completed
               FROM (
-                SELECT DISTINCT root_task, subject
+                SELECT DISTINCT root_task, ${MANIFEST_URN_SQL} AS manifest
                 FROM ${this.pools.tasksApiSchema}.tasks
                 WHERE type = 'crowdsourcing-task' AND status IN (2, 3) AND root_task = ANY($1::uuid[])
+                  AND ${MANIFEST_URN_SQL} IS NOT NULL
               ) distinct_per_project
             `,
             [rootTaskIds]
@@ -169,9 +181,10 @@ export class StatsRepository {
         `
           SELECT root_task, COUNT(*) AS completed
           FROM (
-            SELECT DISTINCT root_task, subject
+            SELECT DISTINCT root_task, ${MANIFEST_URN_SQL} AS manifest
             FROM ${this.pools.tasksApiSchema}.tasks
             WHERE type = 'crowdsourcing-task' AND status IN (2, 3) AND root_task = ANY($1::uuid[])
+              AND ${MANIFEST_URN_SQL} IS NOT NULL
           ) distinct_per_project
           GROUP BY root_task
         `,

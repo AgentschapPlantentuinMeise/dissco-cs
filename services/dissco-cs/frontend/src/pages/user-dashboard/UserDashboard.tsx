@@ -79,7 +79,7 @@ export function UserDashboard() {
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container cs-container--wide">
-          <h1 className="text-4xl text-[var(--cs-primary)] mt-0 mb-5">{t('dashboard_welcome', { name: user.name })}</h1>
+          <h1 className="text-4xl text-cs-primary mt-0 mb-5">{t('dashboard_welcome', { name: user.name })}</h1>
           <p className="text-base leading-relaxed text-gray-700 m-0 mb-6">{t('dashboard_subtitle')}</p>
 
           <hr className="mb-8" />
@@ -162,7 +162,7 @@ export function UserDashboard() {
             <div className="flex flex-col gap-7">
               {chartSegments.length > 0 && (
                 <div className="pb-7 border-b border-gray-100">
-                  <h2 className="text-[1.05rem] font-semibold text-[var(--cs-primary)] m-0 mb-4">{t('my_tasks_projects')}</h2>
+                  <h2 className="text-[1.05rem] font-semibold text-cs-primary m-0 mb-4">{t('my_tasks_projects')}</h2>
                   <div className="flex items-center gap-3.5">
                     <DonutChart segments={chartSegments} />
                     <div className="flex flex-col gap-[5px] text-xs text-gray-600">
@@ -182,7 +182,7 @@ export function UserDashboard() {
               )}
 
               <div>
-                <h2 className="text-[1.05rem] font-semibold text-[var(--cs-primary)] m-0 mb-4">{t('dashboard_widget_title')}</h2>
+                <h2 className="text-[1.05rem] font-semibold text-cs-primary m-0 mb-4">{t('dashboard_widget_title')}</h2>
                 {!unansweredTopics || unansweredTopics.length === 0 ? (
                   <p className="text-sm text-gray-500 m-0">{t('dashboard_widget_empty')}</p>
                 ) : (
@@ -191,7 +191,7 @@ export function UserDashboard() {
                       <li key={topic.id} className="border-b border-gray-200 last:border-b-0">
                         <HrefLink
                           href={`/forum?topic=${topic.id}`}
-                          className="flex flex-col gap-0.5 py-3 no-underline text-inherit hover:text-[var(--cs-primary)]"
+                          className="flex flex-col gap-0.5 py-3 no-underline text-inherit hover:text-cs-primary"
                         >
                           <span className="text-sm font-semibold text-gray-800">{topic.title}</span>
                           <span className="text-xs text-gray-500">
@@ -204,7 +204,7 @@ export function UserDashboard() {
                 )}
                 <HrefLink
                   href="/forum"
-                  className="inline-flex items-center gap-1 text-sm text-[var(--cs-primary)] font-semibold no-underline hover:underline mt-3"
+                  className="inline-flex items-center gap-1 text-sm text-cs-primary font-semibold no-underline hover:underline mt-3"
                 >
                   {t('dashboard_widget_view_all')} <LuArrowRight aria-hidden="true" />
                 </HrefLink>

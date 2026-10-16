@@ -20,7 +20,7 @@ export function LanguageTabs({ selected, onSelect, isMissing }: {
           onClick={() => onSelect(code)}
           className={`px-3 py-1 rounded-full text-sm font-medium border flex items-center gap-1.5 ${
             selected === code
-              ? 'bg-[var(--cs-primary)] text-white border-[var(--cs-primary)]'
+              ? 'bg-cs-primary text-white border-cs-primary'
               : 'bg-transparent text-gray-600 border-gray-300'
           }`}
         >

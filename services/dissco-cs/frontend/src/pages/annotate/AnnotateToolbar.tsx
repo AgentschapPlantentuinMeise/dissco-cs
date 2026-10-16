@@ -6,7 +6,7 @@ import { MadocInternationalString } from '@dissco-cs/shared-types';
 import { LocaleString } from '../../components/ui/LocaleString';
 
 const outlineButtonClass =
-  'text-[0.85rem] text-[var(--cs-primary)] border border-[var(--cs-primary)] rounded px-2 py-1 inline-flex items-center gap-1.5 leading-none';
+  'text-[0.85rem] text-cs-primary border border-cs-primary rounded px-2 py-1 inline-flex items-center gap-1.5 leading-none';
 
 // The bar above the annotate screen: breadcrumb, manual, forum message, previous and next task.
 // Every way out goes through onLeave, so the claim is released before navigating.
@@ -33,11 +33,11 @@ export function AnnotateToolbar({ projectSlug, projectLabel, canvasLabel, onLeav
   return (
     <div className="px-4 py-2 border-b border-gray-300 flex items-center justify-between flex-shrink-0">
       <nav className="text-[0.85rem] text-gray-500 flex items-center" aria-label={t('annotate_breadcrumb_label')}>
-        <Link to="/explore" onClick={leaveLink('/explore')} className="text-[var(--cs-primary)] no-underline hover:underline">
+        <Link to="/explore" onClick={leaveLink('/explore')} className="text-cs-primary no-underline hover:underline">
           {t('nav_projects')}
         </Link>
         <LuChevronRight aria-hidden="true" className="mx-1" />
-        <Link to={`/explore/${projectSlug}`} onClick={leaveLink(`/explore/${projectSlug}`)} className="text-[var(--cs-primary)] no-underline hover:underline">
+        <Link to={`/explore/${projectSlug}`} onClick={leaveLink(`/explore/${projectSlug}`)} className="text-cs-primary no-underline hover:underline">
           <LocaleString>{projectLabel}</LocaleString>
         </Link>
         <LuChevronRight aria-hidden="true" className="mx-1" />

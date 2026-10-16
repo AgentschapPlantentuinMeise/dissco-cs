@@ -50,7 +50,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
   return (
     <div className="relative">
       <button
-        className="bg-transparent border-none cursor-pointer text-gray-600 font-[380] text-base flex items-center gap-1 p-0 hover:text-[var(--cs-primary)] transition-colors duration-200 max-[768px]:py-[10px] max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:w-full"
+        className="bg-transparent border-none cursor-pointer text-gray-600 font-[380] text-base flex items-center gap-1 p-0 hover:text-cs-primary transition-colors duration-200 max-[768px]:py-[10px] max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:w-full"
         {...buttonProps}
       >
         <span className="relative inline-flex">

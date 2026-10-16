@@ -22,7 +22,7 @@ export function ForumReplyThread({ replies, closed, canDeleteReply, onDeleteRepl
       {replies.length > 0 && (
         <div className="flex flex-col gap-[6px]">
           {replies.map(reply => (
-            <div key={reply.id} className="flex items-start justify-between gap-2 bg-gray-50 border-l-[3px] border-[var(--cs-primary)] rounded-r-[6px] py-2 px-3 ml-2">
+            <div key={reply.id} className="flex items-start justify-between gap-2 bg-gray-50 border-l-[3px] border-cs-primary rounded-r-[6px] py-2 px-3 ml-2">
               <div className="min-w-0">
                 <span className="text-xs text-gray-400">{reply.authorName} · {formatDate(reply.createdAt, i18n.language)}</span>
                 <p className="m-0 mt-1 text-[0.9rem] text-gray-800 leading-[1.5] whitespace-pre-line">{reply.body}</p>

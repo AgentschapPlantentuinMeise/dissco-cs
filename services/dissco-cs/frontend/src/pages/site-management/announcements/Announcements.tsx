@@ -104,15 +104,15 @@ export function Announcements() {
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container cs-container--wide">
-          <HrefLink href="/manage" className="inline-flex items-center gap-1 text-[var(--cs-primary)] no-underline font-medium hover:underline">
+          <HrefLink href="/manage" className="inline-flex items-center gap-1 text-cs-primary no-underline font-medium hover:underline">
             <LuArrowLeft aria-hidden="true" /> {t('sm_back_to_hub')}
           </HrefLink>
 
           <div className="flex items-center justify-between mt-4 mb-8">
-            <h1 className="text-4xl text-[var(--cs-primary)] m-0">{t('sm_tile_announcements_title')}</h1>
+            <h1 className="text-4xl text-cs-primary m-0">{t('sm_tile_announcements_title')}</h1>
             <button
               onClick={startCreate}
-              className="px-4 py-2 rounded-full text-sm font-semibold border-none bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)]"
+              className="px-4 py-2 rounded-full text-sm font-semibold border-none bg-cs-primary text-white cursor-pointer hover:bg-cs-dark"
             >
               {t('sm_announcements_new')}
             </button>
@@ -132,7 +132,7 @@ export function Announcements() {
                 }`}
               >
                 {isFormOpen && editingId === null && (
-                  <li className="flex items-center gap-3 px-4 py-3 border-l-4 border-l-[var(--cs-primary)] bg-gray-50">
+                  <li className="flex items-center gap-3 px-4 py-3 border-l-4 border-l-cs-primary bg-gray-50">
                     <div className="min-w-0">
                       <p className="font-semibold m-0 italic text-gray-500 truncate">{t('sm_announcements_draft_name')}</p>
                       <p className="text-xs text-gray-400 m-0">{t('sm_announcements_draft_hint')}</p>
@@ -143,7 +143,7 @@ export function Announcements() {
                   <li
                     key={announcement.id}
                     className={`flex items-center justify-between gap-4 px-4 py-3 border-l-4 ${
-                      editingId === announcement.id ? 'bg-gray-50 border-l-[var(--cs-primary)]' : 'border-l-transparent'
+                      editingId === announcement.id ? 'bg-gray-50 border-l-cs-primary' : 'border-l-transparent'
                     }`}
                   >
                     <div className="min-w-0">
@@ -171,7 +171,7 @@ export function Announcements() {
                         onClick={() => startEdit(announcement)}
                         aria-label={t('sm_pages_edit')}
                         title={t('sm_pages_edit')}
-                        className="bg-transparent border-none cursor-pointer text-gray-500 hover:text-[var(--cs-primary)] p-1"
+                        className="bg-transparent border-none cursor-pointer text-gray-500 hover:text-cs-primary p-1"
                       >
                         <LuPencil />
                       </button>

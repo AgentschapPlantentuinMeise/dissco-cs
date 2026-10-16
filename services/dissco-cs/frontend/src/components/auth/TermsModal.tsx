@@ -39,7 +39,7 @@ export function TermsModal({
             type="button"
             disabled={disabled}
             onClick={onAccept}
-            className="px-4 py-2 rounded-full text-sm font-semibold border-none bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
+            className="px-4 py-2 rounded-full text-sm font-semibold border-none bg-cs-primary text-white cursor-pointer hover:bg-cs-dark disabled:opacity-50"
           >
             {acceptLabel}
           </button>

@@ -21,7 +21,7 @@ export function SelectorControl({ path, hasRegion, isDrawing, controls }: {
 
   if (isDrawing) {
     return (
-      <div className="mt-1 flex items-center gap-2 text-[0.8rem] text-[var(--cs-primary)]">
+      <div className="mt-1 flex items-center gap-2 text-[0.8rem] text-cs-primary">
         <span>{t('annotate_draw_hint')}</span>
         <button type="button" className="text-gray-500 underline" onClick={() => controls.onCancelDraw?.()}>
           {t('common_cancel')}
@@ -33,13 +33,13 @@ export function SelectorControl({ path, hasRegion, isDrawing, controls }: {
   return (
     <div className="mt-1 flex items-center gap-2 text-[0.8rem]">
       {hasRegion && (
-        <span className="inline-flex items-center gap-1 text-[var(--cs-primary)]">
+        <span className="inline-flex items-center gap-1 text-cs-primary">
           <LuCheck aria-hidden="true" /> {t('annotate_region_marked')}
         </span>
       )}
       <button
         type="button"
-        className="text-[var(--cs-primary)] underline"
+        className="text-cs-primary underline"
         onClick={() => controls.onRequestDraw?.(path)}
       >
         {hasRegion ? t('annotate_redraw') : t('annotate_draw_on_image')}

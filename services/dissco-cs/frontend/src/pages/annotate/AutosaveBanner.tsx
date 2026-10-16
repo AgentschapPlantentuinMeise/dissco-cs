@@ -7,7 +7,7 @@ export function AutosaveBanner({ onRelease }: { onRelease: () => void }) {
   return (
     <div className="px-4 py-2 bg-sky-50 border-b border-sky-200 text-sky-800 text-[0.85rem] flex-shrink-0 flex items-center justify-between gap-2">
       <span>{t('annotate_autosaved_banner')}</span>
-      <button className="text-[var(--cs-primary)] underline whitespace-nowrap" onClick={onRelease}>
+      <button className="text-cs-primary underline whitespace-nowrap" onClick={onRelease}>
         {t('annotate_release_task')}
       </button>
     </div>

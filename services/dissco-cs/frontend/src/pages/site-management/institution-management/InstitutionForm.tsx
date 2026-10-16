@@ -53,7 +53,7 @@ export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, i
 
   return (
     <div className="w-full lg:flex-[0_0_42%] lg:min-w-[380px] bg-white border border-gray-200 rounded-[10px] p-6">
-      <h2 className="text-xl font-semibold text-[var(--cs-primary)] mb-4">
+      <h2 className="text-xl font-semibold text-cs-primary mb-4">
         {isEditing ? t('sm_institutions_edit') : t('sm_institutions_new')}
       </h2>
 

@@ -32,14 +32,14 @@ export function WelcomeModal() {
   return (
     <Modal open onClose={close}>
       <div
-        className="[&_p:first-child]:text-2xl [&_p:first-child]:font-semibold [&_p:first-child]:text-[var(--cs-primary)] [&_p:first-child]:leading-snug [&_p:first-child]:mb-3
+        className="[&_p:first-child]:text-2xl [&_p:first-child]:font-semibold [&_p:first-child]:text-cs-primary [&_p:first-child]:leading-snug [&_p:first-child]:mb-3
           [&_p]:text-base [&_p]:text-gray-700 [&_p]:leading-relaxed [&_p]:mb-4 [&_p:last-child]:mb-0
-          [&_a]:mt-1 [&_a]:inline-block [&_a]:rounded-full [&_a]:bg-[var(--cs-primary)] [&_a]:px-5 [&_a]:py-2 [&_a]:text-sm [&_a]:font-semibold [&_a]:text-white [&_a]:no-underline [&_a]:transition-colors [&_a]:hover:bg-[var(--cs-dark)]"
+          [&_a]:mt-1 [&_a]:inline-block [&_a]:rounded-full [&_a]:bg-cs-primary [&_a]:px-5 [&_a]:py-2 [&_a]:text-sm [&_a]:font-semibold [&_a]:text-white [&_a]:no-underline [&_a]:transition-colors [&_a]:hover:bg-cs-dark"
       >
         <CsMarkdown content={content} />
         <Link
           to="/explore"
-          className="mt-1 inline-block rounded-full bg-[var(--cs-primary)] px-5 py-2 text-sm font-semibold text-white no-underline transition-colors hover:bg-[var(--cs-dark)]"
+          className="mt-1 inline-block rounded-full bg-cs-primary px-5 py-2 text-sm font-semibold text-white no-underline transition-colors hover:bg-cs-dark"
         >
           {t('welcome_popup_cta')}
         </Link>

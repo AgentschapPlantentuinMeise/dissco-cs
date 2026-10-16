@@ -22,7 +22,7 @@ export function Institutions() {
         <div className="cs-container cs-container--wide grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-x-8">
 
           <header className="mb-8 lg:col-span-2">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('nav_institutions')}</h1>
+            <h1 className="text-4xl text-cs-primary mb-3">{t('nav_institutions')}</h1>
             <p className="text-lg text-gray-600">{t('institutions_intro')}</p>
           </header>
 

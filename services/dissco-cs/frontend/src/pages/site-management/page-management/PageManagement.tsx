@@ -123,11 +123,11 @@ export function PageManagement() {
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container cs-container--wide">
-          <HrefLink href="/manage" className="inline-flex items-center gap-1 text-[var(--cs-primary)] no-underline font-medium hover:underline">
+          <HrefLink href="/manage" className="inline-flex items-center gap-1 text-cs-primary no-underline font-medium hover:underline">
             <LuArrowLeft aria-hidden="true" /> {t('sm_back_to_hub')}
           </HrefLink>
 
-          <h1 className="text-3xl text-[var(--cs-primary)] mt-4 mb-6">{t('sm_tile_pages_title')}</h1>
+          <h1 className="text-3xl text-cs-primary mt-4 mb-6">{t('sm_tile_pages_title')}</h1>
 
           <div className={`grid grid-cols-1 gap-6 ${selectedKey ? 'md:grid-cols-[380px_1fr]' : ''}`}>
             <ul className="list-none m-0 p-0 bg-white border-t border-gray-200 divide-y divide-gray-100">
@@ -160,7 +160,7 @@ export function PageManagement() {
                           <button
                             onClick={() => setSelectedKey(key)}
                             aria-label={t('sm_pages_edit')}
-                            className="bg-transparent border-none cursor-pointer text-gray-500 hover:text-[var(--cs-primary)] p-1"
+                            className="bg-transparent border-none cursor-pointer text-gray-500 hover:text-cs-primary p-1"
                           >
                             <LuPencil />
                           </button>
@@ -172,7 +172,7 @@ export function PageManagement() {
                           onClick={() => movePage(index, -1)}
                           disabled={index === 0}
                           aria-label={t('sm_pages_move_up')}
-                          className="flex items-center bg-transparent border-none cursor-pointer text-gray-400 hover:text-[var(--cs-primary)] disabled:opacity-25 disabled:cursor-not-allowed p-1"
+                          className="flex items-center bg-transparent border-none cursor-pointer text-gray-400 hover:text-cs-primary disabled:opacity-25 disabled:cursor-not-allowed p-1"
                         >
                           <LuArrowUp />
                         </button>
@@ -180,7 +180,7 @@ export function PageManagement() {
                           onClick={() => movePage(index, 1)}
                           disabled={index === pages.length - 1}
                           aria-label={t('sm_pages_move_down')}
-                          className="flex items-center bg-transparent border-none cursor-pointer text-gray-400 hover:text-[var(--cs-primary)] disabled:opacity-25 disabled:cursor-not-allowed p-1"
+                          className="flex items-center bg-transparent border-none cursor-pointer text-gray-400 hover:text-cs-primary disabled:opacity-25 disabled:cursor-not-allowed p-1"
                         >
                           <LuArrowDown />
                         </button>
@@ -194,7 +194,7 @@ export function PageManagement() {
             {selectedKey && (
               <div className="bg-white border border-gray-200 rounded-[10px] p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-[var(--cs-primary)]">
+                  <h2 className="text-xl font-semibold text-cs-primary">
                     {t(pageLabelKey(selectedKey))}
                   </h2>
                   <button

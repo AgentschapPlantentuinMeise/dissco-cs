@@ -38,7 +38,7 @@ export function ProjectCard({ projectSummaryData }: ProjectCardProps) {
         </div>
       )}
       <div className="p-5 flex flex-col flex-grow">
-        <LocaleString as="h3" className="text-xl mt-0 mb-2.5 text-[var(--cs-primary)]">
+        <LocaleString as="h3" className="text-xl mt-0 mb-2.5 text-cs-primary">
           {projectSummaryData.label}
         </LocaleString>
         <p className="text-[0.95rem] text-gray-600 leading-[1.5] mb-5 flex-grow line-clamp-3">
@@ -50,17 +50,17 @@ export function ProjectCard({ projectSummaryData }: ProjectCardProps) {
         <div className="mt-auto">
           <div className="flex justify-between text-[0.85rem] mb-[5px]">
             {isLoading ? (
-              <span className="font-bold text-[var(--cs-primary)]">{t('card_loading')}</span>
+              <span className="font-bold text-cs-primary">{t('card_loading')}</span>
             ) : (
               <>
-                <span className="font-bold text-[var(--cs-primary)]">{percentage}%</span>
+                <span className="font-bold text-cs-primary">{percentage}%</span>
                 <span className="text-gray-500">{t('pdp_completed')}</span>
               </>
             )}
           </div>
           <div className="h-2 bg-gray-200 rounded overflow-hidden">
             <div
-              className="h-full bg-[var(--cs-primary)] rounded"
+              className="h-full bg-cs-primary rounded"
               style={{ width: `${percentage}%`, transition: 'width 0.5s ease' }}
             />
           </div>

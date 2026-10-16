@@ -218,7 +218,7 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
                     ) : (
                       <button
                         onClick={() => setEditingSlug(project.slug)}
-                        className="text-sm font-semibold text-[var(--cs-primary)] bg-transparent border-none cursor-pointer hover:underline"
+                        className="text-sm font-semibold text-cs-primary bg-transparent border-none cursor-pointer hover:underline"
                       >
                         {t('sm_manuals_edit')}
                       </button>

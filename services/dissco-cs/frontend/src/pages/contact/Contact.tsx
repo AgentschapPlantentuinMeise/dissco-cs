@@ -39,7 +39,7 @@ export function Contact() {
         <div className="cs-container cs-container--wide">
 
           <header className="mb-8">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('nav_contact')}</h1>
+            <h1 className="text-4xl text-cs-primary mb-3">{t('nav_contact')}</h1>
           </header>
 
         
@@ -104,7 +104,7 @@ export function Contact() {
                 <button
                   type="submit"
                   disabled={sending}
-                  className="bg-[var(--cs-primary)] text-white px-5 py-2 rounded-full text-sm font-semibold border-none cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
+                  className="bg-cs-primary text-white px-5 py-2 rounded-full text-sm font-semibold border-none cursor-pointer hover:bg-cs-dark disabled:opacity-50"
                 >
                   {t('contact_form_submit')}
                 </button>

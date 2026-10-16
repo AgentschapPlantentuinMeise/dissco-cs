@@ -101,7 +101,7 @@ export function CaptureModelForm({
         )}
         <div className={`p-5 ${readOnly ? 'pointer-events-none opacity-60 select-none' : ''}`}>
           {stack.length > 1 && (
-            <button className="text-[0.85rem] text-[var(--cs-primary)] mb-3 inline-flex items-center gap-1" onClick={() => setStack(s => s.slice(0, -1))}>
+            <button className="text-[0.85rem] text-cs-primary mb-3 inline-flex items-center gap-1" onClick={() => setStack(s => s.slice(0, -1))}>
               <LuArrowLeft aria-hidden="true" /> {t('annotate_choice_back')}
             </button>
           )}
@@ -110,7 +110,7 @@ export function CaptureModelForm({
             {current.items.map(item => (
               <button
                 key={item.id}
-                className="px-4 py-2 bg-white border border-[var(--cs-primary)] text-[var(--cs-primary)] rounded text-[0.9rem] text-left hover:bg-[var(--cs-primary)] hover:text-white"
+                className="px-4 py-2 bg-white border border-cs-primary text-cs-primary rounded text-[0.9rem] text-left hover:bg-cs-primary hover:text-white"
                 onClick={() => setStack(s => [...s, resolveSingleChoice(item)])}
               >
                 {item.label}
@@ -131,7 +131,7 @@ export function CaptureModelForm({
       )}
       {stack.length > 1 && (
         <div className="px-5 pt-3">
-          <button className="text-[0.85rem] text-[var(--cs-primary)] inline-flex items-center gap-1" onClick={() => setStack(s => s.slice(0, -1))}>
+          <button className="text-[0.85rem] text-cs-primary inline-flex items-center gap-1" onClick={() => setStack(s => s.slice(0, -1))}>
             <LuArrowLeft aria-hidden="true" /> {t('annotate_other_choice')}
           </button>
         </div>
@@ -161,21 +161,21 @@ export function CaptureModelForm({
           )}
           <div className="flex gap-2 items-center flex-wrap">
             <button
-              className="flex-shrink-0 px-4 py-2 bg-white border border-[var(--cs-primary)] text-[var(--cs-primary)] rounded text-[0.9rem] disabled:opacity-50"
+              className="flex-shrink-0 px-4 py-2 bg-white border border-cs-primary text-cs-primary rounded text-[0.9rem] disabled:opacity-50"
               onClick={onSaveDraft}
               disabled={saving}
             >
               {t('task_save_draft')}
             </button>
             <button
-              className="flex-shrink-0 px-4 py-2 bg-[var(--cs-primary)] text-white rounded text-[0.9rem] disabled:opacity-50"
+              className="flex-shrink-0 px-4 py-2 bg-cs-primary text-white rounded text-[0.9rem] disabled:opacity-50"
               onClick={handleSubmit}
               disabled={saving}
             >
               {t('task_submit')}
             </button>
             {confirmation && (
-              <span className="text-[0.9rem] text-[var(--cs-primary)] font-medium inline-flex items-center gap-1">
+              <span className="text-[0.9rem] text-cs-primary font-medium inline-flex items-center gap-1">
                 <LuCheck aria-hidden="true" /> {confirmation}
               </span>
             )}

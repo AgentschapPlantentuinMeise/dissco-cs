@@ -15,9 +15,9 @@ export function CsMarkdown({ content }: CsMarkdownProps) {
   return (
     <ReactMarkdown
       components={{
-        h1: ({ node, ...props }) => <h1 className="text-3xl text-[var(--cs-primary)] mb-4" {...props} />,
-        h2: ({ node, ...props }) => <h2 className="text-2xl text-[var(--cs-primary)] mb-4" {...props} />,
-        h3: ({ node, ...props }) => <h3 className="text-xl text-[var(--cs-primary)] mb-3" {...props} />,
+        h1: ({ node, ...props }) => <h1 className="text-3xl text-cs-primary mb-4" {...props} />,
+        h2: ({ node, ...props }) => <h2 className="text-2xl text-cs-primary mb-4" {...props} />,
+        h3: ({ node, ...props }) => <h3 className="text-xl text-cs-primary mb-3" {...props} />,
         p: ({ node, ...props }) => {
           if (!introRendered.current) {
             introRendered.current = true;

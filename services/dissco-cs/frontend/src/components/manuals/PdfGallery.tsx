@@ -46,7 +46,7 @@ export function PdfGallery({
     return (
       <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3.5 py-2.5 text-sm text-gray-700">
         <span>{filename}</span>
-        <a href={url} download={filename} className="font-semibold text-[var(--cs-primary)] hover:underline">
+        <a href={url} download={filename} className="font-semibold text-cs-primary hover:underline">
           {t('manual_pdf_download_original')}
         </a>
       </div>
@@ -67,7 +67,7 @@ export function PdfGallery({
         <span className="text-xs font-semibold text-gray-500">
           {totalPages ? t('manual_pdf_pages_count', { count: totalPages }) : t('manual_pdf_loading')}
         </span>
-        <a href={url} download={filename} className="text-xs font-semibold text-[var(--cs-primary)] hover:underline">
+        <a href={url} download={filename} className="text-xs font-semibold text-cs-primary hover:underline">
           {t('manual_pdf_download_original')}
         </a>
       </div>
@@ -88,7 +88,7 @@ export function PdfGallery({
         <button
           type="button"
           onClick={loadRest}
-          className="mt-2 border-none bg-transparent p-0 text-xs font-semibold text-[var(--cs-primary)] cursor-pointer hover:underline"
+          className="mt-2 border-none bg-transparent p-0 text-xs font-semibold text-cs-primary cursor-pointer hover:underline"
         >
           {t('manual_pdf_show_more', { count: totalPages - pages.length })}
         </button>

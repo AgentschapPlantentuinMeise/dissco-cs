@@ -22,7 +22,7 @@ type Props = {
   fixedProjectLabel?: string;
 };
 
-const inputClass = 'py-[9px] px-3 border border-gray-300 rounded text-[0.95rem] font-[inherit] resize-y transition-colors duration-200 focus:outline-none focus:border-[var(--cs-primary)]';
+const inputClass = 'py-[9px] px-3 border border-gray-300 rounded text-[0.95rem] font-[inherit] resize-y transition-colors duration-200 focus:outline-none focus:border-cs-primary';
 const labelClass = 'flex flex-col gap-[5px] text-[0.9rem] font-medium text-gray-800';
 
 export function ForumTopicForm({
@@ -53,7 +53,7 @@ export function ForumTopicForm({
 
   return (
     <form className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-8 flex flex-col gap-[14px]" onSubmit={handleSubmit}>
-      <h2 className="m-0 mb-2 text-[1.1rem] text-[var(--cs-primary)]">{t('forum_form_title') || 'Nieuw bericht'}</h2>
+      <h2 className="m-0 mb-2 text-[1.1rem] text-cs-primary">{t('forum_form_title') || 'Nieuw bericht'}</h2>
       <label className={labelClass}>
         {t('forum_form_label_title') || 'Titel'} *
         <input
@@ -115,14 +115,14 @@ export function ForumTopicForm({
       <div className="flex gap-2">
         <button
           type="submit"
-          className="bg-[var(--cs-primary)] text-white border-none px-[18px] py-[10px] rounded text-[0.95rem] font-medium cursor-pointer transition-colors duration-200 hover:bg-[var(--cs-dark)]"
+          className="bg-cs-primary text-white border-none px-[18px] py-[10px] rounded text-[0.95rem] font-medium cursor-pointer transition-colors duration-200 hover:bg-cs-dark"
         >
           {t('forum_form_submit') || 'Verstuur'}
         </button>
         {onCancel && (
           <button
             type="button"
-            className="bg-transparent border border-gray-300 px-3 py-1.5 rounded text-[0.85rem] text-gray-600 cursor-pointer whitespace-nowrap transition-[border-color,color] duration-200 hover:border-[var(--cs-primary)] hover:text-[var(--cs-primary)]"
+            className="bg-transparent border border-gray-300 px-3 py-1.5 rounded text-[0.85rem] text-gray-600 cursor-pointer whitespace-nowrap transition-[border-color,color] duration-200 hover:border-cs-primary hover:text-cs-primary"
             onClick={onCancel}
           >
             {t('common_cancel') || 'Annuleren'}

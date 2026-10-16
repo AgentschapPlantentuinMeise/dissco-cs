@@ -35,7 +35,7 @@ export function Fieldset({
       <legend className="w-full px-0">
         <button
           type="button"
-          className="w-full flex items-center justify-between px-3.5 py-2.5 bg-[rgba(26,91,102,0.07)] border-b border-[rgba(26,91,102,0.15)] text-[0.92rem] font-bold text-[var(--cs-primary)] cursor-pointer"
+          className="w-full flex items-center justify-between px-3.5 py-2.5 bg-[rgba(26,91,102,0.07)] border-b border-[rgba(26,91,102,0.15)] text-[0.92rem] font-bold text-cs-primary cursor-pointer"
           onClick={() => setOpen(o => !o)}
         >
           <span>
@@ -44,7 +44,7 @@ export function Fieldset({
           </span>
           <LuChevronDown
             aria-hidden="true"
-            className={`text-[var(--cs-accent)] flex-shrink-0 transition-transform duration-200 ${open ? '' : '-rotate-90'}`}
+            className={`text-cs-accent flex-shrink-0 transition-transform duration-200 ${open ? '' : '-rotate-90'}`}
           />
         </button>
       </legend>

@@ -17,7 +17,7 @@ export function Toast() {
       <div
         key={toast.id}
         role="alert"
-        className="pointer-events-auto flex items-start gap-2.5 w-full max-w-[520px] rounded bg-[var(--cs-dark)] text-white text-sm leading-snug py-3 pl-4 pr-3 border-b-[3px] border-[#e08f7f] shadow-lg"
+        className="pointer-events-auto flex items-start gap-2.5 w-full max-w-[520px] rounded bg-cs-dark text-white text-sm leading-snug py-3 pl-4 pr-3 border-b-[3px] border-[#e08f7f] shadow-lg"
       >
         <LuCircleAlert className="flex-shrink-0 mt-px text-[#f2b3a6]" size={20} aria-hidden="true" />
         <span className="flex-1 min-w-0">{t(toast.key)}</span>

@@ -73,17 +73,17 @@ export function ProjectManagement() {
     <CsPage>
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container cs-container--wide">
-          <HrefLink href="/manage" className="inline-flex items-center gap-1 text-[var(--cs-primary)] no-underline font-medium hover:underline">
+          <HrefLink href="/manage" className="inline-flex items-center gap-1 text-cs-primary no-underline font-medium hover:underline">
             <LuArrowLeft aria-hidden="true" /> {t('sm_back_to_hub')}
           </HrefLink>
 
-          <h1 className="text-4xl text-[var(--cs-primary)] mt-4 mb-8">{t('sm_tile_projects_title')}</h1>
+          <h1 className="text-4xl text-cs-primary mt-4 mb-8">{t('sm_tile_projects_title')}</h1>
 
           <div className="flex gap-5 border-b border-gray-200 mb-6">
             <button
               onClick={() => setTab('projects')}
               className={`text-sm font-semibold pb-2.5 border-b-2 bg-transparent cursor-pointer ${
-                tab === 'projects' ? 'text-[var(--cs-primary)] border-[var(--cs-primary)]' : 'text-gray-500 border-transparent'
+                tab === 'projects' ? 'text-cs-primary border-cs-primary' : 'text-gray-500 border-transparent'
               }`}
             >
               {t('sm_manuals_tab_projects')}
@@ -91,7 +91,7 @@ export function ProjectManagement() {
             <button
               onClick={() => setTab('manuals')}
               className={`text-sm font-semibold pb-2.5 border-b-2 bg-transparent cursor-pointer ${
-                tab === 'manuals' ? 'text-[var(--cs-primary)] border-[var(--cs-primary)]' : 'text-gray-500 border-transparent'
+                tab === 'manuals' ? 'text-cs-primary border-cs-primary' : 'text-gray-500 border-transparent'
               }`}
             >
               {t('sm_manuals_tab_manuals')}
@@ -99,7 +99,7 @@ export function ProjectManagement() {
             <button
               onClick={() => setTab('stuck-tasks')}
               className={`text-sm font-semibold pb-2.5 border-b-2 bg-transparent cursor-pointer ${
-                tab === 'stuck-tasks' ? 'text-[var(--cs-primary)] border-[var(--cs-primary)]' : 'text-gray-500 border-transparent'
+                tab === 'stuck-tasks' ? 'text-cs-primary border-cs-primary' : 'text-gray-500 border-transparent'
               }`}
             >
               {t('sm_tile_stuck_tasks_title')}
@@ -107,7 +107,7 @@ export function ProjectManagement() {
             <button
               onClick={() => setTab('task-debug')}
               className={`text-sm font-semibold pb-2.5 border-b-2 bg-transparent cursor-pointer ${
-                tab === 'task-debug' ? 'text-[var(--cs-primary)] border-[var(--cs-primary)]' : 'text-gray-500 border-transparent'
+                tab === 'task-debug' ? 'text-cs-primary border-cs-primary' : 'text-gray-500 border-transparent'
               }`}
             >
               Task status (debug)
@@ -115,7 +115,7 @@ export function ProjectManagement() {
             <button
               onClick={() => setTab('bulk-create')}
               className={`text-sm font-semibold pb-2.5 border-b-2 bg-transparent cursor-pointer ${
-                tab === 'bulk-create' ? 'text-[var(--cs-primary)] border-[var(--cs-primary)]' : 'text-gray-500 border-transparent'
+                tab === 'bulk-create' ? 'text-cs-primary border-cs-primary' : 'text-gray-500 border-transparent'
               }`}
             >
               {t('sm_manuals_tab_bulk')}

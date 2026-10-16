@@ -49,7 +49,7 @@ export function Projects() {
         <div className="cs-container cs-container--wide grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-x-8">
 
           <header className="mb-8 lg:col-span-2">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('projects_title')}</h1>
+            <h1 className="text-4xl text-cs-primary mb-3">{t('projects_title')}</h1>
             <p className="text-lg text-gray-600">{t('projects_intro')}</p>
           </header>
 
@@ -88,7 +88,7 @@ export function Projects() {
                   <button
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="py-2 px-4 text-sm font-medium text-[var(--cs-primary)] bg-transparent border border-[var(--cs-primary)] rounded cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--cs-primary)] hover:text-white"
+                    className="py-2 px-4 text-sm font-medium text-cs-primary bg-transparent border border-cs-primary rounded cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:bg-cs-primary hover:text-white"
                   >
                     {t('projects_pagination_prev')}
                   </button>
@@ -100,8 +100,8 @@ export function Projects() {
                       aria-label={t('projects_pagination_page', { page })}
                       className={
                         page === currentPage
-                          ? 'w-9 h-9 text-sm font-semibold text-white bg-[var(--cs-primary)] border border-[var(--cs-primary)] rounded cursor-pointer'
-                          : 'w-9 h-9 text-sm font-medium text-[var(--cs-primary)] bg-transparent border border-transparent rounded cursor-pointer hover:border-[var(--cs-primary)]'
+                          ? 'w-9 h-9 text-sm font-semibold text-white bg-cs-primary border border-cs-primary rounded cursor-pointer'
+                          : 'w-9 h-9 text-sm font-medium text-cs-primary bg-transparent border border-transparent rounded cursor-pointer hover:border-cs-primary'
                       }
                     >
                       {page}
@@ -110,7 +110,7 @@ export function Projects() {
                   <button
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    className="py-2 px-4 text-sm font-medium text-[var(--cs-primary)] bg-transparent border border-[var(--cs-primary)] rounded cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--cs-primary)] hover:text-white"
+                    className="py-2 px-4 text-sm font-medium text-cs-primary bg-transparent border border-cs-primary rounded cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:bg-cs-primary hover:text-white"
                   >
                     {t('projects_pagination_next')}
                   </button>

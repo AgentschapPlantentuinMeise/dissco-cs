@@ -72,9 +72,9 @@ export function Modal({
           <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-gray-200 px-6 py-4">
             <div className="flex flex-col gap-0.5">
               {eyebrow && (
-                <span className="text-[0.68rem] font-bold uppercase tracking-wide text-[var(--cs-secondary)]">{eyebrow}</span>
+                <span className="text-[0.68rem] font-bold uppercase tracking-wide text-cs-secondary">{eyebrow}</span>
               )}
-              {title && <h4 className="m-0 text-lg font-semibold text-[var(--cs-primary)]">{title}</h4>}
+              {title && <h4 className="m-0 text-lg font-semibold text-cs-primary">{title}</h4>}
             </div>
             <button
               type="button"

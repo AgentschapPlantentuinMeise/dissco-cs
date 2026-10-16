@@ -67,7 +67,7 @@ export function ManualModal({
       ) : (
         <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3.5 py-2.5 text-sm text-gray-700">
           <span>{attachment.filename}</span>
-          <a href={attachmentUrl} download={attachment.filename} className="font-semibold text-[var(--cs-primary)] hover:underline">
+          <a href={attachmentUrl} download={attachment.filename} className="font-semibold text-cs-primary hover:underline">
             {t('manual_pdf_download_original')}
           </a>
         </div>
@@ -113,7 +113,7 @@ export function ManualModal({
                     type="button"
                     onClick={() => setOpenSectionIndex(isOpen ? -1 : index)}
                     className={`flex w-full items-center justify-between gap-2 border-none px-3.5 py-2.5 text-left text-sm font-semibold cursor-pointer ${
-                      isOpen ? 'bg-[var(--cs-primary)] text-white' : 'bg-gray-50 text-gray-800'
+                      isOpen ? 'bg-cs-primary text-white' : 'bg-gray-50 text-gray-800'
                     }`}
                   >
                     <span>{section.heading}</span>

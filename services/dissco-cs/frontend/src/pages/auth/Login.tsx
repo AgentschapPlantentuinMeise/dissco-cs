@@ -76,10 +76,10 @@ export function Login() {
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container max-w-md">
           <header className="mb-8">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('login_title')}</h1>
+            <h1 className="text-4xl text-cs-primary mb-3">{t('login_title')}</h1>
             <p className="text-lg text-gray-600">
               {t('login_no_account')}{' '}
-              <HrefLink href="/register" className="text-[var(--cs-primary)]">
+              <HrefLink href="/register" className="text-cs-primary">
                 {t('login_register_link')}
               </HrefLink>
             </p>
@@ -115,13 +115,13 @@ export function Login() {
             {status === 'error' && <p className="text-red-700">{error}</p>}
 
             <div className="flex items-center justify-between mt-2">
-              <HrefLink href="/forgot-password" className="text-sm text-gray-600 hover:text-[var(--cs-primary)]">
+              <HrefLink href="/forgot-password" className="text-sm text-gray-600 hover:text-cs-primary">
                 {t('login_forgot_password_link')}
               </HrefLink>
               <button
                 type="submit"
                 disabled={status === 'sending' || !!pendingTerms}
-                className="bg-[var(--cs-primary)] text-white px-5 py-2 rounded-full text-sm font-semibold border-none cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
+                className="bg-cs-primary text-white px-5 py-2 rounded-full text-sm font-semibold border-none cursor-pointer hover:bg-cs-dark disabled:opacity-50"
               >
                 {t('login_form_submit')}
               </button>
@@ -136,7 +136,7 @@ export function Login() {
           intro={
             <>
               {t('login_terms_modal_intro')}{' '}
-              <HrefLink href="/contact" className="text-[var(--cs-primary)]" onClick={cancelTerms}>
+              <HrefLink href="/contact" className="text-cs-primary" onClick={cancelTerms}>
                 {t('login_terms_modal_contact_link')}
               </HrefLink>
             </>

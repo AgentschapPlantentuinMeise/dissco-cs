@@ -109,7 +109,7 @@ export function ManualsSubview({ projects, manuals }: {
                 <td className="px-4 py-3 border-t border-gray-100 text-right whitespace-nowrap">
                   <button
                     onClick={() => setEditingId(editingId === manual.id ? null : manual.id)}
-                    className="text-sm font-semibold text-[var(--cs-primary)] bg-transparent border-none cursor-pointer hover:underline mr-4"
+                    className="text-sm font-semibold text-cs-primary bg-transparent border-none cursor-pointer hover:underline mr-4"
                   >
                     {editingId === manual.id ? t('sm_manuals_close_edit') : t('sm_manuals_edit')}
                   </button>

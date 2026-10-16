@@ -30,7 +30,7 @@ export function StatBanner({ stats, eyebrow, trailing, trailingDivider = false, 
 }) {
   return (
     <div
-      className={`rounded-[4px] border-b-[3px] border-b-[var(--cs-dark)] bg-gradient-to-r from-[var(--cs-primary)] to-[var(--cs-accent)] text-white px-8 py-6 max-[600px]:px-6 ${className}`}
+      className={`rounded-[4px] border-b-[3px] border-b-cs-dark bg-gradient-to-r from-cs-primary to-cs-accent text-white px-8 py-6 max-[600px]:px-6 ${className}`}
     >
       {eyebrow && (
         <div className="text-[0.68rem] font-bold uppercase tracking-[0.05em] text-[#e3f7f4] opacity-80 mb-3">

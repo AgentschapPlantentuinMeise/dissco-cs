@@ -69,7 +69,7 @@ export function SetPassword() {
       <CsPage>
         <div className="cs-main-wrapper pt-10 pb-16">
           <div className="cs-container max-w-md">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('set_password_title')}</h1>
+            <h1 className="text-4xl text-cs-primary mb-4">{t('set_password_title')}</h1>
             <p className="text-red-700">{t('set_password_invalid_link')}</p>
           </div>
         </div>
@@ -82,7 +82,7 @@ export function SetPassword() {
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container max-w-md">
           <header className="mb-8">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('set_password_title')}</h1>
+            <h1 className="text-4xl text-cs-primary mb-3">{t('set_password_title')}</h1>
             <p className="text-lg text-gray-600">{t('set_password_intro')}</p>
           </header>
 
@@ -150,7 +150,7 @@ export function SetPassword() {
               <button
                 type="submit"
                 disabled={!canSubmit || status === 'sending'}
-                className="bg-[var(--cs-primary)] text-white px-5 py-2 rounded-full text-sm font-semibold border-none cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
+                className="bg-cs-primary text-white px-5 py-2 rounded-full text-sm font-semibold border-none cursor-pointer hover:bg-cs-dark disabled:opacity-50"
               >
                 {t('set_password_form_submit')}
               </button>

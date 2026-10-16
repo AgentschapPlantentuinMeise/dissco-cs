@@ -104,7 +104,7 @@ export function ImagePreviewPopup({ subject, label, onClose }: ImagePreviewPopup
       style={{ left: position.x, top: position.y, width: size.width, height: size.height }}
     >
       <div
-        className="flex-shrink-0 flex items-center justify-between gap-2 px-3 py-2 bg-[var(--cs-primary)] text-white cursor-move select-none"
+        className="flex-shrink-0 flex items-center justify-between gap-2 px-3 py-2 bg-cs-primary text-white cursor-move select-none"
         onMouseDown={handleTitleBarMouseDown}
       >
         <span className="text-sm font-medium truncate">{label ?? t('review_preview_title')}</span>

@@ -171,7 +171,7 @@ export function BulkCreateProjectsSubview({ projects }: { projects: MadocProject
             disabled={!canSubmit}
             className={`text-sm font-semibold px-4 py-2 rounded-full border-none ${
               canSubmit
-                ? 'bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)]'
+                ? 'bg-cs-primary text-white cursor-pointer hover:bg-cs-dark'
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             }`}
           >
@@ -197,7 +197,7 @@ export function BulkCreateProjectsSubview({ projects }: { projects: MadocProject
       {progress.total > 0 && (running || finished) && (
         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mt-3 max-w-sm">
           <div
-            className="h-full bg-[var(--cs-primary)] transition-[width] duration-300 ease-in-out"
+            className="h-full bg-cs-primary transition-[width] duration-300 ease-in-out"
             style={{ width: `${(progress.done / progress.total) * 100}%` }}
           />
         </div>

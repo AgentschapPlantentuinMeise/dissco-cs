@@ -54,12 +54,12 @@ export function FeedbackThreadDetail({ threadId }: { threadId: number }) {
           onChange={e => setReplyBody(e.target.value)}
           rows={2}
           placeholder={t('dashboard_feedback_reply_placeholder')}
-          className="flex-1 border border-gray-300 rounded-lg p-2 text-sm resize-none focus:outline-none focus:border-[var(--cs-primary)]"
+          className="flex-1 border border-gray-300 rounded-lg p-2 text-sm resize-none focus:outline-none focus:border-cs-primary"
         />
         <button
           onClick={() => replyBody.trim() && postReply(replyBody.trim())}
           disabled={!replyBody.trim() || replyStatus === 'pending'}
-          className="px-4 py-2 rounded-full text-sm font-semibold border-none bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
+          className="px-4 py-2 rounded-full text-sm font-semibold border-none bg-cs-primary text-white cursor-pointer hover:bg-cs-dark disabled:opacity-50"
         >
           {t('dashboard_feedback_reply_send')}
         </button>

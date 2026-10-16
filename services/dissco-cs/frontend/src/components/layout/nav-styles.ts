@@ -1,6 +1,6 @@
 // Shared by the navbar's dropdowns (language switcher, user menu).
 export const dropdownItemClass =
-  'block w-full px-4 py-[10px] no-underline text-gray-600 text-[0.9rem] bg-transparent border-none cursor-pointer text-left box-border transition-colors duration-150 hover:bg-gray-100 hover:text-[var(--cs-primary)]';
+  'block w-full px-4 py-[10px] no-underline text-gray-600 text-[0.9rem] bg-transparent border-none cursor-pointer text-left box-border transition-colors duration-150 hover:bg-gray-100 hover:text-cs-primary';
 
 // `placement` holds the dropdown's own offset and width, e.g. 'top-[calc(100%+8px)] min-w-[130px]'.
 export const dropdownListClass = (isOpen: boolean, placement: string) =>

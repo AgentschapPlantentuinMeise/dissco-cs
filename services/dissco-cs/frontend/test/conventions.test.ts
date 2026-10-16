@@ -75,6 +75,11 @@ const rules: ConventionRule[] = [
     allowedIn: { 'api/cs-client/request.ts': 'csFetch puts the already built (and encoded) path behind /api/dissco-cs' },
   },
   {
+    name: 'Brand colors are Tailwind tokens, not arbitrary CSS variables',
+    pattern: /\[var\(--cs-/,
+    instead: "bg-cs-primary, text-cs-dark, border-cs-accent/40, ... (tailwind.config.js); they read the same variables and also allow opacity",
+  },
+  {
     name: 'No refetch: after a write, invalidate',
     pattern: /\brefetch\b/,
     instead: "useMutation with invalidateQueries({ queryKey: xKeys... }) in onSuccess -- CLAUDE.md 'Schrijven naar de server'",

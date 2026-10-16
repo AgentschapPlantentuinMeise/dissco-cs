@@ -58,7 +58,7 @@ export function Register() {
       <CsPage>
         <div className="cs-main-wrapper pt-10 pb-16">
           <div className="cs-container max-w-md">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('register_title')}</h1>
+            <h1 className="text-4xl text-cs-primary mb-4">{t('register_title')}</h1>
             <p className="text-red-700">{t('register_invitation_expired')}</p>
           </div>
         </div>
@@ -71,7 +71,7 @@ export function Register() {
       <CsPage>
         <div className="cs-main-wrapper pt-10 pb-16">
           <div className="cs-container max-w-md">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('register_title')}</h1>
+            <h1 className="text-4xl text-cs-primary mb-4">{t('register_title')}</h1>
             <p className="text-base text-gray-600">{t('register_already_logged_in', { name: user.name })}</p>
           </div>
         </div>
@@ -109,7 +109,7 @@ export function Register() {
       <CsPage>
         <div className="cs-main-wrapper pt-10 pb-16">
           <div className="cs-container max-w-md">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-4">{t('register_title')}</h1>
+            <h1 className="text-4xl text-cs-primary mb-4">{t('register_title')}</h1>
             {emailSent ? (
               <p>{t('register_success_email_sent')}</p>
             ) : (
@@ -126,13 +126,13 @@ export function Register() {
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container max-w-md">
           <header className="mb-8">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('register_title')}</h1>
+            <h1 className="text-4xl text-cs-primary mb-3">{t('register_title')}</h1>
             {invitation && !('expired' in invitation) ? (
               <p className="text-lg text-gray-600">{t('register_invitation_intro')}</p>
             ) : (
               <p className="text-lg text-gray-600">
                 {t('register_have_account')}{' '}
-                <HrefLink href="/login" className="text-[var(--cs-primary)]">
+                <HrefLink href="/login" className="text-cs-primary">
                   {t('register_login_link')}
                 </HrefLink>
               </p>
@@ -168,12 +168,12 @@ export function Register() {
             {terms && (
               <div className="text-sm">
                 {termsAccepted ? (
-                  <span className="text-[var(--cs-primary)]">{t('register_terms_accepted')}</span>
+                  <span className="text-cs-primary">{t('register_terms_accepted')}</span>
                 ) : (
                   <button
                     type="button"
                     onClick={() => setShowTermsPopup(true)}
-                    className="text-[var(--cs-primary)] underline bg-transparent border-none cursor-pointer p-0"
+                    className="text-cs-primary underline bg-transparent border-none cursor-pointer p-0"
                   >
                     {t('register_terms_button')}
                   </button>
@@ -187,7 +187,7 @@ export function Register() {
               <button
                 type="submit"
                 disabled={status === 'sending'}
-                className="bg-[var(--cs-primary)] text-white px-5 py-2 rounded-full text-sm font-semibold border-none cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
+                className="bg-cs-primary text-white px-5 py-2 rounded-full text-sm font-semibold border-none cursor-pointer hover:bg-cs-dark disabled:opacity-50"
               >
                 {t('register_form_submit')}
               </button>

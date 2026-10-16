@@ -26,7 +26,7 @@ export function ForgotPassword() {
       <div className="cs-main-wrapper pt-10 pb-16">
         <div className="cs-container max-w-md">
           <header className="mb-8">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('forgot_password_title')}</h1>
+            <h1 className="text-4xl text-cs-primary mb-3">{t('forgot_password_title')}</h1>
             {status !== 'sent' && <p className="text-lg text-gray-600">{t('forgot_password_intro')}</p>}
           </header>
 
@@ -46,13 +46,13 @@ export function ForgotPassword() {
               </label>
 
               <div className="flex items-center justify-between mt-2">
-                <HrefLink href="/login" className="text-sm text-gray-600 hover:text-[var(--cs-primary)]">
+                <HrefLink href="/login" className="text-sm text-gray-600 hover:text-cs-primary">
                   {t('forgot_password_back_to_login')}
                 </HrefLink>
                 <button
                   type="submit"
                   disabled={status === 'sending'}
-                  className="bg-[var(--cs-primary)] text-white px-5 py-2 rounded-full text-sm font-semibold border-none cursor-pointer hover:bg-[var(--cs-dark)] disabled:opacity-50"
+                  className="bg-cs-primary text-white px-5 py-2 rounded-full text-sm font-semibold border-none cursor-pointer hover:bg-cs-dark disabled:opacity-50"
                 >
                   {t('forgot_password_form_submit')}
                 </button>

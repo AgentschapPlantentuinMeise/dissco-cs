@@ -16,7 +16,7 @@ export function About() {
         <div className="cs-container cs-container--wide">
 
           <header className="mb-8">
-            <h1 className="text-4xl text-[var(--cs-primary)] mb-3">{t('nav_about')}</h1>
+            <h1 className="text-4xl text-cs-primary mb-3">{t('nav_about')}</h1>
           </header>
 
 

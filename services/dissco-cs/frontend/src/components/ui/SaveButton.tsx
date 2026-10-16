@@ -16,7 +16,7 @@ export function SaveButton({ onClick, disabled, loading, title }: {
       className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-none ${
         isDisabled
           ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-          : 'bg-[var(--cs-primary)] text-white cursor-pointer hover:bg-[var(--cs-dark)]'
+          : 'bg-cs-primary text-white cursor-pointer hover:bg-cs-dark'
       }`}
     >
       {loading && (

@@ -10,10 +10,10 @@ export function ConfirmDialog({ title, message, confirmLabel, cancelLabel, tone 
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  const toneColor = tone === 'affirm' ? 'text-[var(--cs-secondary)]' : 'text-red-600';
+  const toneColor = tone === 'affirm' ? 'text-cs-secondary' : 'text-red-600';
   const confirmButtonColor =
     tone === 'affirm'
-      ? 'bg-[var(--cs-secondary)] hover:brightness-90'
+      ? 'bg-cs-secondary hover:brightness-90'
       : 'bg-red-600 hover:bg-red-700';
 
   return (

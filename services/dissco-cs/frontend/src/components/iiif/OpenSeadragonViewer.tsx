@@ -156,7 +156,7 @@ export function OpenSeadragonViewer({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center h-[40px] px-3 bg-[var(--cs-primary)] flex-shrink-0 select-none gap-[6px]">
+      <div className="flex items-center h-[40px] px-3 bg-cs-primary flex-shrink-0 select-none gap-[6px]">
         <div className="flex items-center gap-[6px] flex-1">
           <button className={btnClass} onClick={onPrevCanvas} disabled={!onPrevCanvas} aria-label={t('viewer_prev_canvas')}><LuArrowLeft aria-hidden="true" /></button>
           <span className="text-white/85 text-[0.8rem] whitespace-nowrap truncate max-w-[160px]">

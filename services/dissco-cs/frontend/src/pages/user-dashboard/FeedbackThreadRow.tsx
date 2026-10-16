@@ -57,7 +57,7 @@ export function FeedbackThreadRow({
           onClick={() => setConfirmingDelete(true)}
           aria-label={t('dashboard_feedback_delete_label')}
           title={t('dashboard_feedback_delete_label')}
-          className="flex-shrink-0 bg-transparent border-none text-gray-600 cursor-pointer hover:text-[var(--cs-primary)] transition-colors duration-200 p-1"
+          className="flex-shrink-0 bg-transparent border-none text-gray-600 cursor-pointer hover:text-cs-primary transition-colors duration-200 p-1"
         >
           <LuTrash2 />
         </button>

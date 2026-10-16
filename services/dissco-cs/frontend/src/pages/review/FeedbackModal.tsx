@@ -41,7 +41,7 @@ export function FeedbackModal({ target, onSend, onClose, sending }: FeedbackModa
           <button
             onClick={submit}
             disabled={!canSend}
-            className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-none text-white cursor-pointer bg-[var(--cs-tertiary)] hover:brightness-90 disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-none text-white cursor-pointer bg-cs-tertiary hover:brightness-90 disabled:opacity-50"
           >
             <LuMail aria-hidden="true" />
             {sending ? t('feedback_sending') : t('feedback_send')}
@@ -59,7 +59,7 @@ export function FeedbackModal({ target, onSend, onClose, sending }: FeedbackModa
         onChange={e => setSubject(e.target.value)}
         placeholder={t('feedback_subject_placeholder')}
         autoFocus
-        className="w-full border border-gray-300 rounded-lg p-3 text-sm mb-4 focus:outline-none focus:border-[var(--cs-primary)]"
+        className="w-full border border-gray-300 rounded-lg p-3 text-sm mb-4 focus:outline-none focus:border-cs-primary"
       />
       <label htmlFor="feedback-body" className="block text-[0.78rem] font-semibold text-gray-600 mb-2">
         {t('feedback_body_label')}
@@ -69,7 +69,7 @@ export function FeedbackModal({ target, onSend, onClose, sending }: FeedbackModa
         value={body}
         onChange={e => setBody(e.target.value)}
         rows={4}
-        className="w-full border border-gray-300 rounded-lg p-3 text-sm resize-none focus:outline-none focus:border-[var(--cs-primary)]"
+        className="w-full border border-gray-300 rounded-lg p-3 text-sm resize-none focus:outline-none focus:border-cs-primary"
       />
     </Modal>
   );

@@ -10,7 +10,7 @@ export function DeleteIconButton({ onClick }: {
       onClick={onClick}
       aria-label={t('common_delete')}
       title={t('common_delete')}
-      className="bg-transparent border-none cursor-pointer text-gray-600 text-base px-1 flex items-center hover:text-[var(--cs-primary)] transition-colors duration-200"
+      className="bg-transparent border-none cursor-pointer text-gray-600 text-base px-1 flex items-center hover:text-cs-primary transition-colors duration-200"
     >
       <LuTrash2 />
     </button>

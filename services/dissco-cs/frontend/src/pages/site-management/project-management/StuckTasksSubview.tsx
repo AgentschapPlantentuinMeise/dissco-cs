@@ -86,7 +86,7 @@ export function StuckTasksSubview() {
                 return (
                   <tr key={task.id}>
                     <td className="px-4 py-3 border-t border-gray-100">
-                      <HrefLink href={buildTaskLink(task)} className="text-[var(--cs-primary)] no-underline font-medium hover:underline">
+                      <HrefLink href={buildTaskLink(task)} className="text-cs-primary no-underline font-medium hover:underline">
                         {manifestLabel}
                       </HrefLink>
                     </td>
@@ -102,7 +102,7 @@ export function StuckTasksSubview() {
                       <button
                         onClick={() => setConfirmTask(task)}
                         disabled={isReleasing(task)}
-                        className="text-sm font-semibold text-[var(--cs-primary)] bg-transparent border-none cursor-pointer hover:underline disabled:opacity-50"
+                        className="text-sm font-semibold text-cs-primary bg-transparent border-none cursor-pointer hover:underline disabled:opacity-50"
                       >
                         {t('sm_stuck_tasks_release')}
                       </button>
@@ -117,7 +117,7 @@ export function StuckTasksSubview() {
 
       {manifestCounters.length > 0 && (
         <>
-          <h2 className="text-xl text-[var(--cs-primary)] mb-2">{t('sm_stuck_tasks_counters_title')}</h2>
+          <h2 className="text-xl text-cs-primary mb-2">{t('sm_stuck_tasks_counters_title')}</h2>
           <p className="text-sm text-gray-600 mb-4">{t('sm_stuck_tasks_counters_intro')}</p>
           <div className="bg-white border-t border-gray-200">
             <table className="w-full border-collapse">
@@ -138,7 +138,7 @@ export function StuckTasksSubview() {
                   return (
                     <tr key={counter.id}>
                       <td className="px-4 py-3 border-t border-gray-100">
-                        <HrefLink href={buildTaskLink(counter)} className="text-[var(--cs-primary)] no-underline font-medium hover:underline">
+                        <HrefLink href={buildTaskLink(counter)} className="text-cs-primary no-underline font-medium hover:underline">
                           {manifestLabel}
                         </HrefLink>
                       </td>
@@ -151,7 +151,7 @@ export function StuckTasksSubview() {
                         <button
                           onClick={() => resync.mutate(counter)}
                           disabled={isResyncing(counter)}
-                          className="text-sm font-semibold text-[var(--cs-primary)] bg-transparent border-none cursor-pointer hover:underline disabled:opacity-50"
+                          className="text-sm font-semibold text-cs-primary bg-transparent border-none cursor-pointer hover:underline disabled:opacity-50"
                         >
                           {t('sm_stuck_tasks_resync')}
                         </button>

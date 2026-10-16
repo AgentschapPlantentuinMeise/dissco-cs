@@ -140,7 +140,7 @@ export function ProjectDetail() {
                   style={{ backgroundImage: `url(${institution.logo})` }}
                 />
               )}
-              <LocaleString as="h1" className="text-[1.8rem] font-bold text-[var(--cs-primary)] mt-0 mb-[14px] leading-[1.25] max-[700px]:text-[1.4rem]">
+              <LocaleString as="h1" className="text-[1.8rem] font-bold text-cs-primary mt-0 mb-[14px] leading-[1.25] max-[700px]:text-[1.4rem]">
                 {project.label}
               </LocaleString>
               <LocaleString as="p" className="text-base leading-relaxed text-gray-600 mb-7 flex-grow">
@@ -148,14 +148,14 @@ export function ProjectDetail() {
               </LocaleString>
               <div className="flex flex-wrap gap-3">
                 <button
-                  className="inline-block py-[11px] px-[26px] bg-[var(--cs-primary)] text-white text-[0.95rem] font-semibold border-none rounded cursor-pointer no-underline transition-[background-color,transform] duration-200 hover:bg-[var(--cs-dark)] hover:-translate-y-[1px] disabled:opacity-65 disabled:cursor-not-allowed"
+                  className="inline-block py-[11px] px-[26px] bg-cs-primary text-white text-[0.95rem] font-semibold border-none rounded cursor-pointer no-underline transition-[background-color,transform] duration-200 hover:bg-cs-dark hover:-translate-y-[1px] disabled:opacity-65 disabled:cursor-not-allowed"
                   onClick={() => startRandom()}
                   disabled={isStarting || allTasksTaken}
                 >
                   {isStarting ? t('pdp_starting') : t('pdp_btn_start')}
                 </button>
                 <button
-                  className="inline-block py-[11px] px-[26px] bg-transparent text-[var(--cs-primary)] text-[0.95rem] font-semibold border-2 border-[var(--cs-primary)] rounded cursor-pointer no-underline transition-[background-color,color,transform] duration-200 hover:bg-[var(--cs-primary)] hover:text-white hover:-translate-y-[1px]"
+                  className="inline-block py-[11px] px-[26px] bg-transparent text-cs-primary text-[0.95rem] font-semibold border-2 border-cs-primary rounded cursor-pointer no-underline transition-[background-color,color,transform] duration-200 hover:bg-cs-primary hover:text-white hover:-translate-y-[1px]"
                   onClick={() => setManualOpen(true)}
                 >
                   {t('pdp_btn_guide')}
@@ -175,7 +175,7 @@ export function ProjectDetail() {
 
           {manifests.length > 0 && (
             <section className="mb-10">
-              <h2 className="text-[1.2rem] font-semibold text-[var(--cs-primary)] mt-0 mb-5">{t('pdp_manifests_title')}</h2>
+              <h2 className="text-[1.2rem] font-semibold text-cs-primary mt-0 mb-5">{t('pdp_manifests_title')}</h2>
               <div className="grid [grid-template-columns:repeat(auto-fill,minmax(150px,1fr))] gap-[14px] max-[700px]:[grid-template-columns:repeat(auto-fill,minmax(120px,1fr))]">
                 {manifests.map(manifest => (
                   <button
@@ -198,7 +198,7 @@ export function ProjectDetail() {
 
           {ownSavedTasks.length > 0 && (
             <section className="mb-4">
-              <h2 className="text-[1.2rem] font-semibold text-[var(--cs-primary)] mt-0 mb-5">{t('pdp_saved_tasks_title')}</h2>
+              <h2 className="text-[1.2rem] font-semibold text-cs-primary mt-0 mb-5">{t('pdp_saved_tasks_title')}</h2>
               <div className="bg-white rounded-[10px] overflow-hidden">
                 {ownSavedTasks.map(task => {
                   const href = buildTaskLink(task);
@@ -208,7 +208,7 @@ export function ProjectDetail() {
                     <HrefLink
                       key={task.id}
                       href={href}
-                      className="block px-4 py-3 text-[0.9rem] text-[var(--cs-primary)] no-underline font-medium border-b border-[#f0f0f0] last:border-b-0 hover:bg-gray-50"
+                      className="block px-4 py-3 text-[0.9rem] text-cs-primary no-underline font-medium border-b border-[#f0f0f0] last:border-b-0 hover:bg-gray-50"
                     >
                       {displayName}
                     </HrefLink>
