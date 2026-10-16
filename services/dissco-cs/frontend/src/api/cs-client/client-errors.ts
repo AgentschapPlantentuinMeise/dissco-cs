@@ -2,6 +2,7 @@ import type { ClientErrorInput, ClientErrorKind } from '@dissco-cs/shared-types'
 import { getBreadcrumbs, withoutQuery } from '../breadcrumbs';
 import { getJwt } from '../jwt';
 import { ApiError } from './request';
+import { withQuery } from '../url';
 
 /**
  * Whether the backend still has to hear about this error. An ApiError came from our own backend,
@@ -43,8 +44,7 @@ export function reportClientError(err: unknown, kind: ClientErrorKind): void {
   };
 
   const jwt = getJwt();
-  const slug = siteSlug();
-  fetch(`/api/dissco-cs/client-errors${slug ? `?slug=${slug}` : ''}`, {
+  fetch(withQuery('/api/dissco-cs/client-errors', { slug: siteSlug() }), {
     method: 'POST',
     keepalive: true,
     headers: { 'Content-Type': 'application/json', ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}) },

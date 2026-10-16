@@ -1,5 +1,5 @@
-import queryString from 'query-string';
 import { csFetch, csFetchField } from './request';
+import { urlPath, withQuery } from '../url';
 import { MadocCrowdsourcingTaskDto, MadocPagination } from '@dissco-cs/shared-types';
 
 export const tasksApi = {
@@ -12,7 +12,7 @@ export const tasksApi = {
    */
   list: <T = unknown>(page?: number, query: Record<string, unknown> = {}) =>
     csFetch<{ tasks: T[]; pagination?: MadocPagination }>(
-      `/tasks?${queryString.stringify({ page: page || 1, ...query }, { arrayFormat: 'comma' })}`
+      withQuery('/tasks', { page: page || 1, ...query })
     ),
 
   /**
@@ -22,7 +22,7 @@ export const tasksApi = {
    * Returns: the tasks, all pages together.
    */
   listAll: <T = unknown>(query: Record<string, unknown> = {}) =>
-    csFetchField<T[]>(`/tasks?${queryString.stringify({ ...query, all: true }, { arrayFormat: 'comma' })}`, 'tasks'),
+    csFetchField<T[]>(withQuery('/tasks', { ...query, all: true }), 'tasks'),
 
   /**
    * One task with its details, asked as the caller.
@@ -30,7 +30,7 @@ export const tasksApi = {
    * Who: logged-in user who may see the task (Madoc decides).
    * Returns: the task; Madoc's status passed through unchanged.
    */
-  get: (taskId: string) => csFetch<{ id: string; status: number; state?: { revisionId?: string } }>(`/tasks/${taskId}`),
+  get: (taskId: string) => csFetch<{ id: string; status: number; state?: { revisionId?: string } }>(urlPath`/tasks/${taskId}`),
 
   /**
    * Changes a task through Madoc's generic tasks API, as the caller.
@@ -41,7 +41,7 @@ export const tasksApi = {
    * Returns: nothing; Madoc's status passed through unchanged.
    */
   update: (taskId: string, task: Record<string, unknown>) =>
-    csFetch<void>(`/tasks/${taskId}`, { method: 'PATCH', body: JSON.stringify(task) }),
+    csFetch<void>(urlPath`/tasks/${taskId}`, { method: 'PATCH', body: JSON.stringify(task) }),
 
   /**
    * Tasks that block a manifest for other volunteers: claimed but never started (status 0), or in
@@ -59,7 +59,7 @@ export const tasksApi = {
    * Who: site admin.
    * Returns: true.
    */
-  release: (taskId: string) => csFetchField<boolean>(`/tasks/${taskId}/release`, 'released', { method: 'POST' }),
+  release: (taskId: string) => csFetchField<boolean>(urlPath`/tasks/${taskId}/release`, 'released', { method: 'POST' }),
 
   /**
    * Recounts a manifest's contributors and reopens it (status 1) when there is room again --
@@ -69,5 +69,5 @@ export const tasksApi = {
    * Returns: true when it was reopened; false when nothing had to change.
    */
   resyncManifest: (containerId: string) =>
-    csFetchField<boolean>(`/tasks/manifests/${containerId}/resync`, 'resynced', { method: 'POST' }),
+    csFetchField<boolean>(urlPath`/tasks/manifests/${containerId}/resync`, 'resynced', { method: 'POST' }),
 };

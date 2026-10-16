@@ -186,6 +186,7 @@ Keep in mind that the structure en code we provide is in a open source context
 
 ## Schrijven naar de server (services/dissco-cs frontend)
 
+- **URL bouwen (`api/url.ts`):** een pad met een waarde = `` urlPath`/projects/${slug}` `` (codeert elke waarde); querystring = `withQuery(path, { a, b })` (laat `undefined`/`null` weg); de site-slug = `withSite(path, params?)`. Nooit `?slug=` of `encodeURIComponent` met de hand, en geen `query-string`.
 - **Een actie van de gebruiker die schrijft = `useMutation`**, met `mutationFn: () => xApi.y(...)`. Geen `await xApi.y()` in een eigen try/catch.
 - **Na succes:** in `onSuccess` `invalidateQueries({ queryKey: xKeys.… })` via de factory, zodat ook andere pagina's (bv. de publieke lijst) verversen. Geeft de server het nieuwe object terug, dan mag `setQueryData`. Nooit `refetch()`, en nooit een `refetch`-functie als prop doorgeven.
 - **Laden:** `isPending` (en `variables` voor "welke rij"), geen eigen `useState` voor saving/loading/error.

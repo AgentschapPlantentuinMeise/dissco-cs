@@ -1,4 +1,5 @@
 import { csFetch, csFetchField } from './request';
+import { urlPath } from '../url';
 import { ForumTopicDto, ForumReplyDto, ForumTopicInput } from '@dissco-cs/shared-types';
 
 export const forumApi = {
@@ -27,7 +28,7 @@ export const forumApi = {
    * Who: logged-in user.
    * Returns: ForumReplyDto[]; 404 when the topic is not on this site.
    */
-  listReplies: (topicId: number) => csFetchField<ForumReplyDto[]>(`/forum/topics/${topicId}/replies`, 'replies'),
+  listReplies: (topicId: number) => csFetchField<ForumReplyDto[]>(urlPath`/forum/topics/${topicId}/replies`, 'replies'),
 
   /**
    * Adds a reply in the caller's name; the topic then counts as fully read for the caller.
@@ -37,7 +38,7 @@ export const forumApi = {
    * Returns: the new ForumReplyDto (201); 404 unknown topic; 403 when the topic is closed.
    */
   createReply: (topicId: number, body: string) =>
-    csFetch<ForumReplyDto>(`/forum/topics/${topicId}/replies`, {
+    csFetch<ForumReplyDto>(urlPath`/forum/topics/${topicId}/replies`, {
       method: 'POST',
       body: JSON.stringify({ body }),
     }),
@@ -57,7 +58,7 @@ export const forumApi = {
    * Who: the topic's author or a site admin.
    * Returns: nothing (204); 404 unknown topic; 403 not allowed.
    */
-  deleteTopic: (topicId: number) => csFetch<void>(`/forum/topics/${topicId}`, { method: 'DELETE' }),
+  deleteTopic: (topicId: number) => csFetch<void>(urlPath`/forum/topics/${topicId}`, { method: 'DELETE' }),
 
   /**
    * Closes a topic: it stays visible but takes no new replies.
@@ -65,7 +66,7 @@ export const forumApi = {
    * Who: the topic's author or a site admin.
    * Returns: the topic as ForumTopicDto, with its closedAt; 404 unknown topic; 403 not allowed.
    */
-  closeTopic: (topicId: number) => csFetch<ForumTopicDto>(`/forum/topics/${topicId}/close`, { method: 'POST' }),
+  closeTopic: (topicId: number) => csFetch<ForumTopicDto>(urlPath`/forum/topics/${topicId}/close`, { method: 'POST' }),
 
   /**
    * Deletes one reply.
@@ -75,5 +76,5 @@ export const forumApi = {
    * Returns: nothing (204); 404 when the reply is not part of that topic; 403 not allowed.
    */
   deleteReply: (topicId: number, replyId: number) =>
-    csFetch<void>(`/forum/topics/${topicId}/replies/${replyId}`, { method: 'DELETE' }),
+    csFetch<void>(urlPath`/forum/topics/${topicId}/replies/${replyId}`, { method: 'DELETE' }),
 };

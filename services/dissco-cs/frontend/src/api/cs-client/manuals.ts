@@ -1,4 +1,5 @@
 import { ApiError, csFetch, csFetchField } from './request';
+import { urlPath } from '../url';
 import { getJwt, redirectToExpiredLogin } from '../jwt';
 import { SitePageLang, ManualDto, ManualSummaryDto, ManualDetailDto } from '@dissco-cs/shared-types';
 
@@ -11,7 +12,7 @@ export const manualsApi = {
    * Who: site admin.
    * Returns: ManualDetailDto; 404 when it is not on this site.
    */
-  get: (manualId: number) => csFetch<ManualDetailDto>(`/manuals/${manualId}`),
+  get: (manualId: number) => csFetch<ManualDetailDto>(urlPath`/manuals/${manualId}`),
 
   /**
    * Every manual of this site, with the projects it is linked to.
@@ -38,7 +39,7 @@ export const manualsApi = {
    * Who: site admin.
    * Returns: nothing (204); 404 when it is not on this site.
    */
-  delete: (manualId: number) => csFetch<void>(`/manuals/${manualId}`, { method: 'DELETE' }),
+  delete: (manualId: number) => csFetch<void>(urlPath`/manuals/${manualId}`, { method: 'DELETE' }),
 
   /**
    * Saves the manual's text in one language.
@@ -51,7 +52,7 @@ export const manualsApi = {
    * Returns: nothing (204); 404 when it is not on this site.
    */
   setContent: (manualId: number, lang: SitePageLang, content: string) =>
-    csFetch<void>(`/manuals/${manualId}/${lang}`, { method: 'PUT', body: JSON.stringify({ content }) }),
+    csFetch<void>(urlPath`/manuals/${manualId}/${lang}`, { method: 'PUT', body: JSON.stringify({ content }) }),
 
   /**
    * Uploads (or replaces) the attachment of one language, e.g. a PDF. Sent as multipart form
@@ -67,7 +68,7 @@ export const manualsApi = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`/api/dissco-cs/manuals/${manualId}/${lang}/attachment`, {
+    const response = await fetch(urlPath`/api/dissco-cs/manuals/${manualId}/${lang}/attachment`, {
       method: 'PUT',
       headers: jwt ? { Authorization: `Bearer ${jwt}` } : undefined,
       body: formData,
@@ -78,7 +79,7 @@ export const manualsApi = {
     }
 
     if (!response.ok) {
-      const path = `/manuals/${manualId}/${lang}/attachment`;
+      const path = urlPath`/manuals/${manualId}/${lang}/attachment`;
       throw new ApiError(response.status, path, (await response.text().catch(() => '')) || undefined);
     }
   },
@@ -91,5 +92,5 @@ export const manualsApi = {
    * Returns: nothing (204); 404 unknown manual.
    */
   deleteAttachment: (manualId: number, lang: SitePageLang) =>
-    csFetch<void>(`/manuals/${manualId}/${lang}/attachment`, { method: 'DELETE' }),
+    csFetch<void>(urlPath`/manuals/${manualId}/${lang}/attachment`, { method: 'DELETE' }),
 };

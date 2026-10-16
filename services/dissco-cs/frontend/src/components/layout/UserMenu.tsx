@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import useDropdownMenu from 'react-accessible-dropdown-menu-hook';
-import { stringify } from 'query-string';
 import { useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { reviewQueries } from '../../api/queries/review';
@@ -9,6 +8,7 @@ import { feedbackQueries } from '../../api/queries/feedback';
 import { HrefLink } from '../../utility/href-link';
 import { LuChevronDown, LuUser } from 'react-icons/lu';
 import { getSiteSlug } from '../../api/slug';
+import { withQuery } from '../../api/url';
 import { getCurrentUser } from '../../api/jwt';
 import { dropdownItemClass, dropdownListClass } from './nav-styles';
 
@@ -97,7 +97,7 @@ export const UserMenu: React.FC<{ user: CurrentUser }> = ({ user }) => {
         )}
         <li className="border-t border-[#eee] mt-1 pt-1">
           <a
-            href={`/s/${siteSlug}/logout?${stringify({ redirect: `/s/${siteSlug}/` })}`}
+            href={withQuery(`/s/${siteSlug}/logout`, { redirect: `/s/${siteSlug}/` })}
             className={dropdownItemClass}
             {...itemProps[idxLogout]}
           >

@@ -1,7 +1,7 @@
-import queryString from 'query-string';
 import { getJwt, redirectToExpiredLogin } from '../jwt';
 import { getSiteSlug } from '../slug';
 import { ApiError } from '../cs-client/request';
+import { QueryValue, withQuery } from '../url';
 
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -46,9 +46,8 @@ export async function request<T>(path: string, opts: RequestOptions = {}): Promi
 }
 
 /** Site-scoped "public" API, served at /s/{slug}/madoc/api/... */
-export function publicRequest<T>(endpoint: string, query?: Record<string, unknown>): Promise<T> {
-  const qs = query ? `?${queryString.stringify(query, { arrayFormat: 'comma' })}` : '';
-  return request<T>(`/s/${getSiteSlug()}/madoc/api${endpoint}${qs}`);
+export function publicRequest<T>(endpoint: string, query: Record<string, QueryValue> = {}): Promise<T> {
+  return request<T>(withQuery(`/s/${getSiteSlug()}/madoc/api${endpoint}`, query));
 }
 
 /**

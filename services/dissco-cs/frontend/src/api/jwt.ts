@@ -1,5 +1,6 @@
 import cookies from 'browser-cookies';
 import { getSiteSlug } from './slug';
+import { currentLocation, withQuery } from './url';
 
 export function getJwt(): string | undefined {
   return cookies.get(`madoc/${getSiteSlug()}`) || undefined;
@@ -33,8 +34,7 @@ export function redirectToExpiredLogin<T>(): Promise<T> {
     return new Promise<T>(() => {});
   }
 
-  const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
-  window.location.href = `/s/${slug}/login?redirect=${redirect}&expired=1`;
+  window.location.href = withQuery(`/s/${slug}/login`, { redirect: currentLocation(), expired: 1 });
   return new Promise<T>(() => {});
 }
 

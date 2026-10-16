@@ -1,5 +1,5 @@
 import { csFetch, csFetchField } from './request';
-import { getSiteSlug } from '../slug';
+import { urlPath, withSite } from '../url';
 import { MadocCollectionSummaryDto, MadocManifestStructureDto } from '@dissco-cs/shared-types';
 
 // The canvas JSON is not modeled: only getImageServiceId() reads into it, defensively.
@@ -10,7 +10,7 @@ export const iiifApi = {
    * Who: anyone; Madoc decides what an anonymous visitor may see.
    * Returns: the canvas as Madoc sends it; Madoc's status passed through unchanged.
    */
-  getCanvas: (canvasId: number) => csFetchField<unknown>(`/iiif/canvases/${canvasId}?slug=${getSiteSlug()}`, 'canvas'),
+  getCanvas: (canvasId: number) => csFetchField<unknown>(withSite(urlPath`/iiif/canvases/${canvasId}`), 'canvas'),
 
   /**
    * The canvases of a manifest, in order -- what the annotate page pages through.
@@ -19,7 +19,7 @@ export const iiifApi = {
    * Returns: MadocManifestStructureDto; Madoc's status passed through unchanged.
    */
   getManifestStructure: (manifestId: number) =>
-    csFetch<MadocManifestStructureDto>(`/iiif/manifests/${manifestId}/structure?slug=${getSiteSlug()}`),
+    csFetch<MadocManifestStructureDto>(withSite(urlPath`/iiif/manifests/${manifestId}/structure`)),
 
   /**
    * Every top-level IIIF collection of the site that has items, also unpublished ones -- for the
@@ -39,5 +39,5 @@ export const iiifApi = {
    * Returns: nothing; Madoc's status passed through unchanged.
    */
   setCollectionStructure: (collectionId: number, itemIds: number[]) =>
-    csFetch<void>(`/iiif/collections/${collectionId}/structure`, { method: 'PUT', body: JSON.stringify({ item_ids: itemIds }) }),
+    csFetch<void>(urlPath`/iiif/collections/${collectionId}/structure`, { method: 'PUT', body: JSON.stringify({ item_ids: itemIds }) }),
 };

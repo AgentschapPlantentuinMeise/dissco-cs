@@ -1,4 +1,5 @@
 import { csFetch, csFetchField } from './request';
+import { urlPath } from '../url';
 import { FeedbackThreadDto, FeedbackMessageDto, FeedbackThreadInput } from '@dissco-cs/shared-types';
 
 export const feedbackApi = {
@@ -29,7 +30,7 @@ export const feedbackApi = {
    * Returns: { thread, messages }; 404 unknown thread or not a participant.
    */
   getThread: (threadId: number) =>
-    csFetch<{ thread: FeedbackThreadDto; messages: FeedbackMessageDto[] }>(`/feedback/threads/${threadId}`),
+    csFetch<{ thread: FeedbackThreadDto; messages: FeedbackMessageDto[] }>(urlPath`/feedback/threads/${threadId}`),
 
   /**
    * Adds a message in the caller's name. The thread reappears for the other participant if they
@@ -40,7 +41,7 @@ export const feedbackApi = {
    * Returns: the new FeedbackMessageDto (201); 404 unknown thread or not a participant.
    */
   createReply: (threadId: number, body: string) =>
-    csFetch<FeedbackMessageDto>(`/feedback/threads/${threadId}/replies`, {
+    csFetch<FeedbackMessageDto>(urlPath`/feedback/threads/${threadId}/replies`, {
       method: 'POST',
       body: JSON.stringify({ body }),
     }),
@@ -53,5 +54,5 @@ export const feedbackApi = {
    * Returns: nothing (204); 404 unknown thread or not a participant.
    */
   deleteThread: (threadId: number) =>
-    csFetch<void>(`/feedback/threads/${threadId}`, { method: 'DELETE' }),
+    csFetch<void>(urlPath`/feedback/threads/${threadId}`, { method: 'DELETE' }),
 };

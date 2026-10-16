@@ -1,5 +1,5 @@
 import { csFetch } from './request';
-import { getSiteSlug } from '../slug';
+import { withSite } from '../url';
 import { ContactSubmissionInput } from '@dissco-cs/shared-types';
 
 export const contactApi = {
@@ -14,5 +14,5 @@ export const contactApi = {
    *   502 the mail could not be sent.
    */
   send: (data: ContactSubmissionInput) =>
-    csFetch<void>(`/contact?slug=${getSiteSlug()}`, { method: 'POST', body: JSON.stringify(data) }),
+    csFetch<void>(withSite('/contact'), { method: 'POST', body: JSON.stringify(data) }),
 };

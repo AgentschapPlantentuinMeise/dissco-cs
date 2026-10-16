@@ -48,6 +48,23 @@ const rules: ConventionRule[] = [
     onlyIn: /^api\/cs-client\//,
   },
   {
+    name: 'One way to build a query string',
+    pattern: /from 'query-string'/,
+    instead: "withQuery(path, params) from api/url.ts",
+  },
+  {
+    name: 'The site slug is not added to a URL by hand',
+    pattern: /slug=\$\{/,
+    instead: "withSite(path, params?) from api/url.ts",
+  },
+  {
+    name: 'A cs-client path with a value is built with urlPath, so the value is encoded',
+    pattern: /\(`\//,
+    instead: "urlPath`/projects/${slug}/manual` from api/url.ts (and withSite/withQuery for the query string)",
+    onlyIn: /^api\/cs-client\//,
+    allowedIn: { 'api/cs-client/request.ts': 'csFetch puts the already built (and encoded) path behind /api/dissco-cs' },
+  },
+  {
     name: 'No refetch: after a write, invalidate',
     pattern: /\brefetch\b/,
     instead: "useMutation with invalidateQueries({ queryKey: xKeys... }) in onSuccess -- CLAUDE.md 'Schrijven naar de server'",

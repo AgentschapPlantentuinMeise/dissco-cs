@@ -1,5 +1,5 @@
 import { csFetch, csFetchField } from './request';
-import { getSiteSlug } from '../slug';
+import { urlPath, withSite } from '../url';
 import { NavItemKey, SitePageLang, NavItemDto, NavItemContactEmailDto } from '@dissco-cs/shared-types';
 
 export const navItemsApi = {
@@ -11,7 +11,7 @@ export const navItemsApi = {
    * Who: anyone.
    * Returns: NavItemDto[].
    */
-  list: () => csFetchField<NavItemDto[]>(`/nav-items?slug=${getSiteSlug()}`, 'navItems'),
+  list: () => csFetchField<NavItemDto[]>(withSite('/nav-items'), 'navItems'),
 
   /**
    * The stored address the contact form mails to, also while the contact page is off.
@@ -29,7 +29,7 @@ export const navItemsApi = {
    * Returns: nothing (204); 404 unknown key.
    */
   setActive: (key: NavItemKey, isActive: boolean) =>
-    csFetch<void>(`/nav-items/${key}`, { method: 'PATCH', body: JSON.stringify({ isActive }) }),
+    csFetch<void>(urlPath`/nav-items/${key}`, { method: 'PATCH', body: JSON.stringify({ isActive }) }),
 
   /**
    * Saves a page's text in one language.
@@ -40,7 +40,7 @@ export const navItemsApi = {
    * Returns: nothing (204); 404 when the key has no content.
    */
   setContent: (key: NavItemKey, lang: SitePageLang, contentMd: string) =>
-    csFetch<void>(`/nav-items/${key}/content`, { method: 'PUT', body: JSON.stringify({ lang, contentMd }) }),
+    csFetch<void>(urlPath`/nav-items/${key}/content`, { method: 'PUT', body: JSON.stringify({ lang, contentMd }) }),
 
   /**
    * Sets the address the contact form mails to.

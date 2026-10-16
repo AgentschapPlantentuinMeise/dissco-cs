@@ -1,19 +1,19 @@
 import { csFetch } from './request';
-import { getSiteSlug } from '../slug';
+import { urlPath, withSite } from '../url';
 import { HonourBoardPeriodDto, HonourBoardPeriodKey, InstitutionStatsDto, SiteStatsDto } from '@dissco-cs/shared-types';
 
-const scopePath = (institutionSlug?: string) => (institutionSlug ? `/stats/institutions/${institutionSlug}` : '/stats');
+const scopePath = (institutionSlug?: string) => (institutionSlug ? urlPath`/stats/institutions/${institutionSlug}` : '/stats');
 
 function getStats(): Promise<SiteStatsDto>;
 function getStats(institutionSlug: string): Promise<InstitutionStatsDto>;
 function getStats(institutionSlug?: string) {
-  return csFetch<SiteStatsDto | InstitutionStatsDto>(`${scopePath(institutionSlug)}?slug=${getSiteSlug()}`);
+  return csFetch<SiteStatsDto | InstitutionStatsDto>(withSite(scopePath(institutionSlug)));
 }
 
 function getStatsCurrent(): Promise<SiteStatsDto>;
 function getStatsCurrent(institutionSlug: string): Promise<InstitutionStatsDto>;
 function getStatsCurrent(institutionSlug?: string) {
-  return csFetch<SiteStatsDto | InstitutionStatsDto>(`${scopePath(institutionSlug)}/current?slug=${getSiteSlug()}`);
+  return csFetch<SiteStatsDto | InstitutionStatsDto>(withSite(`${scopePath(institutionSlug)}/current`));
 }
 
 export const statsApi = {
@@ -48,7 +48,7 @@ export const statsApi = {
    * Returns: { top, you }; 400 unknown period; 404 unknown or inactive institution.
    */
   getHonourBoard: (period: HonourBoardPeriodKey, institutionSlug?: string) =>
-    csFetch<HonourBoardPeriodDto>(`${scopePath(institutionSlug)}/honour-board/${period}?slug=${getSiteSlug()}`),
+    csFetch<HonourBoardPeriodDto>(withSite(scopePath(institutionSlug) + urlPath`/honour-board/${period}`)),
 
   /**
    * Same as getHonourBoard, but only reads the cache and never starts a refresh -- for periodic
@@ -59,5 +59,5 @@ export const statsApi = {
    * Returns: as getHonourBoard.
    */
   getHonourBoardCurrent: (period: HonourBoardPeriodKey, institutionSlug?: string) =>
-    csFetch<HonourBoardPeriodDto>(`${scopePath(institutionSlug)}/honour-board/${period}/current?slug=${getSiteSlug()}`),
+    csFetch<HonourBoardPeriodDto>(withSite(scopePath(institutionSlug) + urlPath`/honour-board/${period}/current`)),
 };

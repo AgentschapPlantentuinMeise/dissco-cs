@@ -13,6 +13,7 @@ import { buildTaskLink } from '../../utility/build-task-link';
 import { HrefLink } from '../../utility/href-link';
 import { LocaleString } from '../../components/ui/LocaleString';
 import { CsPage } from '../../components/layout/CsPage';
+import { currentLocation, withQuery } from '../../api/url';
 import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
 import { ManualModal } from '../../components/manuals/ManualModal';
 
@@ -64,8 +65,7 @@ export const ProjectDetail: React.FC = () => {
       if (!user) {
         // Same clean login redirect as AuthGate (no expired=1) - this is a plain "you need to
         // log in to start", not a session that actually expired.
-        const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
-        navigate(`/login?redirect=${redirect}`);
+        navigate(withQuery('/login', { redirect: currentLocation() }));
         return;
       }
       try {

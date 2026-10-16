@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { stringify } from 'query-string';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LuSearch, LuX } from 'react-icons/lu';
+import { withQuery } from '../../api/url';
 
 // The navbar's search icon, which opens a small search box; submitting goes to /find.
 export const NavSearch: React.FC<{ onSearched: () => void }> = ({ onSearched }) => {
@@ -21,7 +21,7 @@ export const NavSearch: React.FC<{ onSearched: () => void }> = ({ onSearched }) 
     event.preventDefault();
     const trimmed = searchQuery.trim();
     if (!trimmed) return;
-    navigate(`/find?${stringify({ q: trimmed })}`);
+    navigate(withQuery('/find', { q: trimmed }));
     setSearchOpen(false);
     setSearchQuery('');
     onSearched();

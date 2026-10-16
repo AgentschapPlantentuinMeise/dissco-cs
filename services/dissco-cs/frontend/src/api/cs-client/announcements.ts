@@ -1,5 +1,5 @@
 import { csFetch, csFetchField } from './request';
-import { getSiteSlug } from '../slug';
+import { urlPath, withSite } from '../url';
 import { AnnouncementTargetType, AnnouncementDto, AnnouncementInput } from '@dissco-cs/shared-types';
 
 export const announcementsApi = {
@@ -21,12 +21,7 @@ export const announcementsApi = {
    * Returns: AnnouncementDto[].
    */
   listActive: (target: AnnouncementTargetType, projectSlug?: string) =>
-    csFetchField<AnnouncementDto[]>(
-      `/announcements/active?slug=${getSiteSlug()}&target=${target}${
-        projectSlug ? `&projectSlug=${encodeURIComponent(projectSlug)}` : ''
-      }`,
-      'announcements'
-    ),
+    csFetchField<AnnouncementDto[]>(withSite('/announcements/active', { target, projectSlug }), 'announcements'),
 
   /**
    * Creates an announcement.
@@ -47,7 +42,7 @@ export const announcementsApi = {
    * Returns: nothing (204); 404 when it is not on this site.
    */
   update: (id: AnnouncementDto['id'], data: AnnouncementInput) =>
-    csFetch<void>(`/announcements/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    csFetch<void>(urlPath`/announcements/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
   /**
    * Deletes an announcement.
@@ -55,5 +50,5 @@ export const announcementsApi = {
    * Who: site admin.
    * Returns: nothing (204); 404 when it is not on this site.
    */
-  delete: (id: AnnouncementDto['id']) => csFetch<void>(`/announcements/${id}`, { method: 'DELETE' }),
+  delete: (id: AnnouncementDto['id']) => csFetch<void>(urlPath`/announcements/${id}`, { method: 'DELETE' }),
 };

@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { reviewQueries } from '../../api/queries/review';
+import { currentLocation, withQuery } from '../../api/url';
 import { useCurrentUser } from '../../hooks/use-current-user';
 import { NoAccessRedirect } from './NoAccessRedirect';
 
@@ -25,8 +26,7 @@ export const AuthGate: React.FC<{ requireAdmin?: boolean; requireReviewer?: bool
     // useLocation().pathname excludes the router's basename (/s/{slug}), but Login's
     // redirectAfterLogin does a raw window.location.href navigation with this value -
     // it needs the basename included or the post-login redirect 404s.
-    const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
-    return <Navigate to={`/login?redirect=${redirect}`} replace />;
+    return <Navigate to={withQuery('/login', { redirect: currentLocation() })} replace />;
   }
 
   if (requireAdmin && !isAdmin) {

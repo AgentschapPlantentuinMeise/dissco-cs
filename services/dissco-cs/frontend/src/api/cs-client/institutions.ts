@@ -1,5 +1,5 @@
 import { csFetch, csFetchField } from './request';
-import { getSiteSlug } from '../slug';
+import { urlPath, withSite } from '../url';
 import { InstitutionDto, InstitutionInput } from '@dissco-cs/shared-types';
 
 export const institutionsApi = {
@@ -9,7 +9,7 @@ export const institutionsApi = {
    * Who: anyone.
    * Returns: InstitutionDto[].
    */
-  listActive: () => csFetchField<InstitutionDto[]>(`/institutions/active?slug=${getSiteSlug()}`, 'institutions'),
+  listActive: () => csFetchField<InstitutionDto[]>(withSite('/institutions/active'), 'institutions'),
 
   /**
    * One active institution.
@@ -17,7 +17,7 @@ export const institutionsApi = {
    * Who: anyone.
    * Returns: InstitutionDto; 404 when it does not exist or is inactive.
    */
-  getActive: (slug: string) => csFetch<InstitutionDto>(`/institutions/active/${slug}?slug=${getSiteSlug()}`),
+  getActive: (slug: string) => csFetch<InstitutionDto>(withSite(urlPath`/institutions/active/${slug}`)),
 
   /**
    * Slugs of the projects linked to an active institution.
@@ -26,7 +26,7 @@ export const institutionsApi = {
    * Returns: string[]; 404 when the institution does not exist or is inactive.
    */
   listActiveProjectSlugs: (slug: string) =>
-    csFetchField<string[]>(`/institutions/active/${slug}/projects?slug=${getSiteSlug()}`, 'projectSlugs'),
+    csFetchField<string[]>(withSite(urlPath`/institutions/active/${slug}/projects`), 'projectSlugs'),
 
   /**
    * Every institution of this site, active or not -- for the management page.
@@ -54,7 +54,7 @@ export const institutionsApi = {
    * Returns: nothing (204); 404 when it is not on this site.
    */
   update: (id: InstitutionDto['id'], data: InstitutionInput) =>
-    csFetch<void>(`/institutions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    csFetch<void>(urlPath`/institutions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
   /**
    * Deletes an institution.
@@ -62,5 +62,5 @@ export const institutionsApi = {
    * Who: site admin.
    * Returns: nothing (204); 404 when it is not on this site.
    */
-  delete: (id: InstitutionDto['id']) => csFetch<void>(`/institutions/${id}`, { method: 'DELETE' }),
+  delete: (id: InstitutionDto['id']) => csFetch<void>(urlPath`/institutions/${id}`, { method: 'DELETE' }),
 };

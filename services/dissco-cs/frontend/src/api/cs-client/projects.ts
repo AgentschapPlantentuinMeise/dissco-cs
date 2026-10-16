@@ -1,5 +1,5 @@
 import { csFetch, csFetchField } from './request';
-import { getSiteSlug } from '../slug';
+import { urlPath, withSite } from '../url';
 import {
   InstitutionDto,
   ManualDetailDto,
@@ -17,13 +17,6 @@ type ProjectListQuery = { published?: boolean };
 // Madoc's structure answer, passed through; we only read the id of the project's own collection.
 type MadocProjectStructure = { collectionId: number };
 
-function listQuery(query: Record<string, string | number | boolean | undefined>): string {
-  const params = new URLSearchParams({ slug: getSiteSlug() });
-  for (const [key, value] of Object.entries(query)) {
-    if (value !== undefined) params.set(key, String(value));
-  }
-  return params.toString();
-}
 
 export const projectsApi = {
   // ---- projects (Madoc, asked as the caller) ----
@@ -36,7 +29,7 @@ export const projectsApi = {
    * Returns: MadocProjectListPageDto (projects + pagination); Madoc's status passed through.
    */
   list: (query: ProjectListQuery & { page?: number } = {}) =>
-    csFetch<MadocProjectListPageDto>(`/projects?${listQuery({ page: query.page ?? 1, published: query.published })}`),
+    csFetch<MadocProjectListPageDto>(withSite('/projects', { page: query.page ?? 1, published: query.published })),
 
   /**
    * Same as list, but every page at once (the backend walks Madoc's pages).
@@ -45,7 +38,7 @@ export const projectsApi = {
    * Returns: MadocProjectDto[].
    */
   listAll: (query: ProjectListQuery = {}) =>
-    csFetchField<MadocProjectDto[]>(`/projects?${listQuery({ all: true, published: query.published })}`, 'projects'),
+    csFetchField<MadocProjectDto[]>(withSite('/projects', { all: true, published: query.published }), 'projects'),
 
   /**
    * One project from Madoc's public site API.
@@ -53,7 +46,7 @@ export const projectsApi = {
    * Who: anyone; Madoc decides what an anonymous visitor may see.
    * Returns: MadocProjectDto; Madoc's status passed through unchanged.
    */
-  get: (projectId: string | number) => csFetch<MadocProjectDto>(`/projects/${projectId}?slug=${getSiteSlug()}`),
+  get: (projectId: string | number) => csFetch<MadocProjectDto>(withSite(urlPath`/projects/${projectId}`)),
 
   /**
    * Creates a project through Madoc's own project creation (collection, capture model and root
@@ -79,7 +72,7 @@ export const projectsApi = {
    * Who: site admin.
    * Returns: Madoc's template, not modeled.
    */
-  exportTemplate: (projectId: string | number) => csFetch<unknown>(`/projects/${projectId}/export`),
+  exportTemplate: (projectId: string | number) => csFetch<unknown>(urlPath`/projects/${projectId}/export`),
 
   /**
    * The project's own collection, where its manifests are linked (see iiifApi.setCollectionStructure).
@@ -87,7 +80,7 @@ export const projectsApi = {
    * Who: site admin.
    * Returns: { collectionId }.
    */
-  getStructure: (projectId: string | number) => csFetch<MadocProjectStructure>(`/projects/${projectId}/structure`),
+  getStructure: (projectId: string | number) => csFetch<MadocProjectStructure>(urlPath`/projects/${projectId}/structure`),
 
   /**
    * Changes a project's status, like Madoc's pause / resume / complete / archive buttons.
@@ -97,7 +90,7 @@ export const projectsApi = {
    * Returns: nothing; Madoc's status passed through unchanged.
    */
   setStatus: (projectId: string | number, status: number) =>
-    csFetch<void>(`/projects/${projectId}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+    csFetch<void>(urlPath`/projects/${projectId}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
 
   // ---- picking and claiming work (Madoc, as the volunteer) ----
 
@@ -109,7 +102,7 @@ export const projectsApi = {
    * Returns: MadocRandomManifestDto (manifest id, remaining tasks); Madoc's status passed through.
    */
   randomManifest: (projectId: string | number, body: { collectionId?: number } = {}) =>
-    csFetch<MadocRandomManifestDto>(`/projects/${projectId}/random`, {
+    csFetch<MadocRandomManifestDto>(urlPath`/projects/${projectId}/random`, {
       method: 'POST',
       body: JSON.stringify({ ...body, type: 'manifest', claim: false }),
     }),
@@ -125,7 +118,7 @@ export const projectsApi = {
    *   the project (Madoc answers 404, not 403); Madoc's status passed through unchanged.
    */
   prepareClaim: (projectId: string | number, claim: Record<string, unknown>) =>
-    csFetch<MadocPrepareClaimDto>(`/projects/${projectId}/prepare-claim`, { method: 'POST', body: JSON.stringify(claim) }),
+    csFetch<MadocPrepareClaimDto>(urlPath`/projects/${projectId}/prepare-claim`, { method: 'POST', body: JSON.stringify(claim) }),
 
   /**
    * Claims a manifest for the caller: creates their task on it.
@@ -137,7 +130,7 @@ export const projectsApi = {
    *   through, e.g. when the manifest reached its maximum of contributors.
    */
   claim: (projectId: string | number, claim: Record<string, unknown>) =>
-    csFetch<MadocCreateResourceClaimDto>(`/projects/${projectId}/claim`, { method: 'POST', body: JSON.stringify(claim) }),
+    csFetch<MadocCreateResourceClaimDto>(urlPath`/projects/${projectId}/claim`, { method: 'POST', body: JSON.stringify(claim) }),
 
   /**
    * Deletes the caller's own claim task entirely, instead of setting it to abandoned (-1).
@@ -148,7 +141,7 @@ export const projectsApi = {
    * Returns: nothing; Madoc's status passed through unchanged.
    */
   revokeClaim: (projectId: string | number, claim: Record<string, unknown>) =>
-    csFetch<void>(`/projects/${projectId}/revoke-claim`, { method: 'POST', body: JSON.stringify(claim) }),
+    csFetch<void>(urlPath`/projects/${projectId}/revoke-claim`, { method: 'POST', body: JSON.stringify(claim) }),
 
   /**
    * Recounts a manifest's contributors after a claim was released, and reopens it when there is
@@ -159,7 +152,7 @@ export const projectsApi = {
    * Returns: true when it was reopened; false when nothing had to change.
    */
   resyncClaim: (projectId: string | number, manifestId: string | number) =>
-    csFetchField<boolean>(`/projects/${projectId}/manifests/${manifestId}/resync-claim?slug=${getSiteSlug()}`, 'resynced', {
+    csFetchField<boolean>(withSite(urlPath`/projects/${projectId}/manifests/${manifestId}/resync-claim`), 'resynced', {
       method: 'POST',
     }),
 
@@ -174,7 +167,7 @@ export const projectsApi = {
    * Returns: ProjectProgressDto.
    */
   getProgress: (projectId: string | number, signal?: AbortSignal) =>
-    csFetch<ProjectProgressDto>(`/projects/${projectId}/progress?slug=${getSiteSlug()}`, { signal }),
+    csFetch<ProjectProgressDto>(withSite(urlPath`/projects/${projectId}/progress`), { signal }),
 
   /**
    * Per manifest of a project, its tasks and whether it counts as transcribed (a task with status
@@ -183,7 +176,7 @@ export const projectsApi = {
    * Who: site admin.
    * Returns: ProjectDebugDto.
    */
-  getTaskDebug: (projectId: string | number) => csFetch<ProjectDebugDto>(`/projects/${projectId}/task-debug`),
+  getTaskDebug: (projectId: string | number) => csFetch<ProjectDebugDto>(urlPath`/projects/${projectId}/task-debug`),
 
   // ---- the project's manual ----
 
@@ -194,7 +187,7 @@ export const projectsApi = {
    * Returns: ManualDetailDto; 404 when the project has no manual.
    */
   getManual: (projectSlug: string) =>
-    csFetch<ManualDetailDto>(`/projects/${encodeURIComponent(projectSlug)}/manual?slug=${getSiteSlug()}`),
+    csFetch<ManualDetailDto>(withSite(urlPath`/projects/${projectSlug}/manual`)),
 
   /**
    * Builds the download URL of the manual's attachment in one language -- no request is made.
@@ -203,7 +196,7 @@ export const projectsApi = {
    * Returns: the URL; fetching it gives the file, or 404 when there is none.
    */
   manualAttachmentUrl: (projectSlug: string, lang: SitePageLang) =>
-    `/api/dissco-cs/projects/${encodeURIComponent(projectSlug)}/manual/attachment/${lang}?slug=${getSiteSlug()}`,
+    withSite(urlPath`/api/dissco-cs/projects/${projectSlug}/manual/attachment/${lang}`),
 
   /**
    * Links a project to a manual, or unlinks it.
@@ -213,7 +206,7 @@ export const projectsApi = {
    * Returns: nothing (204); 404 unknown manual.
    */
   setManualLink: (projectSlug: string, manualId: number | null) =>
-    csFetch<void>(`/projects/${encodeURIComponent(projectSlug)}/manual-link`, {
+    csFetch<void>(urlPath`/projects/${projectSlug}/manual-link`, {
       method: 'PUT',
       body: JSON.stringify({ manualId }),
     }),
@@ -239,7 +232,7 @@ export const projectsApi = {
    * Returns: InstitutionDto; 404 when there is none, or it is inactive.
    */
   getInstitution: (projectSlug: string) =>
-    csFetch<InstitutionDto>(`/projects/${encodeURIComponent(projectSlug)}/institution?slug=${getSiteSlug()}`),
+    csFetch<InstitutionDto>(withSite(urlPath`/projects/${projectSlug}/institution`)),
 
   /**
    * Which institution every project is linked to.
@@ -257,7 +250,7 @@ export const projectsApi = {
    * Returns: nothing (204); 404 unknown institution.
    */
   setInstitutionLink: (projectSlug: string, institutionId: number | null) =>
-    csFetch<void>(`/projects/${encodeURIComponent(projectSlug)}/institution-link`, {
+    csFetch<void>(urlPath`/projects/${projectSlug}/institution-link`, {
       method: 'PUT',
       body: JSON.stringify({ institutionId }),
     }),

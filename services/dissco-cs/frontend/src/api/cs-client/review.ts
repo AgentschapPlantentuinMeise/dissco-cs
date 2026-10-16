@@ -1,4 +1,5 @@
 import { csFetch, csFetchField } from './request';
+import { urlPath } from '../url';
 import { ReviewTaskDto } from '@dissco-cs/shared-types';
 
 export const reviewApi = {
@@ -31,5 +32,5 @@ export const reviewApi = {
    * Returns: Madoc's answer, status passed through unchanged.
    */
   updateTask: (taskId: string, task: Record<string, unknown>) =>
-    csFetch<void>(`/review/tasks/${taskId}`, { method: 'PATCH', body: JSON.stringify({ task }) }),
+    csFetch<void>(urlPath`/review/tasks/${taskId}`, { method: 'PATCH', body: JSON.stringify({ task }) }),
 };

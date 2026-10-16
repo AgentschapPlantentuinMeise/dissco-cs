@@ -1,4 +1,5 @@
 import { csFetch } from './request';
+import { urlPath } from '../url';
 import { MadocCaptureModelDto, MadocCaptureModelRevisionRequestDto } from '@dissco-cs/shared-types';
 
 // `status` (when given) overrides the revision's own status in the request body.
@@ -14,7 +15,7 @@ export const captureModelsApi = {
    * Who: logged-in user with access to the project.
    * Returns: MadocCaptureModelDto; Madoc's status passed through unchanged.
    */
-  get: (modelId: string) => csFetch<MadocCaptureModelDto>(`/capture-models/${modelId}`),
+  get: (modelId: string) => csFetch<MadocCaptureModelDto>(urlPath`/capture-models/${modelId}`),
 
   /**
    * Saves a volunteer's annotation as a revision of the model. Madoc updates the revision with the
@@ -26,7 +27,7 @@ export const captureModelsApi = {
    * Returns: the saved revision; Madoc's status passed through unchanged.
    */
   createRevision: (req: MadocCaptureModelRevisionRequestDto, status?: string) =>
-    csFetch<MadocCaptureModelRevisionRequestDto>(`/capture-models/${req.captureModelId}/revisions`, {
+    csFetch<MadocCaptureModelRevisionRequestDto>(urlPath`/capture-models/${req.captureModelId}/revisions`, {
       method: 'POST',
       body: withStatus(req, status),
     }),
@@ -38,7 +39,7 @@ export const captureModelsApi = {
    * Returns: MadocCaptureModelRevisionRequestDto; Madoc's status passed through unchanged.
    */
   getRevision: (revisionId: string) =>
-    csFetch<MadocCaptureModelRevisionRequestDto>(`/capture-models/revisions/${revisionId}`),
+    csFetch<MadocCaptureModelRevisionRequestDto>(urlPath`/capture-models/revisions/${revisionId}`),
 
   /**
    * Changes an existing revision (e.g. a reviewer correcting values before accepting).
@@ -49,7 +50,7 @@ export const captureModelsApi = {
    * Returns: the updated revision; Madoc's status passed through unchanged.
    */
   updateRevision: (req: MadocCaptureModelRevisionRequestDto, status?: string) =>
-    csFetch<MadocCaptureModelRevisionRequestDto>(`/capture-models/revisions/${req.revision.id}`, {
+    csFetch<MadocCaptureModelRevisionRequestDto>(urlPath`/capture-models/revisions/${req.revision.id}`, {
       method: 'PUT',
       body: withStatus(req, status),
     }),
