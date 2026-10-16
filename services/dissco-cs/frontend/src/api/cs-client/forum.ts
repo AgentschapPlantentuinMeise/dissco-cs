@@ -1,4 +1,4 @@
-import { csFetch } from './request';
+import { csFetch, csFetchField } from './request';
 import { ForumTopicDto, ForumReplyDto, ForumTopicInput } from '@dissco-cs/shared-types';
 
 export const forumApi = {
@@ -7,9 +7,9 @@ export const forumApi = {
    * replies the caller has seen (null = never opened).
    * Input: none.
    * Who: logged-in user.
-   * Returns: { topics: ForumTopicDto[] }.
+   * Returns: ForumTopicDto[].
    */
-  listTopics: () => csFetch<{ topics: ForumTopicDto[] }>('/forum/topics'),
+  listTopics: () => csFetchField<ForumTopicDto[]>('/forum/topics', 'topics'),
 
   /**
    * Creates a topic in the caller's name; it counts as read for the caller.
@@ -27,7 +27,7 @@ export const forumApi = {
    * Who: logged-in user.
    * Returns: ForumReplyDto[]; 404 when the topic is not on this site.
    */
-  listReplies: (topicId: number) => csFetch<ForumReplyDto[]>(`/forum/topics/${topicId}/replies`),
+  listReplies: (topicId: number) => csFetchField<ForumReplyDto[]>(`/forum/topics/${topicId}/replies`, 'replies'),
 
   /**
    * Adds a reply in the caller's name; the topic then counts as fully read for the caller.

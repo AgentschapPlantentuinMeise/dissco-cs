@@ -1,4 +1,4 @@
-import { csFetch } from './request';
+import { csFetch, csFetchField } from './request';
 import { getSiteSlug } from '../slug';
 import { NavItemKey, SitePageLang, NavItemDto, NavItemContactEmailDto } from '@dissco-cs/shared-types';
 
@@ -9,9 +9,9 @@ export const navItemsApi = {
    * default order.
    * Input: none.
    * Who: anyone.
-   * Returns: { navItems: NavItemDto[] }.
+   * Returns: NavItemDto[].
    */
-  list: () => csFetch<{ navItems: NavItemDto[] }>(`/nav-items?slug=${getSiteSlug()}`),
+  list: () => csFetchField<NavItemDto[]>(`/nav-items?slug=${getSiteSlug()}`, 'navItems'),
 
   /**
    * The stored address the contact form mails to, also while the contact page is off.

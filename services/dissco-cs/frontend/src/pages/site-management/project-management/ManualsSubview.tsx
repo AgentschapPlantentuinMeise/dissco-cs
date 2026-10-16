@@ -29,7 +29,7 @@ export const ManualsSubview: React.FC<{
   const queryClient = useQueryClient();
 
   const { mutate: remove } = useMutation({
-    mutationFn: (id: number) => manualsApi.remove(id),
+    mutationFn: (id: number) => manualsApi.delete(id),
     onSuccess: (_result, id) => {
       setPendingDeleteId(null);
       if (editingId === id) {

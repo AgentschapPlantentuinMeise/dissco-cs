@@ -1,4 +1,4 @@
-import { csFetch } from './request';
+import { csFetch, csFetchField } from './request';
 import { getSiteSlug } from '../slug';
 import {
   InstitutionDto,
@@ -14,6 +14,8 @@ import {
 } from '@dissco-cs/shared-types';
 
 type ProjectListQuery = { published?: boolean };
+// Madoc's structure answer, passed through; we only read the id of the project's own collection.
+type MadocProjectStructure = { collectionId: number };
 
 function listQuery(query: Record<string, string | number | boolean | undefined>): string {
   const params = new URLSearchParams({ slug: getSiteSlug() });
@@ -42,8 +44,8 @@ export const projectsApi = {
    * Who: anyone.
    * Returns: MadocProjectDto[].
    */
-  listAll: async (query: ProjectListQuery = {}) =>
-    (await csFetch<{ projects: MadocProjectDto[] }>(`/projects?${listQuery({ all: true, published: query.published })}`)).projects,
+  listAll: (query: ProjectListQuery = {}) =>
+    csFetchField<MadocProjectDto[]>(`/projects?${listQuery({ all: true, published: query.published })}`, 'projects'),
 
   /**
    * One project from Madoc's public site API.
@@ -85,7 +87,7 @@ export const projectsApi = {
    * Who: site admin.
    * Returns: { collectionId }.
    */
-  getStructure: (projectId: string | number) => csFetch<{ collectionId: number }>(`/projects/${projectId}/structure`),
+  getStructure: (projectId: string | number) => csFetch<MadocProjectStructure>(`/projects/${projectId}/structure`),
 
   /**
    * Changes a project's status, like Madoc's pause / resume / complete / archive buttons.
@@ -154,10 +156,10 @@ export const projectsApi = {
    * @param projectId Madoc project id
    * @param manifestId Madoc manifest id
    * Who: logged-in user.
-   * Returns: { resynced } -- false when nothing had to change.
+   * Returns: true when it was reopened; false when nothing had to change.
    */
   resyncClaim: (projectId: string | number, manifestId: string | number) =>
-    csFetch<{ resynced: boolean }>(`/projects/${projectId}/manifests/${manifestId}/resync-claim?slug=${getSiteSlug()}`, {
+    csFetchField<boolean>(`/projects/${projectId}/manifests/${manifestId}/resync-claim?slug=${getSiteSlug()}`, 'resynced', {
       method: 'POST',
     }),
 
@@ -220,10 +222,10 @@ export const projectsApi = {
    * Removes manual links of projects that no longer exist in Madoc.
    * @param liveSlugs the slugs of every project that still exists (from listAll)
    * Who: site admin.
-   * Returns: { removed } -- the number of links removed.
+   * Returns: the number of links removed.
    */
   pruneManualLinks: (liveSlugs: string[]) =>
-    csFetch<{ removed: number }>('/projects/manual-links/prune', {
+    csFetchField<number>('/projects/manual-links/prune', 'removed', {
       method: 'POST',
       body: JSON.stringify({ liveSlugs }),
     }),
@@ -243,9 +245,9 @@ export const projectsApi = {
    * Which institution every project is linked to.
    * Input: none.
    * Who: site admin.
-   * Returns: { links } -- project slug -> institution id.
+   * Returns: project slug -> institution id.
    */
-  listInstitutionLinks: () => csFetch<{ links: Record<string, number> }>('/projects/institution-links'),
+  listInstitutionLinks: () => csFetchField<Record<string, number>>('/projects/institution-links', 'links'),
 
   /**
    * Links a project to an institution, or unlinks it.
@@ -264,10 +266,10 @@ export const projectsApi = {
    * Removes institution links of projects that no longer exist in Madoc.
    * @param liveSlugs the slugs of every project that still exists (from listAll)
    * Who: site admin.
-   * Returns: { removed } -- the number of links removed.
+   * Returns: the number of links removed.
    */
   pruneInstitutionLinks: (liveSlugs: string[]) =>
-    csFetch<{ removed: number }>('/projects/institution-links/prune', {
+    csFetchField<number>('/projects/institution-links/prune', 'removed', {
       method: 'POST',
       body: JSON.stringify({ liveSlugs }),
     }),

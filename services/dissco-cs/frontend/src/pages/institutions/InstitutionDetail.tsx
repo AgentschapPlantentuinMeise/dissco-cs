@@ -21,8 +21,7 @@ export const InstitutionDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: institution, isLoading } = useQuery(institutionQueries.detail(slug));
 
-  const { data: projectSlugsResponse } = useQuery(institutionQueries.projectSlugs(slug));
-  const projectSlugs = projectSlugsResponse?.projectSlugs ?? [];
+  const { data: projectSlugs = [] } = useQuery(institutionQueries.projectSlugs(slug));
 
   // All pages, published-only -- same reasoning as Homepage/Projects.tsx: a site-admin viewer
   // otherwise gets every status unfiltered from page 1 only, which can miss this institution's

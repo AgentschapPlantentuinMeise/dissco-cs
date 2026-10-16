@@ -18,7 +18,7 @@ export const institutionQueries = {
   projectSlugs: (slug: string | undefined) =>
     queryOptions({
       queryKey: institutionKeys.projectSlugs(slug),
-      queryFn: () => institutionsApi.getActiveProjectSlugs(slug!),
+      queryFn: () => institutionsApi.listActiveProjectSlugs(slug!),
       enabled: !!slug,
     }),
 

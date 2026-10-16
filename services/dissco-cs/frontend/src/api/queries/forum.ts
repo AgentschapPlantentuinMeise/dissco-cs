@@ -20,7 +20,7 @@ export const forumQueries = {
     queryOptions({
       queryKey: forumKeys.unreadCount(),
       queryFn: async () => {
-        const { topics } = await forumApi.listTopics();
+        const topics = await forumApi.listTopics();
         return topics.filter(m => m.lastSeenReplyCount === null || m.replyCount > m.lastSeenReplyCount).length;
       },
     }),

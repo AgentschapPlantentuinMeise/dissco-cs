@@ -36,6 +36,18 @@ const rules: ConventionRule[] = [
     onlyIn: /^api\//,
   },
   {
+    name: "A cs-client method that deletes is called delete (or deleteX), not remove",
+    pattern: /^\s+remove\w*:/,
+    instead: "delete: ... (one kind of thing in the api) or deleteTopic: ... (several kinds)",
+    onlyIn: /^api\/cs-client\//,
+  },
+  {
+    name: 'A cs-client method unwraps a one-field answer with csFetchField',
+    pattern: /csFetch<\{ \w+: [^;{}]+ \}>\(/,
+    instead: "csFetchField<T>(path, 'field') -- the backend answers { field: ... }, the caller gets the value itself",
+    onlyIn: /^api\/cs-client\//,
+  },
+  {
     name: 'No refetch: after a write, invalidate',
     pattern: /\brefetch\b/,
     instead: "useMutation with invalidateQueries({ queryKey: xKeys... }) in onSuccess -- CLAUDE.md 'Schrijven naar de server'",

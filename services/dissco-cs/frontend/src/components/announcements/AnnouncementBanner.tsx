@@ -59,7 +59,7 @@ export const AnnouncementBanner: React.FC<{ target: AnnouncementTargetType; proj
     staleTime: 0,
     enabled: !!user,
   });
-  const announcements = data?.announcements ?? [];
+  const announcements = data ?? [];
   const signatures = announcements.map(signatureOf);
   const key = storageKey(target, projectSlug);
 

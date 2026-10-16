@@ -1,4 +1,4 @@
-import { csFetch } from './request';
+import { csFetch, csFetchField } from './request';
 import { ReviewTaskDto } from '@dissco-cs/shared-types';
 
 export const reviewApi = {
@@ -7,18 +7,18 @@ export const reviewApi = {
    * across all projects, with the assigned reviewer.
    * Input: none.
    * Who: reviewer or site admin.
-   * Returns: { tasks: ReviewTaskDto[] }; 403 not a reviewer.
+   * Returns: ReviewTaskDto[]; 403 not a reviewer.
    */
-  getReviewTasks: () => csFetch<{ tasks: ReviewTaskDto[] }>('/review/tasks'),
+  listTasks: () => csFetchField<ReviewTaskDto[]>('/review/tasks', 'tasks'),
 
   /**
    * Whether the caller has the site role 'reviewer'. A site admin gets false here unless that is
    * also their role -- callers treat admins as reviewers themselves.
    * Input: none.
    * Who: logged-in user.
-   * Returns: { isReviewer: boolean }.
+   * Returns: boolean.
    */
-  isReviewer: () => csFetch<{ isReviewer: boolean }>('/review/is-reviewer'),
+  isReviewer: () => csFetchField<boolean>('/review/is-reviewer', 'isReviewer'),
 
   /**
    * Accepts or rejects a submission through madoc-ts's own crowdsourcing task route, not the

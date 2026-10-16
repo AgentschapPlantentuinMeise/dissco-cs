@@ -19,7 +19,7 @@ export function useNavItems() {
 
   // Fail-open: while loading or on error, keep using DEFAULT_NAV_ITEMS so the site behaves as if
   // nothing was ever customized, instead of breaking navigation.
-  const navItems = data?.navItems ?? DEFAULT_NAV_ITEMS;
+  const navItems = data ?? DEFAULT_NAV_ITEMS;
 
   const isActive = (key: NavItemKey) => {
     const item = navItems.find(p => p.pageKey === key);

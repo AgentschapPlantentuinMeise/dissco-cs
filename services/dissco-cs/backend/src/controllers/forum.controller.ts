@@ -72,7 +72,7 @@ export function forumController(forumRepository: ForumRepository): Hono {
 
     const replies = await forumRepository.listReplies(identity.siteId, topicId);
     await forumRepository.markTopicSeen(identity.userId, topicId, replies.length);
-    return c.json(replies.map(toForumReplyDto));
+    return c.json({ replies: replies.map(toForumReplyDto) });
   });
 
   app.delete('/topics/:id', validateParams({ id: intId }), async c => {

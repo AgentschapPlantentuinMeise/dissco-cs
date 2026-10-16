@@ -10,5 +10,5 @@ export const manualKeys = {
 
 export const manualQueries = {
   list: () => queryOptions({ queryKey: manualKeys.list(), queryFn: () => manualsApi.list() }),
-  detail: (manualId: number) => queryOptions({ queryKey: manualKeys.detail(manualId), queryFn: () => manualsApi.getAdmin(manualId) }),
+  detail: (manualId: number) => queryOptions({ queryKey: manualKeys.detail(manualId), queryFn: () => manualsApi.get(manualId) }),
 };

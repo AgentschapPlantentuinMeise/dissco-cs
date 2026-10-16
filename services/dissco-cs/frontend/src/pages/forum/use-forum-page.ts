@@ -28,12 +28,12 @@ export function useForumPage() {
   );
 
   const topicsQuery = useQuery(forumQueries.topics());
-  const topics = useMemo(() => topicsQuery.data?.topics ?? [], [topicsQuery.data]);
+  const topics = useMemo(() => topicsQuery.data ?? [], [topicsQuery.data]);
   // Local edits (delete, close, reply, mark seen) go straight into the shared cache instead of a
   // separate copy in component state.
   const setTopics = useCallback(
     (update: (prev: ForumTopicDto[]) => ForumTopicDto[]) =>
-      queryClient.setQueryData(forumQueries.topics().queryKey, old => (old ? { ...old, topics: update(old.topics) } : old)),
+      queryClient.setQueryData(forumQueries.topics().queryKey, old => (old ? update(old) : old)),
     [queryClient]
   );
   const updateTopic = (topicId: number, update: (topic: ForumTopicDto) => ForumTopicDto) =>

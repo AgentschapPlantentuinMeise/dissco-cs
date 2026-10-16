@@ -1,4 +1,4 @@
-import { csFetch } from './request';
+import { csFetch, csFetchField } from './request';
 import { FeedbackThreadDto, FeedbackMessageDto, FeedbackThreadInput } from '@dissco-cs/shared-types';
 
 export const feedbackApi = {
@@ -7,9 +7,9 @@ export const feedbackApi = {
    * without the ones the caller deleted. Each with its unread count for the caller.
    * Input: none.
    * Who: logged-in user.
-   * Returns: { threads: FeedbackThreadDto[] }.
+   * Returns: FeedbackThreadDto[].
    */
-  listThreads: () => csFetch<{ threads: FeedbackThreadDto[] }>('/feedback/threads'),
+  listThreads: () => csFetchField<FeedbackThreadDto[]>('/feedback/threads', 'threads'),
 
   /**
    * Starts a feedback thread from the caller (as reviewer) to a volunteer, with a first message.

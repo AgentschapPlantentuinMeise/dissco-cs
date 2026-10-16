@@ -1,4 +1,4 @@
-import { csFetch } from './request';
+import { csFetch, csFetchField } from './request';
 import { getSiteSlug } from '../slug';
 import { MadocCollectionSummaryDto, MadocManifestStructureDto } from '@dissco-cs/shared-types';
 
@@ -8,9 +8,9 @@ export const iiifApi = {
    * One canvas (a single image of a manifest) from Madoc's public site API, passed through as is.
    * @param canvasId Madoc's canvas id (MadocManifestStructureDto.items[].id)
    * Who: anyone; Madoc decides what an anonymous visitor may see.
-   * Returns: { canvas } as Madoc sends it; Madoc's status passed through unchanged.
+   * Returns: the canvas as Madoc sends it; Madoc's status passed through unchanged.
    */
-  getCanvas: (canvasId: number) => csFetch<{ canvas: unknown }>(`/iiif/canvases/${canvasId}?slug=${getSiteSlug()}`),
+  getCanvas: (canvasId: number) => csFetchField<unknown>(`/iiif/canvases/${canvasId}?slug=${getSiteSlug()}`, 'canvas'),
 
   /**
    * The canvases of a manifest, in order -- what the annotate page pages through.
@@ -28,7 +28,7 @@ export const iiifApi = {
    * Who: site admin.
    * Returns: MadocCollectionSummaryDto[].
    */
-  listCollections: async () => (await csFetch<{ collections: MadocCollectionSummaryDto[] }>('/iiif/collections')).collections,
+  listCollections: () => csFetchField<MadocCollectionSummaryDto[]>('/iiif/collections', 'collections'),
 
   /**
    * Sets the items of a collection: replaces the whole list, it does not add to it.

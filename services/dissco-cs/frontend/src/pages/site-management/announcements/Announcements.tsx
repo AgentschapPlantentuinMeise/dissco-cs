@@ -50,7 +50,7 @@ export const Announcements: React.FC = () => {
   const { data, isLoading } = useQuery(announcementQueries.admin());
   // 'published' also includes Madoc's status 2 (complete) -- only active projects can be targeted.
   const { data: publishedProjects } = useQuery(projectQueries.listAll({ published: true }));
-  const announcements = data?.announcements ?? [];
+  const announcements = data ?? [];
   const projects = (publishedProjects ?? []).filter((p: MadocProjectDto) => p.status === 1);
 
   const {
@@ -82,7 +82,7 @@ export const Announcements: React.FC = () => {
   });
 
   const { mutate: remove } = useMutation({
-    mutationFn: (id: AnnouncementDto['id']) => announcementsApi.remove(id),
+    mutationFn: (id: AnnouncementDto['id']) => announcementsApi.delete(id),
     onSuccess: () => {
       setPendingDeleteId(null);
       return onWritten();

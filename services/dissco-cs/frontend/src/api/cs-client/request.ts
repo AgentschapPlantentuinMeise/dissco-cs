@@ -71,3 +71,17 @@ export async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
   return response.json();
 }
+
+/**
+ * csFetch for an answer that is an object with one field, e.g. { announcements: [...] }: returns
+ * that field. The backend keeps the object (so a field can be added later), the caller gets what
+ * it needs.
+ * @param path the path after /api/dissco-cs, with its query
+ * @param field the one field of the answer, e.g. 'announcements'
+ * @param init optional fetch options (method, body, signal)
+ * Returns: the field's value as T. Throws an ApiError like csFetch.
+ */
+export async function csFetchField<T>(path: string, field: string, init?: RequestInit): Promise<T> {
+  const data = await csFetch<Record<string, T>>(path, init);
+  return data[field];
+}

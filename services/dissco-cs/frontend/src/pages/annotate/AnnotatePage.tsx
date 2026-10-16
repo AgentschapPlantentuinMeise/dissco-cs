@@ -58,7 +58,7 @@ export function AnnotatePage() {
   const canvases = structure?.items ?? [];
   const [canvasIndex, setCanvasIndex] = useState(0);
 
-  const { data: canvasData } = useQuery({
+  const { data: canvas } = useQuery({
     ...iiifQueries.canvas(canvases[canvasIndex]?.id),
   });
 
@@ -211,7 +211,7 @@ export function AnnotatePage() {
         <AnnotateLayout
           osdViewer={
             <OpenSeadragonViewer
-              imageServiceId={getImageServiceId(canvasData?.canvas)}
+              imageServiceId={getImageServiceId(canvas)}
               canvasIndex={canvasIndex}
               totalCanvases={canvases.length}
               onPrevCanvas={canvasIndex > 0 ? () => setCanvasIndex(i => i - 1) : undefined}

@@ -1,5 +1,5 @@
 import queryString from 'query-string';
-import { csFetch } from './request';
+import { csFetch, csFetchField } from './request';
 import { MadocCrowdsourcingTaskDto, MadocPagination } from '@dissco-cs/shared-types';
 
 export const tasksApi = {
@@ -21,9 +21,8 @@ export const tasksApi = {
    * Who: logged-in user.
    * Returns: the tasks, all pages together.
    */
-  listAll: async <T = unknown>(query: Record<string, unknown> = {}) =>
-    (await csFetch<{ tasks: T[] }>(`/tasks?${queryString.stringify({ ...query, all: true }, { arrayFormat: 'comma' })}`))
-      .tasks,
+  listAll: <T = unknown>(query: Record<string, unknown> = {}) =>
+    csFetchField<T[]>(`/tasks?${queryString.stringify({ ...query, all: true }, { arrayFormat: 'comma' })}`, 'tasks'),
 
   /**
    * One task with its details, asked as the caller.
@@ -58,17 +57,17 @@ export const tasksApi = {
    * Releases a stuck task: sets it to abandoned (-1), so the manifest is free again.
    * @param taskId Madoc task id (from listStuck().tasks)
    * Who: site admin.
-   * Returns: { released: true }.
+   * Returns: true.
    */
-  release: (taskId: string) => csFetch<{ released: boolean }>(`/tasks/${taskId}/release`, { method: 'POST' }),
+  release: (taskId: string) => csFetchField<boolean>(`/tasks/${taskId}/release`, 'released', { method: 'POST' }),
 
   /**
    * Recounts a manifest's contributors and reopens it (status 1) when there is room again --
    * Madoc only recounts on a new claim, never on a release.
    * @param containerId the manifest task's id (from listStuck().manifestCounters)
    * Who: site admin.
-   * Returns: { resynced } -- false when nothing had to change.
+   * Returns: true when it was reopened; false when nothing had to change.
    */
   resyncManifest: (containerId: string) =>
-    csFetch<{ resynced: boolean }>(`/tasks/manifests/${containerId}/resync`, { method: 'POST' }),
+    csFetchField<boolean>(`/tasks/manifests/${containerId}/resync`, 'resynced', { method: 'POST' }),
 };

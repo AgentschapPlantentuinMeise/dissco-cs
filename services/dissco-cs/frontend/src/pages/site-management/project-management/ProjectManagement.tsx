@@ -27,14 +27,11 @@ export const ProjectManagement: React.FC = () => {
 
   const queryClient = useQueryClient();
 
-  const { data: manualsResponse, status: manualsStatus } = useQuery(manualQueries.list());
-  const manuals = manualsResponse?.manuals ?? [];
+  const { data: manuals = [], status: manualsStatus } = useQuery(manualQueries.list());
 
-  const { data: institutionsResponse } = useQuery(institutionQueries.admin());
-  const institutions = institutionsResponse?.institutions ?? [];
+  const { data: institutions = [] } = useQuery(institutionQueries.admin());
 
-  const { data: institutionLinksResponse, status: institutionLinksStatus } = useQuery(projectQueries.institutionLinks());
-  const institutionLinks = institutionLinksResponse?.links ?? {};
+  const { data: institutionLinks = {}, status: institutionLinksStatus } = useQuery(projectQueries.institutionLinks());
 
   // Madoc knows nothing about dissco-cs: when a project is deleted there, its institution/manual
   // links stay behind here. So once the full project list (every page and status) and both link
@@ -53,14 +50,14 @@ export const ProjectManagement: React.FC = () => {
         const liveSlugs = projects.map(p => p.slug).filter((slug: unknown): slug is string => !!slug);
         if (cancelled || liveSlugs.length === 0) return;
 
-        const [institutionResult, manualResult] = await Promise.all([
+        const [institutionLinksRemoved, manualLinksRemoved] = await Promise.all([
           projectsApi.pruneInstitutionLinks(liveSlugs),
           projectsApi.pruneManualLinks(liveSlugs),
         ]);
 
         if (cancelled) return;
-        if (institutionResult.removed > 0) queryClient.invalidateQueries({ queryKey: projectKeys.institutionLinks() });
-        if (manualResult.removed > 0) queryClient.invalidateQueries({ queryKey: manualKeys.all });
+        if (institutionLinksRemoved > 0) queryClient.invalidateQueries({ queryKey: projectKeys.institutionLinks() });
+        if (manualLinksRemoved > 0) queryClient.invalidateQueries({ queryKey: manualKeys.all });
       } catch (err) {
         reportClientError(err, 'action');
       }

@@ -1,4 +1,4 @@
-import { csFetch } from './request';
+import { csFetch, csFetchField } from './request';
 import { getSiteSlug } from '../slug';
 import { InstitutionDto, InstitutionInput } from '@dissco-cs/shared-types';
 
@@ -7,9 +7,9 @@ export const institutionsApi = {
    * The active institutions of this site, in their set order -- for the public pages.
    * Input: none.
    * Who: anyone.
-   * Returns: { institutions: InstitutionDto[] }.
+   * Returns: InstitutionDto[].
    */
-  listActive: () => csFetch<{ institutions: InstitutionDto[] }>(`/institutions/active?slug=${getSiteSlug()}`),
+  listActive: () => csFetchField<InstitutionDto[]>(`/institutions/active?slug=${getSiteSlug()}`, 'institutions'),
 
   /**
    * One active institution.
@@ -23,18 +23,18 @@ export const institutionsApi = {
    * Slugs of the projects linked to an active institution.
    * @param slug the institution's slug (InstitutionDto.slug)
    * Who: anyone.
-   * Returns: { projectSlugs: string[] }; 404 when the institution does not exist or is inactive.
+   * Returns: string[]; 404 when the institution does not exist or is inactive.
    */
-  getActiveProjectSlugs: (slug: string) =>
-    csFetch<{ projectSlugs: string[] }>(`/institutions/active/${slug}/projects?slug=${getSiteSlug()}`),
+  listActiveProjectSlugs: (slug: string) =>
+    csFetchField<string[]>(`/institutions/active/${slug}/projects?slug=${getSiteSlug()}`, 'projectSlugs'),
 
   /**
    * Every institution of this site, active or not -- for the management page.
    * Input: none.
    * Who: site admin.
-   * Returns: { institutions: InstitutionDto[] }.
+   * Returns: InstitutionDto[].
    */
-  listAdmin: () => csFetch<{ institutions: InstitutionDto[] }>('/institutions'),
+  listAdmin: () => csFetchField<InstitutionDto[]>('/institutions', 'institutions'),
 
   /**
    * Creates an institution; its slug is made from the name (first filled language) and kept unique.
@@ -62,5 +62,5 @@ export const institutionsApi = {
    * Who: site admin.
    * Returns: nothing (204); 404 when it is not on this site.
    */
-  remove: (id: InstitutionDto['id']) => csFetch<void>(`/institutions/${id}`, { method: 'DELETE' }),
+  delete: (id: InstitutionDto['id']) => csFetch<void>(`/institutions/${id}`, { method: 'DELETE' }),
 };

@@ -9,5 +9,5 @@ export const reviewKeys = {
 
 export const reviewQueries = {
   isReviewer: () => queryOptions({ queryKey: reviewKeys.isReviewer(), queryFn: () => reviewApi.isReviewer() }),
-  tasks: () => queryOptions({ queryKey: reviewKeys.tasks(), queryFn: () => reviewApi.getReviewTasks() }),
+  tasks: () => queryOptions({ queryKey: reviewKeys.tasks(), queryFn: () => reviewApi.listTasks() }),
 };

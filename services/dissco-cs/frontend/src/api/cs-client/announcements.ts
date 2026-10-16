@@ -1,4 +1,4 @@
-import { csFetch } from './request';
+import { csFetch, csFetchField } from './request';
 import { getSiteSlug } from '../slug';
 import { AnnouncementTargetType, AnnouncementDto, AnnouncementInput } from '@dissco-cs/shared-types';
 
@@ -7,9 +7,9 @@ export const announcementsApi = {
    * Every announcement of this site, active or not, newest first -- for the management page.
    * Input: none.
    * Who: site admin.
-   * Returns: { announcements: AnnouncementDto[] }.
+   * Returns: AnnouncementDto[].
    */
-  listAdmin: () => csFetch<{ announcements: AnnouncementDto[] }>('/announcements'),
+  listAdmin: () => csFetchField<AnnouncementDto[]>('/announcements', 'announcements'),
 
   /**
    * The announcements to show on one place of the public site right now: active, and today
@@ -18,13 +18,14 @@ export const announcementsApi = {
    *   (one project page)
    * @param projectSlug the project, required when target is 'project'
    * Who: anyone.
-   * Returns: { announcements: AnnouncementDto[] }.
+   * Returns: AnnouncementDto[].
    */
   listActive: (target: AnnouncementTargetType, projectSlug?: string) =>
-    csFetch<{ announcements: AnnouncementDto[] }>(
+    csFetchField<AnnouncementDto[]>(
       `/announcements/active?slug=${getSiteSlug()}&target=${target}${
         projectSlug ? `&projectSlug=${encodeURIComponent(projectSlug)}` : ''
-      }`
+      }`,
+      'announcements'
     ),
 
   /**
@@ -54,5 +55,5 @@ export const announcementsApi = {
    * Who: site admin.
    * Returns: nothing (204); 404 when it is not on this site.
    */
-  remove: (id: AnnouncementDto['id']) => csFetch<void>(`/announcements/${id}`, { method: 'DELETE' }),
+  delete: (id: AnnouncementDto['id']) => csFetch<void>(`/announcements/${id}`, { method: 'DELETE' }),
 };

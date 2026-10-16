@@ -47,7 +47,7 @@ export const InstitutionManagement: React.FC = () => {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery(institutionQueries.admin());
-  const institutions = data?.institutions ?? [];
+  const institutions = data ?? [];
 
   const {
     editingId,
@@ -78,7 +78,7 @@ export const InstitutionManagement: React.FC = () => {
   });
 
   const { mutate: remove } = useMutation({
-    mutationFn: (id: InstitutionDto['id']) => institutionsApi.remove(id),
+    mutationFn: (id: InstitutionDto['id']) => institutionsApi.delete(id),
     onSuccess: () => {
       setPendingDeleteId(null);
       return onWritten();

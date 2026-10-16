@@ -14,7 +14,7 @@ export const Institutions: React.FC = () => {
   const { data } = useQuery(institutionQueries.active());
   const { data: siteStats } = useSiteStats();
 
-  const institutions = data?.institutions ?? [];
+  const institutions = data ?? [];
 
   return (
     <CsPage>

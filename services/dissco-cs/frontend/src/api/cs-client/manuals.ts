@@ -1,4 +1,4 @@
-import { ApiError, csFetch } from './request';
+import { ApiError, csFetch, csFetchField } from './request';
 import { getJwt, redirectToExpiredLogin } from '../jwt';
 import { SitePageLang, ManualDto, ManualSummaryDto, ManualDetailDto } from '@dissco-cs/shared-types';
 
@@ -11,15 +11,15 @@ export const manualsApi = {
    * Who: site admin.
    * Returns: ManualDetailDto; 404 when it is not on this site.
    */
-  getAdmin: (manualId: number) => csFetch<ManualDetailDto>(`/manuals/${manualId}`),
+  get: (manualId: number) => csFetch<ManualDetailDto>(`/manuals/${manualId}`),
 
   /**
    * Every manual of this site, with the projects it is linked to.
    * Input: none.
    * Who: site admin.
-   * Returns: { manuals: ManualSummaryDto[] }.
+   * Returns: ManualSummaryDto[].
    */
-  list: () => csFetch<{ manuals: ManualSummaryDto[] }>('/manuals'),
+  list: () => csFetchField<ManualSummaryDto[]>('/manuals', 'manuals'),
 
   /**
    * Creates an empty manual with a title in one language.
@@ -38,7 +38,7 @@ export const manualsApi = {
    * Who: site admin.
    * Returns: nothing (204); 404 when it is not on this site.
    */
-  remove: (manualId: number) => csFetch<void>(`/manuals/${manualId}`, { method: 'DELETE' }),
+  delete: (manualId: number) => csFetch<void>(`/manuals/${manualId}`, { method: 'DELETE' }),
 
   /**
    * Saves the manual's text in one language.

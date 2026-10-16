@@ -23,17 +23,17 @@ export const UserMenu: React.FC<{ user: CurrentUser }> = ({ user }) => {
   const showAdmin = user.scope.includes('site.admin');
   // Reviewer role is not in the JWT (only scope), so ask a light backend call; admins skip it,
   // they see the link anyway.
-  const { data: reviewerCheck } = useQuery({
+  const { data: isReviewer } = useQuery({
     ...reviewQueries.isReviewer(),
     enabled: !showAdmin,
     staleTime: 5 * 60 * 1000,
   });
-  const showReview = showAdmin || !!reviewerCheck?.isReviewer;
+  const showReview = showAdmin || !!isReviewer;
 
   // Refreshed by invalidation from the dashboard (no window events).
   const { data: feedbackUnreadCount = 0 } = useQuery({
     ...feedbackQueries.threads(),
-    select: res => res.threads.reduce((sum, thread) => sum + thread.unreadCount, 0),
+    select: threads => threads.reduce((sum, thread) => sum + thread.unreadCount, 0),
   });
 
   // The dropdown hook needs a fixed index per item; review and site admin are optional.

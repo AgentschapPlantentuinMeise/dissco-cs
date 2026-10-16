@@ -75,7 +75,7 @@ export function useReviewPage() {
   // A reviewer only ever sees the tasks assigned to them: the backend returns every open review
   // task of the site, this page keeps only your own queue. So every row can be selected and
   // accepted (Madoc would also refuse someone else's task, its "limited reviewer" check).
-  const rows = (data?.tasks ?? []).filter(row => !!user && row.reviewerId === user.id && !dismissedIds.has(row.id));
+  const rows = (data ?? []).filter(row => !!user && row.reviewerId === user.id && !dismissedIds.has(row.id));
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {

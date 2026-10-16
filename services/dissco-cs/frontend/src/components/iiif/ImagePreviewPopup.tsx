@@ -32,14 +32,14 @@ export const ImagePreviewPopup: React.FC<ImagePreviewPopupProps> = ({ subject, l
 
   const canvasId = isManifest ? canvases[canvasIndex]?.id : parsed?.type === 'canvas' ? parsed.id : undefined;
 
-  const { data: canvasJson, isError: canvasError } = useQuery({
+  const { data: canvas, isError: canvasError } = useQuery({
     ...iiifQueries.canvas(canvasId),
     retry: false,
   });
 
-  const imageServiceId = canvasJson ? getImageServiceId(canvasJson.canvas) : undefined;
+  const imageServiceId = canvas ? getImageServiceId(canvas) : undefined;
   const structureEmpty = isManifest && !!structure && canvases.length === 0;
-  const unavailable = !parsed || structureEmpty || canvasError || (!!canvasJson && !imageServiceId);
+  const unavailable = !parsed || structureEmpty || canvasError || (!!canvas && !imageServiceId);
 
   const [position, setPosition] = useState(() => ({
     x: Math.max(20, window.innerWidth / 2 - 320),

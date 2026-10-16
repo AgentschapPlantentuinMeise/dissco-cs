@@ -15,7 +15,7 @@ export const AuthGate: React.FC<{ requireAdmin?: boolean; requireReviewer?: bool
 
   // Same query key as UserMenu's reviewer check, so react-query shares the call instead of
   // fetching it twice.
-  const { data: reviewerCheck, isLoading: reviewerLoading } = useQuery({
+  const { data: isReviewer, isLoading: reviewerLoading } = useQuery({
     ...reviewQueries.isReviewer(),
     enabled: !!requireReviewer && !!user && !isAdmin,
     staleTime: 5 * 60 * 1000,
@@ -35,7 +35,7 @@ export const AuthGate: React.FC<{ requireAdmin?: boolean; requireReviewer?: bool
 
   if (requireReviewer && !isAdmin) {
     if (reviewerLoading) return null;
-    if (!reviewerCheck?.isReviewer) return <NoAccessRedirect />;
+    if (!isReviewer) return <NoAccessRedirect />;
   }
 
   return <>{children}</>;

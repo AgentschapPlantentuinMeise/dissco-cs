@@ -49,16 +49,15 @@ export const UserDashboard: React.FC = () => {
 
   const { data: unansweredTopics } = useQuery({
     ...forumQueries.topics(),
-    select: res =>
-      res.topics
+    select: topics =>
+      topics
         .filter(topic => topic.replyCount === 0)
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 3),
     enabled: !!user,
   });
 
-  const { data: feedbackThreadsData, status: feedbackThreadsStatus } = useQuery({ ...feedbackQueries.threads(), enabled: !!user });
-  const feedbackThreads = feedbackThreadsData?.threads ?? [];
+  const { data: feedbackThreads = [], status: feedbackThreadsStatus } = useQuery({ ...feedbackQueries.threads(), enabled: !!user });
 
   // The route sits behind <AuthGate>, which already sends a visitor without a session to login.
   if (!user) return null;

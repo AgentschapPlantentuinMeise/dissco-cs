@@ -41,7 +41,7 @@ export function useSearch(query: string) {
     if (!isActive) {
       return [];
     }
-    return (institutionsQuery.data?.institutions || []).filter(
+    return (institutionsQuery.data || []).filter(
       (institution: InstitutionDto) =>
         matchesInternationalString(institution.name, trimmed) ||
         matchesInternationalString(institution.description, trimmed)
