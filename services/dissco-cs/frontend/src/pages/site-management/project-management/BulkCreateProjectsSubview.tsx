@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { iiifQueries } from '../../../api/queries/iiif';
@@ -15,7 +15,7 @@ import { reportActionError } from '../../../api/error-toast';
 // (projectsApi.create, the same route as Madoc's "New project" button), so each gets a proper
 // collection, capture model and root task. One at a time, not all at once: each creation does
 // several steps on the server, and many at the same moment can overload Madoc.
-export const BulkCreateProjectsSubview: React.FC<{ projects: MadocProjectDto[] }> = ({ projects }) => {
+export function BulkCreateProjectsSubview({ projects }: { projects: MadocProjectDto[] }) {
   const { t, i18n } = useTranslation('dissco-cs');
   const [count, setCount] = useState(5);
   const [title, setTitle] = useState('');
@@ -220,4 +220,4 @@ export const BulkCreateProjectsSubview: React.FC<{ projects: MadocProjectDto[] }
       )}
     </div>
   );
-};
+}

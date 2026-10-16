@@ -6,11 +6,11 @@ import { currentLocation, withQuery } from '../../api/url';
 import { useCurrentUser } from '../../hooks/use-current-user';
 import { NoAccessRedirect } from './NoAccessRedirect';
 
-export const AuthGate: React.FC<{ requireAdmin?: boolean; requireReviewer?: boolean; children: React.ReactNode }> = ({
+export function AuthGate({
   requireAdmin,
   requireReviewer,
   children,
-}) => {
+}: { requireAdmin?: boolean; requireReviewer?: boolean; children: React.ReactNode }) {
   const user = useCurrentUser();
   const isAdmin = !!user && user.scope.includes('site.admin');
 
@@ -39,4 +39,4 @@ export const AuthGate: React.FC<{ requireAdmin?: boolean; requireReviewer?: bool
   }
 
   return <>{children}</>;
-};
+}

@@ -9,7 +9,7 @@ import { MadocSiteTermsDto, InvitationDto } from '@dissco-cs/shared-types';
 import { useCurrentUser } from '../../hooks/use-current-user';
 import { getSiteSlug } from '../../api/slug';
 
-export const Register: React.FC = () => {
+export function Register() {
   const { t } = useTranslation('dissco-cs');
   const [searchParams] = useSearchParams();
   const user = useCurrentUser();
@@ -212,4 +212,4 @@ export const Register: React.FC = () => {
       )}
     </CsPage>
   );
-};
+}

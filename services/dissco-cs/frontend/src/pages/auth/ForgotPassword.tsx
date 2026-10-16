@@ -4,7 +4,7 @@ import { CsPage } from '../../components/layout/CsPage';
 import { HrefLink } from '../../utility/href-link';
 import { forgotPassword } from '../../api/madoc-auth/auth';
 
-export const ForgotPassword: React.FC = () => {
+export function ForgotPassword() {
   const { t } = useTranslation('dissco-cs');
 
   const [email, setEmail] = useState('');
@@ -63,4 +63,4 @@ export const ForgotPassword: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}

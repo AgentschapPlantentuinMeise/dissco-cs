@@ -18,7 +18,7 @@ const navLinkClass = (isActive: boolean) =>
    md:inline md:py-0 md:border-t-0
    ${isActive ? 'font-medium text-[var(--cs-accent)]' : 'font-[380] text-gray-600'}`;
 
-export const Navbar: React.FC = () => {
+export function Navbar() {
   const { t } = useTranslation('dissco-cs');
   const [menuOpen, setMenuOpen] = useState(false);
   const user = useCurrentUser();
@@ -117,4 +117,4 @@ export const Navbar: React.FC = () => {
       </div>
     </nav>
   );
-};
+}

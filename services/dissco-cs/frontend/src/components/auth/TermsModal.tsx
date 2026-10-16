@@ -16,7 +16,7 @@ type TermsModalProps = {
 
 // Shared by Register.tsx (review terms before creating an account) and Login.tsx
 // (re-accept terms that changed since the user's last acceptance).
-export const TermsModal: React.FC<TermsModalProps> = ({
+export function TermsModal({
   title,
   intro,
   terms,
@@ -25,7 +25,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({
   onAccept,
   onCancel,
   disabled,
-}) => {
+}: TermsModalProps) {
   return (
     <Modal
       open
@@ -62,4 +62,4 @@ export const TermsModal: React.FC<TermsModalProps> = ({
       )}
     </Modal>
   );
-};
+}

@@ -1,9 +1,8 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const CancelButton: React.FC<{
+export function CancelButton({ onClick }: {
   onClick: () => void;
-}> = ({ onClick }) => {
+}) {
   const { t } = useTranslation('dissco-cs');
   return (
     <button
@@ -13,4 +12,4 @@ export const CancelButton: React.FC<{
       {t('common_cancel')}
     </button>
   );
-};
+}

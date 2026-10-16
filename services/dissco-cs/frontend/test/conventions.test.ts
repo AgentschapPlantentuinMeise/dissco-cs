@@ -48,6 +48,11 @@ const rules: ConventionRule[] = [
     onlyIn: /^api\/cs-client\//,
   },
   {
+    name: 'A component is a function, not a React.FC',
+    pattern: /React\.FC\b|:\s*FC</,
+    instead: "function X({ a, b }: XProps) { ... } -- CLAUDE.md §6",
+  },
+  {
     name: 'One way to build a query string',
     pattern: /from 'query-string'/,
     instead: "withQuery(path, params) from api/url.ts",

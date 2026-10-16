@@ -10,7 +10,7 @@ interface ProjectCardProps {
   projectSummaryData: MadocProjectDto;
 }
 
-export const ProjectCard: React.FC<ProjectCardProps> = ({ projectSummaryData }) => {
+export function ProjectCard({ projectSummaryData }: ProjectCardProps) {
   const { t } = useTranslation('dissco-cs');
   const { data: progress, isLoading } = useProjectProgress(projectSummaryData.id);
 
@@ -68,4 +68,4 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ projectSummaryData }) 
       </div>
     </Link>
   );
-};
+}

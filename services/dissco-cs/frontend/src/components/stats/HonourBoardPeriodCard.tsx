@@ -2,14 +2,14 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { HonourBoardEntryDto, HonourBoardPeriodDto } from '@dissco-cs/shared-types';
 
-export const HonourBoardPeriodCard: React.FC<{
+export function HonourBoardPeriodCard({ titleKey, icon, period, formatNumber, dark = false, loading = false }: {
   titleKey: string;
   icon: React.ReactNode;
   period: HonourBoardPeriodDto | undefined;
   formatNumber: (n: number) => string;
   dark?: boolean;
   loading?: boolean;
-}> = ({ titleKey, icon, period, formatNumber, dark = false, loading = false }) => {
+}) {
   const { t } = useTranslation('dissco-cs');
   const rows: Array<{ entry: HonourBoardEntryDto; isYou: boolean }> = period
     ? period.top.map(entry => ({ entry, isYou: entry.userUrn === period.you?.userUrn }))
@@ -49,4 +49,4 @@ export const HonourBoardPeriodCard: React.FC<{
       )}
     </div>
   );
-};
+}

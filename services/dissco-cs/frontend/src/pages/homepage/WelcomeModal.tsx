@@ -1,4 +1,3 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CsMarkdown } from '../../components/ui/CsMarkdown';
@@ -9,7 +8,7 @@ import { useCurrentUser } from '../../hooks/use-current-user';
 // Shown once, right after a new account is activated — see the redirect to
 // `/?welcome=1` in SetPassword.tsx. Not stored anywhere (no cookie/DB flag): closing
 // the modal simply drops the query param, so a page reload won't bring it back.
-export const WelcomeModal: React.FC = () => {
+export function WelcomeModal() {
   const { t, i18n } = useTranslation('dissco-cs');
   const [searchParams, setSearchParams] = useSearchParams();
   const { loading, isActive, getContent } = useNavItems();
@@ -47,4 +46,4 @@ export const WelcomeModal: React.FC = () => {
       </div>
     </Modal>
   );
-};
+}

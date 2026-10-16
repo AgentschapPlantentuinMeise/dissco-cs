@@ -21,7 +21,7 @@ function manualSeenKey(projectSlug: string): string {
   return `project-manual-seen-${projectSlug}`;
 }
 
-export const ProjectDetail: React.FC = () => {
+export function ProjectDetail() {
   const { t } = useTranslation('dissco-cs');
   const { data: project } = useCurrentProject();
   const user = useCurrentUser();
@@ -229,4 +229,4 @@ export const ProjectDetail: React.FC = () => {
       />
     </CsPage>
   );
-};
+}

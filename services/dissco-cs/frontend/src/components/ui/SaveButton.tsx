@@ -1,12 +1,11 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const SaveButton: React.FC<{
+export function SaveButton({ onClick, disabled, loading, title }: {
   onClick: () => void;
   disabled?: boolean;
   loading?: boolean;
   title?: string;
-}> = ({ onClick, disabled, loading, title }) => {
+}) {
   const { t } = useTranslation('dissco-cs');
   const isDisabled = disabled || loading;
   return (
@@ -26,4 +25,4 @@ export const SaveButton: React.FC<{
       {loading ? t('common_saving') : t('common_save')}
     </button>
   );
-};
+}

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ForumReplyDto } from '@dissco-cs/shared-types';
 import { DeleteIconButton } from '../../components/ui/DeleteIconButton';
@@ -6,7 +5,7 @@ import { formatDate } from '../../utility/format-date';
 import { btnPrimary, inputClass } from './forum-styles';
 
 // The opened part of a topic: its replies, then a reply box (or a notice when the topic is closed).
-export const ForumReplyThread: React.FC<{
+export function ForumReplyThread({ replies, closed, canDeleteReply, onDeleteReply, replyDraft, onReplyDraftChange, onSubmitReply }: {
   replies: ForumReplyDto[];
   closed: boolean;
   // Admins may delete any reply, others only their own.
@@ -15,7 +14,7 @@ export const ForumReplyThread: React.FC<{
   replyDraft: string;
   onReplyDraftChange: (body: string) => void;
   onSubmitReply: () => void;
-}> = ({ replies, closed, canDeleteReply, onDeleteReply, replyDraft, onReplyDraftChange, onSubmitReply }) => {
+}) {
   const { t, i18n } = useTranslation('dissco-cs');
 
   return (
@@ -56,4 +55,4 @@ export const ForumReplyThread: React.FC<{
       )}
     </div>
   );
-};
+}

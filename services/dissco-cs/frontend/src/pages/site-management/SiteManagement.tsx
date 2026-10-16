@@ -19,7 +19,7 @@ const TILES: Tile[] = [
   { href: '/manage/institutions', titleKey: 'sm_tile_institutions_title', descKey: 'sm_tile_institutions_desc' },
 ];
 
-export const SiteManagement: React.FC = () => {
+export function SiteManagement() {
   const { t } = useTranslation('dissco-cs');
   const siteSlug = getSiteSlug();
 
@@ -66,4 +66,4 @@ export const SiteManagement: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}

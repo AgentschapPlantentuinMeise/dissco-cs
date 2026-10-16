@@ -1,4 +1,3 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { CsPage } from '../../components/layout/CsPage';
 import { StatBanner } from '../../components/ui/StatBanner';
@@ -8,7 +7,7 @@ import { useSiteStats } from '../../hooks/use-site-stats';
 import { LuMedal, LuClock, LuCalendar } from 'react-icons/lu';
 import { formatNumber as formatCount } from '../../utility/format-number';
 
-export const HonourBoard: React.FC = () => {
+export function HonourBoard() {
   const { t, i18n } = useTranslation('dissco-cs');
   const { today, week, month, legend } = useSiteHonourBoard();
   const { data: siteStats } = useSiteStats();
@@ -68,4 +67,4 @@ export const HonourBoard: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}

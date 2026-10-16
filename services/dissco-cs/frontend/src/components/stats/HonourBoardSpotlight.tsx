@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LuArrowRight, LuMedal } from 'react-icons/lu';
@@ -28,7 +27,7 @@ const PERIOD_LINE_KEY: Record<SpotlightPeriod, string> = {
 // period resolves first (usually "today", the smallest/fastest query) shows immediately instead
 // of the whole widget waiting on the slowest one (legend, unfiltered). A period that resolves
 // empty (nobody today/this week yet) still shows its row with a message instead of being hidden.
-export const HonourBoardSpotlight: React.FC<{ className?: string }> = ({ className = '' }) => {
+export function HonourBoardSpotlight({ className = '' }: { className?: string }) {
   const { t, i18n } = useTranslation('dissco-cs');
   const board = useSiteHonourBoard();
 
@@ -100,4 +99,4 @@ export const HonourBoardSpotlight: React.FC<{ className?: string }> = ({ classNa
       </Link>
     </div>
   );
-};
+}

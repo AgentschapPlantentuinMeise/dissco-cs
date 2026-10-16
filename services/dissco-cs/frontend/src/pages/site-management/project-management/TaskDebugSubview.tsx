@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { projectQueries } from '../../../api/queries/projects';
@@ -22,7 +22,7 @@ function taskDebugStatusLabel(status: number): string {
 // Debug-only tab, deliberately not translated (no t()), so it can later be removed in one go.
 // Shows, per manifest of a chosen project, its volunteer tasks and whether they count for the
 // transcribed percentage (status 2 or 3), so that percentage on the project page can be checked.
-export const TaskDebugSubview: React.FC<{ projects: MadocProjectDto[] }> = ({ projects }) => {
+export function TaskDebugSubview({ projects }: { projects: MadocProjectDto[] }) {
   const { i18n } = useTranslation('dissco-cs');
   const [selectedSlug, setSelectedSlug] = useState<string>('');
 
@@ -114,4 +114,4 @@ export const TaskDebugSubview: React.FC<{ projects: MadocProjectDto[] }> = ({ pr
       )}
     </div>
   );
-};
+}

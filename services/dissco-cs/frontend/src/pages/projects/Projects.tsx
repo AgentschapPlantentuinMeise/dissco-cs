@@ -16,7 +16,7 @@ import { MadocProjectDto } from '@dissco-cs/shared-types';
 // columns that fit on the screen (see useGridColumnCount).
 const ROWS_PER_PAGE = 2;
 
-export const Projects: React.FC = () => {
+export function Projects() {
   // All pages, published-only, so every active project shows regardless of how many draft/paused
   // projects exist (and regardless of whether the viewer is a site-admin, who would otherwise see
   // every status unfiltered -- see projectsApi.list's `published` filter).
@@ -125,4 +125,4 @@ export const Projects: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}

@@ -15,7 +15,7 @@ export function toDateInputValue(iso: string | null): string {
 }
 
 // The side form of the announcements page: one announcement, created or edited.
-export const AnnouncementForm: React.FC<{
+export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, isEditing, projects, onSave, onCancel }: {
   draft: AnnouncementInput;
   setDraft: React.Dispatch<React.SetStateAction<AnnouncementInput>>;
   selectedLang: SitePageLang;
@@ -25,7 +25,7 @@ export const AnnouncementForm: React.FC<{
   projects: MadocProjectDto[];
   onSave: (input: AnnouncementInput) => void;
   onCancel: () => void;
-}> = ({ draft, setDraft, selectedLang, onSelectLang, isEditing, projects, onSave, onCancel }) => {
+}) {
   const { t, i18n } = useTranslation('dissco-cs');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -148,4 +148,4 @@ export const AnnouncementForm: React.FC<{
       </div>
     </div>
   );
-};
+}

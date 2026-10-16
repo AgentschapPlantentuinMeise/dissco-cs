@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 type CsMarkdownProps = {
@@ -8,7 +8,7 @@ type CsMarkdownProps = {
 // First paragraph renders as a larger "intro" lead-in; every paragraph after that
 // uses the normal body style. Keeps all CMS-driven pages (about/help/contact/institutions)
 // visually consistent regardless of how much text an admin writes.
-export const CsMarkdown: React.FC<CsMarkdownProps> = ({ content }) => {
+export function CsMarkdown({ content }: CsMarkdownProps) {
   const introRendered = useRef(false);
   introRendered.current = false;
 
@@ -33,4 +33,4 @@ export const CsMarkdown: React.FC<CsMarkdownProps> = ({ content }) => {
       {content}
     </ReactMarkdown>
   );
-};
+}

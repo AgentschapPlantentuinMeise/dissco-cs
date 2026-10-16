@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { useNavItems } from '../../hooks/use-nav-items';
 import { NavItemKey } from '@dissco-cs/shared-types';
 
-export const PageGate: React.FC<{ pageKey: NavItemKey; children: React.ReactNode }> = ({ pageKey, children }) => {
+export function PageGate({ pageKey, children }: { pageKey: NavItemKey; children: React.ReactNode }) {
   const { loading, isActive } = useNavItems();
 
   if (loading) {
@@ -15,4 +15,4 @@ export const PageGate: React.FC<{ pageKey: NavItemKey; children: React.ReactNode
   }
 
   return <>{children}</>;
-};
+}

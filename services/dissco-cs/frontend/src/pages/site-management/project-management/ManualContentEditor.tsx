@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { manualKeys, manualQueries } from '../../../api/queries/manuals';
@@ -14,7 +14,7 @@ import { LanguageTabs } from '../../../components/ui/LanguageTabs';
 
 // The editor of a manual's content: language tabs, markdown toolbar and text, attachment. Used in
 // the per-project panel and in the manual library, so editing works the same everywhere.
-export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }) => {
+export function ManualContentEditor({ manualId }: { manualId: number }) {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
   const { data: manual } = useQuery(manualQueries.detail(manualId));
@@ -222,4 +222,4 @@ export const ManualContentEditor: React.FC<{ manualId: number }> = ({ manualId }
       </div>
     </div>
   );
-};
+}

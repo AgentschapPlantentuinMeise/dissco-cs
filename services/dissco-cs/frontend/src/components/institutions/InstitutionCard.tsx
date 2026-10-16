@@ -8,7 +8,7 @@ interface InstitutionCardProps {
   institution: InstitutionDto;
 }
 
-export const InstitutionCard: React.FC<InstitutionCardProps> = ({ institution }) => {
+export function InstitutionCard({ institution }: InstitutionCardProps) {
   const { i18n } = useTranslation('dissco-cs');
   const name = siteLangText(institution.name, i18n.language, institution.slug);
 
@@ -24,4 +24,4 @@ export const InstitutionCard: React.FC<InstitutionCardProps> = ({ institution })
       <h3 className="text-lg text-center text-[var(--cs-primary)] m-0">{name}</h3>
     </Link>
   );
-};
+}

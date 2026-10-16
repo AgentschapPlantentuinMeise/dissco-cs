@@ -8,7 +8,7 @@ import { login, getTerms, acceptTerms } from '../../api/madoc-auth/auth';
 import { MadocSiteTermsDto } from '@dissco-cs/shared-types';
 import { clearJwt } from '../../api/jwt';
 
-export const Login: React.FC = () => {
+export function Login() {
   const { t } = useTranslation('dissco-cs');
   const [searchParams] = useSearchParams();
 
@@ -151,4 +151,4 @@ export const Login: React.FC = () => {
       )}
     </CsPage>
   );
-};
+}

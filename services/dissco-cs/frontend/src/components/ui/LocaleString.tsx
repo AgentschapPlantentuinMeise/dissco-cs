@@ -2,12 +2,12 @@ import { useTranslation } from 'react-i18next';
 import React, { useMemo } from 'react';
 import { MadocInternationalString } from '@dissco-cs/shared-types';
 
-export const LanguageString: React.FC<{ [key: string]: any } & { as?: string | React.FC<any>; language: string }> = ({
+export function LanguageString({
   as: Component,
   language,
   children,
   ...props
-}) => {
+}: { [key: string]: any } & { as?: React.ElementType; language: string }) {
   const { i18n } = useTranslation();
 
   const viewingDirection = useMemo(() => (i18n.dir ? i18n.dir(language) : 'ltr'), [language]);
@@ -44,7 +44,7 @@ export const LanguageString: React.FC<{ [key: string]: any } & { as?: string | R
       {children}
     </span>
   );
-};
+}
 
 function getClosestLanguage(i18nLanguage: string, languages: string[], i18nLanguages: string[]) {
   if (languages.length === 0) {
@@ -120,13 +120,13 @@ export function useLocaleString(inputText: MadocInternationalString | string | n
   ] as const;
 }
 
-export const LocaleString: React.FC<{
-  as?: string | React.FC<any>;
+export function LocaleString({ as: Component, defaultText, enableDangerouslySetInnerHTML, children, ...props }: {
+  as?: React.ElementType;
   defaultText?: string;
   enableDangerouslySetInnerHTML?: boolean;
   children: MadocInternationalString | string | null | undefined;
   style?: React.CSSProperties;
-} & Record<string, any>> = ({ as: Component, defaultText, enableDangerouslySetInnerHTML, children, ...props }) => {
+} & Record<string, any>) {
   const [text, language] = useLocaleString(children, defaultText);
 
   if (language) {
@@ -148,4 +148,4 @@ export const LocaleString: React.FC<{
   }
 
   return <>{text}</>;
-};
+}

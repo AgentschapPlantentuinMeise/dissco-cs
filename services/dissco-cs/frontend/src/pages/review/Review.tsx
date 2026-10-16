@@ -1,4 +1,3 @@
-import React from 'react';
 import { CsPage } from '../../components/layout/CsPage';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Select } from '../../components/ui/Select';
@@ -14,7 +13,7 @@ import { useReviewPage } from './use-review-page';
 
 // The table never changes width or position: a clicked row opens underneath itself, with the
 // fields in a responsive grid (see ReviewInlineExpansion).
-export const Review: React.FC = () => {
+export function Review() {
   const c = useReviewPage();
   const { t, i18n } = c;
 
@@ -213,4 +212,4 @@ export const Review: React.FC = () => {
       )}
     </CsPage>
   );
-};
+}

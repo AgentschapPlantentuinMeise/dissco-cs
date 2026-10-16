@@ -1,8 +1,7 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 // Shown once the first autosave landed: the task is now on the user's name, with a way to let go.
-export const AutosaveBanner: React.FC<{ onRelease: () => void }> = ({ onRelease }) => {
+export function AutosaveBanner({ onRelease }: { onRelease: () => void }) {
   const { t } = useTranslation('dissco-cs');
 
   return (
@@ -13,4 +12,4 @@ export const AutosaveBanner: React.FC<{ onRelease: () => void }> = ({ onRelease 
       </button>
     </div>
   );
-};
+}

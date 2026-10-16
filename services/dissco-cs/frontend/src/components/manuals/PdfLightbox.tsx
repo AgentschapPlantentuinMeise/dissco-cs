@@ -8,13 +8,13 @@ const roundButtonClass =
 
 // One PDF page almost full screen, with page arrows, zoom (buttons, +/- keys, ctrl+scroll) and
 // Escape to close. Zoom starts at 100% each time the lightbox opens.
-export const PdfLightbox: React.FC<{
+export function PdfLightbox({ pages, totalPages, index, onIndexChange, onClose }: {
   pages: string[];
   totalPages: number | null;
   index: number;
   onIndexChange: (index: number) => void;
   onClose: () => void;
-}> = ({ pages, totalPages, index, onIndexChange, onClose }) => {
+}) {
   const { t } = useTranslation('dissco-cs');
   const [zoom, setZoom] = useState(1);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -172,4 +172,4 @@ export const PdfLightbox: React.FC<{
     </div>,
     document.body
   );
-};
+}

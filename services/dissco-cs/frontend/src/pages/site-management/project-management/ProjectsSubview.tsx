@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectKeys } from '../../../api/queries/projects';
@@ -12,12 +12,12 @@ import { localeText } from '../../../utility/locale-text';
 import { siteLangText } from '../../../utility/site-lang-text';
 import { MadocProjectDto, InstitutionDto, ManualSummaryDto } from '@dissco-cs/shared-types';
 
-export const ProjectsSubview: React.FC<{
+export function ProjectsSubview({ projects, manuals, institutions, institutionLinks }: {
   projects: MadocProjectDto[];
   manuals: ManualSummaryDto[];
   institutions: InstitutionDto[];
   institutionLinks: Record<string, number>;
-}> = ({ projects, manuals, institutions, institutionLinks }) => {
+}) {
   const { t, i18n } = useTranslation('dissco-cs');
   const projectLabel = (project: MadocProjectDto) => localeText(project.label, i18n.language) || project.slug;
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
@@ -232,4 +232,4 @@ export const ProjectsSubview: React.FC<{
       </div>
     </div>
   );
-};
+}

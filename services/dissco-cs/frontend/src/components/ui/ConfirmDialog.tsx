@@ -1,8 +1,7 @@
-import React from 'react';
 import { Modal } from './Modal';
 import { LuTriangleAlert, LuCheck } from 'react-icons/lu';
 
-export const ConfirmDialog: React.FC<{
+export function ConfirmDialog({ title, message, confirmLabel, cancelLabel, tone = 'warn', onConfirm, onCancel }: {
   title: string;
   message: string;
   confirmLabel: string;
@@ -10,7 +9,7 @@ export const ConfirmDialog: React.FC<{
   tone?: 'warn' | 'affirm';
   onConfirm: () => void;
   onCancel: () => void;
-}> = ({ title, message, confirmLabel, cancelLabel, tone = 'warn', onConfirm, onCancel }) => {
+}) {
   const toneColor = tone === 'affirm' ? 'text-[var(--cs-secondary)]' : 'text-red-600';
   const confirmButtonColor =
     tone === 'affirm'
@@ -46,4 +45,4 @@ export const ConfirmDialog: React.FC<{
       <p className="text-sm leading-relaxed text-gray-600">{message}</p>
     </Modal>
   );
-};
+}

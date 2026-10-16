@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePdfPages } from './use-pdf-pages';
 import { PdfLightbox } from './PdfLightbox';
@@ -6,12 +6,12 @@ import { PdfLightbox } from './PdfLightbox';
 // A PDF attachment as a page-image gallery, so a volunteer sees the manual immediately instead of
 // having to download it first. Clicking a page opens it in the lightbox. With openDirectly there
 // is no gallery, only the lightbox on page 1 (a manual that is just a PDF).
-export const PdfGallery: React.FC<{ url: string; filename: string; openDirectly?: boolean; onClose?: () => void }> = ({
+export function PdfGallery({
   url,
   filename,
   openDirectly = false,
   onClose,
-}) => {
+}: { url: string; filename: string; openDirectly?: boolean; onClose?: () => void }) {
   const { t } = useTranslation('dissco-cs');
   const { pages, totalPages, failed, loadRest } = usePdfPages(url);
   const [openIndex, setOpenIndex] = useState<number | null>(openDirectly ? 0 : null);
@@ -97,4 +97,4 @@ export const PdfGallery: React.FC<{ url: string; filename: string; openDirectly?
       {lightbox}
     </div>
   );
-};
+}

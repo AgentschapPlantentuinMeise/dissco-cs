@@ -1,10 +1,9 @@
-import React from 'react';
 
-export const ToggleSwitch: React.FC<{
+export function ToggleSwitch({ checked, onChange, label }: {
   checked: boolean;
   onChange: () => void;
   label: string;
-}> = ({ checked, onChange, label }) => {
+}) {
   return (
     <label className="inline-flex items-center cursor-pointer">
       <span className="sr-only">{label}</span>
@@ -22,4 +21,4 @@ export const ToggleSwitch: React.FC<{
       </span>
     </label>
   );
-};
+}

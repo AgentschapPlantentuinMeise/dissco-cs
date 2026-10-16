@@ -17,7 +17,7 @@ function fileToDataUrl(file: File): Promise<string> {
 
 // The side form of the institutions page: one institution, created or edited. The page gives it a
 // new key per item, so the picked logo name starts empty for each one.
-export const InstitutionForm: React.FC<{
+export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, isEditing, onSave, onCancel }: {
   draft: InstitutionInput;
   setDraft: React.Dispatch<React.SetStateAction<InstitutionInput>>;
   selectedLang: SitePageLang;
@@ -25,7 +25,7 @@ export const InstitutionForm: React.FC<{
   isEditing: boolean;
   onSave: (input: InstitutionInput) => void;
   onCancel: () => void;
-}> = ({ draft, setDraft, selectedLang, onSelectLang, isEditing, onSave, onCancel }) => {
+}) {
   const { t } = useTranslation('dissco-cs');
   // Name of a logo picked in this form session; not part of the saved institution.
   const [logoFileName, setLogoFileName] = useState<string | null>(null);
@@ -155,4 +155,4 @@ export const InstitutionForm: React.FC<{
       </div>
     </div>
   );
-};
+}

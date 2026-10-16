@@ -12,10 +12,10 @@ import { localeText } from '../../../utility/locale-text';
 import { defaultLang, siteLangText } from '../../../utility/site-lang-text';
 import { MadocProjectDto, MAX_MANUAL_TITLE_LENGTH, ManualSummaryDto, setManualTitleSchema } from '@dissco-cs/shared-types';
 
-export const ManualsSubview: React.FC<{
+export function ManualsSubview({ projects, manuals }: {
   projects: MadocProjectDto[];
   manuals: ManualSummaryDto[];
-}> = ({ projects, manuals }) => {
+}) {
   const { t, i18n } = useTranslation('dissco-cs');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
@@ -147,4 +147,4 @@ export const ManualsSubview: React.FC<{
       )}
     </div>
   );
-};
+}

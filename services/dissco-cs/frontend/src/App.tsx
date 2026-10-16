@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { getSiteSlug } from './api/slug';
 import { PageGate } from './components/layout/PageGate';
@@ -31,7 +30,7 @@ import { SetPassword } from './pages/auth/SetPassword';
 
 
 
-export const App: React.FC = () => {
+export function App() {
   const basename = `/s/${getSiteSlug()}`;
 
   return (
@@ -68,4 +67,4 @@ export const App: React.FC = () => {
       </RouteErrorBoundary>
     </BrowserRouter>
   );
-};
+}

@@ -6,7 +6,7 @@ import { CsMarkdown } from '../../components/ui/CsMarkdown';
 import { useNavItems } from '../../hooks/use-nav-items';
 import { contactApi } from '../../api/cs-client/contact';
 
-export const Contact: React.FC = () => {
+export function Contact() {
   const { t, i18n } = useTranslation('dissco-cs');
   const { getContent, navItems } = useNavItems();
 
@@ -119,4 +119,4 @@ export const Contact: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}

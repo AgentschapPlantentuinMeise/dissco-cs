@@ -15,7 +15,7 @@ import { HrefLink } from '../../utility/href-link';
 import { formatNumber } from '../../utility/format-number';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
 
-export const Homepage: React.FC = () => {
+export function Homepage() {
   const [isClient, setIsClient] = useState(false);
   const { data: projectsResponse, status } = useQuery(projectQueries.list({ page: 1, published: true }));
   const { data: siteStats } = useSiteStats();
@@ -112,4 +112,4 @@ export const Homepage: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}

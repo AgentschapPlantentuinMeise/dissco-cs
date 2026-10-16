@@ -18,7 +18,7 @@ function getPasswordRequirements(password: string) {
   ];
 }
 
-export const SetPassword: React.FC = () => {
+export function SetPassword() {
   const { t } = useTranslation('dissco-cs');
   const location = useLocation();
   const isActivation = location.pathname.endsWith('/activate-account');
@@ -160,4 +160,4 @@ export const SetPassword: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}

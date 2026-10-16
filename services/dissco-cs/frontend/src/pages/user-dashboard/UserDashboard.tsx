@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { feedbackQueries } from '../../api/queries/feedback';
@@ -23,7 +23,7 @@ import { sharePercentage, summarizeTasks } from './dashboard-tasks';
 
 const PROJECT_CHART_COLORS = ['#4361ee', '#e63946', '#f4a261', '#2a9d8f', '#9b5de5', '#f15bb5', '#43aa8b', '#ffb703'];
 
-export const UserDashboard: React.FC = () => {
+export function UserDashboard() {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useCurrentUser();
   const [activeTab, setActiveTab] = useState<'saved' | 'done' | 'feedback'>('saved');
@@ -229,4 +229,4 @@ export const UserDashboard: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}

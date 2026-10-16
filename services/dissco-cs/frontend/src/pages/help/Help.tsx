@@ -4,7 +4,7 @@ import { CsPage } from '../../components/layout/CsPage';
 import { CsMarkdown } from '../../components/ui/CsMarkdown';
 import { useNavItems } from '../../hooks/use-nav-items';
 
-export const Help: React.FC = () => {
+export function Help() {
   const { t, i18n } = useTranslation('dissco-cs');
   const { getContent } = useNavItems();
 
@@ -29,4 +29,4 @@ export const Help: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}

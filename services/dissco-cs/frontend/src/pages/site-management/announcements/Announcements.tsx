@@ -1,4 +1,3 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { announcementKeys, announcementQueries } from '../../../api/queries/announcements';
@@ -44,7 +43,7 @@ const emptyDraft: AnnouncementInput = {
   endDate: null,
 };
 
-export const Announcements: React.FC = () => {
+export function Announcements() {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery(announcementQueries.admin());
@@ -212,4 +211,4 @@ export const Announcements: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}

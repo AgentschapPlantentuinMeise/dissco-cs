@@ -14,7 +14,7 @@ export interface ImagePreviewPopupProps {
   onClose: () => void;
 }
 
-export const ImagePreviewPopup: React.FC<ImagePreviewPopupProps> = ({ subject, label, onClose }) => {
+export function ImagePreviewPopup({ subject, label, onClose }: ImagePreviewPopupProps) {
   const { t } = useTranslation('dissco-cs');
   const parsed = parseUrn(subject);
   const isManifest = parsed?.type === 'manifest';
@@ -146,4 +146,4 @@ export const ImagePreviewPopup: React.FC<ImagePreviewPopupProps> = ({ subject, l
       />
     </div>
   );
-};
+}

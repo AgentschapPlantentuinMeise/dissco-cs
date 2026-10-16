@@ -28,7 +28,7 @@ const MERGED_PAGE_TITLE_KEY: Partial<Record<NavItemKey, string>> = {
 };
 const pageLabelKey = (key: NavItemKey) => MERGED_PAGE_TITLE_KEY[key] ?? `sm_pages_page_${key}`;
 
-export const PageManagement: React.FC = () => {
+export function PageManagement() {
   const { t, i18n } = useTranslation('dissco-cs');
   const { navItems: pages, loading, refresh } = useNavItems();
   const { data: contactEmail, isPending: contactEmailLoading } = useQuery(navItemQueries.contactEmail());
@@ -294,4 +294,4 @@ export const PageManagement: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}

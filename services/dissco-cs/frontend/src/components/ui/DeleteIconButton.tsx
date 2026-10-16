@@ -1,10 +1,9 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { LuTrash2 } from 'react-icons/lu';
 
-export const DeleteIconButton: React.FC<{
+export function DeleteIconButton({ onClick }: {
   onClick: () => void;
-}> = ({ onClick }) => {
+}) {
   const { t } = useTranslation('dissco-cs');
   return (
     <button
@@ -16,4 +15,4 @@ export const DeleteIconButton: React.FC<{
       <LuTrash2 />
     </button>
   );
-};
+}

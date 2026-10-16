@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { taskKeys, taskQueries } from '../../../api/queries/tasks';
@@ -16,7 +16,7 @@ function statusLabelKey(status: number): string {
   return status === 0 ? 'sm_stuck_tasks_status_not_started' : 'sm_stuck_tasks_status_in_progress';
 }
 
-export const StuckTasksSubview: React.FC = () => {
+export function StuckTasksSubview() {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
   const { data, status: queryStatus } = useQuery(taskQueries.stuck());
@@ -182,4 +182,4 @@ export const StuckTasksSubview: React.FC = () => {
       )}
     </div>
   );
-};
+}

@@ -43,7 +43,7 @@ function toInstitutionInput(institution: InstitutionDto): InstitutionInput {
   };
 }
 
-export const InstitutionManagement: React.FC = () => {
+export function InstitutionManagement() {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery(institutionQueries.admin());
@@ -201,4 +201,4 @@ export const InstitutionManagement: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}

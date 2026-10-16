@@ -9,7 +9,7 @@ import { btnGhost } from './forum-styles';
 
 // One topic in the list: title with unread/closed markers, actions, meta line and body. When open,
 // `thread` (replies and reply box) is shown below the body.
-export const ForumTopicCard: React.FC<{
+export function ForumTopicCard({ topic, unread, isExpanded, canModerate, onToggle, onClose, onDelete, thread }: {
   topic: ForumTopicDto;
   unread: boolean;
   isExpanded: boolean;
@@ -19,7 +19,7 @@ export const ForumTopicCard: React.FC<{
   onClose: () => void;
   onDelete: () => void;
   thread: React.ReactNode;
-}> = ({ topic, unread, isExpanded, canModerate, onToggle, onClose, onDelete, thread }) => {
+}) {
   const { t, i18n } = useTranslation('dissco-cs');
   const closed = !!topic.closedAt;
   const replyCountLabel = `${topic.replyCount} ${t(topic.replyCount === 1 ? 'forum_btn_replies_one' : 'forum_btn_replies_many')}`;
@@ -118,4 +118,4 @@ export const ForumTopicCard: React.FC<{
       </div>
     </div>
   );
-};
+}

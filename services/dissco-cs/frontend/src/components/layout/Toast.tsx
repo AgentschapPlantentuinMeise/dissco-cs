@@ -1,11 +1,10 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { LuCircleAlert, LuX } from 'react-icons/lu';
 import { useToast } from '../../hooks/use-toast';
 
 // The error message band at the bottom of the screen (direction A of the toast mockup). Errors
 // only; it stays until closed. Rendered once, in main.tsx.
-export const Toast: React.FC = () => {
+export function Toast() {
   const { t } = useTranslation('dissco-cs');
   const { toast, close } = useToast();
 
@@ -34,4 +33,4 @@ export const Toast: React.FC = () => {
       </div>
     </div>
   );
-};
+}

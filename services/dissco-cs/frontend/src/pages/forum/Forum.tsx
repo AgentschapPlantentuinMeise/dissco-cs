@@ -10,7 +10,7 @@ import { ForumTopicCard } from './ForumTopicCard';
 import { ForumReplyThread } from './ForumReplyThread';
 import { ForumSidebar } from './ForumSidebar';
 
-export const Forum: React.FC = () => {
+export function Forum() {
   const { t } = useTranslation('dissco-cs');
   const c = useForumPage();
   const isAdmin = !!c.user?.scope.includes('site.admin');
@@ -112,4 +112,4 @@ export const Forum: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}

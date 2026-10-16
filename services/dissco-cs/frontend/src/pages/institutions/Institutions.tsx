@@ -9,7 +9,7 @@ import { HonourBoardSpotlight } from '../../components/stats/HonourBoardSpotligh
 import { useSiteStats } from '../../hooks/use-site-stats';
 import { formatNumber } from '../../utility/format-number';
 
-export const Institutions: React.FC = () => {
+export function Institutions() {
   const { t, i18n } = useTranslation('dissco-cs');
   const { data } = useQuery(institutionQueries.active());
   const { data: siteStats } = useSiteStats();
@@ -52,4 +52,4 @@ export const Institutions: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}

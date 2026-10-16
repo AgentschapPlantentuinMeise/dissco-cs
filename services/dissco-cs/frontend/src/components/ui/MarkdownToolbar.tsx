@@ -42,7 +42,7 @@ function insertAtLineStart(textarea: HTMLTextAreaElement, value: string, onChang
 
 // Formatting buttons above a Markdown <textarea>: they insert Markdown at the cursor instead of being
 // a WYSIWYG editor, so what is stored stays plain Markdown (no HTML to clean).
-export const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ textareaRef, value, onChange }) => {
+export function MarkdownToolbar({ textareaRef, value, onChange }: MarkdownToolbarProps) {
   const { t } = useTranslation('dissco-cs');
 
   const withTextarea = (fn: (textarea: HTMLTextAreaElement) => void) => {
@@ -110,4 +110,4 @@ export const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ textareaRef, v
       </button>
     </div>
   );
-};
+}

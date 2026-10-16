@@ -25,7 +25,7 @@ const SIZE_CLASS: Record<NonNullable<ModalProps['size']>, string> = {
 // Generic modal shell (overlay + card) — modeled after WelcomeModal.tsx's original
 // overlay/transition pattern but made reusable across content types. Shared by
 // ManualModal, ConfirmDialog, TermsModal and WelcomeModal.
-export const Modal: React.FC<ModalProps> = ({
+export function Modal({
   open,
   onClose,
   title,
@@ -34,7 +34,7 @@ export const Modal: React.FC<ModalProps> = ({
   footer,
   children,
   coverNavbar,
-}) => {
+}: ModalProps) {
   const { t } = useTranslation('dissco-cs');
   const [entered, setEntered] = useState(false);
 
@@ -91,4 +91,4 @@ export const Modal: React.FC<ModalProps> = ({
       </div>
     </div>
   );
-};
+}

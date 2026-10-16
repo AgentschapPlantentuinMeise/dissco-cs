@@ -10,7 +10,7 @@ const outlineButtonClass =
 
 // The bar above the annotate screen: breadcrumb, manual, forum message, previous and next task.
 // Every way out goes through onLeave, so the claim is released before navigating.
-export const AnnotateToolbar: React.FC<{
+export function AnnotateToolbar({ projectSlug, projectLabel, canvasLabel, onLeave, onOpenManual, onOpenForum, canGoPrevious, onPrevious, isLoadingNext, onNext }: {
   projectSlug: string;
   projectLabel: MadocInternationalString;
   canvasLabel: MadocInternationalString | undefined;
@@ -22,7 +22,7 @@ export const AnnotateToolbar: React.FC<{
   onPrevious: () => void;
   isLoadingNext: boolean;
   onNext: () => void;
-}> = ({ projectSlug, projectLabel, canvasLabel, onLeave, onOpenManual, onOpenForum, canGoPrevious, onPrevious, isLoadingNext, onNext }) => {
+}) {
   const { t } = useTranslation('dissco-cs');
 
   const leaveLink = (to: string) => (e: React.MouseEvent) => {
@@ -69,4 +69,4 @@ export const AnnotateToolbar: React.FC<{
       </div>
     </div>
   );
-};
+}

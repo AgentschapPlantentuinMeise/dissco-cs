@@ -5,7 +5,7 @@ import { LuSearch, LuX } from 'react-icons/lu';
 import { withQuery } from '../../api/url';
 
 // The navbar's search icon, which opens a small search box; submitting goes to /find.
-export const NavSearch: React.FC<{ onSearched: () => void }> = ({ onSearched }) => {
+export function NavSearch({ onSearched }: { onSearched: () => void }) {
   const { t } = useTranslation('dissco-cs');
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,4 +68,4 @@ export const NavSearch: React.FC<{ onSearched: () => void }> = ({ onSearched }) 
       </button>
     </div>
   );
-};
+}

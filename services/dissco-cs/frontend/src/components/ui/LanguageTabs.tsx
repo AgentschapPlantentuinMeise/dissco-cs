@@ -1,15 +1,14 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { SitePageLang } from '@dissco-cs/shared-types';
 import { LANGUAGES } from '../../utility/site-lang-text';
 
 // The row of language buttons above a multilingual form (one per site language). `isMissing`
 // marks a language that still needs content with a small dot.
-export const LanguageTabs: React.FC<{
+export function LanguageTabs({ selected, onSelect, isMissing }: {
   selected: SitePageLang;
   onSelect: (lang: SitePageLang) => void;
   isMissing?: (lang: SitePageLang) => boolean;
-}> = ({ selected, onSelect, isMissing }) => {
+}) {
   const { t } = useTranslation('dissco-cs');
 
   return (
@@ -36,4 +35,4 @@ export const LanguageTabs: React.FC<{
       ))}
     </div>
   );
-};
+}

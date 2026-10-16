@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { projectKeys, projectQueries } from '../../../api/queries/projects';
@@ -15,7 +15,7 @@ import { TaskDebugSubview } from './TaskDebugSubview';
 import { BulkCreateProjectsSubview } from './BulkCreateProjectsSubview';
 import { reportClientError } from '../../../api/cs-client/client-errors';
 
-export const ProjectManagement: React.FC = () => {
+export function ProjectManagement() {
   const { t } = useTranslation('dissco-cs');
   const [tab, setTab] = useState<'projects' | 'manuals' | 'stuck-tasks' | 'task-debug' | 'bulk-create'>('projects');
 
@@ -138,4 +138,4 @@ export const ProjectManagement: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}

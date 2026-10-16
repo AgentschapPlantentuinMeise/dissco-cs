@@ -17,12 +17,12 @@ const FILTER_LABEL_KEYS: Record<ForumFilter, string> = {
 };
 
 // Search box and filters next to the topic list. Clicking the active filter again clears it.
-export const ForumSidebar: React.FC<{
+export function ForumSidebar({ searchQuery, onSearchChange, activeFilter, onFilterChange }: {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   activeFilter: ForumFilter | null;
   onFilterChange: React.Dispatch<React.SetStateAction<ForumFilter | null>>;
-}> = ({ searchQuery, onSearchChange, activeFilter, onFilterChange }) => {
+}) {
   const { t } = useTranslation('dissco-cs');
 
   return (
@@ -54,4 +54,4 @@ export const ForumSidebar: React.FC<{
       </div>
     </aside>
   );
-};
+}

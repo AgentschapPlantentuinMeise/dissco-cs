@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { CsPage } from '../../components/layout/CsPage';
@@ -19,7 +18,7 @@ const TEXT_KEYS = {
 } as const;
 
 // The annotate page when it cannot show a task, always with a way back to the project.
-export const AnnotatePageError: React.FC<{ projectSlug: string | undefined; error: AnnotatePageErrorKind }> = ({ projectSlug, error }) => {
+export function AnnotatePageError({ projectSlug, error }: { projectSlug: string | undefined; error: AnnotatePageErrorKind }) {
   const { t } = useTranslation('dissco-cs');
   const navigate = useNavigate();
 
@@ -45,4 +44,4 @@ export const AnnotatePageError: React.FC<{ projectSlug: string | undefined; erro
       )}
     </CsPage>
   );
-};
+}

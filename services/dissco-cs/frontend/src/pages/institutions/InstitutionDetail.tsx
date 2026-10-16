@@ -16,7 +16,7 @@ import { siteLangText } from '../../utility/site-lang-text';
 import { formatNumber as formatCount } from '../../utility/format-number';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
 
-export const InstitutionDetail: React.FC = () => {
+export function InstitutionDetail() {
   const { t, i18n } = useTranslation('dissco-cs');
   const { slug } = useParams<{ slug: string }>();
   const { data: institution, isLoading } = useQuery(institutionQueries.detail(slug));
@@ -185,4 +185,4 @@ export const InstitutionDetail: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}

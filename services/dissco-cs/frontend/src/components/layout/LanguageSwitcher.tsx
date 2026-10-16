@@ -7,7 +7,7 @@ import { LANGUAGES } from '../../utility/site-lang-text';
 import { dropdownItemClass, dropdownListClass } from './nav-styles';
 
 // The navbar's language dropdown. The choice is remembered in localStorage and the i18next cookie.
-export const LanguageSwitcher: React.FC = () => {
+export function LanguageSwitcher() {
   const { i18n } = useTranslation();
   const { buttonProps, itemProps, isOpen, setIsOpen } = useDropdownMenu(LANGUAGES.length);
   const currentLang = LANGUAGES.find(l => l.code === i18n.language) || LANGUAGES[0];
@@ -41,4 +41,4 @@ export const LanguageSwitcher: React.FC = () => {
       </ul>
     </div>
   );
-};
+}

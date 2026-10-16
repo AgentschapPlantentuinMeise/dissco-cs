@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import useDropdownMenu from 'react-accessible-dropdown-menu-hook';
 import { useLocation } from 'react-router-dom';
@@ -16,7 +16,7 @@ type CurrentUser = NonNullable<ReturnType<typeof getCurrentUser>>;
 
 // The logged-in user's dropdown: dashboard (with the unread feedback badge), profile, review and
 // site admin when the user has that role, and logout.
-export const UserMenu: React.FC<{ user: CurrentUser }> = ({ user }) => {
+export function UserMenu({ user }: { user: CurrentUser }) {
   const { t } = useTranslation('dissco-cs');
   const siteSlug = getSiteSlug();
   const location = useLocation();
@@ -107,4 +107,4 @@ export const UserMenu: React.FC<{ user: CurrentUser }> = ({ user }) => {
       </ul>
     </div>
   );
-};
+}

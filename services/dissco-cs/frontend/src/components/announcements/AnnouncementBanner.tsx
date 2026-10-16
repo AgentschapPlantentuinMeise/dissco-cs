@@ -48,10 +48,10 @@ function readSeenSignatures(key: string): string[] | null {
   }
 }
 
-export const AnnouncementBanner: React.FC<{ target: AnnouncementTargetType; projectSlug?: string }> = ({
+export function AnnouncementBanner({
   target,
   projectSlug,
-}) => {
+}: { target: AnnouncementTargetType; projectSlug?: string }) {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useCurrentUser();
   const { data } = useQuery({
@@ -122,4 +122,4 @@ export const AnnouncementBanner: React.FC<{ target: AnnouncementTargetType; proj
       )}
     </div>
   );
-};
+}

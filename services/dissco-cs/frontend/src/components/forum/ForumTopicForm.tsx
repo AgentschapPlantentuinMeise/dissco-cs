@@ -25,14 +25,14 @@ type Props = {
 const inputClass = 'py-[9px] px-3 border border-gray-300 rounded text-[0.95rem] font-[inherit] resize-y transition-colors duration-200 focus:outline-none focus:border-[var(--cs-primary)]';
 const labelClass = 'flex flex-col gap-[5px] text-[0.9rem] font-medium text-gray-800';
 
-export const ForumTopicForm: React.FC<Props> = ({
+export function ForumTopicForm({
   onSubmit,
   onCancel,
   initialTaskUrl = '',
   taskUrlReadOnly,
   projectOptions,
   fixedProjectLabel,
-}) => {
+}: Props) {
   const { t } = useTranslation('dissco-cs');
 
   const [fields, setFields] = useState<ForumTopicInput>({
@@ -131,4 +131,4 @@ export const ForumTopicForm: React.FC<Props> = ({
       </div>
     </form>
   );
-};
+}

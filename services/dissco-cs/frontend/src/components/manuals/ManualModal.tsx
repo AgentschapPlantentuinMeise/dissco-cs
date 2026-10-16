@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { projectQueries } from '../../api/queries/projects';
@@ -20,13 +20,13 @@ type ManualModalProps = {
   onShown?: () => void;
 };
 
-export const ManualModal: React.FC<ManualModalProps> = ({
+export function ManualModal({
   projectSlug,
   projectLabel,
   open,
   onClose,
   onShown,
-}) => {
+}: ManualModalProps) {
   const { t, i18n } = useTranslation('dissco-cs');
   const { data: manual } = useQuery({
     ...projectQueries.manual(projectSlug),
@@ -147,4 +147,4 @@ export const ManualModal: React.FC<ManualModalProps> = ({
       {attachmentNode && !markerUsed && attachmentNode}
     </Modal>
   );
-};
+}

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/layout/CsPage';
@@ -7,7 +6,7 @@ import { InstitutionCard } from '../../components/institutions/InstitutionCard';
 import { useSearch } from './use-search';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
 
-export const SearchResults: React.FC = () => {
+export function SearchResults() {
   const { t } = useTranslation('dissco-cs');
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
@@ -75,4 +74,4 @@ export const SearchResults: React.FC = () => {
       </div>
     </CsPage>
   );
-};
+}
