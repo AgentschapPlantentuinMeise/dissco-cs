@@ -18,10 +18,9 @@ import { getMadocCollectionManifestThumbnails, getMadocProjectManifests } from '
 import { getMadocProjectTasks, getMadocTasksBySubjectAndType, resyncManifestTaskCounter } from '../madoc-client/tasks.js';
 import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
 import { validateJson } from '../infrastructure/validate-json.js';
-import { safeSegment, validateParams } from '../infrastructure/validate-params.js';
+import { safeSegment, siteLang, validateParams } from '../infrastructure/validate-params.js';
 import { computeProjectProgress, computeTaskDebug } from './projects.logic.js';
 import {
-  isSitePageLang,
   MadocProjectListPageDto,
   pruneProjectLinksSchema,
   setInstitutionLinkSchema,
@@ -267,13 +266,13 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
 
   // ---- manual: public read, admin link ----
 
-  app.get('/:projectId/manual', async c => {
+  app.get('/:projectId/manual', validateParams({ projectId: safeSegment }), async c => {
     const siteId = await requireSiteId(c);
     if (siteId instanceof Response) {
       return siteId;
     }
 
-    const manual = await manualsRepository.getManualForProject(siteId, c.req.param('projectId'));
+    const manual = await manualsRepository.getManualForProject(siteId, c.req.valid('param').projectId);
     if (!manual) {
       return c.notFound();
     }
@@ -281,18 +280,15 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     return c.json(toManualDetailDto(manual, await manualsRepository.listAttachmentMeta(manual.id)));
   });
 
-  app.get('/:projectId/manual/attachment/:lang', async c => {
+  app.get('/:projectId/manual/attachment/:lang', validateParams({ projectId: safeSegment, lang: siteLang }), async c => {
     const siteId = await requireSiteId(c);
     if (siteId instanceof Response) {
       return siteId;
     }
 
-    const lang = c.req.param('lang');
-    if (!isSitePageLang(lang)) {
-      return c.notFound();
-    }
+    const { projectId, lang } = c.req.valid('param');
 
-    const manual = await manualsRepository.getManualForProject(siteId, c.req.param('projectId'));
+    const manual = await manualsRepository.getManualForProject(siteId, projectId);
     if (!manual) {
       return c.notFound();
     }
@@ -307,7 +303,7 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     return c.body(new Uint8Array(file.buffer));
   });
 
-  app.put('/:projectId/manual-link', validateJson(setManualLinkSchema), async c => {
+  app.put('/:projectId/manual-link', validateParams({ projectId: safeSegment }), validateJson(setManualLinkSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
@@ -322,19 +318,19 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
       }
     }
 
-    await manualsRepository.setProjectLink(identity.siteId, c.req.param('projectId'), input.manualId);
+    await manualsRepository.setProjectLink(identity.siteId, c.req.valid('param').projectId, input.manualId);
     return c.body(null, 204);
   });
 
   // ---- institution: public read, admin link ----
 
-  app.get('/:projectId/institution', async c => {
+  app.get('/:projectId/institution', validateParams({ projectId: safeSegment }), async c => {
     const siteId = await requireSiteId(c);
     if (siteId instanceof Response) {
       return siteId;
     }
 
-    const institution = await institutionsRepository.getActiveInstitutionForProjectSlug(siteId, c.req.param('projectId'));
+    const institution = await institutionsRepository.getActiveInstitutionForProjectSlug(siteId, c.req.valid('param').projectId);
     if (!institution) {
       return c.notFound();
     }
@@ -342,7 +338,7 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     return c.json(toInstitutionDto(institution));
   });
 
-  app.put('/:projectId/institution-link', validateJson(setInstitutionLinkSchema), async c => {
+  app.put('/:projectId/institution-link', validateParams({ projectId: safeSegment }), validateJson(setInstitutionLinkSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
@@ -357,7 +353,7 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
       }
     }
 
-    await institutionsRepository.setProjectLink(identity.siteId, c.req.param('projectId'), input.institutionId);
+    await institutionsRepository.setProjectLink(identity.siteId, c.req.valid('param').projectId, input.institutionId);
     return c.body(null, 204);
   });
 

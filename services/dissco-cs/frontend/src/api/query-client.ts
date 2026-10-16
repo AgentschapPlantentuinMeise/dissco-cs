@@ -1,6 +1,6 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 import { reportClientError } from './cs-client/client-errors';
-import { ErrorMessageKey, showError } from '../hooks/use-toast';
+import { ErrorMessageKey, showError } from './error-toast';
 
 type AppMutationMeta = {
   // Which message the toast shows when this mutation fails (default: error_save_failed).

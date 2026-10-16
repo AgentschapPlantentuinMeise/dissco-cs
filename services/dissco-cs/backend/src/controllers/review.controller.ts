@@ -1,16 +1,10 @@
 import { Hono } from 'hono';
 
-import { MadocUserIdentity, requestBearerToken, requireUser } from '../auth/auth.js';
+import { requestBearerToken, requireReviewerOrAdmin, requireUser } from '../auth/auth.js';
 import { forwardJsonBody } from '../madoc-client/client.js';
 import { getMadocReviewTasks } from '../madoc-client/reviews.js';
 import { getMadocSiteUserRole } from '../madoc-client/users.js';
 import { safeSegment, validateParams } from '../infrastructure/validate-params.js';
-
-export async function isReviewerOrAdmin(identity: MadocUserIdentity): Promise<boolean> {
-  if (identity.scope.includes('site.admin')) return true;
-  const role = await getMadocSiteUserRole(identity.siteId, identity.userId);
-  return role === 'reviewer';
-}
 
 // Our own overview of all open review tasks of the site, with the assigned reviewer per task,
 export function reviewController(): Hono {
@@ -27,13 +21,9 @@ export function reviewController(): Hono {
   });
 
   app.get('/tasks', async c => {
-    const identity = requireUser(c);
+    const identity = await requireReviewerOrAdmin(c);
     if (identity instanceof Response) {
       return identity;
-    }
-
-    if (!(await isReviewerOrAdmin(identity))) {
-      return c.json({ error: 'Forbidden' }, 403);
     }
 
     return c.json({ tasks: await getMadocReviewTasks(identity.siteId) });

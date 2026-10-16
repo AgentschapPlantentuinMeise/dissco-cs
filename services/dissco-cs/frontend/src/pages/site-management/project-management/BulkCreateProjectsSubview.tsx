@@ -9,7 +9,7 @@ import { Select } from '../../../components/ui/Select';
 import { localeText } from '../../../utility/locale-text';
 import { defaultLang } from '../../../utility/site-lang-text';
 import { MadocProjectDto, slugify } from '@dissco-cs/shared-types';
-import { reportActionError } from '../../../hooks/use-toast';
+import { reportActionError } from '../../../api/error-toast';
 
 // Creates `count` real Madoc projects one after the other, through Madoc's own project creation
 // (projectsApi.create, the same route as Madoc's "New project" button), so each gets a proper

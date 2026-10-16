@@ -1,7 +1,15 @@
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 
-import { intId, safeSegment, siteLang, validateParams } from '../../src/infrastructure/validate-params';
+import {
+  honourBoardPeriod,
+  intId,
+  navItemContentKey,
+  navItemKey,
+  safeSegment,
+  siteLang,
+  validateParams,
+} from '../../src/infrastructure/validate-params';
 
 // A tiny app with one route per building block; each echoes the validated params.
 function testApp() {
@@ -27,5 +35,18 @@ describe('validateParams', () => {
   it('rejects a non-numeric id and an unknown language', async () => {
     expect((await testApp().request('/manuals/abc/fr')).status).toBe(400);
     expect((await testApp().request('/manuals/7/es')).status).toBe(400);
+  });
+});
+
+describe('fixed-list building blocks', () => {
+  it.each([
+    ['honourBoardPeriod', honourBoardPeriod, ['today', 'week', 'month', 'legend'], 'year'],
+    ['navItemKey', navItemKey, ['institutions', 'forum', 'about', 'help', 'contact', 'welcome'], 'admin'],
+    ['navItemContentKey', navItemContentKey, ['about', 'help', 'contact', 'welcome'], 'forum'],
+  ] as const)('%s accepts its list and nothing else', (_name, schema, valid, invalid) => {
+    for (const value of valid) {
+      expect(schema.safeParse(value).success).toBe(true);
+    }
+    expect(schema.safeParse(invalid).success).toBe(false);
   });
 });

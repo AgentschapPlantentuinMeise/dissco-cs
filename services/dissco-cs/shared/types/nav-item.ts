@@ -9,26 +9,6 @@ export type NavItemKey = (typeof NAV_ITEM_KEYS)[number];
 export const NAV_ITEM_CONTENT_KEYS = ['about', 'help', 'contact', 'welcome'] as const;
 export type NavItemContentKey = (typeof NAV_ITEM_CONTENT_KEYS)[number];
 
-/**
- * Whether a value is one of the optional pages (NAV_ITEM_KEYS).
- * E.g. a URL or query parameter that still has to be checked.
- * @param value anything
- * Returns: true, and narrows the type, when it is.
- */
-export function isNavItemKey(value: unknown): value is NavItemKey {
-  return typeof value === 'string' && (NAV_ITEM_KEYS as readonly string[]).includes(value);
-}
-
-/**
- * Whether a value is one of the pages with editable content (NAV_ITEM_CONTENT_KEYS).
- * E.g. a URL or query parameter that still has to be checked.
- * @param value anything
- * Returns: true, and narrows the type, when it is.
- */
-export function isNavItemContentKey(value: unknown): value is NavItemContentKey {
-  return typeof value === 'string' && (NAV_ITEM_CONTENT_KEYS as readonly string[]).includes(value);
-}
-
 // No contact email in here on purpose: that is for admins only (NavItemContactEmailDto).
 export type NavItemDto = {
   pageKey: NavItemKey;

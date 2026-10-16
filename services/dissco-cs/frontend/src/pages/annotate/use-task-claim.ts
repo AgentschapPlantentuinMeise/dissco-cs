@@ -4,7 +4,7 @@ import { projectKeys } from '../../api/queries/projects';
 import { taskKeys } from '../../api/queries/tasks';
 import { projectsApi } from '../../api/cs-client/projects';
 import { reportClientError } from '../../api/cs-client/client-errors';
-import { showError } from '../../hooks/use-toast';
+import { showError } from '../../api/error-toast';
 import { MadocCreateResourceClaimDto, MadocPrepareClaimDto } from '@dissco-cs/shared-types';
 
 // crypto.randomUUID() only exists in secure contexts (https/localhost); this dev

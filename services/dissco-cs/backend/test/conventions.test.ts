@@ -49,8 +49,14 @@ const rules: ConventionRule[] = [
   },
   {
     name: 'Path params are validated on the route, not by hand',
-    pattern: /Number\(c\.req\.param\(/,
-    instead: "validateParams({ id: intId }) + c.req.valid('param') -- CLAUDE.md 'Schrijfroutes'",
+    pattern: /c\.req\.param\(/,
+    instead:
+      "validateParams({ id: intId, slug: safeSegment, period: honourBoardPeriod, ... }) + c.req.valid('param') -- CLAUDE.md 'Schrijfroutes'",
+  },
+  {
+    name: 'A controller does not import from another controller',
+    pattern: /from '\.\/[\w-]+\.controller\.js'/,
+    instead: "move the shared part to auth/ (guards like requireReviewerOrAdmin), infrastructure/ or a .logic.ts",
   },
   {
     name: 'Ids that go into a Madoc URL are checked by validateParams or madocPath',

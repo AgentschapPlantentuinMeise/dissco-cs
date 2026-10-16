@@ -1,4 +1,4 @@
-import { HONOUR_BOARD_PERIODS, HonourBoardEntryDto, HonourBoardPeriodDto, HonourBoardPeriodKey } from '@dissco-cs/shared-types';
+import { HonourBoardEntryDto, HonourBoardPeriodDto, HonourBoardPeriodKey } from '@dissco-cs/shared-types';
 
 const TOP_N = 3;
 
@@ -15,15 +15,6 @@ function startOfWeek(now: Date): Date {
 
 function startOfMonth(now: Date): Date {
   return new Date(now.getFullYear(), now.getMonth(), 1);
-}
-
-/**
- * Whether a string from the URL is one of the honour board's periods.
- * @param value the :period route parameter
- * Returns: true for 'today', 'week', 'month' or 'legend'.
- */
-export function isHonourBoardPeriod(value: string): value is HonourBoardPeriodKey {
-  return (HONOUR_BOARD_PERIODS as string[]).includes(value);
 }
 
 /**

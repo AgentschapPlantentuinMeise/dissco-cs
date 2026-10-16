@@ -30,6 +30,12 @@ const rules: ConventionRule[] = [
     },
   },
   {
+    name: 'The api/ layer does not import from hooks, components or pages',
+    pattern: /from '(\.\.\/)+(hooks|components|pages)\//,
+    instead: 'move what api/ needs into api/ (like api/error-toast.ts); hooks and components import from api/, not the other way round',
+    onlyIn: /^api\//,
+  },
+  {
     name: 'No refetch: after a write, invalidate',
     pattern: /\brefetch\b/,
     instead: "useMutation with invalidateQueries({ queryKey: xKeys... }) in onSuccess -- CLAUDE.md 'Schrijven naar de server'",

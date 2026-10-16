@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { requireSiteAdmin, requireSiteId } from '../auth/auth.js';
 import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
 import { validateJson } from '../infrastructure/validate-json.js';
-import { intId, validateParams } from '../infrastructure/validate-params.js';
+import { intId, safeSegment, validateParams } from '../infrastructure/validate-params.js';
 import { institutionInputSchema } from '@dissco-cs/shared-types';
 
 export function institutionsController(institutionsRepository: InstitutionsRepository): Hono {
@@ -18,13 +18,13 @@ export function institutionsController(institutionsRepository: InstitutionsRepos
     return c.json({ institutions: institutions.map(toInstitutionDto) });
   });
 
-  app.get('/active/:slug', async c => {
+  app.get('/active/:slug', validateParams({ slug: safeSegment }), async c => {
     const siteId = await requireSiteId(c);
     if (siteId instanceof Response) {
       return siteId;
     }
 
-    const institution = await institutionsRepository.getActiveInstitutionBySlug(siteId, c.req.param('slug'));
+    const institution = await institutionsRepository.getActiveInstitutionBySlug(siteId, c.req.valid('param').slug);
     if (!institution) {
       return c.notFound();
     }
@@ -32,13 +32,13 @@ export function institutionsController(institutionsRepository: InstitutionsRepos
     return c.json(toInstitutionDto(institution));
   });
 
-  app.get('/active/:slug/projects', async c => {
+  app.get('/active/:slug/projects', validateParams({ slug: safeSegment }), async c => {
     const siteId = await requireSiteId(c);
     if (siteId instanceof Response) {
       return siteId;
     }
 
-    const institution = await institutionsRepository.getActiveInstitutionBySlug(siteId, c.req.param('slug'));
+    const institution = await institutionsRepository.getActiveInstitutionBySlug(siteId, c.req.valid('param').slug);
     if (!institution) {
       return c.notFound();
     }

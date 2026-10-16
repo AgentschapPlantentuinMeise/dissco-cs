@@ -5,7 +5,7 @@ import './global.css';
 import { App } from './App';
 import { disscoCSConfig } from './dissco-cs-config';
 import { queryClient } from './api/query-client';
-import { Toast } from './components/ui/Toast';
+import { Toast } from './components/layout/Toast';
 
 document.title = disscoCSConfig.platformName;
 

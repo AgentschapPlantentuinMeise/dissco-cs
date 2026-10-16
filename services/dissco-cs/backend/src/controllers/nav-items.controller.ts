@@ -2,9 +2,8 @@ import { Hono } from 'hono';
 import { NavItemsRepository, toNavItemDto } from '../repositories/nav-items.repository.js';
 import { requireSiteAdmin, requireSiteId } from '../auth/auth.js';
 import { validateJson } from '../infrastructure/validate-json.js';
+import { navItemContentKey, navItemKey, validateParams } from '../infrastructure/validate-params.js';
 import {
-  isNavItemContentKey,
-  isNavItemKey,
   NavItemContactEmailDto,
   setContactEmailSchema,
   setNavItemActiveSchema,
@@ -78,16 +77,13 @@ export function navItemsController(navItemsRepository: NavItemsRepository): Hono
     return c.body(null, 204);
   });
 
-  app.put('/:key/content', validateJson(setNavItemContentSchema), async c => {
+  app.put('/:key/content', validateParams({ key: navItemContentKey }), validateJson(setNavItemContentSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const pageKey = c.req.param('key');
-    if (!isNavItemContentKey(pageKey)) {
-      return c.notFound();
-    }
+    const { key: pageKey } = c.req.valid('param');
 
     const input = c.req.valid('json');
 
@@ -95,16 +91,13 @@ export function navItemsController(navItemsRepository: NavItemsRepository): Hono
     return c.body(null, 204);
   });
 
-  app.patch('/:key', validateJson(setNavItemActiveSchema), async c => {
+  app.patch('/:key', validateParams({ key: navItemKey }), validateJson(setNavItemActiveSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const pageKey = c.req.param('key');
-    if (!isNavItemKey(pageKey)) {
-      return c.notFound();
-    }
+    const { key: pageKey } = c.req.valid('param');
 
     const input = c.req.valid('json');
 

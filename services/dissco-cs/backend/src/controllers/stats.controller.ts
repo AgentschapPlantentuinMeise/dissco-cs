@@ -3,8 +3,8 @@ import { Context, Hono } from 'hono';
 import { InstitutionsRepository } from '../repositories/institutions.repository.js';
 import { requestMadocUserIdentity, requireSiteId } from '../auth/auth.js';
 import { HonourBoardRepository } from '../madoc-db/honour-board.repository.js';
-import { isHonourBoardPeriod } from '../madoc-db/honour-board.logic.js';
 import { StatsRepository } from '../madoc-db/stats.repository.js';
+import { honourBoardPeriod, safeSegment, validateParams } from '../infrastructure/validate-params.js';
 
 // Every number has two routes. The normal route answers with the cached value right away and then
 // recalculates it in the background, so the next request sees fresh numbers; only the very first
@@ -19,13 +19,13 @@ export function statsController(
 ): Hono {
   const app = new Hono();
 
-  async function resolveInstitution(c: Context): Promise<{ siteId: number; institutionId: number } | Response> {
+  async function resolveInstitution(c: Context, slug: string): Promise<{ siteId: number; institutionId: number } | Response> {
     const siteId = await requireSiteId(c);
     if (siteId instanceof Response) {
       return siteId;
     }
 
-    const institution = await institutionsRepository.getActiveInstitutionBySlug(siteId, c.req.param('slug') ?? '');
+    const institution = await institutionsRepository.getActiveInstitutionBySlug(siteId, slug);
     if (!institution) {
       return c.notFound();
     }
@@ -64,11 +64,8 @@ export function statsController(
     return c.json(await statsRepository.getSiteCurrent(siteId));
   });
 
-  app.get('/honour-board/:period', async c => {
-    const period = c.req.param('period');
-    if (!isHonourBoardPeriod(period)) {
-      return c.json({ error: 'Unknown period' }, 400);
-    }
+  app.get('/honour-board/:period', validateParams({ period: honourBoardPeriod }), async c => {
+    const { period } = c.req.valid('param');
 
     const siteId = await requireSiteId(c);
     if (siteId instanceof Response) {
@@ -79,11 +76,8 @@ export function statsController(
     return c.json(result);
   });
 
-  app.get('/honour-board/:period/current', async c => {
-    const period = c.req.param('period');
-    if (!isHonourBoardPeriod(period)) {
-      return c.json({ error: 'Unknown period' }, 400);
-    }
+  app.get('/honour-board/:period/current', validateParams({ period: honourBoardPeriod }), async c => {
+    const { period } = c.req.valid('param');
 
     const siteId = await requireSiteId(c);
     if (siteId instanceof Response) {
@@ -98,8 +92,8 @@ export function statsController(
 
   // ---- institution ----
 
-  app.get('/institutions/:slug', async c => {
-    const scope = await resolveInstitution(c);
+  app.get('/institutions/:slug', validateParams({ slug: safeSegment }), async c => {
+    const scope = await resolveInstitution(c, c.req.valid('param').slug);
     if (scope instanceof Response) {
       return scope;
     }
@@ -109,8 +103,8 @@ export function statsController(
     return c.json(overview);
   });
 
-  app.get('/institutions/:slug/current', async c => {
-    const scope = await resolveInstitution(c);
+  app.get('/institutions/:slug/current', validateParams({ slug: safeSegment }), async c => {
+    const scope = await resolveInstitution(c, c.req.valid('param').slug);
     if (scope instanceof Response) {
       return scope;
     }
@@ -125,13 +119,10 @@ export function statsController(
     return c.json(overview);
   });
 
-  app.get('/institutions/:slug/honour-board/:period', async c => {
-    const period = c.req.param('period');
-    if (!isHonourBoardPeriod(period)) {
-      return c.json({ error: 'Unknown period' }, 400);
-    }
+  app.get('/institutions/:slug/honour-board/:period', validateParams({ slug: safeSegment, period: honourBoardPeriod }), async c => {
+    const { slug, period } = c.req.valid('param');
 
-    const scope = await resolveInstitution(c);
+    const scope = await resolveInstitution(c, slug);
     if (scope instanceof Response) {
       return scope;
     }
@@ -141,27 +132,28 @@ export function statsController(
     return c.json(result);
   });
 
-  app.get('/institutions/:slug/honour-board/:period/current', async c => {
-    const period = c.req.param('period');
-    if (!isHonourBoardPeriod(period)) {
-      return c.json({ error: 'Unknown period' }, 400);
-    }
+  app.get(
+    '/institutions/:slug/honour-board/:period/current',
+    validateParams({ slug: safeSegment, period: honourBoardPeriod }),
+    async c => {
+      const { slug, period } = c.req.valid('param');
 
-    const scope = await resolveInstitution(c);
-    if (scope instanceof Response) {
-      return scope;
-    }
+      const scope = await resolveInstitution(c, slug);
+      if (scope instanceof Response) {
+        return scope;
+      }
 
-    const userUrn = userUrnOf(c);
-    const cached = honourBoardRepository.peekInstitutionPeriod(scope.siteId, scope.institutionId, period, userUrn);
-    if (cached) {
-      return c.json(cached);
-    }
+      const userUrn = userUrnOf(c);
+      const cached = honourBoardRepository.peekInstitutionPeriod(scope.siteId, scope.institutionId, period, userUrn);
+      if (cached) {
+        return c.json(cached);
+      }
 
-    const taskIds = await institutionTaskIds(scope.siteId, scope.institutionId);
-    const result = await honourBoardRepository.getInstitutionPeriod(scope.siteId, scope.institutionId, taskIds, period, userUrn);
-    return c.json(result);
-  });
+      const taskIds = await institutionTaskIds(scope.siteId, scope.institutionId);
+      const result = await honourBoardRepository.getInstitutionPeriod(scope.siteId, scope.institutionId, taskIds, period, userUrn);
+      return c.json(result);
+    }
+  );
 
   return app;
 }

@@ -1,8 +1,7 @@
 import { Hono } from 'hono';
 import { FeedbackRepository, toFeedbackMessageDto, toFeedbackThreadDto } from '../repositories/feedback.repository.js';
-import { requireUser } from '../auth/auth.js';
+import { requireReviewerOrAdmin, requireUser } from '../auth/auth.js';
 import { feedbackReplyInputSchema, feedbackThreadInputSchema } from '@dissco-cs/shared-types';
-import { isReviewerOrAdmin } from './review.controller.js';
 import { validateJson } from '../infrastructure/validate-json.js';
 import { intId, validateParams } from '../infrastructure/validate-params.js';
 
@@ -20,13 +19,9 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
   });
 
   app.post('/threads', validateJson(feedbackThreadInputSchema), async c => {
-    const identity = requireUser(c);
+    const identity = await requireReviewerOrAdmin(c);
     if (identity instanceof Response) {
       return identity;
-    }
-
-    if (!(await isReviewerOrAdmin(identity))) {
-      return c.json({ error: 'Forbidden' }, 403);
     }
 
     const input = c.req.valid('json');

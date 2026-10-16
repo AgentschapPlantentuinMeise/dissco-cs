@@ -1,6 +1,7 @@
 import type { Context } from 'hono';
 
 import { getSiteIdBySlug } from '../madoc-client/site.js';
+import { getMadocSiteUserRole } from '../madoc-client/users.js';
 
 function toBase64(input: string): string {
   const normalized = input.replace(/-/g, '+').replace(/_/g, '/');
@@ -118,6 +119,25 @@ export function requireUser(context: Context): MadocUserIdentity | Response {
   const identity = requestMadocUserIdentity(context);
   if (!identity) {
     return context.json({ error: 'Unauthorized' }, 401);
+  }
+
+  return identity;
+}
+
+/**
+ * Returns the requesting user's identity if they are a site admin or have the site role
+ * 'reviewer' (asked from Madoc), or an unauthorized/forbidden Response to return directly from
+ * the route handler.
+ */
+export async function requireReviewerOrAdmin(context: Context): Promise<MadocUserIdentity | Response> {
+  const identity = requireUser(context);
+  if (identity instanceof Response || identity.scope.includes('site.admin')) {
+    return identity;
+  }
+
+  const role = await getMadocSiteUserRole(identity.siteId, identity.userId);
+  if (role !== 'reviewer') {
+    return context.json({ error: 'Forbidden' }, 403);
   }
 
   return identity;

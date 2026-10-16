@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { HonourBoardEntryDto } from '@dissco-cs/shared-types';
-import { isHonourBoardPeriod, rankingToPeriod, sinceForPeriod } from '../../src/madoc-db/honour-board.logic.js';
+import { rankingToPeriod, sinceForPeriod } from '../../src/madoc-db/honour-board.logic.js';
 
 // Local time, like the code: Thursday 15 October 2026, 14:30.
 const thursday = new Date(2026, 9, 15, 14, 30);
@@ -25,16 +25,6 @@ describe('sinceForPeriod', () => {
 
   it('has no start for the legend (all time)', () => {
     expect(sinceForPeriod('legend', thursday)).toBeNull();
-  });
-});
-
-describe('isHonourBoardPeriod', () => {
-  it.each(['today', 'week', 'month', 'legend'])('accepts %s', period => {
-    expect(isHonourBoardPeriod(period)).toBe(true);
-  });
-
-  it('rejects anything else', () => {
-    expect(isHonourBoardPeriod('year')).toBe(false);
   });
 });
 
