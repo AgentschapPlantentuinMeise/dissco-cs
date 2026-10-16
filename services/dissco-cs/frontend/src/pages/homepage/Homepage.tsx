@@ -26,7 +26,7 @@ export function Homepage() {
   }, []);
 
   if (!isClient) {
-    return <div style={{ backgroundColor: 'var(--cs-primary, #1a5b66)', minHeight: '100vh' }} />;
+    return <div className="bg-cs-primary min-h-screen" />;
   }
 
   const projects = projectsResponse?.projects || [];

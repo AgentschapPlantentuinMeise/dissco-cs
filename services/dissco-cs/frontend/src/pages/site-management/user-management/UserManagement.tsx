@@ -9,7 +9,7 @@ export function UserManagement() {
   const siteSlug = getSiteSlug();
 
   const tileClassName =
-    'block no-underline bg-white border border-gray-200 rounded-[10px] p-6 transition-all duration-150 hover:border-cs-primary hover:shadow-[0_4px_14px_rgba(26,91,102,0.14)] hover:-translate-y-px';
+    'block no-underline bg-white border border-gray-200 rounded-[10px] p-6 transition-all duration-150 hover:border-cs-primary hover:shadow-[0_4px_14px_rgba(0,0,0,1)] hover:shadow-cs-primary/[0.14] hover:-translate-y-px';
 
   return (
     <CsPage>

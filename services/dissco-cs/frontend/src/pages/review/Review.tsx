@@ -48,7 +48,7 @@ export function Review() {
             <div className="cs-container cs-container--wide pointer-events-none flex justify-center">
             <div className="pointer-events-auto mb-4 max-w-full">
               {c.selectedIds.size > 0 ? (
-                <div className="flex items-center gap-1 p-1.5 bg-[#f3f8f8] rounded-full border-2 border-[rgba(19,155,148,0.35)]">
+                <div className="flex items-center gap-1 p-1.5 bg-[#f3f8f8] rounded-full border-2 border-cs-accent/35">
                   <span className="px-3 text-sm text-gray-600 whitespace-nowrap">{t('review_bulk_selected_count', { count: c.selectedIds.size })}</span>
                   <span className="w-px self-stretch bg-gray-200" />
                   <button
@@ -69,13 +69,13 @@ export function Review() {
                   </button>
                 </div>
               ) : c.bulkRunning ? (
-                <div className="flex items-center px-5 py-3 bg-[#f3f8f8] rounded-full border-2 border-[rgba(19,155,148,0.35)]">
+                <div className="flex items-center px-5 py-3 bg-[#f3f8f8] rounded-full border-2 border-cs-accent/35">
                   <p className="text-sm text-gray-500 m-0 whitespace-nowrap">
                     {t('review_bulk_progress', { current: c.bulkProgress.current, total: c.bulkProgress.total })}
                   </p>
                 </div>
               ) : c.bulkResults ? (
-                <div className="p-3 bg-[#f3f8f8] rounded-2xl border-2 border-[rgba(19,155,148,0.35)]">
+                <div className="p-3 bg-[#f3f8f8] rounded-2xl border-2 border-cs-accent/35">
                   <div className="flex flex-wrap items-center justify-center gap-3">
                     <p className="text-sm text-gray-700 m-0 whitespace-nowrap">
                       {t('review_bulk_results_summary', { success: c.successCount, failed: c.failedResults.length })}
@@ -110,7 +110,7 @@ export function Review() {
                   )}
                 </div>
               ) : c.lastBatchTasks ? (
-                <div className="flex items-center gap-1 p-1.5 bg-[#f3f8f8] rounded-full border-2 border-[rgba(19,155,148,0.35)]">
+                <div className="flex items-center gap-1 p-1.5 bg-[#f3f8f8] rounded-full border-2 border-cs-accent/35">
                   <span className="flex items-center gap-2 px-3 text-sm text-gray-700 whitespace-nowrap">
                     <span className="w-2 h-2 rounded-full bg-cs-secondary" />
                     {t('feedback_last_batch_summary', { count: c.lastBatchTasks.length })}

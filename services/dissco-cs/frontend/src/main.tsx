@@ -6,8 +6,11 @@ import { App } from './App';
 import { disscoCSConfig } from './dissco-cs-config';
 import { queryClient } from './api/query-client';
 import { Toast } from './components/layout/Toast';
+import { SiteColorsSync } from './components/layout/SiteColorsSync';
+import { applySiteColors, readCachedSiteColors } from './utility/site-colors';
 
 document.title = disscoCSConfig.platformName;
+applySiteColors(readCachedSiteColors());
 
 const root = document.getElementById('app');
 if (!root) {
@@ -18,5 +21,6 @@ createRoot(root).render(
   <QueryClientProvider client={queryClient}>
     <App />
     <Toast />
+    <SiteColorsSync />
   </QueryClientProvider>
 );

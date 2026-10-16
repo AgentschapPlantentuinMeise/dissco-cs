@@ -80,6 +80,14 @@ const rules: ConventionRule[] = [
     instead: "bg-cs-primary, text-cs-dark, border-cs-accent/40, ... (tailwind.config.js); they read the same variables and also allow opacity",
   },
   {
+    name: 'No hard-coded brand color: it would ignore the palette set in site management',
+    pattern: /#(1a5b66|00a877|139b94|124048|6e3466)\b|rgba?\(\s*(26,\s*91,\s*102|0,\s*168,\s*119|19,\s*155,\s*148|18,\s*64,\s*72|110,\s*52,\s*102)\b/i,
+    instead: 'the token with an opacity if needed: bg-cs-primary/[0.07], border-cs-accent/35, hover:shadow-cs-primary/[0.14]',
+    allowedIn: {
+      'pages/site-management/site-colors/palette.ts': 'the defaults for the colors form; a test keeps them equal to citizen-science-theme.css',
+    },
+  },
+  {
     name: 'No refetch: after a write, invalidate',
     pattern: /\brefetch\b/,
     instead: "useMutation with invalidateQueries({ queryKey: xKeys... }) in onSuccess -- CLAUDE.md 'Schrijven naar de server'",

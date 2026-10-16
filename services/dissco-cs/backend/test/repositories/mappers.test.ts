@@ -6,6 +6,7 @@ import { toForumReplyDto, toForumTopicDto } from '../../src/repositories/forum.r
 import { toInstitutionDto } from '../../src/repositories/institutions.repository.js';
 import { toManualDetailDto, toManualSummaryDto } from '../../src/repositories/manuals.repository.js';
 import { toNavItemDto } from '../../src/repositories/nav-items.repository.js';
+import { toSiteColors } from '../../src/repositories/site-theme.repository.js';
 
 // The DTO rule (see CLAUDE.md): camelCase, every field listed explicitly, never internal columns
 // such as site_id. Checking the exact key set catches both a forgotten rename and a `...row`
@@ -34,6 +35,16 @@ describe('DTO mappers', () => {
       ['description', 'email', 'id', 'isActive', 'logo', 'name', 'phone', 'slug', 'sortOrder', 'website']
     );
     expect(dto).toMatchObject({ isActive: false, sortOrder: 2 });
+  });
+
+  it('toSiteColors', () => {
+    const colors = toSiteColors({
+      site_id: 3, primary_color: '#111111', secondary_color: '#222222', accent_color: '#333333',
+      dark_color: '#444444', tertiary_color: '#555555', updated_at: later,
+    });
+    expect(colors).toEqual({
+      primary: '#111111', secondary: '#222222', accent: '#333333', dark: '#444444', tertiary: '#555555',
+    });
   });
 
   it('toNavItemDto leaves the admin-only contact email out', () => {

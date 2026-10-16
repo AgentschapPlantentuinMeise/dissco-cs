@@ -17,6 +17,7 @@ const TILES: Tile[] = [
   { href: '/manage/users', titleKey: 'sm_tile_users_title', descKey: 'sm_tile_users_desc' },
   { href: '/manage/pages', titleKey: 'sm_tile_pages_title', descKey: 'sm_tile_pages_desc' },
   { href: '/manage/institutions', titleKey: 'sm_tile_institutions_title', descKey: 'sm_tile_institutions_desc' },
+  { href: '/manage/colors', titleKey: 'sm_tile_colors_title', descKey: 'sm_tile_colors_desc' },
 ];
 
 export function SiteManagement() {
@@ -41,7 +42,7 @@ export function SiteManagement() {
                 </>
               );
               const tileClassName =
-                'block no-underline bg-white border border-gray-200 rounded-[10px] p-6 transition-all duration-150 hover:border-cs-primary hover:shadow-[0_4px_14px_rgba(26,91,102,0.14)] hover:-translate-y-px';
+                'block no-underline bg-white border border-gray-200 rounded-[10px] p-6 transition-all duration-150 hover:border-cs-primary hover:shadow-[0_4px_14px_rgba(0,0,0,1)] hover:shadow-cs-primary/[0.14] hover:-translate-y-px';
 
               return tile.external ? (
                 <a key={tile.href} href={tile.href} className={tileClassName}>
@@ -56,7 +57,7 @@ export function SiteManagement() {
 
             <a
               href={`/s/${siteSlug}/admin`}
-              className="block no-underline bg-white border border-gray-200 rounded-[10px] p-6 transition-all duration-150 hover:border-cs-primary hover:shadow-[0_4px_14px_rgba(26,91,102,0.14)] hover:-translate-y-px"
+              className="block no-underline bg-white border border-gray-200 rounded-[10px] p-6 transition-all duration-150 hover:border-cs-primary hover:shadow-[0_4px_14px_rgba(0,0,0,1)] hover:shadow-cs-primary/[0.14] hover:-translate-y-px"
             >
               <h2 className="text-xl font-semibold text-cs-primary mb-2">{t('sm_tile_madoc_title')}</h2>
               <p className="text-sm text-gray-600 m-0">{t('sm_tile_madoc_desc')}</p>

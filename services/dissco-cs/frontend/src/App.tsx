@@ -23,6 +23,7 @@ import { Announcements } from './pages/site-management/announcements/Announcemen
 import { UserManagement } from './pages/site-management/user-management/UserManagement';
 import { PageManagement } from './pages/site-management/page-management/PageManagement';
 import { InstitutionManagement } from './pages/site-management/institution-management/InstitutionManagement';
+import { SiteColors } from './pages/site-management/site-colors/SiteColors';
 import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
 import { ForgotPassword } from './pages/auth/ForgotPassword';
@@ -59,6 +60,7 @@ export function App() {
           <Route path="/manage/users" element={<AuthGate requireAdmin><UserManagement /></AuthGate>} />
           <Route path="/manage/pages" element={<AuthGate requireAdmin><PageManagement /></AuthGate>} />
           <Route path="/manage/institutions" element={<AuthGate requireAdmin><InstitutionManagement /></AuthGate>} />
+          <Route path="/manage/colors" element={<AuthGate requireAdmin><SiteColors /></AuthGate>} />
           <Route path="/find" element={<SearchResults />} />
           <Route path="/explore" element={<Projects />} />
           <Route path="/explore/:slug"element={<ProjectDetail />} />
