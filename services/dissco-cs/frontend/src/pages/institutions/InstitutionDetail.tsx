@@ -1,20 +1,26 @@
-import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { institutionQueries } from '../../api/queries/institutions';
 import { projectQueries } from '../../api/queries/projects';
 import { CsPage } from '../../components/layout/CsPage';
-import { HrefLink } from '../../utility/href-link';
-import { LuArrowLeft, LuMail, LuPhone, LuGlobe, LuMedal, LuClock, LuCalendar } from 'react-icons/lu';
-import { StatBanner } from '../../components/ui/StatBanner';
-import { HonourBoardPeriodCard } from '../../components/stats/HonourBoardPeriodCard';
+import { HeaderLogo, PageHeader } from '../../components/layout/PageHeader';
+import { LuMail, LuPhone, LuGlobe, LuMedal } from 'react-icons/lu';
+import { HonourBoardBand } from '../../components/stats/HonourBoardBand';
+import { PageSection } from '../../components/layout/PageSection';
+import { AboutColumns } from '../../components/layout/AboutColumns';
 import { useInstitutionStats } from './use-institution-stats';
 import { useInstitutionHonourBoard } from './use-institution-honour-board';
 import { ProjectCard } from '../../components/projects/ProjectCard';
+import { useBackHref } from '../../hooks/use-return-link';
 import { siteLangText } from '../../utility/site-lang-text';
 import { formatNumber as formatCount } from '../../utility/format-number';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
+import { usePagedGrid } from '../../hooks/use-paged-grid';
+import { Pagination } from '../../components/ui/Pagination';
+
+// Same as the Projects page.
+const ROWS_PER_PAGE = 2;
 
 export function InstitutionDetail() {
   const { t, i18n } = useTranslation('dissco-cs');
@@ -31,158 +37,105 @@ export function InstitutionDetail() {
     staleTime: 5 * 60 * 1000,
   });
   const linkedProjects = (allProjects ?? []).filter((p: MadocProjectDto) => projectSlugs.includes(p.slug));
+  const { gridRef, pageItems, currentPage, totalPages, setCurrentPage } = usePagedGrid(linkedProjects, ROWS_PER_PAGE);
 
   const { data: overview } = useInstitutionStats(slug);
-  const { today, week, month, legend } = useInstitutionHonourBoard(slug);
+  const honourBoard = useInstitutionHonourBoard(slug);
   const tasksCompletedPct = overview && overview.tasksTotal > 0 ? Math.round((overview.tasksCompleted / overview.tasksTotal) * 100) : 0;
-  const legendLeader = legend.data?.top[0];
+  const legendLeader = honourBoard.legend.data?.top[0];
 
-  const [descExpanded, setDescExpanded] = React.useState(false);
+  const backToInstitutions = useBackHref('/institutions');
 
   const formatNumber = (n: number) => formatCount(n, i18n.language);
   const displayUrl = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
   const hasContact = institution && (institution.email || institution.phone || institution.website);
-  const hasSidebar = institution && (institution.logo || hasContact);
+  const name = institution ? siteLangText(institution.name, i18n.language, '') : '';
   const description = institution ? siteLangText(institution.description, i18n.language, '') : '';
-  const isLongDescription = description.length > 400;
+
+  if (isLoading || !institution) {
+    return (
+      <CsPage>
+        <div className="cs-container cs-container--wide py-10">
+          <p className="text-center text-gray-600">{isLoading ? t('loading_projects') : t('institution_not_found')}</p>
+        </div>
+      </CsPage>
+    );
+  }
 
   return (
     <CsPage>
-      <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container cs-container--wide">
-          <HrefLink href="/institutions" className="inline-flex items-center gap-1 text-cs-primary no-underline font-medium hover:underline">
-            <LuArrowLeft aria-hidden="true" /> {t('institution_back_to_list')}
-          </HrefLink>
+      <PageHeader
+        variant="split-banner"
+        back={{ href: backToInstitutions, label: t('institutions_all') }}
+        title={name}
+        stats={[
+          {
+            value: `${tasksCompletedPct}%`,
+            label: t('pdp_completed'),
+            note: overview ? `${formatNumber(overview.tasksTotal)} ${t('institution_progress_tasks')}` : undefined,
+          },
+          { value: overview ? overview.projectsActive : '—', label: t('institution_projects_active') },
+          { value: overview ? overview.projectsCompleted : '—', label: t('institution_projects_completed') },
+          { value: overview ? formatNumber(overview.volunteers) : '—', label: t('institution_stats_volunteers') },
+        ]}
+        aside={institution.logo ? <HeaderLogo src={institution.logo} alt={name} /> : undefined}
+      >
+        {legendLeader && (
+          <div className="flex items-center gap-2 text-sm text-white/85">
+            <LuMedal className="w-[18px] h-[18px]" aria-hidden="true" />
+            <span>{t('honour_board_legend_headline', { name: legendLeader.name, value: formatNumber(legendLeader.count) })}</span>
+          </div>
+        )}
+      </PageHeader>
 
-          {isLoading && <p className="text-center py-10">{t('loading_projects')}</p>}
-
-          {!isLoading && !institution && (
-            <p className="text-center py-10 text-gray-600">{t('institution_not_found')}</p>
-          )}
-
-          {institution && (
-            <>
-              {/* Unified grid: hero row, stat banner + leaderboard (level with each other), then projects */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-x-14 mt-6">
-                {/* Hero: title/description */}
-                <div className="min-w-0 max-w-[720px] lg:col-start-1 lg:row-start-1">
-                  <h1 className="text-4xl text-cs-primary mt-0 mb-5">{siteLangText(institution.name, i18n.language, '')}</h1>
-                  {description && (
-                    <>
-                      <p className={`text-base leading-relaxed text-gray-700 m-0 whitespace-pre-line ${!descExpanded && isLongDescription ? 'line-clamp-4' : ''}`}>
-                        {description}
-                      </p>
-                      {isLongDescription && (
-                        <button
-                          type="button"
-                          onClick={() => setDescExpanded(e => !e)}
-                          className="mt-2 text-sm font-semibold text-cs-primary bg-transparent border-none p-0 cursor-pointer hover:underline"
-                        >
-                          {descExpanded ? t('institution_read_less') : t('institution_read_more')}
-                        </button>
-                      )}
-                    </>
+      {/* The description gets its own section, not the header: a long one made the teal panel tower
+          over the page. The contact details sit beside it. */}
+      {(description || hasContact) && (
+        <PageSection title={t('institution_about_title', { name })}>
+          <AboutColumns
+            text={description}
+            aside={
+              hasContact && (
+                <div className="flex flex-col gap-3 text-[0.95rem] text-gray-700">
+                  {institution.email && (
+                    <a className="inline-flex items-center gap-2.5 no-underline text-gray-700 hover:text-cs-primary" href={`mailto:${institution.email}`}>
+                      <LuMail aria-hidden="true" className="text-cs-primary shrink-0" /> {institution.email}
+                    </a>
+                  )}
+                  {institution.phone && (
+                    <span className="inline-flex items-center gap-2.5">
+                      <LuPhone aria-hidden="true" className="text-cs-primary shrink-0" /> {institution.phone}
+                    </span>
+                  )}
+                  {institution.website && (
+                    <a className="inline-flex items-center gap-2.5 no-underline text-gray-700 hover:text-cs-primary" href={institution.website} target="_blank" rel="noreferrer">
+                      <LuGlobe aria-hidden="true" className="text-cs-primary shrink-0" /> {displayUrl(institution.website)}
+                    </a>
                   )}
                 </div>
+              )
+            }
+          />
+        </PageSection>
+      )}
 
-                {/* Hero: contact sidebar */}
-                {hasSidebar && (
-                  <div className="w-full flex-shrink-0 flex flex-col gap-4 pt-6 lg:pt-0 lg:pl-10 border-t lg:border-t-0 lg:border-l border-gray-100 lg:col-start-2 lg:row-start-1">
-                    {institution.logo && (
-                      <div
-                        className="h-20 w-full bg-contain bg-left bg-no-repeat"
-                        style={{ backgroundImage: `url(${institution.logo})` }}
-                      />
-                    )}
-                    {institution.email && (
-                      <a className="flex items-center gap-2.5 text-sm text-gray-700 no-underline hover:text-cs-primary whitespace-nowrap" href={`mailto:${institution.email}`}>
-                        <LuMail aria-hidden="true" className="text-cs-primary flex-shrink-0" /> {institution.email}
-                      </a>
-                    )}
-                    {institution.phone && (
-                      <span className="flex items-center gap-2.5 text-sm text-gray-700 whitespace-nowrap">
-                        <LuPhone aria-hidden="true" className="text-cs-primary flex-shrink-0" /> {institution.phone}
-                      </span>
-                    )}
-                    {institution.website && (
-                      <a className="flex items-center gap-2.5 text-sm text-gray-700 no-underline hover:text-cs-primary whitespace-nowrap" href={institution.website} target="_blank" rel="noreferrer">
-                        <LuGlobe aria-hidden="true" className="text-cs-primary flex-shrink-0" /> {displayUrl(institution.website)}
-                      </a>
-                    )}
-                  </div>
-                )}
+      <PageSection tone="white" title={t('institution_projects_title')}>
+        {linkedProjects.length === 0 ? (
+          <p className="text-gray-600 m-0">{t('institution_projects_empty')}</p>
+        ) : (
+          <>
+            <div ref={gridRef} className="cs-card-grid">
+              {pageItems.map((project: MadocProjectDto) => (
+                <ProjectCard key={project.id} projectSummaryData={project} />
+              ))}
+            </div>
+            <Pagination currentPage={currentPage} totalPages={totalPages} onChange={setCurrentPage} label={t('projects_pagination_label')} />
+          </>
+        )}
+      </PageSection>
 
-                {/* Stats banner + projects — one grid cell so the projects section sits right under the banner, independent of the leaderboard's height */}
-                <div className="mt-14 lg:col-start-1 lg:row-start-2 flex flex-col">
-                  <StatBanner
-                    eyebrow={t('institution_stats_caption', { name: siteLangText(institution.name, i18n.language, '') })}
-                    stats={[
-                      {
-                        value: `${tasksCompletedPct}%`,
-                        label: t('pdp_completed'),
-                        note: overview ? `${formatNumber(overview.tasksTotal)} ${t('institution_progress_tasks')}` : undefined,
-                      },
-                      { value: overview ? overview.projectsActive : '—', label: t('institution_projects_active') },
-                      { value: overview ? overview.projectsCompleted : '—', label: t('institution_projects_completed') },
-                      { value: overview ? formatNumber(overview.volunteers) : '—', label: t('institution_stats_volunteers') },
-                    ]}
-                    trailing={
-                      legendLeader && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <LuMedal className="w-[18px] h-[18px] opacity-90" aria-hidden="true" />
-                          <span>{t('honour_board_legend_headline', { name: legendLeader.name, value: formatNumber(legendLeader.count) })}</span>
-                        </div>
-                      )
-                    }
-                    trailingDivider
-                  />
-
-                  <div className="mt-8">
-                    {linkedProjects.length === 0 ? (
-                      <p className="text-sm text-gray-500">{t('institution_projects_empty')}</p>
-                    ) : (
-                      <div className="cs-projects-grid cs-projects-grid--compact">
-                        {linkedProjects.map((project: MadocProjectDto) => (
-                          <ProjectCard key={project.id} projectSummaryData={project} />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Leaderboard — starts level with the banner, runs down alongside it */}
-                <div className="mt-14 lg:col-start-2 lg:row-start-2 flex flex-col gap-4">
-                  <HonourBoardPeriodCard
-                    titleKey="honour_board_period_today"
-                    icon={<LuClock className="w-4 h-4" />}
-                    period={today.data}
-                    loading={today.status === 'pending'}
-                    formatNumber={formatNumber}
-                    dark
-                  />
-                  <HonourBoardPeriodCard
-                    titleKey="honour_board_period_week"
-                    icon={<LuCalendar className="w-4 h-4" />}
-                    period={week.data}
-                    loading={week.status === 'pending'}
-                    formatNumber={formatNumber}
-                    dark
-                  />
-                  <HonourBoardPeriodCard
-                    titleKey="honour_board_period_month"
-                    icon={<LuCalendar className="w-4 h-4" />}
-                    period={month.data}
-                    loading={month.status === 'pending'}
-                    formatNumber={formatNumber}
-                    dark
-                  />
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+      <HonourBoardBand board={honourBoard} />
     </CsPage>
   );
 }

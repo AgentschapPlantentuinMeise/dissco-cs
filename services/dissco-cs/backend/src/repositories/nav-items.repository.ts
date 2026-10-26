@@ -1,4 +1,4 @@
-import { Pool, PoolClient } from 'pg';
+import { Pool } from 'pg';
 import { NAV_ITEM_KEYS, NavItemContentKey, NavItemDto, NavItemKey, SitePageLang } from '@dissco-cs/shared-types';
 
 export type NavItemRow = {
@@ -6,6 +6,7 @@ export type NavItemRow = {
   page_key: NavItemKey;
   is_active: boolean;
   content: Partial<Record<SitePageLang, string>>;
+  intro: Partial<Record<SitePageLang, string>>;
   contact_email: string | null;
   show_contact_form: boolean;
   sort_order: number;
@@ -43,6 +44,7 @@ export class NavItemsRepository {
         page_key: key,
         is_active: true,
         content: {},
+        intro: {},
         contact_email: null,
         show_contact_form: false,
         sort_order: defaultIndex,
@@ -56,20 +58,6 @@ export class NavItemsRepository {
       }
       return NAV_ITEM_KEYS.indexOf(a.page_key) - NAV_ITEM_KEYS.indexOf(b.page_key);
     });
-  }
-
-  async setNavItemsOrder(siteId: number, orderedKeys: NavItemKey[]): Promise<void> {
-    await this.runOrderedUpdate(orderedKeys, (client, pageKey, sortOrder) =>
-      client.query(
-        `
-        INSERT INTO ${this.table('nav_items')} (site_id, page_key, sort_order)
-        VALUES ($1, $2, $3)
-        ON CONFLICT (site_id, page_key) DO UPDATE
-        SET sort_order = EXCLUDED.sort_order, updated_at = NOW()
-      `,
-        [siteId, pageKey, sortOrder]
-      )
-    );
   }
 
   async setNavItemActive(siteId: number, pageKey: NavItemKey, isActive: boolean): Promise<void> {
@@ -88,17 +76,19 @@ export class NavItemsRepository {
     siteId: number,
     pageKey: NavItemContentKey,
     lang: SitePageLang,
-    contentMd: string
+    contentMd: string,
+    intro: string
   ): Promise<void> {
     await this.pool.query(
       `
-      INSERT INTO ${this.table('nav_items')} (site_id, page_key, content)
-      VALUES ($1, $2, jsonb_build_object($3::text, $4::text))
+      INSERT INTO ${this.table('nav_items')} (site_id, page_key, content, intro)
+      VALUES ($1, $2, jsonb_build_object($3::text, $4::text), jsonb_build_object($3::text, $5::text))
       ON CONFLICT (site_id, page_key) DO UPDATE
       SET content = jsonb_set(${this.table('nav_items')}.content, ARRAY[$3::text], to_jsonb($4::text)),
+          intro = jsonb_set(${this.table('nav_items')}.intro, ARRAY[$3::text], to_jsonb($5::text)),
           updated_at = NOW()
     `,
-      [siteId, pageKey, lang, contentMd]
+      [siteId, pageKey, lang, contentMd, intro]
     );
   }
 
@@ -139,28 +129,6 @@ export class NavItemsRepository {
 
     return row.contact_email;
   }
-
-  private async runOrderedUpdate<T>(
-    items: T[],
-    queryFor: (client: PoolClient, item: T, index: number) => Promise<unknown>
-  ): Promise<void> {
-    const client = await this.pool.connect();
-
-    try {
-      await client.query('BEGIN');
-
-      for (let i = 0; i < items.length; i++) {
-        await queryFor(client, items[i], i);
-      }
-
-      await client.query('COMMIT');
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
-  }
 }
 
 // ---- DTO mapping ----
@@ -171,6 +139,7 @@ export function toNavItemDto(row: NavItemRow): NavItemDto {
     pageKey: row.page_key,
     isActive: row.is_active,
     content: row.content,
+    intro: row.intro,
     showContactForm: row.show_contact_form,
     sortOrder: row.sort_order,
   };

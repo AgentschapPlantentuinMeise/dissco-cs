@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback, Dispatch, SetStateAction } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -8,10 +8,14 @@ import { forumApi } from '../../api/cs-client/forum';
 import { reportClientError } from '../../api/cs-client/client-errors';
 import { useCurrentUser } from '../../hooks/use-current-user';
 import { localeText } from '../../utility/locale-text';
+import { pageCount, pageOfItem, pageSlice } from '../../utility/paging';
 import { MadocProjectDto, ForumTopicDto, ForumReplyDto, ForumTopicInput } from '@dissco-cs/shared-types';
-import { ForumFilter, filterTopics, sortByLastActivity, withReplyAdded, withReplyRemoved } from './forum-topics';
+import { FORUM_FILTERS, ForumFilter, countByFilter, filterTopics, sortByLastActivity, withReplyAdded, withReplyRemoved } from '../../components/forum/forum-topics';
 
-// Everything the forum page does: topics and replies from the cache, search and filters, the
+// A list to read, not a card grid: a fixed number of topics per page.
+const TOPICS_PER_PAGE = 15;
+
+// Everything the forum page does: topics and replies from the cache, search and filters, paging, the
 // open topic, reply drafts, the three confirm dialogs and the writes.
 export function useForumPage() {
   const { i18n } = useTranslation('dissco-cs');
@@ -45,12 +49,41 @@ export function useForumPage() {
   const setReplies = (topicId: number, update: (prev: ForumReplyDto[]) => ForumReplyDto[]) =>
     queryClient.setQueryData(forumQueries.replies(topicId).queryKey, old => update(old ?? []));
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<ForumFilter | null>(null);
+  const [searchQuery, setSearchQueryState] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  // A link can open the forum on a filter, e.g. the dashboard's call to the unanswered questions.
+  const [activeFilter, setActiveFilterState] = useState<ForumFilter | null>(() => {
+    const filter = searchParams.get('filter') as ForumFilter | null;
+    return filter && FORUM_FILTERS.includes(filter) ? filter : null;
+  });
+  // A project page links to its questions with ?project=<slug>.
+  const projectFilter = searchParams.get('project');
+  const clearProjectFilter = () => {
+    setSearchParams(
+      params => {
+        params.delete('project');
+        return params;
+      },
+      { replace: true }
+    );
+    setCurrentPage(1);
+  };
+  const projectFilterLabel = projectFilter
+    ? projectOptions.find(p => p.slug === projectFilter)?.label || topics.find(m => m.projectSlug === projectFilter)?.projectLabel || projectFilter
+    : null;
+  const [currentPage, setCurrentPage] = useState(1);
+  // A new search or filter starts at page 1: the page you were on may no longer exist.
+  const setSearchQuery = (query: string) => {
+    setSearchQueryState(query);
+    setCurrentPage(1);
+  };
+  const setActiveFilter: Dispatch<SetStateAction<ForumFilter | null>> = filter => {
+    setActiveFilterState(filter);
+    setCurrentPage(1);
+  };
   const [pendingDeleteTopicId, setPendingDeleteTopicId] = useState<number | null>(null);
   const [pendingCloseTopicId, setPendingCloseTopicId] = useState<number | null>(null);
   const [pendingDeleteReply, setPendingDeleteReply] = useState<{ topicId: number; replyId: number } | null>(null);
-  const [searchParams] = useSearchParams();
   const deepLinkTopicId = searchParams.get('topic');
   const didHandleDeepLink = useRef(false);
 
@@ -74,8 +107,13 @@ export function useForumPage() {
     if (!topics.some(m => m.id === topicId)) return;
     didHandleDeepLink.current = true;
 
+    // On the page it is on in the unfiltered list -- a deep link comes without search or filter.
+    setCurrentPage(pageOfItem(sortByLastActivity(topics), m => m.id === topicId, TOPICS_PER_PAGE) ?? 1);
     setExpandedId(topicId);
-    document.getElementById(`topic-${topicId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // After that page has rendered, so the topic's row exists.
+    requestAnimationFrame(() =>
+      document.getElementById(`topic-${topicId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    );
   }, [deepLinkTopicId, topics]);
 
   // Fetching a topic's replies marks it seen on the server -- mirror that in the list.
@@ -89,10 +127,18 @@ export function useForumPage() {
     queryClient.invalidateQueries({ queryKey: forumKeys.unreadCount() });
   }, [topicsQuery.data, queryClient]);
 
-  const displayTopics = useMemo(
-    () => filterTopics(sortByLastActivity(topics), { query: searchQuery, filter: activeFilter, userId: user?.id }),
-    [topics, searchQuery, activeFilter, user]
+  const filterCounts = useMemo(
+    () => countByFilter(topics, { query: searchQuery, userId: user?.id, projectSlug: projectFilter }),
+    [topics, searchQuery, user?.id, projectFilter]
   );
+  const displayTopics = useMemo(
+    () => filterTopics(sortByLastActivity(topics), { query: searchQuery, filter: activeFilter, userId: user?.id, projectSlug: projectFilter }),
+    [topics, searchQuery, activeFilter, user, projectFilter]
+  );
+  const totalPages = pageCount(displayTopics.length, TOPICS_PER_PAGE);
+  // Capped, not reset: deleting the last topic of the last page moves you one page back.
+  const page = Math.min(currentPage, totalPages);
+  const pageTopics = pageSlice(displayTopics, page, TOPICS_PER_PAGE);
 
   const toggleExpand = (topicId: number) => setExpandedId(current => (current === topicId ? null : topicId));
 
@@ -169,6 +215,11 @@ export function useForumPage() {
     user,
     projectOptions,
     displayTopics,
+    pageTopics,
+    currentPage: page,
+    totalPages,
+    setCurrentPage,
+    filterCounts,
     expandedId,
     expandedReplies: expandedReplies ?? [],
     toggleExpand,
@@ -178,6 +229,8 @@ export function useForumPage() {
     setSearchQuery,
     activeFilter,
     setActiveFilter,
+    projectFilterLabel,
+    clearProjectFilter,
     replyDrafts,
     setReplyDraft,
     submitReply,

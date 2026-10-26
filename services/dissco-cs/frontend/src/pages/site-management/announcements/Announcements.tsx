@@ -2,18 +2,24 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { announcementKeys, announcementQueries } from '../../../api/queries/announcements';
 import { projectQueries } from '../../../api/queries/projects';
-import { HrefLink } from '../../../utility/href-link';
 import { CsPage } from '../../../components/layout/CsPage';
+import { PageHeader } from '../../../components/layout/PageHeader';
+import { PageBody } from '../../../components/layout/PageBody';
+import { ListWithPanel } from '../../../components/layout/ListWithPanel';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { Button } from '../../../components/ui/Button';
 import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
+import { IconButton } from '../../../components/ui/IconButton';
 import { ActiveStatusToggle } from '../../../components/ui/ActiveStatusToggle';
-import { LuPencil, LuArrowLeft } from 'react-icons/lu';
+import { LuPencil } from 'react-icons/lu';
 import { siteLangText } from '../../../utility/site-lang-text';
 import { useItemEditor } from '../../../hooks/use-item-editor';
 import { announcementsApi } from '../../../api/cs-client/announcements';
 import { AnnouncementForm, toDateInputValue } from './AnnouncementForm';
 import { MadocProjectDto, AnnouncementDto, AnnouncementInput } from '@dissco-cs/shared-types';
+import { rowHoverClass, savedRowClass } from '../../../components/ui/list-styles';
+import { SavedNotice } from '../../../components/ui/SavedNotice';
+import { useSavedFlash } from '../../../hooks/use-saved-flash';
 
 function targetLabel(t: (key: string) => string, announcement: AnnouncementDto): string {
   if (announcement.targetType === 'homepage') return t('sm_announcements_target_homepage');
@@ -70,16 +76,17 @@ export function Announcements() {
   // Invalidate every announcement query, so the public banners pick up the change too.
   const onWritten = () => queryClient.invalidateQueries({ queryKey: announcementKeys.all });
 
-  const { mutate: upsert } = useMutation({
+  const { mutate: upsert, isPending: saving } = useMutation({
     mutationFn: async ({ id, input }: { id: AnnouncementDto['id'] | null; input: AnnouncementInput }) => {
       if (id !== null) {
         await announcementsApi.update(id, input);
-      } else {
-        await announcementsApi.create(input);
+        return id;
       }
+      return (await announcementsApi.create(input)).id;
     },
     onSuccess: onWritten,
   });
+  const { savedId, flash } = useSavedFlash<AnnouncementDto['id']>();
 
   const { mutate: remove } = useMutation({
     mutationFn: (id: AnnouncementDto['id']) => announcementsApi.delete(id),
@@ -90,7 +97,13 @@ export function Announcements() {
     meta: { errorMessage: 'error_delete_failed' },
   });
 
-  const save = (input: AnnouncementInput) => upsert({ id: editingId, input }, { onSuccess: cancelForm });
+  const save = (input: AnnouncementInput) =>
+    upsert({ id: editingId, input }, {
+      onSuccess: id => {
+        cancelForm();
+        flash(id);
+      },
+    });
 
   const confirmDelete = () => {
     if (pendingDeleteId === null) return;
@@ -103,110 +116,102 @@ export function Announcements() {
 
   return (
     <CsPage>
-      <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container cs-container--wide">
-          <HrefLink href="/manage" className="inline-flex items-center gap-1 text-cs-primary no-underline font-medium hover:underline">
-            <LuArrowLeft aria-hidden="true" /> {t('sm_back_to_hub')}
-          </HrefLink>
+      <PageBody>
+        <PageHeader
+          variant="plain"
+          back={{ href: '/manage', label: t('sm_back_to_hub') }}
+          title={t('sm_tile_announcements_title')}
+          actions={<Button size="sm" onClick={startCreate}>{t('sm_announcements_new')}</Button>}
+        />
 
-          <div className="flex items-center justify-between mt-4 mb-8">
-            <h1 className="text-4xl text-cs-primary m-0">{t('sm_tile_announcements_title')}</h1>
-            <Button size="sm" onClick={startCreate}>
-              {t('sm_announcements_new')}
-            </Button>
-          </div>
+        {isLoading && <p className="text-center py-5">{t('loading_announcements')}</p>}
 
-          {isLoading && <p className="text-center py-5">{t('loading_announcements')}</p>}
+        {!isLoading && announcements.length === 0 && !isFormOpen && (
+          <p className="text-gray-600">{t('sm_announcements_empty')}</p>
+        )}
 
-          {!isLoading && announcements.length === 0 && !isFormOpen && (
-            <p className="text-gray-600">{t('sm_announcements_empty')}</p>
-          )}
-
-          {!isLoading && (announcements.length > 0 || isFormOpen) && (
-            <div className="flex flex-col lg:flex-row items-start gap-5 mb-8">
-              <ul
-                className={`list-none m-0 p-0 bg-white border-t border-gray-200 divide-y divide-gray-100 min-w-0 w-full ${
-                  isFormOpen ? 'lg:flex-[1_1_45%]' : ''
-                }`}
-              >
-                {isFormOpen && editingId === null && (
-                  <li className="flex items-center gap-3 px-4 py-3 border-l-4 border-l-cs-primary bg-gray-50">
-                    <div className="min-w-0">
-                      <p className="font-semibold m-0 italic text-gray-500 truncate">{t('sm_announcements_draft_name')}</p>
-                      <p className="text-xs text-gray-400 m-0">{t('sm_announcements_draft_hint')}</p>
-                    </div>
-                  </li>
-                )}
-                {announcements.map(announcement => (
-                  <li
-                    key={announcement.id}
-                    className={`flex items-center justify-between gap-4 px-4 py-3 border-l-4 ${
-                      editingId === announcement.id ? 'bg-gray-50 border-l-cs-primary' : 'border-l-transparent'
-                    }`}
-                  >
-                    <div className="min-w-0">
-                      <p className="font-semibold m-0 truncate">{siteLangText(announcement.title, i18n.language, announcement.id)}</p>
-                      <p className="text-sm text-gray-500 m-0">
-                        {targetLabel(t, announcement)}
-                        {(announcement.startDate || announcement.endDate) && (
-                          <>
-                            {' · '}
-                            {announcement.startDate ? toDateInputValue(announcement.startDate) : t('sm_announcements_no_date')}
-                            {' – '}
-                            {announcement.endDate ? toDateInputValue(announcement.endDate) : t('sm_announcements_no_date')}
-                          </>
-                        )}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-3 shrink-0">
-                      <ActiveStatusToggle
-                        active={announcement.isActive}
-                        onChange={() => toggleActive(announcement)}
-                        label={siteLangText(announcement.title, i18n.language, announcement.id)}
-                      />
-                      <button
-                        onClick={() => startEdit(announcement)}
-                        aria-label={t('sm_pages_edit')}
-                        title={t('sm_pages_edit')}
-                        className="bg-transparent border-none cursor-pointer text-gray-500 hover:text-cs-primary p-1"
-                      >
-                        <LuPencil />
-                      </button>
-                      <DeleteIconButton onClick={() => setPendingDeleteId(announcement.id)} />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-
-              {isFormOpen && (
-                <AnnouncementForm
-                  key={editingId ?? 'new'}
-                  draft={draft}
-                  setDraft={setDraft}
-                  selectedLang={selectedLang}
-                  onSelectLang={setSelectedLang}
-                  isEditing={editingId !== null}
-                  projects={projects}
-                  onSave={save}
-                  onCancel={cancelForm}
-                />
+        {!isLoading && (announcements.length > 0 || isFormOpen) && (
+          <ListWithPanel
+            panelKey={editingId}
+            onClose={cancelForm}
+            panelTitle={editingId !== null ? t('sm_announcements_edit') : t('sm_announcements_new')}
+            list={
+            <ul className="list-none m-0 p-0 bg-white border-t border-gray-200 divide-y divide-gray-100">
+              {isFormOpen && editingId === null && (
+                <li className="flex items-center gap-3 px-4 py-3 border-l-4 border-l-cs-primary bg-gray-50">
+                  <div className="min-w-0">
+                    <p className="font-semibold m-0 italic text-gray-500 truncate">{t('sm_announcements_draft_name')}</p>
+                    <p className="text-xs text-gray-400 m-0">{t('sm_announcements_draft_hint')}</p>
+                  </div>
+                </li>
               )}
-            </div>
-          )}
+              {announcements.map(announcement => (
+                <li
+                  key={announcement.id}
+                  className={`flex items-center justify-between gap-4 px-4 py-3 border-l-4 ${rowHoverClass} ${
+                    editingId === announcement.id
+                      ? 'bg-gray-50 border-l-cs-primary'
+                      : savedId === announcement.id
+                        ? savedRowClass
+                        : 'border-l-transparent'
+                  }`}
+                >
+                  <div className="min-w-0">
+                    <p className="font-semibold m-0 truncate">{siteLangText(announcement.title, i18n.language, announcement.id)}</p>
+                    <p className="text-sm text-gray-500 m-0">
+                      {targetLabel(t, announcement)}
+                      {(announcement.startDate || announcement.endDate) && (
+                        <>
+                          {' · '}
+                          {announcement.startDate ? toDateInputValue(announcement.startDate) : t('sm_announcements_no_date')}
+                          {' – '}
+                          {announcement.endDate ? toDateInputValue(announcement.endDate) : t('sm_announcements_no_date')}
+                        </>
+                      )}
+                    </p>
+                  </div>
 
-          {pendingDeleteId !== null && (
-            <ConfirmDialog
-              title={t('sm_announcements_confirm_delete_title')}
-              message={t('sm_announcements_confirm_delete')}
-              confirmLabel={t('common_delete')}
-              cancelLabel={t('common_cancel')}
-              onConfirm={confirmDelete}
-              onCancel={() => setPendingDeleteId(null)}
-            />
-          )}
-        </div>
-      </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    {savedId === announcement.id && <SavedNotice />}
+                    <ActiveStatusToggle
+                      active={announcement.isActive}
+                      onChange={() => toggleActive(announcement)}
+                      label={siteLangText(announcement.title, i18n.language, announcement.id)}
+                    />
+                    <IconButton icon={LuPencil} label={t('common_edit')} onClick={() => startEdit(announcement)} />
+                    <DeleteIconButton onClick={() => setPendingDeleteId(announcement.id)} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+            }
+            panel={isFormOpen ? (
+              <AnnouncementForm
+                key={editingId ?? 'new'}
+                draft={draft}
+                setDraft={setDraft}
+                selectedLang={selectedLang}
+                onSelectLang={setSelectedLang}
+                projects={projects}
+                saving={saving}
+                onSave={save}
+                onCancel={cancelForm}
+              />
+            ) : null}
+          />
+        )}
+
+        {pendingDeleteId !== null && (
+          <ConfirmDialog
+            title={t('sm_announcements_confirm_delete_title')}
+            message={t('sm_announcements_confirm_delete')}
+            confirmLabel={t('common_delete')}
+            cancelLabel={t('common_cancel')}
+            onConfirm={confirmDelete}
+            onCancel={() => setPendingDeleteId(null)}
+          />
+        )}
+      </PageBody>
     </CsPage>
   );
 }

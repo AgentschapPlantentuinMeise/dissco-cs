@@ -46,7 +46,7 @@ export function LanguageString({
   );
 }
 
-function getClosestLanguage(i18nLanguage: string, languages: string[], i18nLanguages: string[]) {
+function getClosestLanguage(i18nLanguage: string, languages: string[], i18nLanguages: readonly string[]) {
   if (languages.length === 0) {
     return undefined;
   }

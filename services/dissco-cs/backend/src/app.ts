@@ -21,6 +21,8 @@ import { feedbackController } from './controllers/feedback.controller.js';
 import { reviewController } from './controllers/review.controller.js';
 import { navItemsController } from './controllers/nav-items.controller.js';
 import { siteThemeController } from './controllers/site-theme.controller.js';
+import { siteImagesController } from './controllers/site-images.controller.js';
+import { homeStepsController } from './controllers/home-steps.controller.js';
 import { statsController } from './controllers/stats.controller.js';
 import { tasksController } from './controllers/tasks.controller.js';
 
@@ -46,6 +48,8 @@ export function createDisscoCSApp(
   app.route('/api/dissco-cs/nav-items', navItemsController(database.navItems));
   app.route('/api/dissco-cs/contact', contactController(database.navItems));
   app.route('/api/dissco-cs/site-theme', siteThemeController(database.siteTheme));
+  app.route('/api/dissco-cs/site-images', siteImagesController(database.siteImages));
+  app.route('/api/dissco-cs/home-steps', homeStepsController(database.homeSteps));
   app.route('/api/dissco-cs/announcements', announcementsController(database.announcements));
   app.route('/api/dissco-cs/institutions', institutionsController(database.institutions));
   app.route('/api/dissco-cs/stats', statsController(database.institutions, statsRepository, honourBoardRepository));

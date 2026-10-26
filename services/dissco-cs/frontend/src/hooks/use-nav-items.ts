@@ -8,6 +8,7 @@ const DEFAULT_NAV_ITEMS: NavItemDto[] = NAV_ITEM_KEYS.map((key, sortOrder) => ({
   pageKey: key,
   isActive: true,
   content: {},
+  intro: {},
   showContactForm: true,
   sortOrder: sortOrder,
 }));
@@ -31,7 +32,12 @@ export function useNavItems() {
     return item?.content[lang as keyof NavItemDto['content']];
   };
 
+  const getIntro = (key: NavItemKey, lang: string) => {
+    const item = navItems.find(p => p.pageKey === key);
+    return item?.intro[lang as keyof NavItemDto['intro']];
+  };
+
   const refresh = () => queryClient.invalidateQueries({ queryKey: navItemKeys.all });
 
-  return { loading: isPending, isActive, getContent, navItems, refresh };
+  return { loading: isPending, isActive, getContent, getIntro, navItems, refresh };
 }

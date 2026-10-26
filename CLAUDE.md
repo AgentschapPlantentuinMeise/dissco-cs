@@ -93,6 +93,8 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Do keep hook signatures focused on a single domain
 - Do declare a component as `function X({ a, b }: XProps)`, not `const X: React.FC<XProps>` (`frontend/test/conventions.test.ts` checks it)
 - Do make every action button with a label a `<Button variant size loading>` (`components/ui/Button.tsx`, `buttonClass()` for a link that looks like one), never own button classes or a pill shape; icon buttons, tabs, menu items and toggles are not Buttons (style guide, section "Bedieningselementen")
+- Do open every page with `<PageHeader variant="split-banner" | "compact" | "plain">` (`components/layout/PageHeader.tsx`), never an own `<h1>`: split-banner for public pages with an image, compact for working pages (forum, dashboard, review, help), plain for login and site management
+- Do put the content below the header in `<PageSection title intro action tone>` blocks on public and working pages (`components/layout/PageSection.tsx`; tones alternate page / white / tint), and in one `<PageBody width>` on a plain page (`components/layout/PageBody.tsx`); never an own wrapper with padding (`frontend/test/conventions.test.ts` checks `cs-main-wrapper`)
 - Do use `React.memo()` for expensive components
 - Do use `useMemo()` and `useCallback()` for expensive calculations
 - Do expose imperative handlers via callbacks rather than mutating shared state
@@ -167,7 +169,8 @@ Keep in mind that the structure en code we provide is in a open source context
 - Wel: pure logica — regels, berekeningen, validatie, transformaties.
 - Niet: componenttests, nagemaakte Madoc-antwoorden (mocks), tests "voor de coverage". Rekenlogica die in een controller zit eerst uithalen als pure functie, dan pas testen.
 - Bij elke bugfix in rekenlogica komt er een test bij die de bug reproduceert.
-- Faalt een test: ofwel een echte bug (code fixen), ofwel een bewust gewijzigde regel (test in dezelfde wijziging aanpassen). Een test die herhaaldelijk breekt zonder ooit een bug te vangen, mag weg.
+- **Een bestaande test wijzig je niet zonder toestemming.** Wat een test controleert (verwachte uitkomst, invoer, een `allowedIn`-uitzondering of de test zelf) aanpassen, afzwakken of verwijderen: eerst vragen, met de reden, en wachten op een ja. Een nieuwe test of een nieuwe conventieregel toevoegen mag wel. Enkel een importpad bijwerken omdat een bestand verhuisde: doen, en het melden.
+- Faalt een test: ofwel een echte bug (code fixen), ofwel een bewust gewijzigde regel (dan de test aanpassen, na toestemming). Een test die herhaaldelijk breekt zonder ooit een bug te vangen, mag weg, ook na toestemming.
 
 **Conventietests:** `backend/test/conventions.test.ts` en `frontend/test/conventions.test.ts` (scanner in `test-support/conventions.ts`) zoeken in `src/` naar patronen die we bewust opgeruimd hebben (bv. `c.text(`, `console.log`, `refetch`) en zeggen wat je in de plaats doet. De Claude-hook draait ze na elke edit, de pre-commit en Docker-build via `pnpm test`.
 - Elke ronde die een patroon opruimt, voegt er meteen een regel aan toe — een afspraak die enkel in tekst staat, sluipt terug.

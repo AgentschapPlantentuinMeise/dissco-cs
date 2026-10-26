@@ -8,6 +8,10 @@ export default {
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      // top-navbar, pt-navbar: the height of the fixed navbar (--cs-navbar-height in the theme).
+      spacing: {
+        navbar: 'var(--cs-navbar-height)',
+      },
       colors: {
         cs: {
           primary: fromVar('primary'),

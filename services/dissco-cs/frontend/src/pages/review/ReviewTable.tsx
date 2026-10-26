@@ -5,6 +5,8 @@ import { ReviewTaskDto } from '@dissco-cs/shared-types';
 import { localeText } from '../../utility/locale-text';
 import { SortKey, SortDir } from './use-review-page';
 import { reviewStatusKey, STATUS_BADGE_CLASSES, badgeClass, thClass, tdClass } from './review-table-styles';
+import { rowHoverClass } from '../../components/ui/list-styles';
+import { IconButton } from '../../components/ui/IconButton';
 
 interface ReviewTableProps {
   visibleRows: ReviewTaskDto[];
@@ -90,7 +92,7 @@ export function ReviewTable({
               <tr
                 data-row-id={row.id}
                 onClick={() => onRowClick(row)}
-                className={`cursor-pointer border-l-4 ${isOpen ? 'bg-gray-50 border-l-cs-primary' : 'border-l-transparent'}`}
+                className={`cursor-pointer border-l-4 ${rowHoverClass} ${isOpen ? 'bg-gray-50 border-l-cs-primary' : 'border-l-transparent'}`}
               >
                 <td className={tdClass} onClick={e => e.stopPropagation()}>
                   <input
@@ -123,14 +125,7 @@ export function ReviewTable({
                 <td className={tdClass}>{modified}</td>
                 <td className={`${tdClass} text-right`} onClick={e => e.stopPropagation()}>
                   {canPreview && (
-                    <button
-                      onClick={() => onPreview(row)}
-                      aria-label={t('review_view_image')}
-                      title={t('review_view_image')}
-                      className="bg-transparent border-none text-gray-400 cursor-pointer hover:text-cs-primary p-1"
-                    >
-                      <LuEye />
-                    </button>
+                    <IconButton icon={LuEye} label={t('review_view_image')} onClick={() => onPreview(row)} />
                   )}
                 </td>
               </tr>

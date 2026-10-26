@@ -46,7 +46,6 @@ export function useReviewPage() {
   const { data, status: queryStatus } = useQuery({ ...reviewQueries.tasks(), staleTime: 0 });
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'' | '0' | '1' | '2'>('');
   const [sortKey, setSortKey] = useState<SortKey>('modifiedAt');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -90,7 +89,6 @@ export function useReviewPage() {
     const query = searchQuery.trim().toLowerCase();
 
     const filtered = rows.filter(row => {
-      if (statusFilter !== '' && String(row.status) !== statusFilter) return false;
       if (!query) return true;
       const projectLabel = localeText(row.project.label, i18n.language) || row.project.slug || '';
       const subjectLabel = localeText(row.subject.label, i18n.language) || row.id;
@@ -132,7 +130,7 @@ export function useReviewPage() {
     });
 
     return sorted;
-  }, [rows, searchQuery, statusFilter, sortKey, sortDir, i18n.language]);
+  }, [rows, searchQuery, sortKey, sortDir, i18n.language]);
 
   const allVisibleSelected = visibleRows.length > 0 && visibleRows.every(row => selectedIds.has(row.id));
 
@@ -355,8 +353,6 @@ export function useReviewPage() {
     visibleRows,
     searchQuery,
     setSearchQuery,
-    statusFilter,
-    setStatusFilter,
     sortKey,
     sortDir,
     toggleSort,

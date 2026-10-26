@@ -11,6 +11,7 @@ import { localeText } from '../../../utility/locale-text';
 import { defaultLang } from '../../../utility/site-lang-text';
 import { MadocProjectDto, slugify } from '@dissco-cs/shared-types';
 import { reportActionError } from '../../../api/error-toast';
+import { inputClass } from '../../../components/ui/input-styles';
 
 // Creates `count` real Madoc projects one after the other, through Madoc's own project creation
 // (projectsApi.create, the same route as Madoc's "New project" button), so each gets a proper
@@ -102,7 +103,7 @@ export function BulkCreateProjectsSubview({ projects }: { projects: MadocProject
             value={count}
             onChange={e => setCount(Math.max(1, Math.min(500, Number(e.target.value) || 1)))}
             disabled={running}
-            className="w-full border border-gray-300 rounded-lg p-2"
+            className={`${inputClass} w-full`}
           />
         </div>
         <div>
@@ -111,7 +112,7 @@ export function BulkCreateProjectsSubview({ projects }: { projects: MadocProject
             value={sourceSlug}
             onChange={e => setSourceSlug(e.target.value)}
             disabled={running}
-            className="w-full border border-gray-300 rounded-lg p-2"
+            className={`${inputClass} w-full`}
           >
             <option value="">{t('sm_bulk_source_none')}</option>
             {projects.map(project => (
@@ -131,7 +132,7 @@ export function BulkCreateProjectsSubview({ projects }: { projects: MadocProject
           onChange={e => setManifestCollectionIds(Array.from(e.target.selectedOptions, option => option.value))}
           disabled={running}
           size={Math.min(6, Math.max(3, collections.length))}
-          className="w-full border border-gray-300 rounded-lg p-2"
+          className={`${inputClass} w-full`}
         >
           {collections.map(collection => (
             <option key={collection.id} value={collection.id}>
@@ -149,7 +150,7 @@ export function BulkCreateProjectsSubview({ projects }: { projects: MadocProject
           onChange={e => setTitle(e.target.value)}
           disabled={running}
           placeholder={t('sm_bulk_title_placeholder')}
-          className="w-full border border-gray-300 rounded-lg p-2"
+          className={`${inputClass} w-full`}
         />
         <p className="text-xs text-gray-500 mt-1.5">{t('sm_bulk_title_hint')}</p>
       </div>
@@ -161,7 +162,7 @@ export function BulkCreateProjectsSubview({ projects }: { projects: MadocProject
           onChange={e => setDescription(e.target.value)}
           disabled={running}
           placeholder={t('sm_bulk_description_placeholder')}
-          className="w-full min-h-[90px] border border-gray-300 rounded-lg p-2"
+          className={`${inputClass} w-full min-h-[90px]`}
         />
       </div>
 

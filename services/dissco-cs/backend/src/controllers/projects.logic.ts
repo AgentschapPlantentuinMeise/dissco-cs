@@ -63,6 +63,17 @@ export function transcribedPercentage(manifestIds: number[], tasksByManifestId: 
 }
 
 /**
+ * The number of people who finished at least one task in a project: submitted (2) or accepted (3).
+ * Same rule as the volunteers of an institution (StatsRepository.fetchInstitutionStats).
+ * @param tasks every crowdsourcing-task of the project
+ * Returns: the number of distinct assignees with such a task.
+ */
+export function countVolunteers(tasks: MadocCrowdsourcingTaskDto[]): number {
+  const assignees = new Set(tasks.flatMap(task => (task.assignee && (task.status === 2 || task.status === 3) ? [task.assignee.id] : [])));
+  return assignees.size;
+}
+
+/**
  * A project's progress: how much is transcribed, and which manifests can still be picked.
  * @param input.manifestItems the manifests of the project's collection (no sub-collections)
  * @param input.thumbnails manifest id -> thumbnail URL
@@ -104,6 +115,7 @@ export function computeProjectProgress(input: {
     ),
     totalTasks: manifestItems.length,
     allTasksTaken: manifestItems.length > 0 && availableManifests.length === 0,
+    volunteers: countVolunteers(tasks),
     availableManifests: availableManifests.map(item => ({
       id: item.id,
       label: item.label,

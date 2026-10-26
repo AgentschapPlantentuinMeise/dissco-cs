@@ -3,11 +3,12 @@ import { SiteColors } from '@dissco-cs/shared-types';
 
 export type SiteThemeRow = {
   site_id: number;
-  primary_color: string;
-  secondary_color: string;
-  accent_color: string;
-  dark_color: string;
-  tertiary_color: string;
+  primary_color: string | null;
+  secondary_color: string | null;
+  accent_color: string | null;
+  dark_color: string | null;
+  tertiary_color: string | null;
+  site_name: string | null;
   updated_at: Date;
 };
 
@@ -26,7 +27,7 @@ export class SiteThemeRepository {
     return result.rows[0] ?? null;
   }
 
-  async upsert(siteId: number, colors: SiteColors): Promise<void> {
+  async upsertColors(siteId: number, colors: SiteColors): Promise<void> {
     await this.pool.query(
       `
       INSERT INTO ${this.table} (site_id, primary_color, secondary_color, accent_color, dark_color, tertiary_color)
@@ -43,14 +44,44 @@ export class SiteThemeRepository {
     );
   }
 
-  async delete(siteId: number): Promise<void> {
-    await this.pool.query(`DELETE FROM ${this.table} WHERE site_id = $1`, [siteId]);
+  // The row stays: it may also hold the site's name.
+  async clearColors(siteId: number): Promise<void> {
+    await this.pool.query(
+      `
+      UPDATE ${this.table}
+      SET primary_color = NULL, secondary_color = NULL, accent_color = NULL, dark_color = NULL, tertiary_color = NULL,
+          updated_at = NOW()
+      WHERE site_id = $1
+    `,
+      [siteId]
+    );
+  }
+
+  // null removes the site's own name.
+  async setName(siteId: number, name: string | null): Promise<void> {
+    await this.pool.query(
+      `
+      INSERT INTO ${this.table} (site_id, site_name) VALUES ($1, $2)
+      ON CONFLICT (site_id) DO UPDATE SET site_name = EXCLUDED.site_name, updated_at = NOW()
+    `,
+      [siteId, name]
+    );
   }
 }
 
 // ---- DTO mapping ----
 
-export function toSiteColors(row: SiteThemeRow): SiteColors {
+// null while the site has no palette of its own (the colors are set and cleared together).
+export function toSiteColors(row: SiteThemeRow): SiteColors | null {
+  if (
+    row.primary_color === null ||
+    row.secondary_color === null ||
+    row.accent_color === null ||
+    row.dark_color === null ||
+    row.tertiary_color === null
+  ) {
+    return null;
+  }
   return {
     primary: row.primary_color,
     secondary: row.secondary_color,

@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { ReviewTaskDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
 import { SubmissionFieldsForm } from '../../components/capture-models/SubmissionFieldsForm';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { Button } from '../../components/ui/Button';
+import { IconButton } from '../../components/ui/IconButton';
 import { useReviewRevisionDocument } from './use-review-revision-document';
 import { localeText } from '../../utility/locale-text';
 import { LuTrash2 } from 'react-icons/lu';
@@ -42,9 +44,9 @@ function ExpansionChrome({
         </div>
         <div className="flex items-center gap-3">
           {headerAction}
-          <button onClick={onClose} className="bg-transparent border-none text-gray-500 hover:text-cs-primary cursor-pointer text-[0.8rem] font-semibold">
+          <Button variant="text" size="sm" onClick={onClose}>
             {t('review_detail_close')}
-          </button>
+          </Button>
         </div>
       </div>
       {children}
@@ -119,15 +121,7 @@ export function ReviewInlineExpansion({
             aria-label={title}
             className="cursor-pointer"
           />
-          <button
-            onClick={() => setConfirmingRelease(true)}
-            disabled={releasing}
-            aria-label={t('review_detail_release_button')}
-            title={t('review_detail_release_button')}
-            className="bg-transparent border-none text-gray-600 hover:text-cs-primary transition-colors duration-200 cursor-pointer p-1 disabled:opacity-50"
-          >
-            <LuTrash2 />
-          </button>
+          <IconButton icon={LuTrash2} label={t('review_detail_release_button')} onClick={() => setConfirmingRelease(true)} disabled={releasing} />
         </>
       }
     >

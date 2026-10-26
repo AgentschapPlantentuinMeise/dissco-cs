@@ -3,15 +3,15 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ForumTopicDto } from '@dissco-cs/shared-types';
 import { DeleteIconButton } from '../../components/ui/DeleteIconButton';
-import { formatDate } from '../../utility/format-date';
-import { LuChevronDown, LuUser, LuClock, LuFolder, LuLink, LuCheck } from 'react-icons/lu';
+import { Button } from '../../components/ui/Button';
+import { CardStat } from '../../components/ui/CardStat';
+import { formatDate, formatTimeAgo } from '../../utility/format-date';
+import { LuCheck } from 'react-icons/lu';
 
-// Opens and closes the replies, so a disclosure toggle rather than an action Button.
-const replyToggleClass =
-  'bg-transparent border border-gray-300 px-3 py-1.5 rounded text-[0.85rem] text-gray-600 cursor-pointer whitespace-nowrap transition-[border-color,color] duration-200 hover:border-cs-primary hover:text-cs-primary';
 
-// One topic in the list: title with unread/closed markers, actions, meta line and body. When open,
-// `thread` (replies and reply box) is shown below the body.
+// One topic as a row of the forum list: unread dot, title (with "closed"), a meta line, one line of
+// the body, and on the right only the number of replies and when the last one came. When open, the
+// full body, `thread` (replies and reply box) and -- for its author or an admin -- close and delete.
 export function ForumTopicCard({ topic, unread, isExpanded, canModerate, onToggle, onClose, onDelete, thread }: {
   topic: ForumTopicDto;
   unread: boolean;
@@ -25,76 +25,37 @@ export function ForumTopicCard({ topic, unread, isExpanded, canModerate, onToggl
 }) {
   const { t, i18n } = useTranslation('dissco-cs');
   const closed = !!topic.closedAt;
-  const replyCountLabel = `${topic.replyCount} ${t(topic.replyCount === 1 ? 'forum_btn_replies_one' : 'forum_btn_replies_many')}`;
 
   return (
-    <div id={`topic-${topic.id}`} className={`flex bg-white rounded-lg shadow-sm border border-gray-100 border-l-4 ${unread ? 'border-l-cs-secondary' : 'border-l-transparent'} px-4 py-3.5`}>
-      <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-start gap-3 mb-1">
-          {/* Clicking the title/meta/body reads the full message — same toggle as
-              "Antwoord", so opening it to just read doesn't require hitting the
-              reply button specifically. */}
-          <div className="min-w-0 flex-1 cursor-pointer" onClick={onToggle}>
-            <h3 className={`m-0 text-[0.95rem] text-cs-primary flex items-center gap-[6px] min-w-0 ${unread ? 'font-bold' : 'font-medium'}`}>
-              {unread && <span className="inline-block w-2 h-2 rounded-full bg-cs-secondary flex-shrink-0" aria-label={t('forum_unread_label')} />}
-              {topic.title}
-              {closed && (
-                <span className="text-[0.68rem] font-semibold text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 flex-shrink-0">
-                  {t('forum_closed_badge')}
-                </span>
-              )}
-            </h3>
-          </div>
-          {/* Reply stays last so it always sits flush against the card's right
-              edge — the context actions before it (close/delete) vary per row
-              (owner/admin, open/closed), so those are the ones that shift, not the
-              button people click most often. */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {canModerate && !closed && (
-              <button
-                onClick={onClose}
-                aria-label={t('forum_btn_close')}
-                title={t('forum_btn_close')}
-                className="bg-transparent border-none cursor-pointer text-gray-600 text-base px-1 flex items-center hover:text-cs-primary transition-colors duration-200"
-              >
-                <LuCheck />
-              </button>
-            )}
-            {canModerate && <DeleteIconButton onClick={onDelete} />}
-            {/* A closed topic allows no further action, so it gets no button: just a
-                muted reply count (clickable like the title/body), or nothing at all
-                when there are no replies. */}
-            {closed ? (
-              topic.replyCount > 0 && (
-                <span className="text-xs text-gray-400 cursor-pointer whitespace-nowrap" onClick={onToggle}>
-                  {replyCountLabel}
-                </span>
-              )
-            ) : (
-              <button className={`${replyToggleClass} flex items-center gap-1`} onClick={onToggle}>
-                {topic.replyCount > 0 ? replyCountLabel : t('forum_btn_reply')}
-                <LuChevronDown className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
-              </button>
-            )}
-          </div>
-        </div>
+    <div
+      id={`topic-${topic.id}`}
+      className={`grid grid-cols-[10px_minmax(0,1fr)_auto] max-sm:grid-cols-[10px_minmax(0,1fr)] gap-x-3.5 gap-y-1 px-[18px] py-4 border-b border-gray-100 ${isExpanded ? 'bg-cs-primary/[0.03]' : ''}`}
+    >
+      <span
+        className={`w-2 h-2 rounded-full mt-[7px] ${unread ? 'bg-cs-secondary' : ''}`}
+        aria-label={unread ? t('forum_unread_label') : undefined}
+      />
 
-        {/* Fixed order (who → when → about which project → which task) so every card
-            reads the same regardless of which fields it has. */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 mb-1.5 cursor-pointer" onClick={onToggle}>
-          <span className="inline-flex items-center gap-1 text-xs text-gray-400">
-            <LuUser aria-hidden="true" className="text-gray-300" /> {topic.authorName}
-          </span>
-          <span className="inline-flex items-center gap-1 text-xs text-gray-400">
-            <LuClock aria-hidden="true" className="text-gray-300" /> {formatDate(topic.createdAt, i18n.language)}
-          </span>
+      {/* Clicking the title, meta line or body opens the topic -- the same toggle as the reply
+          button, so reading a topic doesn't require hitting that button specifically. */}
+      <div className="min-w-0 cursor-pointer" onClick={onToggle}>
+        <h3 className={`m-0 text-base text-cs-primary flex flex-wrap items-center gap-x-2 gap-y-1 ${unread ? 'font-bold' : 'font-medium'}`}>
+          {topic.title}
+          {closed && (
+            <span className="text-[0.68rem] font-semibold text-gray-500 bg-gray-100 rounded px-1.5 py-0.5">{t('forum_closed_badge')}</span>
+          )}
+        </h3>
+        {/* Fixed order (who, when, which project, which task), so every row reads the same. */}
+        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 mt-[3px] text-[0.78rem] text-gray-500">
+          <span>{topic.authorName}</span>
+          <span>{formatDate(topic.createdAt, i18n.language)}</span>
           {topic.projectSlug && (
             <Link
               to={`/explore/${topic.projectSlug}`}
               onClick={e => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-cs-primary no-underline hover:underline"
+              className="font-semibold text-cs-primary no-underline hover:underline"
             >
-              <LuFolder aria-hidden="true" /> {topic.projectLabel || topic.projectSlug}
+              {topic.projectLabel || topic.projectSlug}
             </Link>
           )}
           {topic.taskUrl && (
@@ -103,22 +64,56 @@ export function ForumTopicCard({ topic, unread, isExpanded, canModerate, onToggl
               target="_blank"
               rel="noopener noreferrer"
               onClick={e => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-xs text-cs-primary no-underline hover:underline"
+              className="font-semibold text-cs-primary no-underline hover:underline"
             >
-              <LuLink aria-hidden="true" /> {t('forum_view_task')}
+              {t('forum_view_task')}
             </a>
           )}
         </div>
-
-        <p
-          className={`text-[0.9rem] text-[#555] leading-[1.4] my-1 mb-[6px] whitespace-pre-line cursor-pointer ${isExpanded ? '' : 'line-clamp-2'}`}
-          onClick={onToggle}
-        >
-          {topic.body}
-        </p>
-
-        {isExpanded && thread}
       </div>
+
+      {/* The number of replies opens the topic, like the title: there is no separate reply button.
+          Without replies the right side stays empty. */}
+      {topic.replyCount > 0 ? (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={isExpanded}
+          className="row-span-2 max-sm:row-span-1 max-sm:col-start-2 bg-transparent border-none p-0 cursor-pointer flex flex-col items-end max-sm:items-start gap-0.5 min-w-[96px] text-right max-sm:text-left"
+        >
+          <span className="text-[0.86rem] text-gray-600 whitespace-nowrap">
+            <CardStat value={topic.replyCount} label={t('forum_reply_count', { count: topic.replyCount })} />
+          </span>
+          <span className="text-[0.72rem] text-gray-500 whitespace-nowrap">
+            {closed ? t('forum_closed_badge').toLowerCase() : formatTimeAgo(topic.lastActivity, i18n.language)}
+          </span>
+        </button>
+      ) : (
+        <span className="row-span-2 max-sm:hidden min-w-[96px]" />
+      )}
+
+      <p
+        className={`col-start-2 m-0 mt-1 text-[0.88rem] text-gray-600 leading-[1.45] whitespace-pre-line cursor-pointer ${isExpanded ? '' : 'line-clamp-1'}`}
+        onClick={onToggle}
+      >
+        {topic.body}
+      </p>
+
+      {isExpanded && (
+        <div className="col-start-2 col-span-2 max-sm:col-span-1">
+          {thread}
+          {canModerate && (
+            <div className="flex gap-2 mt-2">
+              {!closed && (
+                <Button variant="text" size="sm" onClick={onClose}>
+                  <LuCheck aria-hidden="true" /> {t('forum_btn_close')}
+                </Button>
+              )}
+              <DeleteIconButton onClick={onDelete} />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { buttonClass } from '../../../components/ui/Button';
 import { ActiveToggleField } from '../../../components/ui/ActiveToggleField';
 import { LanguageTabs } from '../../../components/ui/LanguageTabs';
 import { InstitutionInput, SitePageLang, institutionInputSchema } from '@dissco-cs/shared-types';
+import { inputClass } from '../../../components/ui/input-styles';
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -18,12 +19,12 @@ function fileToDataUrl(file: File): Promise<string> {
 
 // The side form of the institutions page: one institution, created or edited. The page gives it a
 // new key per item, so the picked logo name starts empty for each one.
-export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, isEditing, onSave, onCancel }: {
+export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, saving, onSave, onCancel }: {
   draft: InstitutionInput;
   setDraft: React.Dispatch<React.SetStateAction<InstitutionInput>>;
   selectedLang: SitePageLang;
   onSelectLang: (lang: SitePageLang) => void;
-  isEditing: boolean;
+  saving: boolean;
   onSave: (input: InstitutionInput) => void;
   onCancel: () => void;
 }) {
@@ -53,10 +54,7 @@ export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, i
   };
 
   return (
-    <div className="w-full lg:flex-[0_0_42%] lg:min-w-[380px] bg-white border border-gray-200 rounded-[10px] p-6">
-      <h2 className="text-xl font-semibold text-cs-primary mb-4">
-        {isEditing ? t('sm_institutions_edit') : t('sm_institutions_new')}
-      </h2>
+    <div>
 
       <LanguageTabs
         selected={selectedLang}
@@ -70,7 +68,7 @@ export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, i
           type="text"
           value={draft.name[selectedLang]}
           onChange={e => setDraft(prev => ({ ...prev, name: { ...prev.name, [selectedLang]: e.target.value } }))}
-          className="border border-gray-300 rounded-lg p-2"
+          className={inputClass}
         />
       </label>
 
@@ -81,7 +79,7 @@ export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, i
           onChange={e =>
             setDraft(prev => ({ ...prev, description: { ...prev.description, [selectedLang]: e.target.value } }))
           }
-          className="border border-gray-300 rounded-lg p-2 min-h-[90px]"
+          className={`${inputClass} min-h-[90px]`}
         />
       </label>
 
@@ -115,7 +113,7 @@ export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, i
           type="text"
           value={draft.website}
           onChange={e => setDraft(prev => ({ ...prev, website: e.target.value }))}
-          className="border border-gray-300 rounded-lg p-2"
+          className={inputClass}
         />
       </label>
 
@@ -146,6 +144,7 @@ export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, i
       <div className="flex items-center gap-3">
         <SaveButton
           onClick={save}
+          loading={saving}
           disabled={!canSave}
           title={!canSave ? t('common_fill_required_fields') : undefined}
         />

@@ -1,44 +1,37 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
-import useDropdownMenu from 'react-accessible-dropdown-menu-hook';
-import Cookies from 'js-cookie';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { LuChevronDown } from 'react-icons/lu';
 import { LANGUAGES } from '../../utility/site-lang-text';
-import { dropdownItemClass, dropdownListClass } from './nav-styles';
+import { changeLanguage } from './change-language';
+import { menuItemClass, menuItemsClass } from './nav-styles';
 
-// The navbar's language dropdown. The choice is remembered in localStorage and the i18next cookie.
+// The navbar's language menu for visitors who are not logged in; logged in, the languages sit in
+// the account menu.
 export function LanguageSwitcher() {
-  const { i18n } = useTranslation();
-  const { buttonProps, itemProps, isOpen, setIsOpen } = useDropdownMenu(LANGUAGES.length);
+  const { t, i18n } = useTranslation('dissco-cs');
   const currentLang = LANGUAGES.find(l => l.code === i18n.language) || LANGUAGES[0];
 
   return (
-    <div className="relative">
-      <button
-        className="bg-transparent border-none cursor-pointer text-gray-600 font-[380] text-base p-0 inline-flex items-center gap-1 hover:text-cs-primary transition-colors duration-200 max-[768px]:py-[10px]"
-        {...buttonProps}
+    <Menu>
+      <MenuButton
+        aria-label={t('common_tabs_language')}
+        className="inline-flex items-center gap-0.5 bg-transparent border-0 px-1.5 py-1.5 text-[0.85rem] font-semibold text-gray-500 cursor-pointer hover:text-cs-primary"
       >
         {currentLang.code.toUpperCase()} <LuChevronDown aria-hidden="true" />
-      </button>
-      <ul className={dropdownListClass(isOpen, 'top-[calc(100%+8px)] min-w-[130px]')} role="menu">
-        {LANGUAGES.map((lng, key) => (
-          <li key={lng.code}>
+      </MenuButton>
+      <MenuItems anchor={{ to: 'bottom end', gap: 8 }} className={`${menuItemsClass} !min-w-[140px]`}>
+        {LANGUAGES.map(lng => (
+          <MenuItem key={lng.code}>
             <button
-              className={dropdownItemClass}
-              style={{ fontWeight: lng.code === i18n.language ? 'bold' : undefined }}
-              onClick={() => {
-                localStorage.setItem('i18nextLng', lng.code);
-                Cookies.set('i18next', lng.code);
-                i18n.changeLanguage(lng.code);
-                setIsOpen(false);
-              }}
-              {...(itemProps[key] as unknown as React.ButtonHTMLAttributes<HTMLButtonElement>)}
+              type="button"
+              onClick={() => changeLanguage(i18n, lng.code)}
+              className={`${menuItemClass} ${lng.code === i18n.language ? 'font-semibold text-cs-primary' : ''}`}
             >
               {lng.label}
             </button>
-          </li>
+          </MenuItem>
         ))}
-      </ul>
-    </div>
+      </MenuItems>
+    </Menu>
   );
 }

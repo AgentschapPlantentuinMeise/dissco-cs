@@ -3,7 +3,7 @@ import { ManualsRepository, toManualDetailDto, toManualDto, toManualSummaryDto }
 import { requireSiteAdmin } from '../auth/auth.js';
 import { validateJson } from '../infrastructure/validate-json.js';
 import { intId, siteLang, validateParams } from '../infrastructure/validate-params.js';
-import { attachmentFileSchema, setManualContentSchema, setManualTitleSchema } from '@dissco-cs/shared-types';
+import { attachmentFileSchema, manualInputSchema } from '@dissco-cs/shared-types';
 
 export function manualsController(manualsRepository: ManualsRepository): Hono {
   const app = new Hono();
@@ -18,16 +18,30 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
     return c.json({ manuals: manuals.map(toManualSummaryDto) });
   });
 
-  app.post('/', validateJson(setManualTitleSchema), async c => {
+  app.post('/', validateJson(manualInputSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const input = c.req.valid('json');
-
-    const manual = await manualsRepository.createManual(identity.siteId, { [input.lang]: input.title });
+    const manual = await manualsRepository.createManual(identity.siteId, c.req.valid('json'));
     return c.json(toManualDto(manual), 201);
+  });
+
+  app.put('/:manualId', validateParams({ manualId: intId }), validateJson(manualInputSchema), async c => {
+    const identity = requireSiteAdmin(c);
+    if (identity instanceof Response) {
+      return identity;
+    }
+
+    const { manualId } = c.req.valid('param');
+
+    const updated = await manualsRepository.updateManual(identity.siteId, manualId, c.req.valid('json'));
+    if (!updated) {
+      return c.notFound();
+    }
+
+    return c.body(null, 204);
   });
 
   app.get('/:manualId', validateParams({ manualId: intId }), async c => {
@@ -56,24 +70,6 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
 
     const deleted = await manualsRepository.deleteManual(identity.siteId, manualId);
     if (!deleted) {
-      return c.notFound();
-    }
-
-    return c.body(null, 204);
-  });
-
-  app.put('/:manualId/:lang', validateParams({ manualId: intId, lang: siteLang }), validateJson(setManualContentSchema), async c => {
-    const identity = requireSiteAdmin(c);
-    if (identity instanceof Response) {
-      return identity;
-    }
-
-    const { manualId, lang } = c.req.valid('param');
-
-    const input = c.req.valid('json');
-
-    const updated = await manualsRepository.updateManualContent(identity.siteId, manualId, lang, input.content);
-    if (!updated) {
       return c.notFound();
     }
 

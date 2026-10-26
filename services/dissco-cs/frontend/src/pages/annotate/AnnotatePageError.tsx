@@ -10,7 +10,9 @@ export type AnnotatePageErrorKind =
   // Madoc answers 404 when the user may not work on this task.
   | { kind: 'no-access' }
   | { kind: 'load' }
-  | { kind: 'no-model' };
+  | { kind: 'no-model' }
+  // Not an error either: the screen is too small to annotate on.
+  | { kind: 'small-screen' };
 
 const TEXT_KEYS = {
   'no-access': 'annotate_no_access',
@@ -36,6 +38,10 @@ export function AnnotatePageError({ projectSlug, error }: { projectSlug: string 
           <Button onClick={error.onNext} loading={error.isLoadingNext}>
             {t('annotate_next_task')}
           </Button>
+          {backToProject}
+        </PageError>
+      ) : error.kind === 'small-screen' ? (
+        <PageError role="status" title={t('annotate_small_screen_title')} text={t('annotate_small_screen_text')}>
           {backToProject}
         </PageError>
       ) : (

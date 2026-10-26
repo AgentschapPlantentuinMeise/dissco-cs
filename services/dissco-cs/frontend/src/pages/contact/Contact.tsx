@@ -3,15 +3,18 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { useMutation } from '@tanstack/react-query';
 import { CsPage } from '../../components/layout/CsPage';
-import { CsMarkdown } from '../../components/ui/CsMarkdown';
+import { PageHeader } from '../../components/layout/PageHeader';
+import { ManagedTextSection } from '../../components/layout/ManagedTextSection';
+import { PageSection } from '../../components/layout/PageSection';
 import { useNavItems } from '../../hooks/use-nav-items';
 import { contactApi } from '../../api/cs-client/contact';
+import { inputClass } from '../../components/ui/input-styles';
+import { SavedNotice } from '../../components/ui/SavedNotice';
 
 export function Contact() {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { getContent, navItems } = useNavItems();
+  const { navItems, getIntro } = useNavItems();
 
-  const dbContent = getContent('contact', i18n.language);
   const showForm = navItems.find(p => p.pageKey === 'contact')?.showContactForm ?? true;
 
   const [name, setName] = useState('');
@@ -36,87 +39,70 @@ export function Contact() {
 
   return (
     <CsPage>
-      <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container cs-container--wide">
+      <PageHeader variant="compact" title={t('nav_contact')} lead={getIntro('contact', i18n.language) || t('contact_intro_default')} />
+      <ManagedTextSection pageKey="contact" />
 
-          <header className="mb-8">
-            <h1 className="text-4xl text-cs-primary mb-3">{t('nav_contact')}</h1>
-          </header>
+      {showForm && (
+        <PageSection>
+          <form onSubmit={submit} className="flex flex-col gap-4 max-w-2xl">
+            {/* Honeypot: hidden from real visitors, often auto-filled by spam bots. */}
+            <label
+              htmlFor="contact-website"
+              className="absolute -left-[9999px] w-px h-px overflow-hidden"
+              aria-hidden="true"
+            >
+              Website
+              <input
+                id="contact-website"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={website}
+                onChange={e => setWebsite(e.target.value)}
+              />
+            </label>
 
-        
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-gray-700">{t('contact_form_name')}</span>
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={e => setName(e.target.value)}
+                className={inputClass}
+              />
+            </label>
 
-          <div className="max-w-2xl">
-          <section className="mb-8">
-            {dbContent ? <CsMarkdown content={dbContent} /> : <p className="text-base text-gray-600">{t('common_no_content')}</p>}
-          </section>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-gray-700">{t('contact_form_email')}</span>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className={inputClass}
+              />
+            </label>
 
-          {showForm && (
-            <form onSubmit={submit} className="flex flex-col gap-4">
-              {/* Honeypot: hidden from real visitors, often auto-filled by spam bots. */}
-              <label
-                htmlFor="contact-website"
-                className="absolute -left-[9999px] w-px h-px overflow-hidden"
-                aria-hidden="true"
-              >
-                Website
-                <input
-                  id="contact-website"
-                  type="text"
-                  tabIndex={-1}
-                  autoComplete="off"
-                  value={website}
-                  onChange={e => setWebsite(e.target.value)}
-                />
-              </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-gray-700">{t('contact_form_message')}</span>
+              <textarea
+                required
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                className={`${inputClass} min-h-[160px]`}
+              />
+            </label>
 
-              <label className="flex flex-col gap-1">
-                <span className="text-sm font-medium text-gray-700">{t('contact_form_name')}</span>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  className="border border-gray-300 rounded-lg p-2"
-                />
-              </label>
-
-              <label className="flex flex-col gap-1">
-                <span className="text-sm font-medium text-gray-700">{t('contact_form_email')}</span>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="border border-gray-300 rounded-lg p-2"
-                />
-              </label>
-
-              <label className="flex flex-col gap-1">
-                <span className="text-sm font-medium text-gray-700">{t('contact_form_message')}</span>
-                <textarea
-                  required
-                  value={message}
-                  onChange={e => setMessage(e.target.value)}
-                  className="border border-gray-300 rounded-lg p-2 min-h-[160px]"
-                />
-              </label>
-
-              <div>
-                <Button
-                  type="submit"
-                  disabled={sending}
-                >
-                  {t('contact_form_submit')}
-                </Button>
-              </div>
-
-              {sent && <p className="text-green-700">{t('contact_form_success')}</p>}
-            </form>
-          )}
-          </div>
-
-        </div>
-      </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button type="submit" loading={sending}>
+                {t('contact_form_submit')}
+              </Button>
+              {sent && <SavedNotice>{t('contact_form_success')}</SavedNotice>}
+            </div>
+          </form>
+        </PageSection>
+      )}
     </CsPage>
   );
 }

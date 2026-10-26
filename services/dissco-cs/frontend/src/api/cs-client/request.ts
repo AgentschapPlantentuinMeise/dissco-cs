@@ -73,6 +73,36 @@ export async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 /**
+ * Uploads one file to our backend as multipart form data (field 'file'), with the user's JWT.
+ * Its own fetch: csFetch sets Content-Type to JSON, while the browser must set the multipart
+ * boundary itself.
+ * @param path the path after /api/dissco-cs
+ * @param file the file to send
+ * Returns: nothing; sends an expired session to the login page, throws an ApiError on any other
+ * non-2xx answer.
+ */
+export async function csUpload(path: string, file: File): Promise<void> {
+  const jwt = getJwt();
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`/api/dissco-cs${path}`, {
+    method: 'PUT',
+    headers: jwt ? { Authorization: `Bearer ${jwt}` } : undefined,
+    body: formData,
+  });
+  addBreadcrumb('api', `PUT ${withoutQuery(path)} ${response.status}`);
+
+  if (response.status === 401) {
+    return redirectToExpiredLogin<void>();
+  }
+
+  if (!response.ok) {
+    throw new ApiError(response.status, path, await readServerMessage(response));
+  }
+}
+
+/**
  * csFetch for an answer that is an object with one field, e.g. { announcements: [...] }: returns
  * that field. The backend keeps the object (so a field can be added later), the caller gets what
  * it needs.

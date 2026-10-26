@@ -1,32 +1,17 @@
-﻿import React from 'react';
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { CsPage } from '../../components/layout/CsPage';
-import { CsMarkdown } from '../../components/ui/CsMarkdown';
+import { PageHeader } from '../../components/layout/PageHeader';
+import { ManagedTextSection } from '../../components/layout/ManagedTextSection';
 import { useNavItems } from '../../hooks/use-nav-items';
 
 export function Help() {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { getContent } = useNavItems();
-
-  const dbContent = getContent('help', i18n.language);
+  const { getIntro } = useNavItems();
 
   return (
     <CsPage>
-      <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container cs-container--wide">
-
-          <header className="mb-8">
-            <h1 className="text-4xl text-cs-primary mb-3">{t('nav_help')}</h1>
-          </header>
-
-        
-
-          <section>
-            {dbContent ? <CsMarkdown content={dbContent} /> : <p className="text-base text-gray-600">{t('common_no_content')}</p>}
-          </section>
-
-        </div>
-      </div>
+      <PageHeader variant="compact" title={t('nav_help')} lead={getIntro('help', i18n.language) || t('help_intro_default')} />
+      <ManagedTextSection pageKey="help" />
     </CsPage>
   );
 }

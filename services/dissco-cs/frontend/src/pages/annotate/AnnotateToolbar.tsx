@@ -1,21 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LuArrowLeft, LuArrowRight, LuBookOpen, LuChevronRight, LuMail } from 'react-icons/lu';
+import { LuArrowLeft, LuArrowRight, LuChevronRight } from 'react-icons/lu';
 import { MadocInternationalString } from '@dissco-cs/shared-types';
 import { LocaleString } from '../../components/ui/LocaleString';
 import { Button } from '../../components/ui/Button';
 
-// The bar above the annotate screen: breadcrumb, manual, forum message, previous and next task.
-// Every way out goes through onLeave, so the claim is released before navigating.
-export function AnnotateToolbar({ projectSlug, projectLabel, canvasLabel, onLeave, onOpenManual, onOpenForum, canGoPrevious, onPrevious, isLoadingNext, onNext }: {
+// The bar above the annotate screen: breadcrumb, previous and next task. Help (manual, forum, ...)
+// is in the rail on the right. Every way out goes through onLeave, so the claim is released before
+// navigating.
+export function AnnotateToolbar({ projectSlug, projectLabel, canvasLabel, onLeave, canGoPrevious, onPrevious, isLoadingNext, onNext }: {
   projectSlug: string;
   projectLabel: MadocInternationalString;
   canvasLabel: MadocInternationalString | undefined;
   onLeave: (to: string) => void;
-  onOpenManual: () => void;
-  // Not offered on a submitted task.
-  onOpenForum: (() => void) | null;
   canGoPrevious: boolean;
   onPrevious: () => void;
   isLoadingNext: boolean;
@@ -42,14 +40,6 @@ export function AnnotateToolbar({ projectSlug, projectLabel, canvasLabel, onLeav
         <LocaleString>{canvasLabel ?? { en: ['...'] }}</LocaleString>
       </nav>
       <div className="flex items-center gap-2">
-        <Button variant="secondary" size="sm" onClick={onOpenManual}>
-          <LuBookOpen aria-hidden="true" /> {t('annotate_manual_button')}
-        </Button>
-        {onOpenForum && (
-          <Button variant="secondary" size="sm" onClick={onOpenForum}>
-            <LuMail aria-hidden="true" /> {t('annotate_forum_button')}
-          </Button>
-        )}
         <Button variant="secondary" size="sm" disabled={!canGoPrevious} onClick={onPrevious}>
           <LuArrowLeft aria-hidden="true" /> {t('annotate_prev_task')}
         </Button>

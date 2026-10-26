@@ -7,6 +7,8 @@ import { toInstitutionDto } from '../../src/repositories/institutions.repository
 import { toManualDetailDto, toManualSummaryDto } from '../../src/repositories/manuals.repository.js';
 import { toNavItemDto } from '../../src/repositories/nav-items.repository.js';
 import { toSiteColors } from '../../src/repositories/site-theme.repository.js';
+import { toSiteImageDto } from '../../src/repositories/site-images.repository.js';
+import { toHomeStepDto } from '../../src/repositories/home-steps.repository.js';
 
 // The DTO rule (see CLAUDE.md): camelCase, every field listed explicitly, never internal columns
 // such as site_id. Checking the exact key set catches both a forgotten rename and a `...row`
@@ -40,19 +42,37 @@ describe('DTO mappers', () => {
   it('toSiteColors', () => {
     const colors = toSiteColors({
       site_id: 3, primary_color: '#111111', secondary_color: '#222222', accent_color: '#333333',
-      dark_color: '#444444', tertiary_color: '#555555', updated_at: later,
+      dark_color: '#444444', tertiary_color: '#555555', site_name: 'DoeDat', updated_at: later,
     });
     expect(colors).toEqual({
       primary: '#111111', secondary: '#222222', accent: '#333333', dark: '#444444', tertiary: '#555555',
     });
   });
 
+  it('toSiteColors is null for a site with only a name of its own', () => {
+    const colors = toSiteColors({
+      site_id: 3, primary_color: null, secondary_color: null, accent_color: null,
+      dark_color: null, tertiary_color: null, site_name: 'DoeDat', updated_at: later,
+    });
+    expect(colors).toBeNull();
+  });
+
+  it('toSiteImageDto', () => {
+    const dto = toSiteImageDto({ image_key: 'home', credit: 'Photo: X', updated_at: later });
+    expect(dto).toEqual({ key: 'home', credit: 'Photo: X', updatedAt: '2026-02-03T04:05:06.000Z' });
+  });
+
+  it('toHomeStepDto keeps only title and body', () => {
+    const dto = toHomeStepDto({ title: { nl: 'Kies' }, body: { nl: 'Een project' }, extra: 1 } as Parameters<typeof toHomeStepDto>[0]);
+    expect(dto).toEqual({ title: { nl: 'Kies' }, body: { nl: 'Een project' } });
+  });
+
   it('toNavItemDto leaves the admin-only contact email out', () => {
     const dto = toNavItemDto({
-      site_id: 3, page_key: 'contact', is_active: true, content: { nl: 'x' }, show_contact_form: true,
+      site_id: 3, page_key: 'contact', is_active: true, content: { nl: 'x' }, intro: { nl: 'i' }, show_contact_form: true,
       contact_email: 'secret@example.org', sort_order: 4, updated_at: later,
     } as Parameters<typeof toNavItemDto>[0]);
-    expect(dto).toEqual({ pageKey: 'contact', isActive: true, content: { nl: 'x' }, showContactForm: true, sortOrder: 4 });
+    expect(dto).toEqual({ pageKey: 'contact', isActive: true, content: { nl: 'x' }, intro: { nl: 'i' }, showContactForm: true, sortOrder: 4 });
   });
 
   it('toFeedbackThreadDto and toFeedbackMessageDto', () => {
@@ -89,6 +109,39 @@ describe('DTO mappers', () => {
       id: 9, site_id: 3, topic_id: 1, author_user_id: 10, author_name: 'A', body: 'B', created_at: created,
     } as Parameters<typeof toForumReplyDto>[0]);
     expect(reply).toEqual({ id: 9, topicId: 1, authorUserId: 10, authorName: 'A', body: 'B', createdAt: '2026-01-02T03:04:05.000Z' });
+  });
+
+  it('BIGSERIAL ids (strings from pg) become numbers in every DTO that promises one', () => {
+    const institution = toInstitutionDto({
+      id: '4', site_id: 3, slug: 's', name: {}, description: {}, email: null, phone: null,
+      website: null, logo: null, is_active: true, sort_order: 0, created_at: created, updated_at: later,
+    } as unknown as Parameters<typeof toInstitutionDto>[0]);
+    expect(institution.id).toBe(4);
+
+    const manual = toManualDetailDto(
+      { id: '2', site_id: 3, title: {}, content: {}, updated_at: later } as unknown as Parameters<typeof toManualDetailDto>[0],
+      []
+    );
+    expect(manual.id).toBe(2);
+
+    const message = toFeedbackMessageDto({
+      id: '8', thread_id: '6', author_user_id: 10, author_name: 'A', body: 'B', read_at: null, created_at: created,
+    } as unknown as Parameters<typeof toFeedbackMessageDto>[0]);
+    expect(message).toMatchObject({ id: 8, threadId: 6 });
+  });
+
+  it('the forum mappers turn BIGSERIAL ids (strings from pg) into numbers', () => {
+    const topic = toForumTopicDto({
+      id: '5', site_id: 3, author_user_id: 10, author_name: 'A', title: 'T', task_url: null, project_slug: null,
+      project_label: null, body: 'B', created_at: created, last_activity: later, closed_at: null,
+      reply_count: 0, last_seen_reply_count: null,
+    } as unknown as Parameters<typeof toForumTopicDto>[0]);
+    expect(topic.id).toBe(5);
+
+    const reply = toForumReplyDto({
+      id: '9', site_id: 3, topic_id: '5', author_user_id: 10, author_name: 'A', body: 'B', created_at: created,
+    } as unknown as Parameters<typeof toForumReplyDto>[0]);
+    expect(reply).toMatchObject({ id: 9, topicId: 5 });
   });
 
   it('toManualSummaryDto and toManualDetailDto', () => {

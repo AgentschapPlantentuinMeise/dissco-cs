@@ -84,7 +84,7 @@ export function MarkdownToolbar({ textareaRef, value, onChange }: MarkdownToolba
     'w-7 h-7 rounded-md border-none bg-transparent text-gray-700 flex items-center justify-center hover:bg-gray-200 cursor-pointer';
 
   return (
-    <div className="flex items-center gap-0.5 border border-gray-300 border-b-0 rounded-t-lg p-1.5 bg-gray-50">
+    <div className="flex items-center gap-0.5 border border-gray-300 border-b-0 rounded-t p-1.5 bg-gray-50">
       <button type="button" title={t('md_toolbar_bold')} aria-label={t('md_toolbar_bold')} onClick={applyBold} className={`${btnClass} font-bold text-sm`}>
         B
       </button>

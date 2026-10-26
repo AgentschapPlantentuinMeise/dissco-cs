@@ -12,6 +12,7 @@ import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { Button } from '../../../components/ui/Button';
 import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
 import { reportClientError } from '../../../api/cs-client/client-errors';
+import { rowHoverClass } from '../../../components/ui/list-styles';
 
 function statusLabelKey(status: number): string {
   return status === 0 ? 'sm_stuck_tasks_status_not_started' : 'sm_stuck_tasks_status_in_progress';
@@ -85,7 +86,7 @@ export function StuckTasksSubview() {
                 const projectLabel = localeText(task.metadata?.project?.label, i18n.language) || task.metadata?.project?.slug || '—';
                 const modified = task.modified_at ? new Date(task.modified_at).toLocaleString(i18n.language) : '—';
                 return (
-                  <tr key={task.id}>
+                  <tr key={task.id} className={rowHoverClass}>
                     <td className="px-4 py-3 border-t border-gray-100">
                       <HrefLink href={buildTaskLink(task)} className="text-cs-primary no-underline font-medium hover:underline">
                         {manifestLabel}
@@ -133,7 +134,7 @@ export function StuckTasksSubview() {
                   const projectLabel = localeText(counter.metadata?.project?.label, i18n.language) || counter.metadata?.project?.slug || '—';
                   const modified = counter.modified_at ? new Date(counter.modified_at).toLocaleString(i18n.language) : '—';
                   return (
-                    <tr key={counter.id}>
+                    <tr key={counter.id} className={rowHoverClass}>
                       <td className="px-4 py-3 border-t border-gray-100">
                         <HrefLink href={buildTaskLink(counter)} className="text-cs-primary no-underline font-medium hover:underline">
                           {manifestLabel}

@@ -1,7 +1,12 @@
-// Shared by the navbar's dropdowns (language switcher, user menu).
-export const dropdownItemClass =
-  'block w-full px-4 py-[10px] no-underline text-gray-600 text-[0.9rem] bg-transparent border-none cursor-pointer text-left box-border transition-colors duration-150 hover:bg-gray-100 hover:text-cs-primary';
+// Shared by the navbar's menus (language, account). Headless UI marks the item under the mouse or
+// keyboard with data-focus. The menus open in a portal, so they need a z-index above the navbar (200).
+export const menuItemsClass =
+  'z-[250] min-w-[200px] bg-white rounded border border-gray-200 shadow-[0_10px_30px_rgba(0,0,0,0.16)] py-1.5 focus:outline-none';
 
-// `placement` holds the dropdown's own offset and width, e.g. 'top-[calc(100%+8px)] min-w-[130px]'.
-export const dropdownListClass = (isOpen: boolean, placement: string) =>
-  `${isOpen ? 'block' : 'hidden'} absolute ${placement} right-0 bg-white rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.12)] z-[100] list-none p-[6px_0] m-0 max-[768px]:static max-[768px]:shadow-none max-[768px]:rounded-none max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:min-w-0`;
+export const menuItemClass =
+  'flex w-full items-center justify-between gap-3 px-4 py-2 text-[0.9rem] text-gray-800 no-underline bg-transparent border-0 text-left cursor-pointer data-[focus]:bg-gray-100 data-[focus]:text-cs-primary';
+
+export const menuSeparatorClass = 'my-1 border-t border-gray-200';
+
+// A small dot that says something new is waiting; the number is shown where it is used.
+export const newDotClass = 'w-2 h-2 rounded-full bg-cs-secondary';

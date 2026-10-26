@@ -3,9 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/layout/CsPage';
+import { PageHeader } from '../../components/layout/PageHeader';
+import { PageBody } from '../../components/layout/PageBody';
 import { setPassword as submitSetPassword, checkReset } from '../../api/madoc-auth/auth';
 import { getSiteSlug } from '../../api/slug';
 import { LuCheck, LuCircle, LuEye, LuEyeOff } from 'react-icons/lu';
+import { IconButton } from '../../components/ui/IconButton';
+import { inputClass } from '../../components/ui/input-styles';
 
 // Mirrors validatePasswordStrength() in services/madoc-ts/src/routes/dissco-cs-auth.ts -
 // this is client-side feedback only, the server call is the real source of truth.
@@ -68,96 +72,85 @@ export function SetPassword() {
   if (!c1 || !c2 || linkValid === false) {
     return (
       <CsPage>
-        <div className="cs-main-wrapper pt-10 pb-16">
-          <div className="cs-container max-w-md">
-            <h1 className="text-4xl text-cs-primary mb-4">{t('set_password_title')}</h1>
-            <p className="text-red-700">{t('set_password_invalid_link')}</p>
-          </div>
-        </div>
+        <PageBody width="narrow">
+          <PageHeader variant="plain" title={t('set_password_title')} />
+          <p className="text-red-700">{t('set_password_invalid_link')}</p>
+        </PageBody>
       </CsPage>
     );
   }
 
   return (
     <CsPage>
-      <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container max-w-md">
-          <header className="mb-8">
-            <h1 className="text-4xl text-cs-primary mb-3">{t('set_password_title')}</h1>
-            <p className="text-lg text-gray-600">{t('set_password_intro')}</p>
-          </header>
+      <PageBody width="narrow">
+        <PageHeader variant="plain" title={t('set_password_title')} lead={t('set_password_intro')} />
 
-          <form onSubmit={submit} className="flex flex-col gap-4">
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-gray-700">{t('set_password_form_password')}</span>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="border border-gray-300 rounded-lg p-2 w-full pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(v => !v)}
-                  aria-label={t(showPassword ? 'password_toggle_hide' : 'password_toggle_show')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-500 flex items-center p-1"
-                >
-                  {showPassword ? <LuEyeOff /> : <LuEye />}
-                </button>
-              </div>
-              {password && (
-                <ul className="flex flex-col gap-0.5 mt-1">
-                  {passwordRequirements.map(req => (
-                    <li
-                      key={req.key}
-                      className={`text-sm flex items-center gap-1.5 ${req.met ? 'text-green-700' : 'text-gray-500'}`}
-                    >
-                      {req.met ? <LuCheck aria-hidden="true" /> : <LuCircle aria-hidden="true" />} {t(req.key)}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </label>
-
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-gray-700">{t('set_password_form_confirm')}</span>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  required
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  className="border border-gray-300 rounded-lg p-2 w-full pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(v => !v)}
-                  aria-label={t(showConfirmPassword ? 'password_toggle_hide' : 'password_toggle_show')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-gray-500 flex items-center p-1"
-                >
-                  {showConfirmPassword ? <LuEyeOff /> : <LuEye />}
-                </button>
-              </div>
-              {confirmPassword && confirmPassword !== password && (
-                <span className="text-sm text-red-700">{t('set_password_error_mismatch')}</span>
-              )}
-            </label>
-
-            {status === 'error' && <p className="text-red-700">{error}</p>}
-
-            <div>
-              <Button
-                type="submit"
-                disabled={!canSubmit || status === 'sending'}
-              >
-                {t('set_password_form_submit')}
-              </Button>
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-gray-700">{t('set_password_form_password')}</span>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className={`${inputClass} w-full pr-10`}
+              />
+              <IconButton
+                icon={showPassword ? LuEyeOff : LuEye}
+                label={t(showPassword ? 'password_toggle_hide' : 'password_toggle_show')}
+                onClick={() => setShowPassword(v => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+              />
             </div>
-          </form>
-        </div>
-      </div>
+            {password && (
+              <ul className="flex flex-col gap-0.5 mt-1">
+                {passwordRequirements.map(req => (
+                  <li
+                    key={req.key}
+                    className={`text-sm flex items-center gap-1.5 ${req.met ? 'text-green-700' : 'text-gray-500'}`}
+                  >
+                    {req.met ? <LuCheck aria-hidden="true" /> : <LuCircle aria-hidden="true" />} {t(req.key)}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-gray-700">{t('set_password_form_confirm')}</span>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                required
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                className={`${inputClass} w-full pr-10`}
+              />
+              <IconButton
+                icon={showConfirmPassword ? LuEyeOff : LuEye}
+                label={t(showConfirmPassword ? 'password_toggle_hide' : 'password_toggle_show')}
+                onClick={() => setShowConfirmPassword(v => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+              />
+            </div>
+            {confirmPassword && confirmPassword !== password && (
+              <span className="text-sm text-red-700">{t('set_password_error_mismatch')}</span>
+            )}
+          </label>
+
+          {status === 'error' && <p className="text-red-700">{error}</p>}
+
+          <div>
+            <Button
+              type="submit"
+              disabled={!canSubmit || status === 'sending'}
+            >
+              {t('set_password_form_submit')}
+            </Button>
+          </div>
+        </form>
+      </PageBody>
     </CsPage>
   );
 }

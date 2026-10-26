@@ -2,6 +2,7 @@
 import { useTranslation } from 'react-i18next';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
+import { inputClass } from '../ui/input-styles';
 import { ForumTopicInput } from '@dissco-cs/shared-types';
 
 type ProjectOption = { slug: string; label: string };
@@ -23,7 +24,6 @@ type Props = {
   fixedProjectLabel?: string;
 };
 
-const inputClass = 'py-[9px] px-3 border border-gray-300 rounded text-[0.95rem] font-[inherit] resize-y transition-colors duration-200 focus:outline-none focus:border-cs-primary';
 const labelClass = 'flex flex-col gap-[5px] text-[0.9rem] font-medium text-gray-800';
 
 export function ForumTopicForm({

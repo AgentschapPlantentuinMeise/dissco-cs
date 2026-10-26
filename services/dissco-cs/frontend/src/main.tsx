@@ -6,7 +6,7 @@ import { App } from './App';
 import { disscoCSConfig } from './dissco-cs-config';
 import { queryClient } from './api/query-client';
 import { Toast } from './components/layout/Toast';
-import { SiteColorsSync } from './components/layout/SiteColorsSync';
+import { SiteThemeSync } from './components/layout/SiteThemeSync';
 import { applySiteColors, readCachedSiteColors } from './utility/site-colors';
 
 document.title = disscoCSConfig.platformName;
@@ -21,6 +21,6 @@ createRoot(root).render(
   <QueryClientProvider client={queryClient}>
     <App />
     <Toast />
-    <SiteColorsSync />
+    <SiteThemeSync />
   </QueryClientProvider>
 );

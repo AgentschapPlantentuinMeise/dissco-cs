@@ -9,7 +9,7 @@ const BASE =
   'inline-flex items-center justify-center gap-2 rounded font-semibold leading-tight no-underline cursor-pointer ' +
   'transition-[background-color,color,transform] duration-200 ' +
   'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cs-accent ' +
-  'disabled:opacity-[0.65] disabled:cursor-not-allowed';
+  'disabled:opacity-[0.65] disabled:cursor-not-allowed aria-busy:disabled:cursor-progress';
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: 'bg-cs-primary text-white border-transparent hover:bg-cs-dark',

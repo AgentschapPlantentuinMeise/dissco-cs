@@ -1,25 +1,31 @@
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import useDropdownMenu from 'react-accessible-dropdown-menu-hook';
-import { useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { Menu, MenuButton, MenuItem, MenuItems, MenuSeparator } from '@headlessui/react';
+import { LuChevronDown, LuUser } from 'react-icons/lu';
 import { reviewQueries } from '../../api/queries/review';
 import { feedbackQueries } from '../../api/queries/feedback';
 import { HrefLink } from '../../utility/href-link';
-import { LuChevronDown, LuUser } from 'react-icons/lu';
 import { getSiteSlug } from '../../api/slug';
 import { withQuery } from '../../api/url';
 import { getCurrentUser } from '../../api/jwt';
-import { dropdownItemClass, dropdownListClass } from './nav-styles';
+import { LANGUAGES } from '../../utility/site-lang-text';
+import { changeLanguage } from './change-language';
+import { SUPPORT_LINK_KEYS } from './nav-config';
+import { useNavLinks } from './use-nav-links';
+import { useSiteName } from '../../hooks/use-site-name';
+import { menuItemClass, menuItemsClass, menuSeparatorClass, newDotClass } from './nav-styles';
 
 type CurrentUser = NonNullable<ReturnType<typeof getCurrentUser>>;
 
-// The logged-in user's dropdown: dashboard (with the unread feedback badge), profile, review and
-// site admin when the user has that role, and logout.
+const firstName = (name: string) => name.trim().split(/\s+/)[0];
+
+// The logged-in user's name and menu: dashboard (with the number of unread feedback threads),
+// review and site admin for those roles, profile, help and contact, the site languages, and logout.
 export function UserMenu({ user }: { user: CurrentUser }) {
-  const { t } = useTranslation('dissco-cs');
+  const { t, i18n } = useTranslation('dissco-cs');
+  const platformName = useSiteName();
   const siteSlug = getSiteSlug();
-  const location = useLocation();
+  const { linksFor } = useNavLinks();
   const showAdmin = user.scope.includes('site.admin');
   // Reviewer role is not in the JWT (only scope), so ask a light backend call; admins skip it,
   // they see the link anyway.
@@ -35,76 +41,76 @@ export function UserMenu({ user }: { user: CurrentUser }) {
     ...feedbackQueries.threads(),
     select: threads => threads.reduce((sum, thread) => sum + thread.unreadCount, 0),
   });
-
-  // The dropdown hook needs a fixed index per item; review and site admin are optional.
-  const dropdownCount = 3 + (showReview ? 1 : 0) + (showAdmin ? 1 : 0);
-  const { buttonProps, itemProps, isOpen, setIsOpen } = useDropdownMenu(dropdownCount);
-  const idxReview = showReview ? 2 : -1;
-  const idxSiteAdmin = showAdmin ? 2 + (showReview ? 1 : 0) : -1;
-  const idxLogout = 2 + (showReview ? 1 : 0) + (showAdmin ? 1 : 0);
-
-  useEffect(() => {
-    setIsOpen(false);
-  }, [location, setIsOpen]);
+  const supportLinks = linksFor(SUPPORT_LINK_KEYS);
 
   return (
-    <div className="relative">
-      <button
-        className="bg-transparent border-none cursor-pointer text-gray-600 font-[380] text-base flex items-center gap-1 p-0 hover:text-cs-primary transition-colors duration-200 max-[768px]:py-[10px] max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:w-full"
-        {...buttonProps}
+    <Menu>
+      <MenuButton
+        aria-label={t('nav_account_menu', { name: user.name })}
+        className="inline-flex items-center gap-1.5 rounded border-0 bg-transparent px-2 py-1.5 text-[0.9rem] text-gray-600 cursor-pointer hover:text-cs-primary hover:bg-cs-primary/[0.07] data-[open]:text-cs-primary data-[focus]:outline data-[focus]:outline-2 data-[focus]:outline-cs-accent"
       >
         <span className="relative inline-flex">
-          <LuUser style={{ fontSize: '1.2em', flexShrink: 0 }} />
+          <LuUser aria-hidden="true" className="text-[1.15em]" />
           {feedbackUnreadCount > 0 && (
             <span
-              className="absolute -top-0.5 -right-0.5 flex w-[9px] h-[9px]"
               role="status"
               aria-label={t('nav_feedback_notification')}
-            >
-              <span
-                className="motion-safe:animate-ping absolute inline-flex w-full h-full rounded-full opacity-75"
-                style={{ background: 'var(--cs-tertiary)' }}
-              />
-              <span
-                className="relative inline-flex w-[9px] h-[9px] rounded-full border border-white"
-                style={{ background: 'var(--cs-tertiary)' }}
-              />
-            </span>
+              className={`${newDotClass} absolute -top-1 -right-1 border-2 border-white box-content`}
+            />
           )}
         </span>
-        {user.name} <LuChevronDown aria-hidden="true" />
-      </button>
-      <ul className={dropdownListClass(isOpen, 'top-[calc(100%+10px)] min-w-[200px]')} role="menu">
-        <li>
-          <HrefLink href="/my-dashboard" className={dropdownItemClass} {...itemProps[0]}>
+        {/* Only the icon on a phone, where the bar has no room for a name. */}
+        <span className="hidden sm:inline max-w-[140px] truncate">{firstName(user.name)}</span>
+        <LuChevronDown aria-hidden="true" className="hidden sm:inline" />
+      </MenuButton>
+      <MenuItems anchor={{ to: 'bottom end', gap: 8 }} className={`${menuItemsClass} w-[240px]`}>
+        <div className="px-4 pt-2 pb-2.5 font-semibold text-gray-900 truncate">{user.name}</div>
+        <MenuSeparator className={menuSeparatorClass} />
+        <MenuItem>
+          <HrefLink href="/my-dashboard" className={menuItemClass}>
             {t('nav_dashboard')}
             {feedbackUnreadCount > 0 && (
-              <span
-                className="inline-block text-white rounded-[10px] px-[6px] py-[1px] text-[0.7rem] font-bold ml-[5px] align-middle leading-[1.4]"
-                style={{ background: 'var(--cs-tertiary)' }}
-              >
+              <span className="rounded-full bg-cs-secondary px-1.5 text-[0.7rem] font-bold leading-[1.5] text-white">
                 {feedbackUnreadCount}
               </span>
             )}
           </HrefLink>
-        </li>
-        <li><a href={`/s/${siteSlug}/account`} className={dropdownItemClass} {...itemProps[1]}>{t('nav_profile_settings')}</a></li>
+        </MenuItem>
         {showReview && (
-          <li><HrefLink href="/review" className={dropdownItemClass} {...itemProps[idxReview]}>{t('nav_review')}</HrefLink></li>
+          <MenuItem><HrefLink href="/review" className={menuItemClass}>{t('nav_review')}</HrefLink></MenuItem>
         )}
         {showAdmin && (
-          <li><HrefLink href="/manage" className={dropdownItemClass} {...itemProps[idxSiteAdmin]}>{t('nav_site_admin')}</HrefLink></li>
+          <MenuItem><HrefLink href="/manage" className={menuItemClass}>{t('nav_site_admin')}</HrefLink></MenuItem>
         )}
-        <li className="border-t border-[#eee] mt-1 pt-1">
-          <a
-            href={withQuery(`/s/${siteSlug}/logout`, { redirect: `/s/${siteSlug}/` })}
-            className={dropdownItemClass}
-            {...itemProps[idxLogout]}
-          >
+        <MenuItem><a href={`/s/${siteSlug}/account`} className={menuItemClass}>{t('nav_profile_settings')}</a></MenuItem>
+        {supportLinks.length > 0 && <MenuSeparator className={menuSeparatorClass} />}
+        {supportLinks.map(link => (
+          <MenuItem key={link.key}><HrefLink href={link.href} className={menuItemClass}>{t(link.labelKey, { platformName })}</HrefLink></MenuItem>
+        ))}
+        <MenuSeparator className={menuSeparatorClass} />
+        <div className="flex gap-1 px-4 py-1.5" role="group" aria-label={t('common_tabs_language')}>
+          {LANGUAGES.map(lng => (
+            <MenuItem key={lng.code}>
+              <button
+                type="button"
+                onClick={() => changeLanguage(i18n, lng.code)}
+                aria-label={lng.label}
+                className={`rounded border bg-white px-2 py-0.5 text-[0.8rem] font-semibold cursor-pointer data-[focus]:border-cs-primary ${
+                  lng.code === i18n.language ? 'border-cs-primary text-cs-primary' : 'border-gray-200 text-gray-500'
+                }`}
+              >
+                {lng.code.toUpperCase()}
+              </button>
+            </MenuItem>
+          ))}
+        </div>
+        <MenuSeparator className={menuSeparatorClass} />
+        <MenuItem>
+          <a href={withQuery(`/s/${siteSlug}/logout`, { redirect: `/s/${siteSlug}/` })} className={menuItemClass}>
             {t('nav_logout')}
           </a>
-        </li>
-      </ul>
-    </div>
+        </MenuItem>
+      </MenuItems>
+    </Menu>
   );
 }

@@ -10,7 +10,7 @@ const LANGUAGE_NAMES: Record<SitePageLang, string> = {
 };
 
 export const disscoCSConfig = {
-  platformName: 'DoeDat',
+  platformName: 'DiSSCo Flanders',
   developer: 'Plantentuin Meise',
   developerUrl: 'https://www.plantentuinmeise.be',
 
@@ -21,7 +21,29 @@ export const disscoCSConfig = {
     de: 'Botanischer Garten Meise',
   },
 
-  logoUrl: new URL('./images/logoDoeDat.png', import.meta.url).href,
+  logoUrl: new URL('./images/disscoflanders_logo.png', import.meta.url).href,
+  // The logos at the bottom of the footer, on every site of this installation: the project that
+  // built the platform, its funder and the open-source platform it is built on. labelKey: an
+  // optional text before the logo.
+  footerLogos: [
+    {
+      name: 'DiSSCo Flanders',
+      url: 'https://dissco-flanders.be/',
+      logoUrl: new URL('./images/disscoflanders_logo.png', import.meta.url).href,
+    },
+    {
+      name: 'FWO',
+      url: 'https://www.fwo.be',
+      logoUrl: new URL('./images/fwologo.png', import.meta.url).href,
+      labelKey: 'footer_supported_by',
+    },
+    {
+      name: 'Madoc',
+      url: 'https://github.com/digirati-co-uk/madoc-platform',
+      logoUrl: new URL('./images/madoc_logo.png', import.meta.url).href,
+      labelKey: 'footer_built_with',
+    },
+  ] as { name: string; url: string; logoUrl: string; labelKey?: string }[],
   heroBgUrl: new URL('./images/backgroundflower.png', import.meta.url).href,
   heroBgCredit: 'Maarten Strack van Schijndel',
 

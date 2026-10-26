@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { LuChevronDown } from 'react-icons/lu';
+import React from 'react';
+import { Disclosure } from '../../../components/ui/Disclosure';
 
 // `collapsible` separates two uses: an entity group gets a fixed frame (a border to show its fields
 // belong together, no open/close), while the sections of a 'tabs' model can be opened and closed.
@@ -14,8 +14,6 @@ export function Fieldset({
   collapsible?: boolean;
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(true);
-
   if (!collapsible) {
     return (
       <fieldset className="border border-gray-200 rounded mb-4">
@@ -31,24 +29,19 @@ export function Fieldset({
   }
 
   return (
-    <fieldset className="border border-gray-200 rounded mb-4 overflow-hidden">
-      <legend className="w-full px-0">
-        <button
-          type="button"
-          className="w-full flex items-center justify-between px-3.5 py-2.5 bg-cs-primary/[0.07] border-b border-cs-primary/15 text-[0.92rem] font-bold text-cs-primary cursor-pointer"
-          onClick={() => setOpen(o => !o)}
-        >
-          <span>
+    <div className="mb-4">
+      <Disclosure
+        as="fieldset"
+        defaultOpen
+        title={
+          <>
             {label}
             {required && <span className="text-red-500"> *</span>}
-          </span>
-          <LuChevronDown
-            aria-hidden="true"
-            className={`text-cs-accent flex-shrink-0 transition-transform duration-200 ${open ? '' : '-rotate-90'}`}
-          />
-        </button>
-      </legend>
-      {open && <div className="px-3.5 py-4">{children}</div>}
-    </fieldset>
+          </>
+        }
+      >
+        {children}
+      </Disclosure>
+    </div>
   );
 }

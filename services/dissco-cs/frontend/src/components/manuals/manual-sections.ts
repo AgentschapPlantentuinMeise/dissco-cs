@@ -1,4 +1,16 @@
+import { ManualDetailDto, SitePageLang } from '@dissco-cs/shared-types';
+
 export type Section = { heading: string | null; body: string };
+
+/**
+ * The language of the manual's attachment to show: the reader's language when the manual has an
+ * attachment in it, else Dutch.
+ * @param manual the project's manual
+ * @param language the reader's language (i18n.language)
+ */
+export function attachmentLang(manual: ManualDetailDto, language: string): SitePageLang {
+  return (manual.attachments?.[language as SitePageLang] ? language : 'nl') as SitePageLang;
+}
 
 // Splits the manual's markdown into accordion sections at every H2 (`## `) heading.
 // Content before the first heading (if any) becomes an unlabelled first section.

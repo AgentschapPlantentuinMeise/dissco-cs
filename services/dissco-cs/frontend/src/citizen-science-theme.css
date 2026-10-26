@@ -30,7 +30,7 @@
   background-color: #f8f9fa;
   color: #212529;
   min-height: 100vh;
-  padding-top: 70px;
+  padding-top: var(--cs-navbar-height);
 }
 
 /* Centered content container */
@@ -47,35 +47,37 @@
   max-width: clamp(1400px, 90vw, 1700px);
 }
 
-/* Auto-fill project card grid */
-.cs-projects-grid {
+/* Left padding that puts a full-width band's text on the same line as the content of a
+   .cs-container--wide below it: half of the space the container leaves free, plus its 15px padding.
+   Keep the clamp() equal to the one in .cs-container--wide. */
+.cs-header-start {
+  padding-left: calc(max(0px, (100vw - clamp(1400px, 90vw, 1700px)) / 2) + 15px);
+}
+
+/* Grid of project and institution cards: at least 340px a card, so 3 on a laptop and 4 on a wide
+   screen. Home and Projects count the columns (useGridColumnCount) to always fill whole rows. */
+.cs-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 30px;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 28px;
 }
 
-/* Same grid, lower minimum — for use where this grid shares its row with a sidebar (e.g. instituutpagina) */
-.cs-projects-grid--compact {
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+/* Home: a single row as a preview, so a few more (smaller) cards side by side -- 4 on a wide screen. */
+.cs-card-grid--dense {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 
-/* Fixed navbar */
+/* Fixed navbar. Its height is a variable because fixed overlays (Modal, PdfLightbox) start below it. */
+:root {
+  --cs-navbar-height: 64px;
+}
+
 .cs-navbar {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 70px;
   z-index: 200;
   background-color: #ffffff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-}
-
-@media (max-width: 768px) {
-  .cs-navbar {
-    height: auto;
-    min-height: 70px;
-  }
+  border-bottom: 1px solid #e5e7eb;
 }

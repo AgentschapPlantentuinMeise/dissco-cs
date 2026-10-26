@@ -4,9 +4,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { feedbackKeys } from '../../api/queries/feedback';
 import { feedbackApi } from '../../api/cs-client/feedback';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { IconButton } from '../../components/ui/IconButton';
 import { LuTrash2 } from 'react-icons/lu';
 import { FeedbackThreadDto } from '@dissco-cs/shared-types';
 import { FeedbackThreadDetail } from './FeedbackThreadDetail';
+import { rowHoverClass } from '../../components/ui/list-styles';
 
 // One feedback thread in the dashboard's feedback tab; click to open it, trash icon to delete it.
 export function FeedbackThreadRow({
@@ -39,7 +41,7 @@ export function FeedbackThreadRow({
   });
 
   return (
-    <li className="border-b border-gray-200 last:border-b-0 py-3">
+    <li className={`border-b border-gray-200 last:border-b-0 py-3 -mx-3 px-3 ${rowHoverClass}`}>
       <div className="flex items-start gap-2">
         <button onClick={onToggle} className="flex-1 min-w-0 text-left bg-transparent border-none cursor-pointer p-0">
           <div className="flex items-center justify-between gap-3">
@@ -53,14 +55,7 @@ export function FeedbackThreadRow({
           </div>
           <div className="text-xs text-gray-500 mt-0.5">{directionLabel}</div>
         </button>
-        <button
-          onClick={() => setConfirmingDelete(true)}
-          aria-label={t('dashboard_feedback_delete_label')}
-          title={t('dashboard_feedback_delete_label')}
-          className="flex-shrink-0 bg-transparent border-none text-gray-600 cursor-pointer hover:text-cs-primary transition-colors duration-200 p-1"
-        >
-          <LuTrash2 />
-        </button>
+        <IconButton icon={LuTrash2} label={t('dashboard_feedback_delete_label')} onClick={() => setConfirmingDelete(true)} className="flex-shrink-0" />
       </div>
       {isOpen && <FeedbackThreadDetail threadId={thread.id} />}
       {confirmingDelete && (

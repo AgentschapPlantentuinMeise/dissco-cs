@@ -99,7 +99,107 @@ const rules: ConventionRule[] = [
     allowedIn: {
       'components/manuals/PdfLightbox.tsx': 'round icon buttons (previous, next, close) on the dark lightbox',
       'components/ui/Modal.tsx': 'the round close icon of a modal',
+      'components/announcements/AnnouncementPin.tsx': 'the round megaphone icon in the navbar, tinted while there are new announcements',    },
+  },
+  {
+    name: 'A text field takes its look from inputClass, not a copy of it or a look of its own',
+    pattern: /py-\[9px\] px-3 border border-gray-300|border-gray-300 rounded(-[a-z]+)? p-/,
+    instead: "inputClass from components/ui/input-styles.ts (add classes after it, e.g. `${inputClass} w-full`)",
+    allowedIn: {
+      'components/ui/input-styles.ts': 'the one definition',
     },
+  },
+  {
+    name: 'A text that names the platform gets the site name',
+    // These translations contain {{platformName}}; a nav link's label can be one of them (nav_about).
+    pattern: /t\('(?:nav_about|my_tasks_percentage|dashboard_subtitle)'\)|t\(\w+\.labelKey\)/,
+    instead: "t(key, { platformName }) with platformName = useSiteName() (hooks/use-site-name.ts), so the site's own name from site management shows",
+  },
+  {
+    name: 'A management form sits in panelClass',
+    pattern: /border border-gray-200 rounded-\[10px\] p-6/,
+    instead: 'panelClass from components/ui/panel-styles.ts, or <ListWithPanel> for a form beside a list',
+  },
+  {
+    name: 'A save is confirmed with <SavedNotice>',
+    pattern: /t\('common_saved'\)/,
+    instead: '<SavedNotice /> (components/ui/SavedNotice.tsx) next to the Save button; in a list, useSavedFlash and savedRowClass on the saved row',
+    allowedIn: {
+      'components/ui/SavedNotice.tsx': 'the component itself',
+    },
+  },
+  {
+    name: 'A row opens its edit form with the pencil, not a text button',
+    pattern: />\s*\{t\('common_edit'\)\}/,
+    instead: '<IconButton icon={LuPencil} label={t(\'common_edit\')} />, the same in every list',
+  },
+  {
+    name: 'A list row lights up with rowHoverClass, not a hover colour of its own',
+    pattern: /hover:bg-gray-50\b/,
+    instead: 'rowHoverClass from components/ui/list-styles.ts, so every list row lights up the same way',
+  },
+  {
+    name: 'A row of tabs is <Tabs>',
+    pattern: /\btabBtnClass\b|role="tab"|aria-selected/,
+    instead: '<Tabs tabs selected onSelect /> (components/ui/Tabs.tsx), or <LanguageTabs> for the site languages',
+  },
+  {
+    name: 'A button that is only an icon is <IconButton>',
+    // Other classes may sit in between (a colour, a padding), so a copy with one extra class is caught too.
+    pattern: /bg-transparent border-none[^"'`]*cursor-pointer/,
+    instead: '<IconButton icon label onClick /> (components/ui/IconButton.tsx); <DeleteIconButton> to delete, <MoveButtons> to reorder; a text button is <Button variant="text">',
+    allowedIn: {
+      'components/ui/IconButton.tsx': 'the component itself',
+      'pages/auth/Register.tsx': 'a text button that looks like a link inside a sentence, not an icon',
+      'pages/user-dashboard/FeedbackThreadRow.tsx': 'the whole row of a feedback thread opens it, not an icon',
+      'pages/forum/ForumTopicCard.tsx': 'the reply count on the right of a topic opens it, not an icon',
+      'pages/review/ReviewTable.tsx': "the submitter's name in a cell filters the list on that person, not an icon",
+      'components/iiif/ImagePreviewPopup.tsx': 'a white close icon on the dark image viewer; IconButton is grey and teal, for light backgrounds',
+      'components/layout/Toast.tsx': 'a white close icon on the dark toast; IconButton is grey and teal, for light backgrounds',
+    },
+  },
+  {
+    name: 'A block that opens and closes is <Disclosure>',
+    pattern: /aria-expanded/,
+    instead: '<Disclosure title defaultOpen> (components/ui/Disclosure.tsx); Headless UI sets aria-expanded itself',
+    allowedIn: {
+      'components/ui/Disclosure.tsx': 'the component itself',
+      'pages/forum/ForumTopicCard.tsx': 'the forum page decides which topic is open (one at a time, also from a ?topic= link); a Disclosure keeps its own state',
+    },
+  },
+  {
+    name: 'The page title is a PageHeader',
+    pattern: /<h1\b/,
+    instead: '<PageHeader variant="split-banner" | "compact" | "plain" title ...> (components/layout/PageHeader.tsx)',
+    allowedIn: {
+      'components/layout/PageHeader.tsx': 'the component itself',
+      'components/layout/PageError.tsx': 'a full-page error screen with its own layout',
+      'components/ui/CsMarkdown.tsx': 'headings inside text written in page management',
+      'pages/honour-board/HonourBoard.tsx': 'the page is being hidden; its code is kept unchanged',
+    },
+  },
+  {
+    name: 'The content below a PageHeader is a PageSection or a PageBody',
+    // cs-main-wrapper has no CSS: it only wrapped the content of the old layout.
+    pattern: /cs-main-wrapper/,
+    instead: '<PageSection title tone> per part of a public or working page, <PageBody width> on a plain page (login, review, site management) -- CLAUDE.md §6',
+    allowedIn: { 'pages/honour-board/HonourBoard.tsx': 'the page is hidden; its code is kept unchanged' },
+  },
+  {
+    name: 'The Honour Board is a band at the bottom of the page, not a sidebar',
+    pattern: /HonourBoardSpotlight|HonourBoardPeriodCard/,
+    instead: '<HonourBoardBand board={useSiteHonourBoard()} /> (components/stats/HonourBoardBand.tsx), below the page content',
+    allowedIn: {
+      'components/stats/HonourBoardPeriodCard.tsx': 'the card itself, kept for the hidden /honour-board page',
+      'pages/honour-board/HonourBoard.tsx': 'the page is hidden; its code is kept unchanged',
+    },
+  },
+  {
+    name: 'Help on the annotate page opens beside the form, not in a modal',
+    // A modal covers the image and the form the volunteer is working on.
+    pattern: /<(Manual)?Modal\b/,
+    instead: 'a panel in AnnotateSidePanel, opened from AnnotateHelpBar (pages/annotate/); a confirmation is <ConfirmDialog>',
+    onlyIn: /^pages\/annotate\//,
   },
   {
     name: 'No refetch: after a write, invalidate',
@@ -127,7 +227,7 @@ const rules: ConventionRule[] = [
     instead: '<LanguageTabs selected onSelect isMissing /> (components/ui/LanguageTabs.tsx)',
     allowedIn: {
       'components/ui/LanguageTabs.tsx': 'the component itself',
-      'pages/site-management/project-management/ManualContentEditor.tsx': 'names the missing languages inside a message, not buttons',
+      'pages/site-management/project-management/ManualForm.tsx': 'names the missing languages inside a message, not buttons',
     },
   },
   {

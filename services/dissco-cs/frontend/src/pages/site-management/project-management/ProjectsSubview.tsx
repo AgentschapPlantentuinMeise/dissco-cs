@@ -6,12 +6,19 @@ import { manualKeys } from '../../../api/queries/manuals';
 import { institutionKeys } from '../../../api/queries/institutions';
 import { projectsApi } from '../../../api/cs-client/projects';
 import { SaveButton } from '../../../components/ui/SaveButton';
-import { Button } from '../../../components/ui/Button';
+import { CancelButton } from '../../../components/ui/CancelButton';
+import { ListWithPanel } from '../../../components/layout/ListWithPanel';
+import { IconButton } from '../../../components/ui/IconButton';
+import { LuPencil } from 'react-icons/lu';
 import { Select } from '../../../components/ui/Select';
 import { manualHasContent } from './manual-content';
 import { localeText } from '../../../utility/locale-text';
 import { siteLangText } from '../../../utility/site-lang-text';
 import { MadocProjectDto, InstitutionDto, ManualSummaryDto } from '@dissco-cs/shared-types';
+import { rowHoverClass, savedRowClass } from '../../../components/ui/list-styles';
+import { SavedNotice } from '../../../components/ui/SavedNotice';
+import { useSavedFlash } from '../../../hooks/use-saved-flash';
+import { filterFieldClass, inputClass } from '../../../components/ui/input-styles';
 
 export function ProjectsSubview({ projects, manuals, institutions, institutionLinks }: {
   projects: MadocProjectDto[];
@@ -65,19 +72,24 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
   const canSave = pickedInstitutionId !== '' && pickedManualId !== '';
 
   const queryClient = useQueryClient();
+  const { savedId: savedSlug, flash } = useSavedFlash<string>();
   const { mutate: saveLinks, isPending: saving } = useMutation({
     mutationFn: async ({ slug, institutionId, manualId }: { slug: string; institutionId: number; manualId: number }) => {
       await projectsApi.setInstitutionLink(slug, institutionId);
       await projectsApi.setManualLink(slug, manualId);
     },
-    onSuccess: (_result, { slug }) => {
+    onSuccess: async (_result, { slug }) => {
+      // The admin lists here plus the public project page (its institution and manual). The row
+      // closes only once they are refreshed, otherwise it shows the old values for a moment.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: projectKeys.institutionLinks() }),
+        queryClient.invalidateQueries({ queryKey: projectKeys.institution(slug) }),
+        queryClient.invalidateQueries({ queryKey: projectKeys.manual(slug) }),
+        queryClient.invalidateQueries({ queryKey: institutionKeys.all }),
+        queryClient.invalidateQueries({ queryKey: manualKeys.all }),
+      ]);
       setEditingSlug(null);
-      // The admin lists here plus the public project page (its institution and manual).
-      queryClient.invalidateQueries({ queryKey: projectKeys.institutionLinks() });
-      queryClient.invalidateQueries({ queryKey: projectKeys.institution(slug) });
-      queryClient.invalidateQueries({ queryKey: projectKeys.manual(slug) });
-      queryClient.invalidateQueries({ queryKey: institutionKeys.all });
-      return queryClient.invalidateQueries({ queryKey: manualKeys.all });
+      flash(slug);
     },
   });
 
@@ -90,6 +102,11 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
     <div>
       <p className="text-sm text-gray-500 mb-4">{t('sm_project_links_intro')}</p>
 
+      <ListWithPanel
+        panelKey={editingSlug}
+        onClose={() => setEditingSlug(null)}
+        panelTitle={editingProject && projectLabel(editingProject)}
+        list={
       <div className="bg-white border-t border-gray-200">
         <table className="w-full border-collapse">
           <thead>
@@ -100,7 +117,7 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder={t('sm_projects_search_placeholder')}
-                  className="w-full border border-gray-300 rounded-lg p-1.5 normal-case tracking-normal font-normal text-gray-700"
+                  className={filterFieldClass}
                 />
               </th>
               <th className="px-4 py-3 font-bold align-top">
@@ -108,7 +125,7 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
                 <Select
                   value={filterInstitutionId}
                   onChange={e => setFilterInstitutionId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg p-1.5 normal-case tracking-normal font-normal"
+                  className={filterFieldClass}
                 >
                   <option value="all">{t('sm_project_filter_institution_all')}</option>
                   <option value="none">{t('sm_project_filter_institution_none')}</option>
@@ -124,7 +141,7 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
                 <Select
                   value={filterManualId}
                   onChange={e => setFilterManualId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg p-1.5 normal-case tracking-normal font-normal"
+                  className={filterFieldClass}
                 >
                   <option value="all">{t('sm_project_filter_manual_all')}</option>
                   <option value="none">{t('sm_project_filter_manual_none')}</option>
@@ -144,83 +161,24 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
               const institution = institutions.find(inst => inst.id === institutionLinks[project.slug]);
               const isEditing = editingSlug === project.slug;
               return (
-                <tr key={project.slug} className={isEditing ? 'bg-gray-50' : undefined}>
+                <tr
+                  key={project.slug}
+                  className={`${rowHoverClass} ${isEditing ? 'bg-gray-50' : savedSlug === project.slug ? savedRowClass : ''}`}
+                >
                   <td className="px-4 py-3 border-t border-gray-100 align-top">
                     <b>{projectLabel(project)}</b>
                   </td>
                   <td className="px-4 py-3 border-t border-gray-100 text-sm text-gray-500 align-top">
-                    {isEditing ? (
-                      <Select
-                        value={pickedInstitutionId}
-                        onChange={e => setPickedInstitutionId(e.target.value ? Number(e.target.value) : '')}
-                        className="w-full border border-gray-300 rounded-lg p-2"
-                      >
-                        {pickedInstitutionId === '' && (
-                          <option value="" disabled>
-                            {t('sm_project_institution_placeholder')}
-                          </option>
-                        )}
-                        {institutions.map(inst => (
-                          <option key={inst.id} value={inst.id}>
-                            {siteLangText(inst.name, i18n.language, `#${inst.id}`)}
-                          </option>
-                        ))}
-                      </Select>
-                    ) : institution ? (
-                      siteLangText(institution.name, i18n.language, `#${institution.id}`)
-                    ) : (
-                      t('sm_manuals_chip_none')
-                    )}
+                    {institution ? siteLangText(institution.name, i18n.language, `#${institution.id}`) : t('sm_manuals_chip_none')}
                   </td>
                   <td className="px-4 py-3 border-t border-gray-100 text-sm text-gray-500 align-top">
-                    {isEditing ? (
-                      manuals.length === 0 ? (
-                        <p className="text-sm text-gray-500">{t('sm_manuals_none_available')}</p>
-                      ) : (
-                        <>
-                          <Select
-                            value={pickedManualId}
-                            onChange={e => setPickedManualId(e.target.value ? Number(e.target.value) : '')}
-                            className="w-full border border-gray-300 rounded-lg p-2"
-                          >
-                            {pickedManualId === '' && (
-                              <option value="" disabled>
-                                {t('sm_manuals_pick_placeholder')}
-                              </option>
-                            )}
-                            {manuals.map(manual => {
-                              const hasContent = manualHasContent(manual);
-                              return (
-                                <option key={manual.id} value={manual.id} disabled={!hasContent}>
-                                  {siteLangText(manual.title, i18n.language, `#${manual.id}`)}
-                                  {!hasContent
-                                    ? ` — ${t('sm_manuals_empty_note')}`
-                                    : manual.linkedProjectSlugs.length > 0
-                                      ? ` — ${t('sm_manuals_used_by_count', { count: manual.linkedProjectSlugs.length })}`
-                                      : ''}
-                                </option>
-                              );
-                            })}
-                          </Select>
-                          <p className="text-xs text-gray-500 mt-2">{t('sm_project_manual_edit_hint')}</p>
-                        </>
-                      )
-                    ) : linked ? (
-                      siteLangText(linked.title, i18n.language, `#${linked.id}`)
-                    ) : (
-                      t('sm_manuals_chip_none')
-                    )}
+                    {linked ? siteLangText(linked.title, i18n.language, `#${linked.id}`) : t('sm_manuals_chip_none')}
                   </td>
                   <td className="px-4 py-3 border-t border-gray-100 text-right whitespace-nowrap align-top">
-                    {isEditing ? (
-                      <div className="flex items-center justify-end gap-3">
-                        <SaveButton onClick={save} disabled={!canSave} loading={saving} />
-                      </div>
-                    ) : (
-                      <Button variant="text" size="sm" onClick={() => setEditingSlug(project.slug)}>
-                        {t('sm_manuals_edit')}
-                      </Button>
-                    )}
+                    <span className="inline-flex items-center gap-4">
+                      {savedSlug === project.slug && <SavedNotice />}
+                      <IconButton icon={LuPencil} label={t('common_edit')} onClick={() => setEditingSlug(project.slug)} />
+                    </span>
                   </td>
                 </tr>
               );
@@ -228,6 +186,67 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
           </tbody>
         </table>
       </div>
+        }
+        panel={editingProject ? (
+          <div className="flex flex-col gap-4">
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-gray-700">{t('sm_project_institution_label')}</span>
+              <Select
+                value={pickedInstitutionId}
+                onChange={e => setPickedInstitutionId(e.target.value ? Number(e.target.value) : '')}
+                className={`${inputClass} w-full`}
+              >
+                {pickedInstitutionId === '' && (
+                  <option value="" disabled>
+                    {t('sm_project_institution_placeholder')}
+                  </option>
+                )}
+                {institutions.map(inst => (
+                  <option key={inst.id} value={inst.id}>
+                    {siteLangText(inst.name, i18n.language, `#${inst.id}`)}
+                  </option>
+                ))}
+              </Select>
+            </label>
+            {manuals.length === 0 ? (
+              <p className="text-sm text-gray-500 m-0">{t('sm_manuals_none_available')}</p>
+            ) : (
+              <label className="flex flex-col gap-1">
+                <span className="text-sm font-medium text-gray-700">{t('sm_project_manual_label')}</span>
+                <Select
+                  value={pickedManualId}
+                  onChange={e => setPickedManualId(e.target.value ? Number(e.target.value) : '')}
+                  className={`${inputClass} w-full`}
+                >
+                  {pickedManualId === '' && (
+                    <option value="" disabled>
+                      {t('sm_manuals_pick_placeholder')}
+                    </option>
+                  )}
+                  {manuals.map(manual => {
+                    const hasContent = manualHasContent(manual);
+                    return (
+                      <option key={manual.id} value={manual.id} disabled={!hasContent}>
+                        {siteLangText(manual.title, i18n.language, `#${manual.id}`)}
+                        {!hasContent
+                          ? ` — ${t('sm_manuals_empty_note')}`
+                          : manual.linkedProjectSlugs.length > 0
+                            ? ` — ${t('sm_manuals_used_by_count', { count: manual.linkedProjectSlugs.length })}`
+                            : ''}
+                      </option>
+                    );
+                  })}
+                </Select>
+                <span className="text-xs text-gray-500">{t('sm_project_manual_edit_hint')}</span>
+              </label>
+            )}
+            <div className="flex items-center gap-3">
+              <SaveButton onClick={save} disabled={!canSave} loading={saving} />
+              <CancelButton onClick={() => setEditingSlug(null)} />
+            </div>
+          </div>
+        ) : null}
+      />
     </div>
   );
 }

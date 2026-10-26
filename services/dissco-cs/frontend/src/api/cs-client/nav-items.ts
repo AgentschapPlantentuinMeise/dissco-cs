@@ -32,15 +32,17 @@ export const navItemsApi = {
     csFetch<void>(urlPath`/nav-items/${key}`, { method: 'PATCH', body: JSON.stringify({ isActive }) }),
 
   /**
-   * Saves a page's text in one language.
+   * Saves a page's text and the intro in its header, in one language.
    * @param key a page with content: about, help, contact or welcome (NAV_ITEM_CONTENT_KEYS)
    * @param lang the language (SITE_PAGE_LANGS)
    * @param contentMd the text as Markdown; empty is allowed
+   * @param intro the short text under the title in the header, max MAX_NAV_ITEM_INTRO_LENGTH (200)
+   *   characters; empty is allowed. Validated by setNavItemContentSchema.
    * Who: site admin.
    * Returns: nothing (204); 404 when the key has no content.
    */
-  setContent: (key: NavItemKey, lang: SitePageLang, contentMd: string) =>
-    csFetch<void>(urlPath`/nav-items/${key}/content`, { method: 'PUT', body: JSON.stringify({ lang, contentMd }) }),
+  setContent: (key: NavItemKey, lang: SitePageLang, contentMd: string, intro: string) =>
+    csFetch<void>(urlPath`/nav-items/${key}/content`, { method: 'PUT', body: JSON.stringify({ lang, contentMd, intro }) }),
 
   /**
    * Sets the address the contact form mails to.
@@ -59,14 +61,4 @@ export const navItemsApi = {
    */
   setShowContactForm: (showContactForm: boolean) =>
     csFetch<void>('/nav-items/contact/show-form', { method: 'PUT', body: JSON.stringify({ showContactForm }) }),
-
-  /**
-   * Sets the order of the optional pages in the navbar.
-   * @param order every key of NAV_ITEM_KEYS exactly once, in the new order.
-   *   Validated by setNavItemsOrderSchema.
-   * Who: site admin.
-   * Returns: nothing (204).
-   */
-  setOrder: (order: NavItemKey[]) =>
-    csFetch<void>('/nav-items/order', { method: 'PUT', body: JSON.stringify({ order }) }),
 };

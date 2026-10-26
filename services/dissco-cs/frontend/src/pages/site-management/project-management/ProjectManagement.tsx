@@ -4,10 +4,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { projectKeys, projectQueries } from '../../../api/queries/projects';
 import { manualKeys, manualQueries } from '../../../api/queries/manuals';
 import { institutionQueries } from '../../../api/queries/institutions';
-import { HrefLink } from '../../../utility/href-link';
 import { CsPage } from '../../../components/layout/CsPage';
-import { LuArrowLeft } from 'react-icons/lu';
+import { PageHeader } from '../../../components/layout/PageHeader';
+import { PageBody } from '../../../components/layout/PageBody';
 import { projectsApi } from '../../../api/cs-client/projects';
+import { Tabs } from '../../../components/ui/Tabs';
 import { ProjectsSubview } from './ProjectsSubview';
 import { ManualsSubview } from './ManualsSubview';
 import { StuckTasksSubview } from './StuckTasksSubview';
@@ -71,71 +72,34 @@ export function ProjectManagement() {
 
   return (
     <CsPage>
-      <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container cs-container--wide">
-          <HrefLink href="/manage" className="inline-flex items-center gap-1 text-cs-primary no-underline font-medium hover:underline">
-            <LuArrowLeft aria-hidden="true" /> {t('sm_back_to_hub')}
-          </HrefLink>
+      <PageBody>
+        <PageHeader variant="plain" back={{ href: '/manage', label: t('sm_back_to_hub') }} title={t('sm_tile_projects_title')} />
 
-          <h1 className="text-4xl text-cs-primary mt-4 mb-8">{t('sm_tile_projects_title')}</h1>
+        <Tabs
+          selected={tab}
+          onSelect={setTab}
+          tabs={[
+            { key: 'projects', label: t('sm_manuals_tab_projects') },
+            { key: 'manuals', label: t('sm_manuals_tab_manuals') },
+            { key: 'stuck-tasks', label: t('sm_tile_stuck_tasks_title') },
+            { key: 'task-debug', label: 'Task status (debug)' },
+            { key: 'bulk-create', label: t('sm_manuals_tab_bulk') },
+          ]}
+        />
 
-          <div className="flex gap-5 border-b border-gray-200 mb-6">
-            <button
-              onClick={() => setTab('projects')}
-              className={`text-sm font-semibold pb-2.5 border-b-2 bg-transparent cursor-pointer ${
-                tab === 'projects' ? 'text-cs-primary border-cs-primary' : 'text-gray-500 border-transparent'
-              }`}
-            >
-              {t('sm_manuals_tab_projects')}
-            </button>
-            <button
-              onClick={() => setTab('manuals')}
-              className={`text-sm font-semibold pb-2.5 border-b-2 bg-transparent cursor-pointer ${
-                tab === 'manuals' ? 'text-cs-primary border-cs-primary' : 'text-gray-500 border-transparent'
-              }`}
-            >
-              {t('sm_manuals_tab_manuals')}
-            </button>
-            <button
-              onClick={() => setTab('stuck-tasks')}
-              className={`text-sm font-semibold pb-2.5 border-b-2 bg-transparent cursor-pointer ${
-                tab === 'stuck-tasks' ? 'text-cs-primary border-cs-primary' : 'text-gray-500 border-transparent'
-              }`}
-            >
-              {t('sm_tile_stuck_tasks_title')}
-            </button>
-            <button
-              onClick={() => setTab('task-debug')}
-              className={`text-sm font-semibold pb-2.5 border-b-2 bg-transparent cursor-pointer ${
-                tab === 'task-debug' ? 'text-cs-primary border-cs-primary' : 'text-gray-500 border-transparent'
-              }`}
-            >
-              Task status (debug)
-            </button>
-            <button
-              onClick={() => setTab('bulk-create')}
-              className={`text-sm font-semibold pb-2.5 border-b-2 bg-transparent cursor-pointer ${
-                tab === 'bulk-create' ? 'text-cs-primary border-cs-primary' : 'text-gray-500 border-transparent'
-              }`}
-            >
-              {t('sm_manuals_tab_bulk')}
-            </button>
-          </div>
-
-          {tab === 'projects' && (
-            <ProjectsSubview
-              projects={projects}
-              manuals={manuals}
-              institutions={institutions}
-              institutionLinks={institutionLinks}
-            />
-          )}
-          {tab === 'manuals' && <ManualsSubview projects={projects} manuals={manuals} />}
-          {tab === 'stuck-tasks' && <StuckTasksSubview />}
-          {tab === 'task-debug' && <TaskDebugSubview projects={projects} />}
-          {tab === 'bulk-create' && <BulkCreateProjectsSubview projects={projects} />}
-        </div>
-      </div>
+        {tab === 'projects' && (
+          <ProjectsSubview
+            projects={projects}
+            manuals={manuals}
+            institutions={institutions}
+            institutionLinks={institutionLinks}
+          />
+        )}
+        {tab === 'manuals' && <ManualsSubview projects={projects} manuals={manuals} />}
+        {tab === 'stuck-tasks' && <StuckTasksSubview />}
+        {tab === 'task-debug' && <TaskDebugSubview projects={projects} />}
+        {tab === 'bulk-create' && <BulkCreateProjectsSubview projects={projects} />}
+      </PageBody>
     </CsPage>
   );
 }

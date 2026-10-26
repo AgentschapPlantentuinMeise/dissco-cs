@@ -6,9 +6,29 @@ export type StatBannerItem = {
   note?: string;
 };
 
-function Divider({ className = '' }: { className?: string }) {
+// White on a teal header or StatBanner, or teal on a light page section.
+const ITEM_TONES = {
+  onDark: { divider: 'bg-white/25', value: '', label: 'text-[#e3f7f4]', note: 'text-[#bcebe6]' },
+  onLight: { divider: 'bg-gray-300', value: 'text-cs-primary', label: 'text-gray-600', note: 'text-gray-500' },
+};
+
+// The numbers themselves (big value, small uppercase label, hairline between them): inside a
+// StatBanner, a PageHeader band, or a light page section. The caller provides the flex row.
+export function StatItems({ stats, tone = 'onDark' }: { stats: StatBannerItem[]; tone?: keyof typeof ITEM_TONES }) {
+  const colors = ITEM_TONES[tone];
   return (
-    <div className={`w-px self-stretch bg-white/25 ${className}`} />
+    <>
+      {stats.map((stat, i) => (
+        <React.Fragment key={i}>
+          {i > 0 && <div className={`w-px self-stretch ${colors.divider}`} />}
+          <div className="flex flex-col">
+            <span className={`text-[1.9rem] font-bold leading-none tabular-nums ${colors.value}`}>{stat.value}</span>
+            <span className={`text-[0.68rem] uppercase tracking-[0.05em] mt-1.5 ${colors.label}`}>{stat.label}</span>
+            {stat.note && <span className={`text-[0.62rem] italic mt-0.5 ${colors.note}`}>{stat.note}</span>}
+          </div>
+        </React.Fragment>
+      ))}
+    </>
   );
 }
 
@@ -38,16 +58,7 @@ export function StatBanner({ stats, eyebrow, trailing, trailingDivider = false, 
         </div>
       )}
       <div className="flex items-center gap-9 flex-wrap max-[600px]:gap-6">
-        {stats.map((stat, i) => (
-          <React.Fragment key={i}>
-            {i > 0 && <Divider />}
-            <div className="flex flex-col">
-              <span className="text-[1.9rem] font-bold leading-none tabular-nums">{stat.value}</span>
-              <span className="text-[0.68rem] uppercase tracking-[0.05em] text-[#e3f7f4] mt-1.5">{stat.label}</span>
-              {stat.note && <span className="text-[0.62rem] text-[#bcebe6] italic mt-0.5">{stat.note}</span>}
-            </div>
-          </React.Fragment>
-        ))}
+        <StatItems stats={stats} />
         {trailing && !trailingDivider && (
           <div className="ml-auto max-[600px]:ml-0">{trailing}</div>
         )}

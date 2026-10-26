@@ -10,6 +10,8 @@ import { ManualsRepository } from '../repositories/manuals.repository.js';
 import { FeedbackRepository } from '../repositories/feedback.repository.js';
 import { NavItemsRepository } from '../repositories/nav-items.repository.js';
 import { SiteThemeRepository } from '../repositories/site-theme.repository.js';
+import { SiteImagesRepository } from '../repositories/site-images.repository.js';
+import { HomeStepsRepository } from '../repositories/home-steps.repository.js';
 
 // Our own Postgres database: one connection pool, shared by every repository created here.
 export class DisscoCSDatabase {
@@ -21,6 +23,8 @@ export class DisscoCSDatabase {
   readonly feedback: FeedbackRepository;
   readonly appLog: AppLogRepository;
   readonly siteTheme: SiteThemeRepository;
+  readonly siteImages: SiteImagesRepository;
+  readonly homeSteps: HomeStepsRepository;
 
   private readonly pool: Pool;
   private readonly schemaRef: string;
@@ -51,6 +55,8 @@ export class DisscoCSDatabase {
     this.feedback = new FeedbackRepository(this.pool, this.schemaRef);
     this.appLog = new AppLogRepository(this.pool, this.schemaRef);
     this.siteTheme = new SiteThemeRepository(this.pool, this.schemaRef);
+    this.siteImages = new SiteImagesRepository(this.pool, this.schemaRef);
+    this.homeSteps = new HomeStepsRepository(this.pool, this.schemaRef);
   }
 
   async close(): Promise<void> {

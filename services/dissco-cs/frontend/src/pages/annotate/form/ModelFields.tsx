@@ -1,11 +1,14 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { LuCircleHelp } from 'react-icons/lu';
 import { MadocModelFields, MadocNestedModelFields, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
 import { fieldRegistry } from './fields/registry';
 import { DocumentPath, pathsEqual } from '../../../utility/annotation-document';
 import { isDependentSatisfied, isEntityList, isRequired } from './capture-model-rules';
 import { Fieldset } from './Fieldset';
 import { SelectorControl, SelectorControls } from './SelectorControl';
+import { IconButton } from '../../../components/ui/IconButton';
+import { fieldHelpKey } from '../field-help';
 
 interface ModelFieldsProps {
   fields: MadocModelFields;
@@ -13,11 +16,13 @@ interface ModelFieldsProps {
   pathPrefix: DocumentPath;
   onChange: (path: DocumentPath, value: unknown) => void;
   selectorControls: SelectorControls;
+  // Opens the Uitleg panel at a field's help; a field with a description then gets a question mark.
+  onShowHelp?: (helpKey: string) => void;
 }
 
 // The inputs for a list of model fields. A nested entry (an entity) becomes a framed group that
 // renders its own fields again with this component, one level deeper in the document path.
-export function ModelFields({ fields, document, pathPrefix, onChange, selectorControls }: ModelFieldsProps) {
+export function ModelFields({ fields, document, pathPrefix, onChange, selectorControls, onShowHelp }: ModelFieldsProps) {
   const { t } = useTranslation('dissco-cs');
 
   return (
@@ -41,6 +46,7 @@ export function ModelFields({ fields, document, pathPrefix, onChange, selectorCo
                     pathPrefix={[...pathPrefix, term, idx]}
                     onChange={onChange}
                     selectorControls={selectorControls}
+                    onShowHelp={onShowHelp}
                   />
                 </div>
               ))}
@@ -55,10 +61,19 @@ export function ModelFields({ fields, document, pathPrefix, onChange, selectorCo
           const path = [...pathPrefix, term, idx];
           return (
             <div key={field.id ?? `${term}-${idx}`} className="mb-4">
-              <label className="block text-[0.85rem] font-medium text-gray-700 mb-1">
-                {field.label}
-                {isRequired(field.required) && <span className="text-red-500"> *</span>}
-              </label>
+              <div className="flex items-center gap-0.5 mb-1">
+                <label className="block text-[0.85rem] font-medium text-gray-700">
+                  {field.label}
+                  {isRequired(field.required) && <span className="text-red-500"> *</span>}
+                </label>
+                {onShowHelp && field.description?.trim() && (
+                  <IconButton
+                    icon={LuCircleHelp}
+                    label={t('annotate_field_help_label', { label: field.label })}
+                    onClick={() => onShowHelp(fieldHelpKey(path))}
+                  />
+                )}
+              </div>
               {FieldComponent ? (
                 <FieldComponent field={field} path={path} onChange={onChange} />
               ) : (

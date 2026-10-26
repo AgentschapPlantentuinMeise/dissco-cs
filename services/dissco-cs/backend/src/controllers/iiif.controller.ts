@@ -13,7 +13,7 @@ import {
 } from '../madoc-client/client.js';
 import { collectAllPages } from '../madoc-client/pagination.js';
 import { safeSegment, validateParams } from '../infrastructure/validate-params.js';
-import { MadocCollectionSummaryDto, MadocPagination } from '@dissco-cs/shared-types';
+import { MadocCollectionSummaryDto, MadocManifestMetadataDto, MadocMetadataItemDto, MadocPagination } from '@dissco-cs/shared-types';
 
 // Only the IIIF descriptions (JSON) go through here. The images themselves do not: the viewer
 // loads them directly from the image server.
@@ -40,6 +40,32 @@ export function iiifController(): Hono {
     }
 
     return relayMadocResponse(await madocFetch(path, requestBearerToken(c)));
+  });
+
+  // Madoc's site manifest also carries a page of canvases and task statuses; only the descriptive
+  // part goes to the browser.
+  app.get('/manifests/:manifestId/metadata', validateParams({ manifestId: safeSegment }), async c => {
+    const { manifestId } = c.req.valid('param');
+    const path = publicSitePath(c, `/manifests/${manifestId}`);
+    if (!path) {
+      return c.json({ error: 'Invalid slug' }, 400);
+    }
+
+    try {
+      const { manifest } = await madocJson<{ manifest: Omit<MadocManifestMetadataDto, 'metadata'> & { metadata?: MadocMetadataItemDto[] } }>(
+        path,
+        requestBearerToken(c)
+      );
+      const metadata: MadocManifestMetadataDto = {
+        label: manifest.label,
+        summary: manifest.summary,
+        metadata: manifest.metadata ?? [],
+        requiredStatement: manifest.requiredStatement,
+      };
+      return c.json(metadata);
+    } catch (err) {
+      return madocErrorResponse(err);
+    }
   });
 
   // ---- admin (gated Madoc API, forwarded as the admin) ----

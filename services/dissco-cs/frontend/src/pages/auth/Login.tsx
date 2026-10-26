@@ -3,11 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/layout/CsPage';
+import { PageHeader } from '../../components/layout/PageHeader';
+import { PageBody } from '../../components/layout/PageBody';
 import { TermsModal } from '../../components/auth/TermsModal';
 import { HrefLink } from '../../utility/href-link';
 import { login, getTerms, acceptTerms } from '../../api/madoc-auth/auth';
 import { MadocSiteTermsDto } from '@dissco-cs/shared-types';
 import { clearJwt } from '../../api/jwt';
+import { inputClass } from '../../components/ui/input-styles';
 
 export function Login() {
   const { t } = useTranslation('dissco-cs');
@@ -74,61 +77,62 @@ export function Login() {
 
   return (
     <CsPage>
-      <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container max-w-md">
-          <header className="mb-8">
-            <h1 className="text-4xl text-cs-primary mb-3">{t('login_title')}</h1>
-            <p className="text-lg text-gray-600">
+      <PageBody width="narrow">
+        <PageHeader
+          variant="plain"
+          title={t('login_title')}
+          lead={
+            <>
               {t('login_no_account')}{' '}
               <HrefLink href="/register" className="text-cs-primary">
                 {t('login_register_link')}
               </HrefLink>
-            </p>
-          </header>
+            </>
+          }
+        />
 
-          {sessionExpired && (
-            <p className="mb-4 text-sm text-gray-600 bg-gray-100 rounded-lg p-3">{t('login_session_expired')}</p>
-          )}
+        {sessionExpired && (
+          <p className="mb-4 text-sm text-gray-600 bg-gray-100 rounded-lg p-3">{t('login_session_expired')}</p>
+        )}
 
-          <form onSubmit={submit} className="flex flex-col gap-4">
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-gray-700">{t('login_form_email')}</span>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="border border-gray-300 rounded-lg p-2"
-              />
-            </label>
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-gray-700">{t('login_form_email')}</span>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className={inputClass}
+            />
+          </label>
 
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-gray-700">{t('login_form_password')}</span>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="border border-gray-300 rounded-lg p-2"
-              />
-            </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-gray-700">{t('login_form_password')}</span>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className={inputClass}
+            />
+          </label>
 
-            {status === 'error' && <p className="text-red-700">{error}</p>}
+          {status === 'error' && <p className="text-red-700">{error}</p>}
 
-            <div className="flex items-center justify-between mt-2">
-              <HrefLink href="/forgot-password" className="text-sm text-gray-600 hover:text-cs-primary">
-                {t('login_forgot_password_link')}
-              </HrefLink>
-              <Button
-                type="submit"
-                disabled={status === 'sending' || !!pendingTerms}
-              >
-                {t('login_form_submit')}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
+          <div className="flex items-center justify-between mt-2">
+            <HrefLink href="/forgot-password" className="text-sm text-gray-600 hover:text-cs-primary">
+              {t('login_forgot_password_link')}
+            </HrefLink>
+            <Button
+              type="submit"
+              disabled={status === 'sending' || !!pendingTerms}
+            >
+              {t('login_form_submit')}
+            </Button>
+          </div>
+        </form>
+      </PageBody>
 
       {pendingTerms && (
         <TermsModal

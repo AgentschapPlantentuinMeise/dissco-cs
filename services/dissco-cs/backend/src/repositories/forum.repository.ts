@@ -1,3 +1,4 @@
+import { fromBigint } from '../database/bigint.js';
 import { Pool } from 'pg';
 import { ForumReplyDto, ForumTopicDto } from '@dissco-cs/shared-types';
 
@@ -231,7 +232,7 @@ export class ForumRepository {
 
 export function toForumTopicDto(topic: ForumTopicWithReplyCount): ForumTopicDto {
   return {
-    id: topic.id,
+    id: fromBigint(topic.id),
     authorUserId: topic.author_user_id,
     authorName: topic.author_name,
     title: topic.title,
@@ -249,8 +250,8 @@ export function toForumTopicDto(topic: ForumTopicWithReplyCount): ForumTopicDto 
 
 export function toForumReplyDto(row: ForumReplyRow): ForumReplyDto {
   return {
-    id: row.id,
-    topicId: row.topic_id,
+    id: fromBigint(row.id),
+    topicId: fromBigint(row.topic_id),
     authorUserId: row.author_user_id,
     authorName: row.author_name,
     body: row.body,

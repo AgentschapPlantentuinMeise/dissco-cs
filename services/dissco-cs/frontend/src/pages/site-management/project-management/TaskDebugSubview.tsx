@@ -6,6 +6,8 @@ import { Select } from '../../../components/ui/Select';
 import { useAutoSelectFirstSlug } from './use-auto-select-first-slug';
 import { localeText } from '../../../utility/locale-text';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
+import { rowHoverClass } from '../../../components/ui/list-styles';
+import { inputClass } from '../../../components/ui/input-styles';
 
 function taskDebugStatusLabel(status: number): string {
   switch (status) {
@@ -47,7 +49,7 @@ export function TaskDebugSubview({ projects }: { projects: MadocProjectDto[] }) 
         <Select
           value={selectedSlug}
           onChange={e => setSelectedSlug(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg p-2"
+          className={`${inputClass} w-full`}
         >
           {projects.map(project => (
             <option key={project.slug} value={project.slug}>
@@ -77,7 +79,7 @@ export function TaskDebugSubview({ projects }: { projects: MadocProjectDto[] }) 
               </thead>
               <tbody>
                 {data.manifests.map(manifest => (
-                  <tr key={manifest.manifestId} className={manifest.countsAsTranscribed ? 'bg-green-50' : ''}>
+                  <tr key={manifest.manifestId} className={`${rowHoverClass} ${manifest.countsAsTranscribed ? 'bg-green-50' : ''}`}>
                     <td className="px-4 py-3 border-t border-gray-100">
                       {localeText(manifest.label, i18n.language) || `#${manifest.manifestId}`}
                       <span className="text-xs text-gray-400 ml-1">#{manifest.manifestId}</span>

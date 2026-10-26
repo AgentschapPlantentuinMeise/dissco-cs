@@ -69,6 +69,7 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         contact_email TEXT,
         sort_order INTEGER NOT NULL DEFAULT 0,
         show_contact_form BOOLEAN NOT NULL DEFAULT FALSE,
+        intro JSONB NOT NULL DEFAULT '{}'::jsonb,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         PRIMARY KEY (site_id, page_key)
       )
@@ -238,15 +239,42 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
       ON ${schemaRef}.feedback_messages (thread_id, created_at ASC)
     `);
 
-    // One row per site that set its own palette; no row = the frontend's default colors.
+    // One row per site that set its own palette or name. NULL colors = the frontend's default
+    // colors; a NULL site_name = the platform's name from the frontend's config.
     await client.query(`
       CREATE TABLE IF NOT EXISTS ${schemaRef}.site_theme (
         site_id INTEGER PRIMARY KEY,
-        primary_color TEXT NOT NULL,
-        secondary_color TEXT NOT NULL,
-        accent_color TEXT NOT NULL,
-        dark_color TEXT NOT NULL,
-        tertiary_color TEXT NOT NULL,
+        primary_color TEXT,
+        secondary_color TEXT,
+        accent_color TEXT,
+        dark_color TEXT,
+        tertiary_color TEXT,
+        site_name TEXT,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    // The images a site admin sets in page management (SITE_IMAGE_KEYS): the navbar logo and the
+    // photo in a page's header. Kept here instead of in nav_items: that list loads on every page,
+    // and every visitor would download every image with it.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS ${schemaRef}.site_images (
+        site_id INTEGER NOT NULL,
+        image_key TEXT NOT NULL,
+        mime_type TEXT NOT NULL,
+        file_size INTEGER NOT NULL,
+        file_data BYTEA NOT NULL,
+        credit TEXT,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (site_id, image_key)
+      )
+    `);
+
+    // "How it works" on Home: one list per site, saved as a whole (HomeStepDto[] as JSON).
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS ${schemaRef}.home_steps (
+        site_id INTEGER PRIMARY KEY,
+        steps JSONB NOT NULL DEFAULT '[]'::jsonb,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);

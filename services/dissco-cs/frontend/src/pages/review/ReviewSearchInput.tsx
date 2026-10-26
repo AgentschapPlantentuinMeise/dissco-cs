@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { LuX } from 'react-icons/lu';
+import { IconButton } from '../../components/ui/IconButton';
+import { inputClass } from '../../components/ui/input-styles';
 
 interface ReviewSearchInputProps {
   value: string;
@@ -14,17 +16,10 @@ export function ReviewSearchInput({ value, onChange }: ReviewSearchInputProps) {
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={t('review_search_placeholder')}
-        className="w-full border border-gray-300 rounded-lg p-2 pr-8"
+        className={`${inputClass} w-full pr-8`}
       />
       {value && (
-        <button
-          type="button"
-          onClick={() => onChange('')}
-          aria-label={t('common_close')}
-          className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none text-gray-400 hover:text-cs-primary cursor-pointer p-1"
-        >
-          <LuX />
-        </button>
+        <IconButton icon={LuX} label={t('common_close')} onClick={() => onChange('')} className="absolute right-2 top-1/2 -translate-y-1/2" />
       )}
     </div>
   );

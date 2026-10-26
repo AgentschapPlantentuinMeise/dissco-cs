@@ -1,3 +1,4 @@
+import { fromBigint } from '../database/bigint.js';
 import { Pool } from 'pg';
 import { InstitutionDto, InstitutionInput, SitePageLang, firstFilledLang, slugify } from '@dissco-cs/shared-types';
 
@@ -156,7 +157,7 @@ export class InstitutionsRepository {
 
     const links: Record<string, number> = {};
     for (const row of result.rows) {
-      links[row.project_slug] = row.institution_id;
+      links[row.project_slug] = fromBigint(row.institution_id);
     }
 
     return links;
@@ -227,7 +228,7 @@ export class InstitutionsRepository {
 
 export function toInstitutionDto(row: InstitutionRow): InstitutionDto {
   return {
-    id: row.id,
+    id: fromBigint(row.id),
     slug: row.slug,
     name: row.name,
     description: row.description,

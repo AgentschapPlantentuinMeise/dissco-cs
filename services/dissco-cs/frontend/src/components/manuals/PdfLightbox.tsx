@@ -74,10 +74,10 @@ export function PdfLightbox({ pages, totalPages, index, onIndexChange, onClose }
     // fixed elements that could intercept each other's clicks).
     <div
       ref={scrollContainerRef}
-      // top-[70px]: keeps the fixed site navbar (.cs-navbar, 70px high) visible above the lightbox
+      // top-navbar: keeps the fixed site navbar (.cs-navbar) visible above the lightbox
       // instead of covering it -- so the z-index only has to beat the base Modal (z-50), not the
       // navbar (z-200).
-      className="fixed inset-x-0 bottom-0 top-[70px] z-[60] overflow-auto bg-black/90"
+      className="fixed inset-x-0 bottom-0 top-navbar z-[60] overflow-auto bg-black/90"
       onClick={onClose}
     >
       <div

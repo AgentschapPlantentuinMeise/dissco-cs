@@ -4,13 +4,13 @@ inclusion: manual
 
 # Productanalyse — dissco-cs (DoeDat)
 
-> Gegenereerd op basis van de broncode. Beschrijft wat de applicatie functioneel doet, afgeleid uitsluitend van de code.
+> Gegenereerd op basis van de broncode. Beschrijft wat de applicatie functioneel doet.
 
 ---
 
 ## Wat is dit?
 
-**DoeDat** is een citizen science-platform gebouwd door Plantentuin Meise. Het stelt vrijwilligers in staat om wetenschappelijke collectierecords te transcriberen — primair via IIIF-manifests (digitale afbeeldingen van botanische objecten). Het platform is gebouwd als een uitbreidingslaag bovenop **Madoc**, een bestaand IIIF-annotatie- en taakbeheersysteem. DoeDat levert de aanvullende functionaliteit die Madoc niet biedt: communityfeatures, statistieken, beheer en platformbranding.
+**DoeDat** is een citizen science-platform gebouwd door Plantentuin Meise. Het stelt vrijwilligers in staat om wetenschappelijke collectierecords te transcriberen — primair via IIIF-manifests (digitale afbeeldingen van botanische objecten). Het platform is een uitbreidingslaag bovenop **Madoc**, een bestaand IIIF-annotatie- en taakbeheersysteem. DoeDat levert de communityfeatures, statistieken, brandingconfiguratie en beheerfunctionaliteit die Madoc niet biedt.
 
 De applicatie is meertalig (NL, EN, FR, DE) en wordt per Madoc-site-instantie gedeployed.
 
@@ -33,20 +33,18 @@ DiSSCo CS backend
                                     user JWT voor gebruikersacties)
 ```
 
-De frontend van DoeDat wordt in productie als statische bestanden meegebundeld in de Docker-container van de backend en geserveerd onder `/cs-assets/*`. De SPA zelf wordt geserveerd op `/s/{slug}/*`, hetzelfde pad-prefix als Madoc.
-
 ---
 
 ## Gebruikersrollen
 
-| Rol              | Toegang                                                                      |
-|------------------|------------------------------------------------------------------------------|
+| Rol              | Toegang                                                                       |
+|------------------|-------------------------------------------------------------------------------|
 | **Bezoeker**     | Homepage, projectenlijst, projectdetail, instellingen, statistieken, honour board |
 | **Vrijwilliger** | Alles van bezoeker + annoteren, eigen dashboard, forum, review-feedback lezen |
-| **Reviewer**     | Alles van vrijwilliger + reviewtaken-overzicht, feedback sturen naar vrijwilligers |
-| **Admin**        | Alles + volledig sitebeheer (zie beheerportaal)                              |
+| **Reviewer**     | Alles van vrijwilliger + reviewtaken-overzicht, feedback sturen               |
+| **Admin**        | Alles + volledig sitebeheer                                                   |
 
-Authenticatie en gebruikersbeheer worden volledig gedelegeerd aan Madoc. Rollen worden gelezen uit het JWT-token (`site.admin` scope) of via een Madoc-gateway-call (`getMadocSiteUserRole`).
+Authenticatie en gebruikersbeheer worden volledig gedelegeerd aan Madoc. Rollen komen uit het JWT-token (`site.admin` scope) of via een Madoc-gateway-call (`getMadocSiteUserRole`).
 
 ---
 
@@ -54,112 +52,100 @@ Authenticatie en gebruikersbeheer worden volledig gedelegeerd aan Madoc. Rollen 
 
 ### 1. Annoteren van IIIF-manifests
 Vrijwilligers openen een manifest en vullen een gestructureerd annotatieformulier in. De annotatieinterface bestaat uit:
-- een **OpenSeadragon-viewer** voor het bekijken van de afbeelding (IIIF Image API)
-- ondersteuning voor **PDF-manifests** via pdfjs-dist
-- een **CaptureModelForm** op basis van Madoc's capture model — ondersteunde veldtypes: tekst (enkelvoudig en meerregelig), dropdown, checkboxlijst en autocomplete (externe databron)
+- een **OpenSeadragon-viewer** (IIIF Image API, met tile-level zoom)
+- **PDF-ondersteuning** via pdfjs-dist
+- een **CaptureModelForm** op basis van Madoc's capture model, met veldtypes: tekst (enkelvoudig en meerregelig), dropdown, checkboxlijst en autocomplete (externe databron via `dataSource`-URL)
 
-De annotatie-lifecycle (claim aanmaken, herzien, indienen, intrekken) wordt volledig via de Madoc-gateway afgehandeld. De CS-backend levert één aanvullend eindpunt: het herberekenen van de manifest-teller na een abandon (`POST /:projectId/manifests/:manifestId/resync-claim`), dat een bekende Madoc-bug verhelpt waarbij manifests permanent geblokkeerd bleven bij `maxContributors:1`.
+De annotatie-lifecycle (claim aanmaken, herzien, indienen, intrekken) gaat via de Madoc-gateway. De CS-backend levert één aanvullend eindpunt: herberekening van de manifest-teller na een abandon (`resync-claim`), als correctie op een Madoc-bug waarbij manifests bij `maxContributors:1` permanent geblokkeerd bleven.
 
 ### 2. Projectenoverzicht en voortgang
-- De **projectenlijst** (`/explore`) toont actieve en gepubliceerde projecten. Projecten worden opgehaald via de Madoc-gateway en doorgegeven door de CS-backend.
-- Elke **projectdetailpagina** toont voortgangsstatistieken berekend door de CS-backend: percentage getranscribeerd, totale en beschikbare manifests, per-manifest beschikbaarheid op basis van contributor-limieten en inzendingsstatus.
-- De voortgangsberekening houdt rekening met twee redenen waarom een manifest niet meer beschikbaar is: (1) al ingediend/geaccepteerd, (2) contributor-maximum bereikt.
+- De **projectenlijst** (`/explore`) toont gepubliceerde projecten, opgehaald via de Madoc-gateway en doorgegeven door de CS-backend.
+- Elke **projectdetailpagina** toont voortgangsstatistieken: percentage getranscribeerd, per-manifest beschikbaarheid op basis van contributor-limieten en inzendingsstatus, en thumbnails per manifest.
+- De voortgangsberekening houdt rekening met `claimGranularity` (canvas vs. manifest) en `contributionMode` (transcription vs. default).
 
 ### 3. Instellingen (institutions)
-- Overzichtspagina (`/institutions`) en detailpagina per instelling.
-- Elke instelling heeft: meertalige naam en beschrijving, contactgegevens (e-mail, telefoon, website), logo (opgeslagen als data-URI in de database) en een koppeling aan één of meer Madoc-projecten.
+- Overzichtspagina en detailpagina per instelling.
+- Elke instelling heeft: meertalige naam en beschrijving, contactgegevens, logo (data-URI, max 3 MB), en een koppeling aan één of meer Madoc-projecten.
 - Per instelling zijn aparte statistieken en een eigen honour board beschikbaar.
 
-### 4. Statistieken (sitebreed en per instelling)
-Een banner op meerdere pagina's toont live:
-- **Aantal actieve vrijwilligers** — telt actieve, niet-geautomatiseerde gebruikers met een sitepermissie (`madoc_ts.user` + `site_permission`)
-- **Aantal voltooide taken** — telt unieke (root_task, subject)-combinaties met status 2 of 3 (`tasks_api.tasks`)
-- **Totaal aantal taken** — telt manifests via Madoc's `iiif_derived_resource_items`
+### 4. Site-themabeheer
+Admins kunnen de **brandingkleuren** (vijf CSS-variabelen: primary, secondary, accent, dark, tertiary) en de **sitenaam** instellen via het beheerportaal. Lege waarden zetten de defaults van het platform terug. De kleuren worden opgeslagen als `#rrggbb`-strings en direct als CSS-variabelen door de frontend toegepast.
 
-Per instelling telt "vrijwilligers" anders: elke distinct assignee met minstens één voltooide taak op die instelling's projecten — een bewuste keuze gedocumenteerd in `stats.repository.ts`.
+### 5. Site-afbeeldingen
+Admins kunnen vaste afbeeldingen instellen per sleutel (hero, logo, enz.). Elke afbeelding wordt opgeslagen als data-URI in de database.
+
+### 6. Statistieken (sitebreed en per instelling)
+Een banner toont live:
+- **Aantal actieve vrijwilligers** — actieve, niet-geautomatiseerde gebruikers met sitepermissie (`madoc_ts`)
+- **Aantal voltooide taken** — unieke (root_task, subject)-combinaties met status 2 of 3 (`tasks_api`)
+- **Totaal aantal taken** — manifests via Madoc's `iiif_derived_resource_items`
+
+Per instelling telt "vrijwilligers" anders: distinct assignees met minstens één voltooide taak op die instelling's projecten — een bewuste keuze.
 
 Alle statistieken worden gecached met stale-while-revalidate. Polling-endpoints (`/current`) lezen uitsluitend de cache zonder een recompute te triggeren.
 
-### 5. Honour Board (leaderboard)
-Top-3 vrijwilligers en de rangschikking van de ingelogde gebruiker, uitgesplitst in vier periodes: **vandaag**, **deze week** (ma–zo), **deze maand**, **legende** (all-time).
+### 7. Honour Board (leaderboard)
+Top-3 vrijwilligers en de rangschikking van de ingelogde gebruiker, in vier periodes: **vandaag**, **deze week** (ma–zo), **deze maand**, **legende** (all-time).
 
-De telling vermijdt een subtiel periodiseringsprobleem: een reviewer die een oude inzending goedkeurt, zou anders de `modified_at`-timestamp van de taak in de huidige periode plaatsen en de bijdrage aan de verkeerde vrijwilliger toeschrijven. Status-3-taken worden daarom geteld op `created_at`, status-2-taken op `modified_at`.
+Status-3-taken (goedgekeurd) worden geteld op `created_at` (om mis-attributie door late reviewgoed­keuring te voorkomen); status-2-taken op `modified_at`. Beschikbaar sitebreed en per instelling. Gecached per scope+periode.
 
-Beschikbaar zowel sitebreed als per instelling (gefilterd op de `root_task`-IDs van die instelling's projecten). Gecached per scope+periode.
+### 8. Navigatie-items en paginabeheer
+Pagina's (About, Help, Instellingen, Contact, Forum, Welcome) zijn instelbaar per site:
+- **activeren/deactiveren** — deactieve pagina's verdwijnen uit de navigatie
+- **meertalige inhoud** (Markdown per taal, JSONB)
+- **volgorde** (drag-and-drop in beheerportaal)
+- **contactformulier** — apart in/uitschakelbaar met eigen e-mailadres
 
-### 6. Navigatie-items en paginabeheer
-Pagina's zoals "Over", "Help", "Instellingen", "Contact" en "Forum" zijn instelbaar per Madoc-site:
-- **activeren/deactiveren** — deactieve pagina's verdwijnen uit de navigatie en geven een redirect naar `/`
-- **meertalige inhoud** — Markdown per taal (NL/EN/FR/DE), opgeslagen als JSONB
-- **volgorde** — via drag-and-drop in het beheerportaal
-- **contactformulier** — apart in/uitschakelbaar, eigen e-mailadres
+### 9. "How it works" stappen op de homepage
+Admins kunnen tot vier meertalige uitlegstapjes instellen die op de homepage worden getoond. Een lege lijst verbergt de sectie. Elke stap heeft een titel (max 80 tekens) en een omschrijving (max 300 tekens) per taal.
 
-`use-nav-items` in de frontend en `PageGate` zorgen voor fail-open gedrag: bij een laadstoring zijn alle pagina's zichtbaar.
-
-### 7. Forum (berichtenbord)
-Geauthenticeerde gebruikers kunnen discussietopics aanmaken en beantwoorden (`/forum`). Features:
-- Topics aanmaken met optionele koppeling aan een project (slug + label) en taak-URL
+### 10. Forum (berichtenbord)
+Geauthenticeerde gebruikers (`/forum`):
+- Topics aanmaken, optioneel gekoppeld aan een project
 - Replies plaatsen
-- Ongelezen-indicatie per topic (bijgehouden in `forum_read_state`)
+- Ongelezen-indicatie per topic (`forum_read_state`)
 - Topics en replies sluiten of verwijderen (door auteur of admin)
-- Topics kunnen worden gesloten zodat nieuwe replies geblokkeerd worden
 
-### 8. Reviewtaken-overzicht
-Reviewers en admins (`/review`) zien een overzicht van alle crowdsourcing-taken die ter beoordeling staan, samengesteld door de CS-backend uit de Madoc-gateway. Per taak zijn zichtbaar: project, subject (manifest), indiener en reviewer. Reviewers kunnen de annotatieinhoud inline uitklappen voor beoordeling. Goedkeuren/afwijzen verloopt via Madoc's eigen crowdsourcing-taakroute (bewust niet de generieke tasks-API PATCH).
+### 11. Reviewtaken-overzicht
+Reviewers en admins (`/review`) zien alle crowdsourcing-taken ter beoordeling. Reviewers kunnen annotatieinhoud inline uitklappen. Goedkeuren/afwijzen gaat via Madoc's eigen crowdsourcing-taakroute.
 
-### 9. Review-feedback (privéberichten)
-Na een review kan een reviewer privé feedback sturen naar de vrijwilliger (`/feedback/threads`). Features:
-- Reviewer maakt een thread aan met onderwerp en eerste bericht
-- Beide partijen kunnen antwoorden
-- Threads kunnen worden verborgen door zowel reviewer als ontvanger (soft delete per partij)
-- Ongelezen-teller per thread, bijgewerkt bij elke weergave
+### 12. Review-feedback (privéberichten)
+Reviewers sturen privé feedback naar vrijwilligers (`/feedback/threads`). Beide partijen kunnen antwoorden. Threads zijn per partij verbergbaar (soft delete); als beide partijen verbergen volgt een echte DELETE.
 
-### 10. Aankondigingen
-Admins maken meertalige aankondigingen die zichtbaar zijn op:
-- de homepage (target `homepage`)
-- de projectenlijst (target `projects`)
-- een specifieke projectpagina (target `project` + `targetProjectSlug`)
+### 13. Aankondigingen
+Meertalige banners, zichtbaar sitebreed, op de projectenlijst of op een specifiek project. Optionele start- en einddatum (kruisgevalideerd in Zod-schema). Datum-only einddatums worden omgezet naar `23:59:59.999`.
 
-Aankondigingen hebben een optionele start- en einddatum. Start/einde worden cross-gevalideerd in het Zod-schema. Datum-only einddatums worden automatisch omgezet naar `23:59:59.999` van die dag.
+### 14. Contactformulier
+Stuurt e-mail naar het geconfigureerde adres. Beveiligd met een honeypot-veld (`website`) en een in-memory rate limiter (5 per 10 minuten per IP per site).
 
-### 11. Contactformulier
-Een contactformulier (`/contact`) stuurt een e-mail naar het geconfigureerde adres. Beveiligd met een honeypot-veld en een in-memory sliding-window rate limiter (5 pogingen per 10 minuten per IP per site). Het contactadres en het tonen van het formulier zijn instelbaar via de nav-item-instellingen.
+### 15. Projecthandleidingen
+Admins koppelen per project een handleiding. Een handleiding heeft meertalige titel (max 200 tekens) en inhoud (Markdown, max 200.000 tekens), plus optionele bestandsbijlagen per taal (BYTEA in DB, max 8 MB). Vrijwilligers zien de handleiding als modal op de projectpagina.
 
-### 12. Projecthandleidingen
-Admins koppelen per project een handleiding (`/manuals`). Een handleiding heeft:
-- meertalige titel en inhoud (Markdown, max 200.000 tekens)
-- optionele bestandsbijlage per taal (opgeslagen als BYTEA, max 8 MB)
+### 16. Gebruikersdashboard
+Ingelogde vrijwilligers (`/my-dashboard`) zien hun eigen actieve en voltooide taken, onbeantwoorde forumtopics, en ontvangen review-feedback-threads. Taken kunnen direct worden losgelaten (abandon) vanuit het dashboard.
 
-Vrijwilligers zien de handleiding als modal op de projectpagina. Bijlagen zijn downloadbaar als bestand (Content-Disposition: attachment).
+### 17. Beheerportaal (`/manage`)
 
-### 13. Gebruikersdashboard
-Ingelogde vrijwilligers (`/my-dashboard`) zien:
-- hun eigen actieve taken (alle pagina's opgehaald via Madoc-gateway, gebundeld aan de client)
-- voltooide taken
-- onbeantwoorde forumtopics (max 3, voor community-betrokkenheid)
-- ontvangen review-feedback-threads
-- kunnen taken loslaten (abandon) direct vanuit het dashboard
+| Subpagina                 | Functie                                                                        |
+|---------------------------|--------------------------------------------------------------------------------|
+| `/manage`                 | Dashboard met alle beheergebieden                                              |
+| `/manage/projects`        | Handleiding- en instellingskoppelingen, bulk aanmaken, stuck tasks, task-debug |
+| `/manage/announcements`   | Aankondigingen aanmaken, bewerken, verwijderen                                 |
+| `/manage/users`           | Gebruikersoverzicht via Madoc-gateway                                          |
+| `/manage/pages`           | Nav-items activeren, inhoud bewerken, volgorde instellen, homepage-stappen     |
+| `/manage/institutions`    | Instellingen aanmaken, bewerken, koppelen aan projecten                        |
 
-### 14. Beheerportaal (`/manage`)
-Centrale admintool met de volgende subpagina's:
+### 18. Stuck tasks-beheer
+Manifests die vastzitten (claim niet losgelaten, niet ingediend) zijn zichtbaar en los te laten. Na loslaten wordt de manifest-teller herberekend via hetzelfde `resync-claim`-eindpunt als bij een vrijwilligers-abandon.
 
-| Subpagina                 | Functie                                                                      |
-|---------------------------|------------------------------------------------------------------------------|
-| `/manage`                 | Dashboard met alle beheergebieden                                            |
-| `/manage/projects`        | Projectbeheer: handleiding- en instellingskoppelingen, bulk aanmaken, stuck tasks, task-debug |
-| `/manage/announcements`   | Aankondigingen beheren                                                       |
-| `/manage/users`           | Gebruikersoverzicht via Madoc-gateway                                        |
-| `/manage/pages`           | Nav-items activeren, inhoud bewerken, volgorde instellen                     |
-| `/manage/institutions`    | Instellingen aanmaken, bewerken, koppelen aan projecten                      |
+### 19. Task-debug-overzicht
+Admin-only view: per manifest van een project wordt getoond welke crowdsourcing-taken eraan hangen en of ze meetellen als "getranscribeerd" — zodat het voortgangspercentage visueel controleerbaar is.
 
-### 15. Stuck tasks-beheer
-Manifests die vastzitten (claim niet losgelaten, niet ingediend) zijn via het beheerportaal zichtbaar en los te laten. Admins zien hoelang een taak al vaststaat. Na loslaten wordt de manifest-teller herberekend via hetzelfde `resync-claim`-eindpunt als bij een vrijwilligers-abandon.
+### 20. Bulk project aanmaken
+Admins maken meerdere Madoc-projecten aan op basis van bestaande collecties (elk manifest wordt een apart project). Aanmaken is geserialiseerd om overbelasting van de gateway te voorkomen.
 
-### 16. Task-debug-overzicht
-Admin-only debugview: per manifest van een project wordt getoond welke crowdsourcing-taken eraan hangen en of ze meetellen als "getranscribeerd" (status 2 of 3) — zodat het voortgangspercentage op de projectpagina visueel controleerbaar is zonder de database te raadplegen.
+### 21. Zoekfunctie
+`/find` delegeert aan Madoc's eigen zoekmechanisme, doorgestuurd als de ingelogde gebruiker.
 
-### 17. Bulk project aanmaken
-Admins kunnen meerdere Madoc-projecten aanmaken op basis van bestaande collecties (elk manifest wordt een afzonderlijk project). Elk project doorloopt Madoc's eigen aanmaakriflow (collection + capture model + root task). Het aanmaken wordt bewust geserialiseerd om overbelasting van de gateway te voorkomen.
-
-### 18. Zoekfunctie
-Een zoekpagina (`/find`) delegeert aan Madoc's eigen zoekmechanisme, doorgestuurd via de CS-backend als de ingelogde gebruiker.
+### 22. Frontend crash-rapportage
+Elke render-crash (ErrorBoundary), mislukte server-call (react-query) en mislukte actie (upload, claim, enz.) wordt gerapporteerd naar `POST /api/dissco-cs/client-errors` en opgeslagen in de `app_log`-tabel. Breadcrumbs (laatste route- en API-wijzigingen) worden meegestuurd voor context.

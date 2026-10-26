@@ -1,6 +1,6 @@
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { HONOUR_BOARD_PERIODS, NAV_ITEM_CONTENT_KEYS, NAV_ITEM_KEYS, SITE_PAGE_LANGS } from '@dissco-cs/shared-types';
+import { HONOUR_BOARD_PERIODS, NAV_ITEM_CONTENT_KEYS, NAV_ITEM_KEYS, SITE_IMAGE_KEYS, SITE_PAGE_LANGS } from '@dissco-cs/shared-types';
 
 import { isSafeSegment } from '../madoc-client/path-segment.js';
 
@@ -13,6 +13,7 @@ export const siteLang = z.enum(SITE_PAGE_LANGS);
 export const honourBoardPeriod = z.enum(HONOUR_BOARD_PERIODS);
 export const navItemKey = z.enum(NAV_ITEM_KEYS);
 export const navItemContentKey = z.enum(NAV_ITEM_CONTENT_KEYS);
+export const siteImageKey = z.enum(SITE_IMAGE_KEYS);
 
 // The path-param counterpart of validateJson: validates a route's params, the handler reads them
 // typed with c.req.valid('param'). An invalid param answers 400 { error }.

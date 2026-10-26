@@ -11,6 +11,8 @@ export type ProjectProgressDto = {
   transcribedPercentage: number;
   totalTasks: number;
   allTasksTaken: boolean;
+  // People with at least one submitted or accepted task in the project.
+  volunteers: number;
   availableManifests: Array<{ id: number; label: unknown; thumbnail?: string }>;
 };
 

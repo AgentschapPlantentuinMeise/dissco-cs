@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
 import { HrefLink } from '../../utility/href-link';
 import { buildTaskLink } from '../../utility/build-task-link';
-import { localeText } from '../../utility/locale-text';
-import { DeleteIconButton } from '../../components/ui/DeleteIconButton';
+import { formatTimeAgo } from '../../utility/format-date';
+import { Button } from '../../components/ui/Button';
+import { IconButton } from '../../components/ui/IconButton';
 import { TaskRevisionView } from './TaskRevisionView';
 import { LuEye } from 'react-icons/lu';
 import { ImagePreviewPopup } from '../../components/iiif/ImagePreviewPopup';
+import { TaskTab, taskProjectName } from './dashboard-tasks';
+import { taskDisplayName } from '../../utility/task-display-name';
+import { rowHoverClass } from '../../components/ui/list-styles';
 
 const BADGE_CLASSES: Record<string, string> = {
   done:     'bg-[#d1e7dd] text-[#0a5940]',
@@ -25,27 +30,18 @@ export function getStatusBadge(status: number): { label: string; variant: string
 const thClass = 'bg-gray-50 px-4 py-3 text-left text-[0.8rem] font-semibold text-gray-500 uppercase tracking-[0.04em] border-b border-gray-200 max-[600px]:hidden';
 const tdClass = 'px-4 py-[14px] text-[0.9rem] text-[#343a40] align-middle max-[600px]:block max-[600px]:px-0 max-[600px]:py-[2px]';
 
-export const tabBtnClass = (isActive: boolean) =>
-  `bg-transparent border-0 border-b-2 border-solid mb-[-2px] px-5 py-[10px] text-[0.9rem] cursor-pointer transition-[color,border-color] duration-[0.15s] hover:text-cs-primary ` +
-  (isActive ? 'font-semibold text-cs-primary border-b-cs-primary' : 'font-medium text-gray-500 border-b-transparent');
-
-interface TaskTableProps {
+// One page of the user's tasks. Saved tasks link to the annotate page (which returns here after
+// saving) and can be released; done tasks open a read-only view of what was submitted.
+export function TaskTable({ tasks, userName, variant, onRelease }: {
   tasks: MadocCrowdsourcingTaskDto[];
   userName: string;
-  language: string;
-  t: (key: string) => string;
-  linkable?: boolean;
-  /** Clicking the task name opens a row with the submitted data (read-only) instead of navigating. */
-  expandable?: boolean;
+  variant: TaskTab;
   onRelease?: (task: MadocCrowdsourcingTaskDto) => void;
-  /** After saving or submitting on the annotate page, return to this path instead of going to the next task. */
-  returnPath?: string;
-}
-
-export function TaskTable({ tasks, userName, language, t, linkable = true, expandable = false, onRelease, returnPath }: TaskTableProps) {
+}) {
+  const { t, i18n } = useTranslation('dissco-cs');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [previewTask, setPreviewTask] = useState<MadocCrowdsourcingTaskDto | null>(null);
-  const columnCount = 3 + (onRelease ? 1 : 0) + (expandable ? 1 : 0);
+  const columnCount = 5;
 
   return (
     <div className="bg-white rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.07)] overflow-hidden">
@@ -55,77 +51,62 @@ export function TaskTable({ tasks, userName, language, t, linkable = true, expan
             <th className={thClass}>{t('my_tasks_col_task')}</th>
             <th className={thClass}>{t('my_tasks_col_project')}</th>
             <th className={thClass}>{t('my_tasks_col_status')}</th>
-            {onRelease && <th className={thClass} />}
-            {expandable && <th className={thClass} />}
+            <th className={thClass}>{t('my_tasks_col_modified')}</th>
+            <th className={thClass} />
           </tr>
         </thead>
         <tbody>
           {tasks.map(task => {
-            const href = buildTaskLink(task);
-            const project = task.metadata?.project;
-            const projectName = project ? (localeText(project.label, language) || project.slug) : undefined;
+            const displayName = taskDisplayName(task, userName);
             const badge = getStatusBadge(task.status);
-            const prefix = userName + ': ';
-            const displayName = task.name?.startsWith(prefix) ? task.name.slice(prefix.length) : task.name;
             const isExpanded = expandedId === task.id;
             return (
               <React.Fragment key={task.id}>
-                <tr className="border-b border-[#f0f0f0] last:border-b-0 transition-colors duration-[0.15s] hover:bg-gray-50 max-[600px]:block max-[600px]:px-4 max-[600px]:py-3 max-[600px]:border-b max-[600px]:border-gray-200">
+                <tr className={`border-b border-[#f0f0f0] last:border-b-0 ${rowHoverClass} max-[600px]:block max-[600px]:px-4 max-[600px]:py-3 max-[600px]:border-b max-[600px]:border-gray-200`}>
                   <td className={tdClass}>
-                    {expandable ? (
+                    {variant === 'done' ? (
                       <button
                         onClick={() => setExpandedId(isExpanded ? null : task.id)}
                         className="bg-transparent border-0 p-0 text-cs-primary font-medium cursor-pointer hover:underline"
                       >
                         {displayName}
                       </button>
-                    ) : linkable ? (
+                    ) : (
                       <HrefLink
-                        href={href}
-                        state={returnPath ? { returnTo: returnPath } : undefined}
+                        href={buildTaskLink(task)}
+                        state={{ returnTo: '/my-dashboard' }}
                         className="text-cs-primary no-underline font-medium hover:underline"
                       >
                         {displayName}
                       </HrefLink>
-                    ) : (
-                      <span className="font-medium">{displayName}</span>
                     )}
                   </td>
-                  <td className={`${tdClass} text-gray-500 max-[600px]:text-[0.8rem]`}>{projectName ?? '—'}</td>
+                  <td className={`${tdClass} text-gray-500 max-[600px]:text-[0.8rem]`}>{taskProjectName(task, i18n.language) || '—'}</td>
                   <td className={tdClass}>
                     <span className={`${badgeBase} ${BADGE_CLASSES[badge.variant]}`}>{t(badge.label)}</span>
                   </td>
-                  {onRelease && (
-                    <td className={tdClass}>
-                      <DeleteIconButton onClick={() => onRelease(task)} />
-                    </td>
-                  )}
-                  {expandable && (
-                    <td className={tdClass}>
-                      {task.subject && (
-                        <button
-                          onClick={() => setPreviewTask(task)}
-                          aria-label={t('review_view_image')}
-                          title={t('review_view_image')}
-                          className="bg-transparent border-none text-gray-400 cursor-pointer hover:text-cs-primary p-1"
-                        >
-                          <LuEye />
-                        </button>
-                      )}
-                    </td>
-                  )}
+                  <td className={`${tdClass} text-gray-500 whitespace-nowrap max-[600px]:text-[0.8rem]`}>
+                    {task.modified_at ? formatTimeAgo(new Date(task.modified_at).toISOString(), i18n.language) : '—'}
+                  </td>
+                  <td className={`${tdClass} text-right max-[600px]:text-left`}>
+                    {variant === 'saved' && onRelease && (
+                      <Button variant="secondary" size="sm" onClick={() => onRelease(task)}>
+                        {t('my_tasks_release')}
+                      </Button>
+                    )}
+                    {variant === 'done' && task.subject && (
+                      <IconButton icon={LuEye} label={t('review_view_image')} onClick={() => setPreviewTask(task)} />
+                    )}
+                  </td>
                 </tr>
-                {expandable && isExpanded && (
+                {variant === 'done' && isExpanded && (
                   <tr className="border-b border-[#f0f0f0] last:border-b-0 bg-gray-50">
                     <td className={tdClass} colSpan={columnCount}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[0.8rem] font-semibold text-gray-700">{displayName}</span>
-                        <button
-                          onClick={() => setExpandedId(null)}
-                          className="bg-transparent border-none p-0 text-[0.78rem] font-semibold text-gray-500 cursor-pointer hover:text-cs-primary"
-                        >
+                        <Button variant="text" size="sm" onClick={() => setExpandedId(null)}>
                           {t('review_detail_close')}
-                        </button>
+                        </Button>
                       </div>
                       <TaskRevisionView taskId={task.id} />
                     </td>

@@ -4,6 +4,7 @@ import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
 import {
   computeProjectProgress,
   computeTaskDebug,
+  countVolunteers,
   groupTasksByManifestId,
   manifestUrnOfTask,
   transcribedPercentage,
@@ -146,6 +147,17 @@ describe('computeProjectProgress: available manifests', () => {
     });
     expect(result.availableManifests.map(m => m.thumbnail)).toEqual([undefined, 'https://example.org/2.jpg']);
     expect(result.totalTasks).toBe(2);
+  });
+});
+
+describe('countVolunteers', () => {
+  it('counts each person with a submitted or accepted task once', () => {
+    const tasks = [canvasTask(1, 2, 'ann'), canvasTask(2, 3, 'ann'), manifestTask(3, 3, 'bob'), canvasTask(4, 1, 'cas'), canvasTask(5, -1, 'dirk')];
+    expect(countVolunteers(tasks)).toBe(2);
+  });
+
+  it('ignores tasks without an assignee', () => {
+    expect(countVolunteers([canvasTask(1, 3)])).toBe(0);
   });
 });
 

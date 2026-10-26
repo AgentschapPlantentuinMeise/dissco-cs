@@ -8,14 +8,15 @@ import { contrastWarnings, DEFAULT_SITE_COLORS, isHexColor } from './palette';
 // The colors form: the stored palette (or the defaults) plus the admin's unsaved edits.
 export function useSiteColors() {
   const queryClient = useQueryClient();
-  const { data: stored, isPending: isLoading } = useQuery(siteThemeQueries.get());
+  const { data, isPending: isLoading } = useQuery(siteThemeQueries.get());
+  const stored = data?.colors ?? null;
   const [edits, setEdits] = useState<SiteColors | null>(null);
 
   const colors = edits ?? stored ?? DEFAULT_SITE_COLORS;
   const isValid = SITE_COLOR_KEYS.every(key => isHexColor(colors[key]));
   const warnings = contrastWarnings(colors);
 
-  // Invalidating the theme query lets SiteColorsSync apply the new palette to the whole site.
+  // Invalidating the theme query lets SiteThemeSync apply the new palette to the whole site.
   const onWritten = async () => {
     await queryClient.invalidateQueries({ queryKey: siteThemeKeys.all });
     setEdits(null);

@@ -1,25 +1,22 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import { projectQueries } from '../../api/queries/projects';
 import { CsPage } from '../../components/layout/CsPage';
-import { ProjectCard } from '../../components/projects/ProjectCard';
-import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
 import { WelcomeModal } from './WelcomeModal';
-import { LuArrowDown, LuArrowRight } from 'react-icons/lu';
-import { StatBanner } from '../../components/ui/StatBanner';
-import { Button } from '../../components/ui/Button';
-import { HonourBoardSpotlight } from '../../components/stats/HonourBoardSpotlight';
+import { HomeProjectsSection } from './HomeProjectsSection';
+import { HomeStepsSection } from './HomeStepsSection';
+import { HomeInstitutionsSection } from './HomeInstitutionsSection';
+import { HeaderImage, PageHeader } from '../../components/layout/PageHeader';
+import { PageHeaderPhoto } from '../../components/layout/PageHeaderPhoto';
+import { HonourBoardBand } from '../../components/stats/HonourBoardBand';
+import { useSiteHonourBoard } from '../../hooks/use-site-honour-board';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { useSiteStats } from '../../hooks/use-site-stats';
-import { HrefLink } from '../../utility/href-link';
 import { formatNumber } from '../../utility/format-number';
-import { MadocProjectDto } from '@dissco-cs/shared-types';
 
 export function Homepage() {
   const [isClient, setIsClient] = useState(false);
-  const { data: projectsResponse, status } = useQuery(projectQueries.list({ page: 1, published: true }));
   const { data: siteStats } = useSiteStats();
+  const honourBoard = useSiteHonourBoard();
   const { t, i18n } = useTranslation('dissco-cs');
 
   useEffect(() => {
@@ -30,87 +27,36 @@ export function Homepage() {
     return <div className="bg-cs-primary min-h-screen" />;
   }
 
-  const projects = projectsResponse?.projects || [];
-  const isLoadingList = status === 'pending';
-
-  const latestProjects = projects.filter((p: MadocProjectDto) => p.status === 1).slice(0, 6);
-
   return (
     <CsPage>
       <WelcomeModal />
-      <div className="cs-main-wrapper">
+      <PageHeader
+        variant="split-banner"
+        continuous
+        title={t('hero_title')}
+        lead={t('hero_lead')}
+        stats={[
+          { value: siteStats ? formatNumber(siteStats.volunteers, i18n.language) : '—', label: t('institution_stats_volunteers') },
+          {
+            value: siteStats ? `${formatNumber(siteStats.tasksCompleted, i18n.language)} / ${formatNumber(siteStats.tasksTotal, i18n.language)}` : '—',
+            label: t('honour_board_stat_tasks_label'),
+          },
+        ]}
+        aside={
+          <PageHeaderPhoto
+            pageKey="home"
+            fallback={<HeaderImage src={disscoCSConfig.heroBgUrl} credit={disscoCSConfig.heroBgCredit} fit="cutout" />}
+          />
+        }
+      />
 
-        <header className="bg-cs-primary text-left text-white relative mt-0">
-          <div
-            className="cs-container cs-container--wide relative bg-[length:auto_160%] bg-no-repeat py-8"
-            style={{
-              backgroundImage: `var(--hero-bg, url(${disscoCSConfig.heroBgUrl}))`,
-              backgroundPosition: 'right 0px top -28px',
-            } as React.CSSProperties}
-          >
-            <h1 className="text-[32px] font-light leading-tight mb-3 text-white mt-0" dangerouslySetInnerHTML={{ __html: t('hero_title') }} />
-            <p className="text-[20px] text-white/90 max-w-[650px] mb-5 leading-[1.5]" dangerouslySetInnerHTML={{ __html: t('hero_lead') }} />
-            <div className="flex gap-4 items-center">
-              <Button variant="on-dark">
-                {t('btn_active')} <LuArrowDown aria-hidden="true" />
-              </Button>
-              <Button variant="on-dark-line">
-                {t('btn_read_more')}
-              </Button>
-            </div>
-            <span className="absolute bottom-0 right-0 opacity-50 text-xs italic text-white">
-              {t('hero_bg_credit', disscoCSConfig.heroBgCredit)}
-            </span>
-          </div>
-        </header>
+      <main>
+        <HomeProjectsSection />
+        <HomeStepsSection />
+        <HomeInstitutionsSection />
+      </main>
 
-        <div className="cs-container cs-container--wide">
-          <AnnouncementBanner target="homepage" />
-        </div>
-
-        <main className="pt-10 pb-10">
-          <div className="cs-container cs-container--wide grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-x-8">
-            <div className="lg:col-start-1 lg:row-start-1 lg:self-start flex flex-col">
-              <StatBanner
-                stats={[
-                  { value: siteStats ? formatNumber(siteStats.volunteers, i18n.language) : '—', label: t('institution_stats_volunteers') },
-                  {
-                    value: siteStats ? `${formatNumber(siteStats.tasksCompleted, i18n.language)} / ${formatNumber(siteStats.tasksTotal, i18n.language)}` : '—',
-                    label: t('honour_board_stat_tasks_label'),
-                  },
-                ]}
-              />
-              <div className="mt-8">
-                {isLoadingList && <p className="text-center py-5">{t('loading_projects')}</p>}
-                {isClient && !isLoadingList && latestProjects.length === 0 && (
-                  <p className="text-center py-5">{t('no_projects')}</p>
-                )}
-                <div className="cs-projects-grid cs-projects-grid--compact">
-                  {latestProjects.map((project: MadocProjectDto) => (
-                    <ProjectCard key={project.id} projectSummaryData={project} />
-                  ))}
-                </div>
-                {isClient && !isLoadingList && latestProjects.length > 0 && (
-                  <HrefLink
-                    href="/explore"
-                    className="inline-flex items-center gap-1 text-sm text-cs-primary font-semibold no-underline hover:underline mt-4"
-                  >
-                    {t('homepage_view_all_projects')} <LuArrowRight aria-hidden="true" />
-                  </HrefLink>
-                )}
-              </div>
-            </div>
-            <HonourBoardSpotlight className="mt-8 lg:mt-0 lg:col-start-2 lg:row-start-1" />
-          </div>
-        </main>
-
-        <footer className="text-center py-8 text-gray-500 text-sm border-t border-gray-200 bg-white mt-16">
-          <div className="cs-container cs-container--wide">
-            <p>{t('footer_text')}</p>
-          </div>
-        </footer>
-
-      </div>
+      <HonourBoardBand board={honourBoard} />
     </CsPage>
   );
 }

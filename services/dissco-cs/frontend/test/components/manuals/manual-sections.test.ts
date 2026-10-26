@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ATTACHMENT_MARKER, splitBodyAroundMarker, splitIntoSections, toEmbedUrl } from '../../../src/components/manuals/manual-sections';
+import { ATTACHMENT_MARKER, attachmentLang, splitBodyAroundMarker, splitIntoSections, toEmbedUrl } from '../../../src/components/manuals/manual-sections';
 
 describe('splitIntoSections', () => {
   it('splits at every ## heading and keeps an intro without heading', () => {
@@ -40,5 +40,15 @@ describe('toEmbedUrl', () => {
 describe('splitBodyAroundMarker', () => {
   it('returns the text before and after the marker', () => {
     expect(splitBodyAroundMarker(`Before\n${ATTACHMENT_MARKER}\nAfter`)).toEqual(['Before\n', '\nAfter']);
+  });
+});
+
+describe('attachmentLang', () => {
+  const pdf = { filename: 'm.pdf', mimeType: 'application/pdf', size: 1 };
+  const manual = { id: 1, title: {}, content: {}, attachments: { nl: pdf, fr: pdf } };
+
+  it("takes the reader's language when the manual has an attachment in it, else Dutch", () => {
+    expect(attachmentLang(manual, 'fr')).toBe('fr');
+    expect(attachmentLang(manual, 'en')).toBe('nl');
   });
 });

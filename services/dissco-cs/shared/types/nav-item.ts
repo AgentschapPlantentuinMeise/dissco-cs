@@ -14,6 +14,8 @@ export type NavItemDto = {
   pageKey: NavItemKey;
   isActive: boolean;
   content: MultilingualText;
+  // The short text under the title in the page's header.
+  intro: MultilingualText;
   showContactForm: boolean;
   sortOrder: number;
 };
@@ -24,14 +26,11 @@ export const setContactEmailSchema = z.object({ email: emailSchema });
 
 export const setNavItemActiveSchema = z.object({ isActive: z.boolean() });
 export const setShowContactFormSchema = z.object({ showContactForm: z.boolean() });
-export const setNavItemContentSchema = z.object({ lang: sitePageLangSchema, contentMd: z.string() });
+// About two lines in the header.
+export const MAX_NAV_ITEM_INTRO_LENGTH = 200;
 
-function isNavItemKeyPermutation(value: unknown): value is NavItemKey[] {
-  if (!Array.isArray(value) || value.length !== NAV_ITEM_KEYS.length) {
-    return false;
-  }
-  const seen = new Set(value);
-  return seen.size === NAV_ITEM_KEYS.length && NAV_ITEM_KEYS.every(key => seen.has(key));
-}
-
-export const setNavItemsOrderSchema = z.object({ order: z.custom<NavItemKey[]>(isNavItemKeyPermutation) });
+export const setNavItemContentSchema = z.object({
+  lang: sitePageLangSchema,
+  contentMd: z.string(),
+  intro: z.string().trim().max(MAX_NAV_ITEM_INTRO_LENGTH),
+});

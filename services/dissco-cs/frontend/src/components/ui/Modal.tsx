@@ -11,7 +11,7 @@ type ModalProps = {
   footer?: React.ReactNode;
   children: React.ReactNode;
   // Extends the backdrop over the fixed site navbar (z-200) instead of leaving it clickable
-  // below top-[70px]. Needed for gates like TermsModal, where the navbar must not offer an
+  // below top-navbar. Needed for gates like TermsModal, where the navbar must not offer an
   // escape route around onClose. Other modals keep the default (navbar stays usable).
   coverNavbar?: boolean;
 };
@@ -22,9 +22,7 @@ const SIZE_CLASS: Record<NonNullable<ModalProps['size']>, string> = {
   lg: 'max-w-xl',
 };
 
-// Generic modal shell (overlay + card) — modeled after WelcomeModal.tsx's original
-// overlay/transition pattern but made reusable across content types. Shared by
-// ManualModal, ConfirmDialog, TermsModal and WelcomeModal.
+// Generic modal shell (overlay + card) for any content: a dialog, a manual, the terms.
 export function Modal({
   open,
   onClose,
@@ -53,12 +51,12 @@ export function Modal({
 
   return (
     <div
-      // top-[70px]: the centring area starts below the fixed site navbar (70px, z-200) instead of
+      // top-navbar: the centring area starts below the fixed site navbar (z-200) instead of
       // covering it, so a tall card never ends up against or behind the navbar. coverNavbar puts
       // the backdrop over the navbar too (inset-0, z above 200), for steps the user may not skip
       // through the navbar -- see ModalProps.coverNavbar.
       className={`fixed flex items-center justify-center bg-black/50 p-4 ${
-        coverNavbar ? 'inset-0 z-[210]' : 'inset-x-0 bottom-0 top-[70px] z-50'
+        coverNavbar ? 'inset-0 z-[210]' : 'inset-x-0 bottom-0 top-navbar z-50'
       }`}
       onClick={onClose}
     >

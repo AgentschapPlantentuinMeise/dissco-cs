@@ -1,18 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { LuTrash2 } from 'react-icons/lu';
+import { IconButton } from './IconButton';
 
 export function DeleteIconButton({ onClick }: {
   onClick: () => void;
 }) {
   const { t } = useTranslation('dissco-cs');
-  return (
-    <button
-      onClick={onClick}
-      aria-label={t('common_delete')}
-      title={t('common_delete')}
-      className="bg-transparent border-none cursor-pointer text-gray-600 text-base px-1 flex items-center hover:text-cs-primary transition-colors duration-200"
-    >
-      <LuTrash2 />
-    </button>
-  );
+  return <IconButton icon={LuTrash2} label={t('common_delete')} onClick={onClick} />;
 }

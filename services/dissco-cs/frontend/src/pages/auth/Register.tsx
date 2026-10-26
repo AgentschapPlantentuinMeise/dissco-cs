@@ -3,12 +3,15 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/layout/CsPage';
+import { PageHeader } from '../../components/layout/PageHeader';
+import { PageBody } from '../../components/layout/PageBody';
 import { TermsModal } from '../../components/auth/TermsModal';
 import { HrefLink } from '../../utility/href-link';
 import { register, getInvitation, getTerms } from '../../api/madoc-auth/auth';
 import { MadocSiteTermsDto, InvitationDto } from '@dissco-cs/shared-types';
 import { useCurrentUser } from '../../hooks/use-current-user';
 import { getSiteSlug } from '../../api/slug';
+import { inputClass } from '../../components/ui/input-styles';
 
 export function Register() {
   const { t } = useTranslation('dissco-cs');
@@ -46,23 +49,17 @@ export function Register() {
 
   if (code && status === 'loading-invitation' && !invitation) {
     return (
-      <CsPage>
-        <div className="cs-main-wrapper pt-10 pb-16">
-          <div className="cs-container max-w-md" />
-        </div>
-      </CsPage>
+      <CsPage>{null}</CsPage>
     );
   }
 
   if (code && invitation && 'expired' in invitation) {
     return (
       <CsPage>
-        <div className="cs-main-wrapper pt-10 pb-16">
-          <div className="cs-container max-w-md">
-            <h1 className="text-4xl text-cs-primary mb-4">{t('register_title')}</h1>
-            <p className="text-red-700">{t('register_invitation_expired')}</p>
-          </div>
-        </div>
+        <PageBody width="narrow">
+          <PageHeader variant="plain" title={t('register_title')} />
+          <p className="text-red-700">{t('register_invitation_expired')}</p>
+        </PageBody>
       </CsPage>
     );
   }
@@ -70,12 +67,10 @@ export function Register() {
   if (code && invitation && user) {
     return (
       <CsPage>
-        <div className="cs-main-wrapper pt-10 pb-16">
-          <div className="cs-container max-w-md">
-            <h1 className="text-4xl text-cs-primary mb-4">{t('register_title')}</h1>
-            <p className="text-base text-gray-600">{t('register_already_logged_in', { name: user.name })}</p>
-          </div>
-        </div>
+        <PageBody width="narrow">
+          <PageHeader variant="plain" title={t('register_title')} />
+          <p className="text-base text-gray-600">{t('register_already_logged_in', { name: user.name })}</p>
+        </PageBody>
       </CsPage>
     );
   }
@@ -108,93 +103,92 @@ export function Register() {
   if (status === 'success') {
     return (
       <CsPage>
-        <div className="cs-main-wrapper pt-10 pb-16">
-          <div className="cs-container max-w-md">
-            <h1 className="text-4xl text-cs-primary mb-4">{t('register_title')}</h1>
-            {emailSent ? (
-              <p>{t('register_success_email_sent')}</p>
-            ) : (
-              <p>{t('register_success_no_email')}</p>
-            )}
-          </div>
-        </div>
+        <PageBody width="narrow">
+          <PageHeader variant="plain" title={t('register_title')} />
+          {emailSent ? (
+            <p>{t('register_success_email_sent')}</p>
+          ) : (
+            <p>{t('register_success_no_email')}</p>
+          )}
+        </PageBody>
       </CsPage>
     );
   }
 
   return (
     <CsPage>
-      <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container max-w-md">
-          <header className="mb-8">
-            <h1 className="text-4xl text-cs-primary mb-3">{t('register_title')}</h1>
-            {invitation && !('expired' in invitation) ? (
-              <p className="text-lg text-gray-600">{t('register_invitation_intro')}</p>
+      <PageBody width="narrow">
+        <PageHeader
+          variant="plain"
+          title={t('register_title')}
+          lead={
+            invitation && !('expired' in invitation) ? (
+              t('register_invitation_intro')
             ) : (
-              <p className="text-lg text-gray-600">
+              <>
                 {t('register_have_account')}{' '}
                 <HrefLink href="/login" className="text-cs-primary">
                   {t('register_login_link')}
                 </HrefLink>
-              </p>
-            )}
-          </header>
+              </>
+            )
+          }
+        />
 
-          <form ref={formRef} onSubmit={submit} className="flex flex-col gap-4">
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-gray-700">{t('register_form_name')}</span>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={e => setName(e.target.value)}
-                className="border border-gray-300 rounded-lg p-2"
-              />
-            </label>
+        <form ref={formRef} onSubmit={submit} className="flex flex-col gap-4">
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-gray-700">{t('register_form_name')}</span>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className={inputClass}
+            />
+          </label>
 
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-gray-700">{t('register_form_email')}</span>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="border border-gray-300 rounded-lg p-2"
-              />
-            </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-gray-700">{t('register_form_email')}</span>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className={inputClass}
+            />
+          </label>
 
-            {/* @ts-expect-error custom element from @cap.js/widget, loaded in index.html */}
-            <cap-widget data-cap-api-endpoint={`/s/${getSiteSlug()}/madoc/api/captcha/`} />
+          {/* @ts-expect-error custom element from @cap.js/widget, loaded in index.html */}
+          <cap-widget data-cap-api-endpoint={`/s/${getSiteSlug()}/madoc/api/captcha/`} />
 
-            {terms && (
-              <div className="text-sm">
-                {termsAccepted ? (
-                  <span className="text-cs-primary">{t('register_terms_accepted')}</span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowTermsPopup(true)}
-                    className="text-cs-primary underline bg-transparent border-none cursor-pointer p-0"
-                  >
-                    {t('register_terms_button')}
-                  </button>
-                )}
-              </div>
-            )}
-
-            {status === 'error' && <p className="text-red-700">{error}</p>}
-
-            <div>
-              <Button
-                type="submit"
-                disabled={status === 'sending'}
-              >
-                {t('register_form_submit')}
-              </Button>
+          {terms && (
+            <div className="text-sm">
+              {termsAccepted ? (
+                <span className="text-cs-primary">{t('register_terms_accepted')}</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowTermsPopup(true)}
+                  className="text-cs-primary underline bg-transparent border-none cursor-pointer p-0"
+                >
+                  {t('register_terms_button')}
+                </button>
+              )}
             </div>
-          </form>
-        </div>
-      </div>
+          )}
+
+          {status === 'error' && <p className="text-red-700">{error}</p>}
+
+          <div>
+            <Button
+              type="submit"
+              disabled={status === 'sending'}
+            >
+              {t('register_form_submit')}
+            </Button>
+          </div>
+        </form>
+      </PageBody>
 
       {showTermsPopup && terms && (
         <TermsModal

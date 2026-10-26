@@ -20,10 +20,11 @@ import { Forum } from './pages/forum/Forum';
 import { SiteManagement } from './pages/site-management/SiteManagement';
 import { ProjectManagement } from './pages/site-management/project-management/ProjectManagement';
 import { Announcements } from './pages/site-management/announcements/Announcements';
-import { UserManagement } from './pages/site-management/user-management/UserManagement';
 import { PageManagement } from './pages/site-management/page-management/PageManagement';
 import { InstitutionManagement } from './pages/site-management/institution-management/InstitutionManagement';
 import { SiteColors } from './pages/site-management/site-colors/SiteColors';
+import { SiteImages } from './pages/site-management/site-images/SiteImages';
+import { HomeSteps } from './pages/site-management/home-steps/HomeSteps';
 import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
 import { ForgotPassword } from './pages/auth/ForgotPassword';
@@ -57,10 +58,11 @@ export function App() {
           <Route path="/manage" element={<AuthGate requireAdmin><SiteManagement /></AuthGate>} />
           <Route path="/manage/projects" element={<AuthGate requireAdmin><ProjectManagement /></AuthGate>} />
           <Route path="/manage/announcements" element={<AuthGate requireAdmin><Announcements /></AuthGate>} />
-          <Route path="/manage/users" element={<AuthGate requireAdmin><UserManagement /></AuthGate>} />
           <Route path="/manage/pages" element={<AuthGate requireAdmin><PageManagement /></AuthGate>} />
           <Route path="/manage/institutions" element={<AuthGate requireAdmin><InstitutionManagement /></AuthGate>} />
           <Route path="/manage/colors" element={<AuthGate requireAdmin><SiteColors /></AuthGate>} />
+          <Route path="/manage/images" element={<AuthGate requireAdmin><SiteImages /></AuthGate>} />
+          <Route path="/manage/home-steps" element={<AuthGate requireAdmin><HomeSteps /></AuthGate>} />
           <Route path="/find" element={<SearchResults />} />
           <Route path="/explore" element={<Projects />} />
           <Route path="/explore/:slug"element={<ProjectDetail />} />

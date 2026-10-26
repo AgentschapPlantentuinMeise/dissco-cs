@@ -1,6 +1,6 @@
 import { csFetch, csFetchField } from './request';
 import { urlPath, withSite } from '../url';
-import { MadocCollectionSummaryDto, MadocManifestStructureDto } from '@dissco-cs/shared-types';
+import { MadocCollectionSummaryDto, MadocManifestMetadataDto, MadocManifestStructureDto } from '@dissco-cs/shared-types';
 
 // The canvas JSON is not modeled: only getImageServiceId() reads into it, defensively.
 export const iiifApi = {
@@ -20,6 +20,16 @@ export const iiifApi = {
    */
   getManifestStructure: (manifestId: number) =>
     csFetch<MadocManifestStructureDto>(withSite(urlPath`/iiif/manifests/${manifestId}/structure`)),
+
+  /**
+   * What the institution tells about a manifest: its label, summary, metadata and required
+   * attribution -- the Info panel on the annotate page.
+   * @param manifestId Madoc's manifest id, from the URL
+   * Who: anyone; Madoc decides what an anonymous visitor may see.
+   * Returns: MadocManifestMetadataDto; 404 when the manifest is unknown or not published.
+   */
+  getManifestMetadata: (manifestId: number) =>
+    csFetch<MadocManifestMetadataDto>(withSite(urlPath`/iiif/manifests/${manifestId}/metadata`)),
 
   /**
    * Every top-level IIIF collection of the site that has items, also unpublished ones -- for the

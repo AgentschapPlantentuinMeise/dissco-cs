@@ -8,7 +8,6 @@ import {
   setContactEmailSchema,
   setNavItemActiveSchema,
   setNavItemContentSchema,
-  setNavItemsOrderSchema,
   setShowContactFormSchema,
 } from '@dissco-cs/shared-types';
 
@@ -39,18 +38,6 @@ export function navItemsController(navItemsRepository: NavItemsRepository): Hono
       email: navItems.find(item => item.page_key === 'contact')?.contact_email ?? null,
     };
     return c.json(result);
-  });
-
-  app.put('/order', validateJson(setNavItemsOrderSchema), async c => {
-    const identity = requireSiteAdmin(c);
-    if (identity instanceof Response) {
-      return identity;
-    }
-
-    const input = c.req.valid('json');
-
-    await navItemsRepository.setNavItemsOrder(identity.siteId, input.order);
-    return c.body(null, 204);
   });
 
   app.put('/contact/email', validateJson(setContactEmailSchema), async c => {
@@ -87,7 +74,7 @@ export function navItemsController(navItemsRepository: NavItemsRepository): Hono
 
     const input = c.req.valid('json');
 
-    await navItemsRepository.upsertNavItemContent(identity.siteId, pageKey, input.lang, input.contentMd);
+    await navItemsRepository.upsertNavItemContent(identity.siteId, pageKey, input.lang, input.contentMd, input.intro);
     return c.body(null, 204);
   });
 

@@ -17,18 +17,20 @@ export const emailSchema = z.string().trim().pipe(z.email());
  * The zod schema of a text in every site language (nl, en, fr, de), each one trimmed.
  * @param requireFilled true: every language must be filled in; false: every language is
  *   optional, but a language that is sent may not be empty
+ * @param maxLength optional: the most characters each language may have
  * Returns: a zod object schema with one key per language.
  */
-export function multilingualTextSchema(requireFilled: boolean) {
+export function multilingualTextSchema(requireFilled: boolean, maxLength?: number) {
+  const text = maxLength === undefined ? z.string().trim().min(1) : z.string().trim().min(1).max(maxLength);
   if (requireFilled) {
-    const shape = Object.fromEntries(SITE_PAGE_LANGS.map(lang => [lang, z.string().trim().min(1)])) as Record<
+    const shape = Object.fromEntries(SITE_PAGE_LANGS.map(lang => [lang, text])) as Record<
       SitePageLang,
       z.ZodString
     >;
     return z.object(shape);
   }
 
-  const shape = Object.fromEntries(SITE_PAGE_LANGS.map(lang => [lang, z.string().trim().min(1).optional()])) as Record<
+  const shape = Object.fromEntries(SITE_PAGE_LANGS.map(lang => [lang, text.optional()])) as Record<
     SitePageLang,
     z.ZodOptional<z.ZodString>
   >;

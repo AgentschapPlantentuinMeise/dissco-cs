@@ -1,7 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { HonourBoardEntryDto, HonourBoardPeriodDto } from '@dissco-cs/shared-types';
+import { HonourBoardPeriodDto } from '@dissco-cs/shared-types';
+import { rowsWithYou } from './honour-board-band';
 
+// One period of the Honour Board as a card, for the /honour-board page. That page is hidden (no
+// link leads to it any more) but kept; the other pages show HonourBoardBand.
 export function HonourBoardPeriodCard({ titleKey, icon, period, formatNumber, dark = false, loading = false }: {
   titleKey: string;
   icon: React.ReactNode;
@@ -11,12 +14,7 @@ export function HonourBoardPeriodCard({ titleKey, icon, period, formatNumber, da
   loading?: boolean;
 }) {
   const { t } = useTranslation('dissco-cs');
-  const rows: Array<{ entry: HonourBoardEntryDto; isYou: boolean }> = period
-    ? period.top.map(entry => ({ entry, isYou: entry.userUrn === period.you?.userUrn }))
-    : [];
-  if (period?.you && !rows.some(row => row.isYou)) {
-    rows.push({ entry: period.you, isYou: true });
-  }
+  const rows = rowsWithYou(period, Infinity);
 
   return (
     <div className={`rounded-[4px] p-5 ${dark ? 'bg-cs-dark' : 'bg-white border border-gray-100'}`}>
@@ -30,7 +28,7 @@ export function HonourBoardPeriodCard({ titleKey, icon, period, formatNumber, da
       {loading ? (
         <p className={`text-sm ${dark ? 'text-[#a9c9c5]' : 'text-gray-400'}`}>{t('card_loading')}</p>
       ) : rows.length === 0 ? (
-        <p className={`text-sm ${dark ? 'text-[#a9c9c5]' : 'text-gray-400'}`}>{t('honour_board_spotlight_empty')}</p>
+        <p className={`text-sm ${dark ? 'text-[#a9c9c5]' : 'text-gray-400'}`}>{t('honour_board_empty')}</p>
       ) : (
         <ol className="list-none m-0 p-0">
           {rows.map(({ entry, isYou }) => (

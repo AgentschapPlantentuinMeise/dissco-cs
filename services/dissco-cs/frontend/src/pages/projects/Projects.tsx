@@ -1,19 +1,22 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { shuffle } from 'lodash-es';
 import { useQuery } from '@tanstack/react-query';
 import { projectQueries } from '../../api/queries/projects';
 import { CsPage } from '../../components/layout/CsPage';
 import { ProjectCard } from '../../components/projects/ProjectCard';
-import { AnnouncementBanner } from '../../components/announcements/AnnouncementBanner';
-import { StatBanner } from '../../components/ui/StatBanner';
-import { HonourBoardSpotlight } from '../../components/stats/HonourBoardSpotlight';
+import { HeaderMosaic, PageHeader } from '../../components/layout/PageHeader';
+import { HonourBoardBand } from '../../components/stats/HonourBoardBand';
+import { useSiteHonourBoard } from '../../hooks/use-site-honour-board';
 import { useSiteStats } from '../../hooks/use-site-stats';
-import { useGridColumnCount } from './use-grid-column-count';
+import { usePagedGrid } from '../../hooks/use-paged-grid';
+import { PageSection } from '../../components/layout/PageSection';
+import { Pagination } from '../../components/ui/Pagination';
 import { formatNumber } from '../../utility/format-number';
+import { localeText } from '../../utility/locale-text';
+import { projectImageUrl } from '../../utility/project-image-url';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
 
-// Rows instead of a fixed number of cards, so every page shows a full grid whatever the number of
-// columns that fit on the screen (see useGridColumnCount).
 const ROWS_PER_PAGE = 2;
 
 export function Projects() {
@@ -25,104 +28,57 @@ export function Projects() {
     staleTime: 5 * 60 * 1000,
   });
   const { data: siteStats } = useSiteStats();
+  const honourBoard = useSiteHonourBoard();
   const { t, i18n } = useTranslation('dissco-cs');
   const projects = (allProjects ?? []).filter((p: MadocProjectDto) => p.status === 1);
   const isLoadingList = status === 'pending';
 
-  const [gridRef, columns] = useGridColumnCount<HTMLDivElement>();
-  const pageSize = columns * ROWS_PER_PAGE;
-  const totalPages = Math.max(1, Math.ceil(projects.length / pageSize));
-  const [currentPage, setCurrentPage] = useState(1);
-
-  // Only cap the page (never reset it to 1): otherwise every recount of the columns -- e.g. a
-  // scrollbar appearing after a page change -- would send the user back to page 1, mounting and
-  // fetching that page's cards again right away.
-  useEffect(() => {
-    setCurrentPage(p => Math.min(p, totalPages));
-  }, [totalPages]);
-
-  const pagedProjects = projects.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const { gridRef, pageItems, currentPage, totalPages, setCurrentPage } = usePagedGrid(projects, ROWS_PER_PAGE);
+  // A random pick for the header, not the first projects of the list -- those are right below it.
+  // Shuffled once per load of the list, so a resize does not swap the pictures.
+  const mosaicProjects = useMemo(
+    () => shuffle((allProjects ?? []).filter((p: MadocProjectDto) => p.status === 1)),
+    [allProjects]
+  );
 
   return (
     <CsPage>
-      <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container cs-container--wide grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-x-8">
-
-          <header className="mb-8 lg:col-span-2">
-            <h1 className="text-4xl text-cs-primary mb-3">{t('projects_title')}</h1>
-            <p className="text-lg text-gray-600">{t('projects_intro')}</p>
-          </header>
-
-          <div className="lg:col-span-2">
-            <AnnouncementBanner target="projects" />
-          </div>
-
-          <div className="mt-8 lg:mt-0 lg:col-start-1 lg:row-start-3 lg:self-start flex flex-col">
-            <StatBanner
-              stats={[
-                { value: siteStats ? formatNumber(siteStats.volunteers, i18n.language) : '—', label: t('institution_stats_volunteers') },
-                {
-                  value: siteStats ? `${formatNumber(siteStats.tasksCompleted, i18n.language)} / ${formatNumber(siteStats.tasksTotal, i18n.language)}` : '—',
-                  label: t('honour_board_stat_tasks_label'),
-                },
-              ]}
-            />
-
-            <div className="mt-8">
-              {isLoadingList && <p className="text-center py-5">{t('loading_projects')}</p>}
-              {!isLoadingList && projects.length === 0 && (
-                <p className="text-center py-5">{t('no_projects')}</p>
-              )}
-
-              <div ref={gridRef} className="cs-projects-grid cs-projects-grid--compact">
-                {pagedProjects.map((project: MadocProjectDto) => (
-                  <ProjectCard key={project.id} projectSummaryData={project} />
-                ))}
-              </div>
-
-              {totalPages > 1 && (
-                <nav
-                  className="mt-8 flex justify-center items-center gap-2 flex-wrap"
-                  aria-label={t('projects_pagination_label')}
-                >
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="py-2 px-4 text-sm font-medium text-cs-primary bg-transparent border border-cs-primary rounded cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:bg-cs-primary hover:text-white"
-                  >
-                    {t('projects_pagination_prev')}
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      aria-current={page === currentPage ? 'page' : undefined}
-                      aria-label={t('projects_pagination_page', { page })}
-                      className={
-                        page === currentPage
-                          ? 'w-9 h-9 text-sm font-semibold text-white bg-cs-primary border border-cs-primary rounded cursor-pointer'
-                          : 'w-9 h-9 text-sm font-medium text-cs-primary bg-transparent border border-transparent rounded cursor-pointer hover:border-cs-primary'
-                      }
-                    >
-                      {page}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="py-2 px-4 text-sm font-medium text-cs-primary bg-transparent border border-cs-primary rounded cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:bg-cs-primary hover:text-white"
-                  >
-                    {t('projects_pagination_next')}
-                  </button>
-                </nav>
-              )}
-            </div>
-          </div>
-
-          <HonourBoardSpotlight className="mt-8 lg:mt-0 lg:col-start-2 lg:row-start-3" />
-
+      <PageHeader
+        variant="split-banner"
+        title={t('projects_title')}
+        lead={t('projects_intro')}
+        stats={[
+          { value: isLoadingList ? '—' : formatNumber(projects.length, i18n.language), label: t('projects_stat_running') },
+          {
+            value: siteStats ? formatNumber(Math.max(0, siteStats.tasksTotal - siteStats.tasksCompleted), i18n.language) : '—',
+            label: t('projects_stat_open'),
+          },
+        ]}
+        aside={
+          <HeaderMosaic
+            items={mosaicProjects.map((project: MadocProjectDto) => ({
+              href: `/explore/${project.slug}`,
+              label: localeText(project.label, i18n.language) || project.slug,
+              image: projectImageUrl(project),
+            }))}
+          />
+        }
+      />
+      <PageSection
+        title={t('projects_section_title')}
+        intro={isLoadingList ? undefined : t('projects_section_intro', { count: projects.length })}
+      >
+        {isLoadingList && <p className="text-gray-600 m-0">{t('loading_projects')}</p>}
+        {!isLoadingList && projects.length === 0 && <p className="text-gray-600 m-0">{t('no_projects')}</p>}
+        <div ref={gridRef} className="cs-card-grid">
+          {pageItems.map((project: MadocProjectDto) => (
+            <ProjectCard key={project.id} projectSummaryData={project} />
+          ))}
         </div>
-      </div>
+        <Pagination currentPage={currentPage} totalPages={totalPages} onChange={setCurrentPage} label={t('projects_pagination_label')} />
+      </PageSection>
+
+      <HonourBoardBand board={honourBoard} />
     </CsPage>
   );
 }

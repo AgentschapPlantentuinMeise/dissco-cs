@@ -1,5 +1,6 @@
+import { fromBigint } from '../database/bigint.js';
 import { Pool } from 'pg';
-import { ManualAttachmentDto, ManualDetailDto, ManualDto, ManualSummaryDto, PerLanguage, SitePageLang } from '@dissco-cs/shared-types';
+import { ManualAttachmentDto, ManualDetailDto, ManualDto, ManualInput, ManualSummaryDto, PerLanguage, SitePageLang } from '@dissco-cs/shared-types';
 
 export type ManualRow = {
   id: number;
@@ -98,23 +99,23 @@ export class ManualsRepository {
     return result.rows[0] ?? null;
   }
 
-  async createManual(siteId: number, title: Partial<Record<SitePageLang, string>>): Promise<ManualRow> {
+  async createManual(siteId: number, input: ManualInput): Promise<ManualRow> {
     const result = await this.pool.query<ManualRow>(
-      `INSERT INTO ${this.table('manuals')} (site_id, title) VALUES ($1, $2) RETURNING *`,
-      [siteId, JSON.stringify(title)]
+      `INSERT INTO ${this.table('manuals')} (site_id, title, content) VALUES ($1, $2, $3) RETURNING *`,
+      [siteId, JSON.stringify(input.title), JSON.stringify(input.content)]
     );
 
     return result.rows[0];
   }
 
-  async updateManualContent(siteId: number, manualId: number, lang: SitePageLang, contentMd: string): Promise<boolean> {
+  async updateManual(siteId: number, manualId: number, input: ManualInput): Promise<boolean> {
     const result = await this.pool.query(
       `
       UPDATE ${this.table('manuals')}
-      SET content = jsonb_set(content, ARRAY[$3::text], to_jsonb($4::text)), updated_at = NOW()
+      SET title = $3, content = $4, updated_at = NOW()
       WHERE id = $1 AND site_id = $2
     `,
-      [manualId, siteId, lang, contentMd]
+      [manualId, siteId, JSON.stringify(input.title), JSON.stringify(input.content)]
     );
 
     return (result.rowCount ?? 0) > 0;
@@ -212,7 +213,7 @@ export class ManualsRepository {
 // ---- DTO mapping ----
 
 export function toManualDto(row: ManualRow): ManualDto {
-  return { id: row.id, title: row.title, content: row.content, updatedAt: row.updated_at.toISOString() };
+  return { id: fromBigint(row.id), title: row.title, content: row.content, updatedAt: row.updated_at.toISOString() };
 }
 
 export function toManualSummaryDto(summary: ManualSummary): ManualSummaryDto {
@@ -225,5 +226,5 @@ export function toManualDetailDto(manual: ManualRow, attachmentMeta: ManualAttac
     attachments[meta.lang] = { filename: meta.filename, mimeType: meta.mime_type, size: meta.file_size };
   }
 
-  return { id: manual.id, title: manual.title, content: manual.content, attachments };
+  return { id: fromBigint(manual.id), title: manual.title, content: manual.content, attachments };
 }

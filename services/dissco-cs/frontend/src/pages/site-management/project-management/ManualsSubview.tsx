@@ -1,26 +1,47 @@
-import React, { useState } from 'react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { manualKeys } from '../../../api/queries/manuals';
 import { projectKeys } from '../../../api/queries/projects';
 import { manualsApi } from '../../../api/cs-client/manuals';
-import { SaveButton } from '../../../components/ui/SaveButton';
 import { Button } from '../../../components/ui/Button';
+import { IconButton } from '../../../components/ui/IconButton';
+import { LuPencil } from 'react-icons/lu';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
-import { ManualContentEditor } from './ManualContentEditor';
+import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
+import { ListWithPanel } from '../../../components/layout/ListWithPanel';
+import { useItemEditor } from '../../../hooks/use-item-editor';
+import { EMPTY_MANUAL_DRAFT, ManualDraft, ManualForm } from './ManualForm';
 import { manualHasContent } from './manual-content';
 import { localeText } from '../../../utility/locale-text';
-import { defaultLang, siteLangText } from '../../../utility/site-lang-text';
-import { MadocProjectDto, MAX_MANUAL_TITLE_LENGTH, ManualSummaryDto, setManualTitleSchema } from '@dissco-cs/shared-types';
+import { siteLangText } from '../../../utility/site-lang-text';
+import { MadocProjectDto, ManualSummaryDto, SITE_PAGE_LANGS, manualInputSchema } from '@dissco-cs/shared-types';
+import { rowHoverClass, savedRowClass } from '../../../components/ui/list-styles';
+import { SavedNotice } from '../../../components/ui/SavedNotice';
+import { useSavedFlash } from '../../../hooks/use-saved-flash';
 
 export function ManualsSubview({ projects, manuals }: {
   projects: MadocProjectDto[];
   manuals: ManualSummaryDto[];
 }) {
   const { t, i18n } = useTranslation('dissco-cs');
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
-  const [newTitle, setNewTitle] = useState('');
+  const {
+    editingId,
+    isFormOpen,
+    draft,
+    setDraft,
+    selectedLang,
+    setSelectedLang,
+    pendingDeleteId,
+    setPendingDeleteId,
+    startCreate,
+    startEdit,
+    cancelForm,
+  } = useItemEditor<ManualSummaryDto, ManualDraft>({
+    emptyDraft: EMPTY_MANUAL_DRAFT,
+    toDraft: manual => ({ title: manual.title, content: manual.content, picked: {} }),
+  });
+  const editingManual = manuals.find(manual => manual.id === editingId);
 
   const projectLabel = (slug: string) => {
     const project = projects.find(p => p.slug === slug);
@@ -28,54 +49,88 @@ export function ManualsSubview({ projects, manuals }: {
   };
 
   const queryClient = useQueryClient();
+  // The admin list and a linked project's public manual popup.
+  const onWritten = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: manualKeys.all }),
+      queryClient.invalidateQueries({ queryKey: projectKeys.manuals() }),
+    ]);
 
   const { mutate: remove } = useMutation({
     mutationFn: (id: number) => manualsApi.delete(id),
     onSuccess: (_result, id) => {
       setPendingDeleteId(null);
       if (editingId === id) {
-        setEditingId(null);
+        cancelForm();
       }
-      // A linked project's public manual popup disappears with it.
-      queryClient.invalidateQueries({ queryKey: projectKeys.manuals() });
-      return queryClient.invalidateQueries({ queryKey: manualKeys.all });
+      return onWritten();
     },
     meta: { errorMessage: 'error_delete_failed' },
   });
 
-  const canCreate = setManualTitleSchema.safeParse({ lang: defaultLang(i18n.language), title: newTitle.trim() }).success;
-
-  const { mutate: createManual } = useMutation({
-    mutationFn: (title: string) => manualsApi.create(defaultLang(i18n.language), title),
-    onSuccess: manual => {
-      setNewTitle('');
-      setEditingId(manual.id);
-      return queryClient.invalidateQueries({ queryKey: manualKeys.all });
+  // Set once a new manual exists on the server. When an attachment upload fails after that, the
+  // form closes, so a second Save does not create the manual twice; the list shows it as incomplete.
+  const createdIdRef = useRef<number | null>(null);
+  const { savedId, flash } = useSavedFlash<number>();
+  const { mutate: saveManual, isPending: saving } = useMutation({
+    mutationFn: async ({ id, draft: saved }: { id: number | null; draft: ManualDraft }) => {
+      const input = manualInputSchema.parse({ title: saved.title, content: saved.content });
+      createdIdRef.current = null;
+      let manualId = id;
+      if (manualId === null) {
+        manualId = (await manualsApi.create(input)).id;
+        createdIdRef.current = manualId;
+      } else {
+        await manualsApi.update(manualId, input);
+      }
+      for (const lang of SITE_PAGE_LANGS) {
+        if (!(lang in saved.picked)) continue;
+        const file = saved.picked[lang];
+        await (file ? manualsApi.uploadAttachment(manualId, lang, file) : manualsApi.deleteAttachment(manualId, lang));
+      }
+      return manualId;
+    },
+    onSuccess: async manualId => {
+      await onWritten();
+      cancelForm();
+      flash(manualId);
+    },
+    onError: () => {
+      if (createdIdRef.current !== null) {
+        cancelForm();
+        onWritten();
+      }
     },
   });
 
-  const create = () => {
-    if (!canCreate) return;
-    createManual(newTitle.trim());
-  };
-
   return (
     <div>
-      <h4 className="text-sm font-semibold text-gray-700 mb-2">{t('sm_manuals_new_heading')}</h4>
-      <div className="flex items-center gap-3 mb-4">
-        <input
-          value={newTitle}
-          onChange={e => setNewTitle(e.target.value)}
-          placeholder={t('sm_manuals_new_title_placeholder')}
-          maxLength={MAX_MANUAL_TITLE_LENGTH}
-          className="border border-gray-300 rounded-lg p-2 flex-1 max-w-sm"
-        />
-        <SaveButton onClick={create} disabled={!canCreate} />
+      <div className="flex justify-end mb-4">
+        <Button size="sm" onClick={startCreate}>{t('sm_manuals_new')}</Button>
       </div>
 
-      {manuals.length === 0 ? (
+      {manuals.length === 0 && !isFormOpen ? (
         <p className="text-sm text-gray-500">{t('sm_manuals_none_available')}</p>
       ) : (
+      <ListWithPanel
+        panelKey={editingId}
+        onClose={cancelForm}
+        panelTitle={editingManual ? siteLangText(editingManual.title, i18n.language, `#${editingManual.id}`) : t('sm_manuals_new')}
+        panel={isFormOpen ? (
+          <ManualForm
+            key={editingId ?? 'new'}
+            manualId={editingId}
+            storedLangs={editingManual?.attachmentLangs ?? []}
+            draft={draft}
+            setDraft={setDraft}
+            selectedLang={selectedLang}
+            onSelectLang={setSelectedLang}
+            saving={saving}
+            onSave={() => saveManual({ id: editingId, draft })}
+            onCancel={cancelForm}
+          />
+        ) : null}
+        list={
       <div className="bg-white border-t border-gray-200">
       <table className="w-full border-collapse">
         <thead>
@@ -88,8 +143,18 @@ export function ManualsSubview({ projects, manuals }: {
         </thead>
         <tbody>
           {manuals.map(manual => (
-            <React.Fragment key={manual.id}>
-              <tr className={manual.linkedProjectSlugs.length === 0 ? 'bg-orange-50' : ''}>
+              <tr
+                key={manual.id}
+                className={`${rowHoverClass} ${
+                  editingId === manual.id
+                    ? 'bg-gray-50'
+                    : savedId === manual.id
+                      ? savedRowClass
+                      : manual.linkedProjectSlugs.length === 0
+                        ? 'bg-orange-50'
+                        : ''
+                }`}
+              >
                 <td className="px-4 py-3 border-t border-gray-100">
                   <b>{siteLangText(manual.title, i18n.language, `#${manual.id}`)}</b>
                   {manual.linkedProjectSlugs.length === 0 && (
@@ -108,29 +173,19 @@ export function ManualsSubview({ projects, manuals }: {
                   {new Date(manual.updatedAt).toLocaleDateString(i18n.language)}
                 </td>
                 <td className="px-4 py-3 border-t border-gray-100 text-right whitespace-nowrap">
-                  <Button variant="text" size="sm" className="mr-4" onClick={() => setEditingId(editingId === manual.id ? null : manual.id)}>
-                    {editingId === manual.id ? t('sm_manuals_close_edit') : t('sm_manuals_edit')}
-                  </Button>
-                  <button
-                    onClick={() => setPendingDeleteId(manual.id)}
-                    className="text-sm font-semibold text-red-700 bg-transparent border-none cursor-pointer hover:underline"
-                  >
-                    {t('common_delete')}
-                  </button>
+                  <div className="flex items-center justify-end gap-4">
+                    {savedId === manual.id && <SavedNotice />}
+                    <IconButton icon={LuPencil} label={t('common_edit')} onClick={() => startEdit(manual)} />
+                    <DeleteIconButton onClick={() => setPendingDeleteId(manual.id)} />
+                  </div>
                 </td>
               </tr>
-              {editingId === manual.id && (
-                <tr>
-                  <td colSpan={4} className="px-5 pb-5 border-t border-gray-100 bg-gray-50">
-                    <ManualContentEditor manualId={manual.id} />
-                  </td>
-                </tr>
-              )}
-            </React.Fragment>
           ))}
         </tbody>
       </table>
       </div>
+        }
+      />
       )}
 
       {pendingDeleteId !== null && (

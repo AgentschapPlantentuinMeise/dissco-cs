@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { ForumReplyDto } from '@dissco-cs/shared-types';
 import { DeleteIconButton } from '../../components/ui/DeleteIconButton';
 import { formatDate } from '../../utility/format-date';
-import { inputClass } from './forum-styles';
+import { inputClass } from '../../components/ui/input-styles';
 import { Button } from '../../components/ui/Button';
 
 // The opened part of a topic: its replies, then a reply box (or a notice when the topic is closed).

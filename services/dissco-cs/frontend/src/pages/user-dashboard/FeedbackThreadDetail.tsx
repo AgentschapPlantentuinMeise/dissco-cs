@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { feedbackKeys, feedbackQueries } from '../../api/queries/feedback';
 import { feedbackApi } from '../../api/cs-client/feedback';
 import { Button } from '../../components/ui/Button';
+import { inputClass } from '../../components/ui/input-styles';
 
 // An opened feedback thread: its messages and a reply box.
 export function FeedbackThreadDetail({ threadId }: { threadId: number }) {
@@ -55,7 +56,7 @@ export function FeedbackThreadDetail({ threadId }: { threadId: number }) {
           onChange={e => setReplyBody(e.target.value)}
           rows={2}
           placeholder={t('dashboard_feedback_reply_placeholder')}
-          className="flex-1 border border-gray-300 rounded-lg p-2 text-sm resize-none focus:outline-none focus:border-cs-primary"
+          className={`${inputClass} flex-1`}
         />
         <Button
           size="sm"

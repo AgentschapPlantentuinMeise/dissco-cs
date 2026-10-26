@@ -1,121 +1,102 @@
-﻿import React, { useState, useLayoutEffect } from 'react';
+﻿import { useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { forumQueries } from '../../api/queries/forum';
+import { Disclosure, DisclosureButton } from '@headlessui/react';
+import { LuMenu, LuX } from 'react-icons/lu';
 import { HrefLink } from '../../utility/href-link';
 import { useCurrentUser } from '../../hooks/use-current-user';
-import { disscoCSConfig } from '../../dissco-cs-config';
-import { useNavItems } from '../../hooks/use-nav-items';
-import { NAV_ITEMS } from './nav-config';
 import { NavSearch } from './NavSearch';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { AnnouncementPin } from '../announcements/AnnouncementPin';
 import { UserMenu } from './UserMenu';
+import { SiteLogo } from './SiteLogo';
+import { ForumNavLink } from './ForumNavLink';
+import { MobileNavPanel } from './MobileNavPanel';
+import { BAR_LINK_KEYS } from './nav-config';
+import { NavLink, useNavLinks } from './use-nav-links';
 import { buttonClass } from '../ui/Button';
+import { useSiteName } from '../../hooks/use-site-name';
 
-const navLinkClass = (isActive: boolean) =>
-  `no-underline text-base transition-colors duration-200 hover:text-cs-primary
-   block py-[10px] border-t border-[#f0f0f0]
-   md:inline md:py-0 md:border-t-0
-   ${isActive ? 'font-medium text-cs-accent' : 'font-[380] text-gray-600'}`;
+const PROJECTS_LINK: NavLink = { key: 'projects', labelKey: 'nav_projects', href: '/explore' };
 
+// The fixed bar on top of every page: logo, the links to the pages with a large header, and on the
+// right search, the forum, the announcements pin and the account menu (or language and login).
+// On a phone the links and search move into a menu below the bar.
 export function Navbar() {
   const { t } = useTranslation('dissco-cs');
-  const [menuOpen, setMenuOpen] = useState(false);
+  const platformName = useSiteName();
   const user = useCurrentUser();
   const location = useLocation();
-  const { navItems } = useNavItems();
+  const { linksFor, isVisible } = useNavLinks();
+  const links = [PROJECTS_LINK, ...linksFor(BAR_LINK_KEYS)];
 
   useLayoutEffect(() => {
     document.body.classList.add('cs-active');
     return () => document.body.classList.remove('cs-active');
   }, []);
 
-  // Unread badge: refreshed by invalidation from the forum page (no window events).
-  const { data: newMsgCount = 0 } = useQuery({ ...forumQueries.unreadCount(), enabled: !!user });
-
   return (
-    <nav className="cs-navbar">
-      <div className="flex justify-between items-center w-full px-10 h-full max-[768px]:flex-wrap max-[768px]:px-5 max-[768px]:py-3 max-[768px]:h-auto">
-
-        <HrefLink href="/" className="flex items-center cursor-pointer no-underline">
-          <img src={disscoCSConfig.logoUrl} alt={`${disscoCSConfig.platformName} Logo`} className="h-[25px] w-auto block" />
+    // Keyed on the path, so the mobile menu closes after following one of its links.
+    <Disclosure as="nav" key={location.pathname} className="cs-navbar">
+      <div className="cs-container cs-container--wide h-navbar flex items-center gap-3 lg:gap-6">
+        <HrefLink href="/" className="mr-auto min-w-0 flex items-center no-underline">
+          <SiteLogo />
         </HrefLink>
 
-        {/* Hamburger — only visible on mobile */}
-        <button
-          className="md:hidden flex flex-col justify-between w-6 h-[18px] bg-transparent border-none cursor-pointer p-0"
-          onClick={() => setMenuOpen(o => !o)}
-          aria-label={t('nav_menu_label')}
-          aria-expanded={menuOpen}
-        >
-          <span className={`block h-0.5 w-full bg-gray-600 rounded-sm transition-transform duration-200 ${menuOpen ? 'translate-y-2 rotate-45' : ''}`} />
-          <span className={`block h-0.5 w-full bg-gray-600 rounded-sm transition-opacity duration-200 ${menuOpen ? 'opacity-0' : ''}`} />
-          <span className={`block h-0.5 w-full bg-gray-600 rounded-sm transition-transform duration-200 ${menuOpen ? '-translate-y-2 -rotate-45' : ''}`} />
-        </button>
-
-        {/* Nav menu */}
-        <ul className={`list-none m-0 p-0 gap-5 items-center
-          ${menuOpen ? 'flex flex-col w-full gap-0 py-2' : 'hidden'}
-          md:flex md:flex-row md:gap-5 md:w-auto md:py-0`}>
-
-          <li>
-            <HrefLink
-              href="/explore"
-              className={navLinkClass(location.pathname.startsWith('/explore'))}
-              onClick={() => setMenuOpen(false)}
-            >
-              {t('nav_projects')}
-            </HrefLink>
-          </li>
-
-          {navItems.map(navItem => {
-            const nav = NAV_ITEMS[navItem.pageKey];
-            if (!nav || !navItem.isActive || (nav.requiresLogin && !user)) {
-              return null;
-            }
-
+        <ul className="hidden lg:flex self-stretch items-stretch gap-6 list-none m-0 p-0">
+          {links.map(link => {
+            const isCurrent = location.pathname.startsWith(link.href);
             return (
-              <li key={navItem.pageKey}>
+              <li key={link.key} className="flex">
                 <HrefLink
-                  href={nav.href}
-                  className={navLinkClass(location.pathname.startsWith(nav.href))}
-                  onClick={() => setMenuOpen(false)}
+                  href={link.href}
+                  aria-current={isCurrent ? 'page' : undefined}
+                  className={`flex items-center border-y-2 border-t-transparent text-[0.92rem] no-underline transition-colors duration-150 hover:text-cs-primary ${
+                    isCurrent ? 'border-b-cs-primary font-semibold text-cs-primary' : 'border-b-transparent text-gray-500'
+                  }`}
                 >
-                  {t(nav.labelKey)}
-                  {navItem.pageKey === 'forum' && newMsgCount > 0 && (
-                    <span className="inline-block bg-cs-accent text-white rounded-[10px] px-[6px] py-[1px] text-[0.7rem] font-bold ml-[5px] align-middle leading-[1.4]">
-                      {newMsgCount}
-                    </span>
-                  )}
+                  {t(link.labelKey, { platformName })}
                 </HrefLink>
               </li>
             );
           })}
+        </ul>
 
-          <li className="relative max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:w-full max-[768px]:py-[10px]">
-            <NavSearch onSearched={() => setMenuOpen(false)} />
-          </li>
+        {/* Separates the pages from the tools on the right. */}
+        <span className="hidden lg:block w-px h-6 bg-gray-200" aria-hidden="true" />
 
-          <li className="relative max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:w-full">
-            <LanguageSwitcher />
-          </li>
-
-          <li className="relative max-[768px]:w-full">
-            {user ? (
-              <UserMenu user={user} />
-            ) : (
-              <HrefLink
-                href="/login"
-                className={`${buttonClass({ size: 'sm' })} whitespace-nowrap max-[768px]:flex max-[768px]:justify-start max-[768px]:py-[10px] max-[768px]:px-0 max-[768px]:bg-transparent max-[768px]:text-cs-primary max-[768px]:text-base max-[768px]:border-0 max-[768px]:border-t max-[768px]:border-[#f0f0f0] max-[768px]:rounded-none hover:max-[768px]:bg-transparent hover:max-[768px]:text-cs-dark hover:max-[768px]:translate-y-0`}
-              >
+        <div className="flex items-center gap-3 lg:gap-5">
+          <span className="hidden lg:flex">
+            <NavSearch />
+          </span>
+          {user && isVisible('forum') && (
+            <span className="hidden lg:flex">
+              <ForumNavLink />
+            </span>
+          )}
+          {user && <AnnouncementPin />}
+          {user ? (
+            <UserMenu user={user} />
+          ) : (
+            <>
+              <span className="hidden lg:flex">
+                <LanguageSwitcher />
+              </span>
+              <HrefLink href="/login" className={`${buttonClass({ size: 'sm' })} whitespace-nowrap`}>
                 {t('nav_login')}
               </HrefLink>
-            )}
-          </li>
-
-        </ul>
+            </>
+          )}
+          <DisclosureButton
+            aria-label={t('nav_menu_label')}
+            className="group lg:hidden grid place-items-center w-[34px] h-[34px] bg-transparent border-0 p-0 text-gray-600 text-xl cursor-pointer"
+          >
+            <LuMenu aria-hidden="true" className="group-data-[open]:hidden" />
+            <LuX aria-hidden="true" className="hidden group-data-[open]:block" />
+          </DisclosureButton>
+        </div>
       </div>
-    </nav>
+      <MobileNavPanel projectsLink={PROJECTS_LINK} />
+    </Disclosure>
   );
 }

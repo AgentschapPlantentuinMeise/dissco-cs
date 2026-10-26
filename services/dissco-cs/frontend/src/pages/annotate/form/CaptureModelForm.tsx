@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LuArrowLeft, LuCheck } from 'react-icons/lu';
+import { LuArrowLeft } from 'react-icons/lu';
+import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { MadocCaptureModelDto, MadocStructureNodeDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
 import { DocumentPath } from '../../../utility/annotation-document';
 import { collectMissingRequiredLabels, hasVisibleRequiredField, resolveSectionModels, resolveSingleChoice } from './capture-model-rules';
@@ -32,6 +33,8 @@ export interface CaptureModelFormProps {
   readOnly?: boolean;
   /** Text of the banner at the top of the form when readOnly is true. */
   readOnlyBanner?: string;
+  /** Opens the Uitleg panel at a field's help (key from fieldHelpKey). */
+  onShowHelp?: (helpKey: string) => void;
 }
 
 export function CaptureModelForm({
@@ -49,6 +52,7 @@ export function CaptureModelForm({
   onClearSelector,
   readOnly,
   readOnlyBanner,
+  onShowHelp,
 }: CaptureModelFormProps) {
   const { t } = useTranslation('dissco-cs');
   const selectorControls: SelectorControls = { drawingPath, onRequestDraw, onCancelDraw, onClearSelector };
@@ -146,11 +150,25 @@ export function CaptureModelForm({
         {sectionModels
           ? sectionModels.map(sectionModel => (
               <Fieldset key={sectionModel.id} label={sectionModel.label} required={false}>
-                <ModelFields fields={sectionModel.fields} document={document} pathPrefix={[]} onChange={onChange} selectorControls={selectorControls} />
+                <ModelFields
+                  fields={sectionModel.fields}
+                  document={document}
+                  pathPrefix={[]}
+                  onChange={onChange}
+                  selectorControls={selectorControls}
+                  onShowHelp={onShowHelp}
+                />
               </Fieldset>
             ))
           : current.type === 'model' && (
-              <ModelFields fields={current.fields} document={document} pathPrefix={[]} onChange={onChange} selectorControls={selectorControls} />
+              <ModelFields
+                fields={current.fields}
+                document={document}
+                pathPrefix={[]}
+                onChange={onChange}
+                selectorControls={selectorControls}
+                onShowHelp={onShowHelp}
+              />
             )}
       </div>
       {!readOnly && (
@@ -167,11 +185,7 @@ export function CaptureModelForm({
             <Button size="sm" className="flex-shrink-0" onClick={handleSubmit} disabled={saving}>
               {t('task_submit')}
             </Button>
-            {confirmation && (
-              <span className="text-[0.9rem] text-cs-primary font-medium inline-flex items-center gap-1">
-                <LuCheck aria-hidden="true" /> {confirmation}
-              </span>
-            )}
+            {confirmation && <SavedNotice>{confirmation}</SavedNotice>}
           </div>
         </div>
       )}

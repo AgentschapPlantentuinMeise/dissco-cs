@@ -8,6 +8,7 @@ import { LanguageTabs } from '../../../components/ui/LanguageTabs';
 import { MarkdownToolbar } from '../../../components/ui/MarkdownToolbar';
 import { localeText } from '../../../utility/locale-text';
 import { MadocProjectDto, AnnouncementInput, AnnouncementTargetType, SitePageLang, announcementInputSchema } from '@dissco-cs/shared-types';
+import { inputClass } from '../../../components/ui/input-styles';
 
 export function toDateInputValue(iso: string | null): string {
   if (!iso) return '';
@@ -15,14 +16,14 @@ export function toDateInputValue(iso: string | null): string {
 }
 
 // The side form of the announcements page: one announcement, created or edited.
-export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, isEditing, projects, onSave, onCancel }: {
+export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, projects, saving, onSave, onCancel }: {
   draft: AnnouncementInput;
   setDraft: React.Dispatch<React.SetStateAction<AnnouncementInput>>;
   selectedLang: SitePageLang;
   onSelectLang: (lang: SitePageLang) => void;
-  isEditing: boolean;
   // Projects an announcement can target.
   projects: MadocProjectDto[];
+  saving: boolean;
   onSave: (input: AnnouncementInput) => void;
   onCancel: () => void;
 }) {
@@ -37,10 +38,7 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
   };
 
   return (
-    <div className="w-full lg:flex-[0_0_55%] lg:min-w-[420px] bg-white border border-gray-200 rounded-[10px] p-6">
-      <h2 className="text-xl font-semibold text-cs-primary mb-4">
-        {isEditing ? t('sm_announcements_edit') : t('sm_announcements_new')}
-      </h2>
+    <div>
 
       <LanguageTabs
         selected={selectedLang}
@@ -54,7 +52,7 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
           type="text"
           value={draft.title[selectedLang] ?? ''}
           onChange={e => setDraft(prev => ({ ...prev, title: { ...prev.title, [selectedLang]: e.target.value } }))}
-          className="border border-gray-300 rounded-lg p-2"
+          className={inputClass}
         />
       </label>
 
@@ -71,7 +69,7 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
           onChange={e =>
             setDraft(prev => ({ ...prev, description: { ...prev.description, [selectedLang]: e.target.value } }))
           }
-          className="border border-gray-300 rounded-b-lg p-2 min-h-[90px]"
+          className={`${inputClass} rounded-t-none min-h-[90px]`}
         />
       </label>
 
@@ -98,7 +96,7 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
           <Select
             value={draft.targetProjectSlug ?? ''}
             onChange={e => setDraft(prev => ({ ...prev, targetProjectSlug: e.target.value || null }))}
-            className="border border-gray-300 rounded-lg p-2"
+            className={inputClass}
             wrapperClassName="ml-6"
           >
             <option value="">{t('sm_announcements_select_project')}</option>
@@ -118,7 +116,7 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
             type="date"
             value={toDateInputValue(draft.startDate)}
             onChange={e => setDraft(prev => ({ ...prev, startDate: e.target.value || null }))}
-            className="border border-gray-300 rounded-lg p-2"
+            className={inputClass}
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -127,7 +125,7 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
             type="date"
             value={toDateInputValue(draft.endDate)}
             onChange={e => setDraft(prev => ({ ...prev, endDate: e.target.value || null }))}
-            className="border border-gray-300 rounded-lg p-2"
+            className={inputClass}
           />
         </label>
       </div>
@@ -140,6 +138,7 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
       <div className="flex items-center gap-3">
         <SaveButton
           onClick={save}
+          loading={saving}
           disabled={!canSave}
           title={!canSave ? t('common_fill_required_fields') : undefined}
         />

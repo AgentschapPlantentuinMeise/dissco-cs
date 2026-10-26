@@ -58,6 +58,8 @@ export interface MadocAnnotationDocumentDto {
   id: string;
   type: 'entity';
   label?: string;
+  // Help text the model author wrote for this group of fields (Madoc's model editor, "Description").
+  description?: string;
   selector?: MadocBaseSelectorDto;
   // Entities carry the same MadocBasePropertyDto config as fields do (required/dependent), set by
   // the model author — used to decide whether to show a "*" or hide the group conditionally.

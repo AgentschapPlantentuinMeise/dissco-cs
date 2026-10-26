@@ -1,3 +1,4 @@
+import { fromBigint } from '../database/bigint.js';
 import { Pool } from 'pg';
 import { FeedbackMessageDto, FeedbackThreadDto } from '@dissco-cs/shared-types';
 
@@ -272,7 +273,7 @@ export class FeedbackRepository {
 // Both *_hidden_at columns (the other participant's hide state) stay server-side.
 export function toFeedbackThreadDto(thread: FeedbackThreadWithMeta): FeedbackThreadDto {
   return {
-    id: thread.id,
+    id: fromBigint(thread.id),
     reviewerUserId: thread.reviewer_user_id,
     reviewerName: thread.reviewer_name,
     recipientUserId: thread.recipient_user_id,
@@ -289,8 +290,8 @@ export function toFeedbackThreadDto(thread: FeedbackThreadWithMeta): FeedbackThr
 // read_at is only used server-side for unread counts.
 export function toFeedbackMessageDto(row: FeedbackMessageRow): FeedbackMessageDto {
   return {
-    id: row.id,
-    threadId: row.thread_id,
+    id: fromBigint(row.id),
+    threadId: fromBigint(row.thread_id),
     authorUserId: row.author_user_id,
     authorName: row.author_name,
     body: row.body,

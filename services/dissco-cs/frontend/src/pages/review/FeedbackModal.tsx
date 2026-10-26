@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { CancelButton } from '../../components/ui/CancelButton';
 import { LuMail } from 'react-icons/lu';
 import { FeedbackComposeTarget } from './use-review-page';
+import { inputClass } from '../../components/ui/input-styles';
 
 interface FeedbackModalProps {
   target: FeedbackComposeTarget;
@@ -52,7 +53,7 @@ export function FeedbackModal({ target, onSend, onClose, sending }: FeedbackModa
         onChange={e => setSubject(e.target.value)}
         placeholder={t('feedback_subject_placeholder')}
         autoFocus
-        className="w-full border border-gray-300 rounded-lg p-3 text-sm mb-4 focus:outline-none focus:border-cs-primary"
+        className={`${inputClass} w-full mb-4`}
       />
       <label htmlFor="feedback-body" className="block text-[0.78rem] font-semibold text-gray-600 mb-2">
         {t('feedback_body_label')}
@@ -62,7 +63,7 @@ export function FeedbackModal({ target, onSend, onClose, sending }: FeedbackModa
         value={body}
         onChange={e => setBody(e.target.value)}
         rows={4}
-        className="w-full border border-gray-300 rounded-lg p-3 text-sm resize-none focus:outline-none focus:border-cs-primary"
+        className={`${inputClass} w-full`}
       />
     </Modal>
   );

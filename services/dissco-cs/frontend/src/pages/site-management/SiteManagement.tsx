@@ -1,70 +1,76 @@
-﻿import React from 'react';
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
+import {
+  LuBuilding2,
+  LuFileText,
+  LuFolder,
+  LuImage,
+  LuListOrdered,
+  LuMegaphone,
+  LuPalette,
+  LuSettings,
+  LuShieldCheck,
+  LuUserCog,
+} from 'react-icons/lu';
 import { getSiteSlug } from '../../api/slug';
-import { HrefLink } from '../../utility/href-link';
 import { CsPage } from '../../components/layout/CsPage';
-
-interface Tile {
-  href: string;
-  external?: boolean;
-  titleKey: string;
-  descKey: string;
-}
-
-const TILES: Tile[] = [
-  { href: '/manage/projects', titleKey: 'sm_tile_projects_title', descKey: 'sm_tile_projects_desc' },
-  { href: '/manage/announcements', titleKey: 'sm_tile_announcements_title', descKey: 'sm_tile_announcements_desc' },
-  { href: '/manage/users', titleKey: 'sm_tile_users_title', descKey: 'sm_tile_users_desc' },
-  { href: '/manage/pages', titleKey: 'sm_tile_pages_title', descKey: 'sm_tile_pages_desc' },
-  { href: '/manage/institutions', titleKey: 'sm_tile_institutions_title', descKey: 'sm_tile_institutions_desc' },
-  { href: '/manage/colors', titleKey: 'sm_tile_colors_title', descKey: 'sm_tile_colors_desc' },
-];
+import { PageHeader } from '../../components/layout/PageHeader';
+import { PageBody } from '../../components/layout/PageBody';
+import { ManageGroup, ManageList } from './ManageList';
 
 export function SiteManagement() {
   const { t } = useTranslation('dissco-cs');
   const siteSlug = getSiteSlug();
+  const groups: ManageGroup[] = [
+    {
+      titleKey: 'sm_group_content',
+      links: [
+        { href: '/manage/announcements', icon: LuMegaphone, titleKey: 'sm_tile_announcements_title', descKey: 'sm_tile_announcements_desc' },
+        { href: '/manage/pages', icon: LuFileText, titleKey: 'sm_tile_pages_title', descKey: 'sm_tile_pages_desc' },
+        { href: '/manage/home-steps', icon: LuListOrdered, titleKey: 'sm_home_steps_title', descKey: 'sm_tile_home_steps_desc' },
+      ],
+    },
+    {
+      titleKey: 'sm_group_projects',
+      links: [
+        { href: '/manage/projects', icon: LuFolder, titleKey: 'sm_tile_projects_title', descKey: 'sm_tile_projects_desc' },
+        { href: '/manage/institutions', icon: LuBuilding2, titleKey: 'sm_tile_institutions_title', descKey: 'sm_tile_institutions_desc' },
+      ],
+    },
+    {
+      titleKey: 'sm_group_appearance',
+      links: [
+        { href: '/manage/images', icon: LuImage, titleKey: 'sm_site_images_title', descKey: 'sm_tile_images_desc' },
+        { href: '/manage/colors', icon: LuPalette, titleKey: 'sm_tile_colors_title', descKey: 'sm_tile_colors_desc' },
+      ],
+    },
+    {
+      titleKey: 'sm_group_access',
+      links: [
+        {
+          href: `/s/${siteSlug}/admin/site/permissions`,
+          icon: LuShieldCheck,
+          titleKey: 'sm_tile_site_permissions_title',
+          descKey: 'sm_tile_site_permissions_desc',
+          external: true,
+        },
+        {
+          href: `/s/${siteSlug}/admin/global/users`,
+          icon: LuUserCog,
+          titleKey: 'sm_tile_user_accounts_title',
+          descKey: 'sm_tile_user_accounts_desc',
+          external: true,
+        },
+        { href: `/s/${siteSlug}/admin`, icon: LuSettings, titleKey: 'sm_tile_madoc_title', descKey: 'sm_tile_madoc_desc', external: true },
+      ],
+    },
+  ];
 
   return (
     <CsPage>
-      <div className="cs-main-wrapper pt-10 pb-16">
-        <div className="cs-container cs-container--wide">
-          <header className="mb-8">
-            <h1 className="text-4xl text-cs-primary mb-3">{t('sm_title')}</h1>
-            <p className="text-lg text-gray-600">{t('sm_intro')}</p>
-          </header>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {TILES.map(tile => {
-              const tileContent = (
-                <>
-                  <h2 className="text-xl font-semibold text-cs-primary mb-2">{t(tile.titleKey)}</h2>
-                  <p className="text-sm text-gray-600 m-0">{t(tile.descKey)}</p>
-                </>
-              );
-              const tileClassName =
-                'block no-underline bg-white border border-gray-200 rounded-[10px] p-6 transition-all duration-150 hover:border-cs-primary hover:shadow-[0_4px_14px_rgba(0,0,0,1)] hover:shadow-cs-primary/[0.14] hover:-translate-y-px';
-
-              return tile.external ? (
-                <a key={tile.href} href={tile.href} className={tileClassName}>
-                  {tileContent}
-                </a>
-              ) : (
-                <HrefLink key={tile.href} href={tile.href} className={tileClassName}>
-                  {tileContent}
-                </HrefLink>
-              );
-            })}
-
-            <a
-              href={`/s/${siteSlug}/admin`}
-              className="block no-underline bg-white border border-gray-200 rounded-[10px] p-6 transition-all duration-150 hover:border-cs-primary hover:shadow-[0_4px_14px_rgba(0,0,0,1)] hover:shadow-cs-primary/[0.14] hover:-translate-y-px"
-            >
-              <h2 className="text-xl font-semibold text-cs-primary mb-2">{t('sm_tile_madoc_title')}</h2>
-              <p className="text-sm text-gray-600 m-0">{t('sm_tile_madoc_desc')}</p>
-            </a>
-          </div>
-        </div>
-      </div>
+      <PageBody>
+        <PageHeader variant="plain" title={t('sm_title')} lead={t('sm_intro')} />
+        <ManageList groups={groups} />
+      </PageBody>
     </CsPage>
   );
 }
