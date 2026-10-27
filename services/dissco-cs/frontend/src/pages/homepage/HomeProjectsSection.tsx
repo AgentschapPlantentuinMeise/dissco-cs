@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
 import { projectQueries } from '../../api/queries/projects';
 import { PageSection } from '../../components/layout/PageSection';
+import { SectionLoadError } from '../../components/layout/SectionLoadError';
 import { ProjectCard } from '../../components/projects/ProjectCard';
 import { useGridColumnCount } from '../../hooks/use-grid-column-count';
 
@@ -22,7 +23,8 @@ export function HomeProjectsSection() {
       action={{ href: '/explore', label: t('projects_all') }}
     >
       {status === 'pending' && <p className="text-gray-600 m-0">{t('loading_projects')}</p>}
-      {status !== 'pending' && running.length === 0 && <p className="text-gray-600 m-0">{t('no_projects')}</p>}
+      {status === 'error' && <SectionLoadError />}
+      {status === 'success' && running.length === 0 && <p className="text-gray-600 m-0">{t('no_projects')}</p>}
       <div ref={gridRef} className="cs-card-grid cs-card-grid--dense">
         {running.map((project: MadocProjectDto) => (
           <ProjectCard key={project.id} projectSummaryData={project} />

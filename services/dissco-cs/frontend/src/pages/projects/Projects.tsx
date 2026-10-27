@@ -4,6 +4,7 @@ import { shuffle } from 'lodash-es';
 import { useQuery } from '@tanstack/react-query';
 import { projectQueries } from '../../api/queries/projects';
 import { CsPage } from '../../components/layout/CsPage';
+import { PageLoadError } from '../../components/layout/PageLoadError';
 import { ProjectCard } from '../../components/projects/ProjectCard';
 import { HeaderMosaic, PageHeader } from '../../components/layout/PageHeader';
 import { HonourBoardBand } from '../../components/stats/HonourBoardBand';
@@ -40,6 +41,10 @@ export function Projects() {
     () => shuffle((allProjects ?? []).filter((p: MadocProjectDto) => p.status === 1)),
     [allProjects]
   );
+
+  if (status === 'error') {
+    return <PageLoadError />;
+  }
 
   return (
     <CsPage>

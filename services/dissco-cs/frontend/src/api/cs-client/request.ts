@@ -5,13 +5,30 @@ import { getJwt, redirectToExpiredLogin } from '../jwt';
  * The one error type of every API call. Callers branch on `status` (e.g. 404 on prepare-claim =
  * no access) instead of parsing text. `message` is the server's own `{ error }` text (ours or
  * Madoc's), for recognising a specific case and for the log -- never shown to the user.
+ * `serverMessage` is that text alone, undefined when the server sent none (then `message` is a
+ * technical fallback). `loggedByBackend` is false when the answer did not come from our backend
+ * (a 502/504 page from nginx, or Madoc itself), so the browser has to report it (see shouldReport).
  */
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, path: string, serverMessage?: string) {
+  serverMessage: string | undefined;
+  loggedByBackend: boolean;
+  constructor(status: number, path: string, serverMessage?: string, loggedByBackend = true) {
     super(serverMessage || `DiSSCo CS API request failed: ${status} ${path}`);
     this.status = status;
+    this.serverMessage = serverMessage || undefined;
+    this.loggedByBackend = loggedByBackend;
   }
+}
+
+/**
+ * Whether a failed call means "this thing does not exist" rather than "loading went wrong", so a
+ * page can say "not found" instead of offering a retry.
+ * @param error the error of a failed query or call, of any type
+ * Returns: true only for an ApiError with status 404.
+ */
+export function isNotFound(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 404;
 }
 
 async function readServerMessage(response: Response): Promise<string | undefined> {
@@ -26,6 +43,13 @@ async function readServerMessage(response: Response): Promise<string | undefined
   } catch {
     return text;
   }
+}
+
+// Our backend answers every error with { error } JSON; anything else came from in front of it
+// (nginx's 502/504 page, the dev proxy), and the backend never saw that request fail.
+async function apiErrorFrom(response: Response, path: string): Promise<ApiError> {
+  const fromBackend = (response.headers.get('content-type') || '').includes('application/json');
+  return new ApiError(response.status, path, await readServerMessage(response), fromBackend);
 }
 
 /**
@@ -60,7 +84,7 @@ export async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (!response.ok) {
-    throw new ApiError(response.status, path, await readServerMessage(response));
+    throw await apiErrorFrom(response, path);
   }
 
   // 204, and Madoc routes relayed by the backend that answer 201 without a JSON body.
@@ -98,7 +122,7 @@ export async function csUpload(path: string, file: File): Promise<void> {
   }
 
   if (!response.ok) {
-    throw new ApiError(response.status, path, await readServerMessage(response));
+    throw await apiErrorFrom(response, path);
   }
 }
 

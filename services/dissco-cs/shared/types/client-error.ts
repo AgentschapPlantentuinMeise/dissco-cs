@@ -2,8 +2,9 @@ import { z } from 'zod';
 
 // Where a browser error happened: 'render' = a crash caught by the error boundary, 'query' and
 // 'mutation' = a failed server call reported by react-query, 'action' = an error caught in a
-// page's own handler (e.g. a failed claim or upload).
-export const clientErrorKinds = ['render', 'query', 'mutation', 'action'] as const;
+// page's own handler (e.g. a failed claim or upload), 'uncaught' = an error nobody caught, e.g. in a
+// click handler or a timer (window's error and unhandledrejection events).
+export const clientErrorKinds = ['render', 'query', 'mutation', 'action', 'uncaught'] as const;
 export type ClientErrorKind = (typeof clientErrorKinds)[number];
 
 // The last few things that happened in the browser before the error: page changes and API calls

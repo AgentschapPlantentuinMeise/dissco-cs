@@ -1,15 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/layout/CsPage';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PageBody } from '../../components/layout/PageBody';
-import { setPassword as submitSetPassword, checkReset } from '../../api/madoc-auth/auth';
+import { setPassword as submitSetPassword } from '../../api/madoc-auth/auth';
+import { authQueries } from '../../api/queries/auth';
+import { failedToLoad } from '../../api/query-state';
+import { PageLoadError } from '../../components/layout/PageLoadError';
 import { getSiteSlug } from '../../api/slug';
 import { LuCheck, LuCircle, LuEye, LuEyeOff } from 'react-icons/lu';
 import { IconButton } from '../../components/ui/IconButton';
 import { inputClass } from '../../components/ui/input-styles';
+import { reportAuthError } from './auth-error';
 
 // Mirrors validatePasswordStrength() in services/madoc-ts/src/routes/dissco-cs-auth.ts -
 // this is client-side feedback only, the server call is the real source of truth.
@@ -37,16 +42,7 @@ export function SetPassword() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [status, setStatus] = useState<'idle' | 'sending' | 'error'>('idle');
   const [error, setError] = useState('');
-  const [linkValid, setLinkValid] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (!c1 || !c2) {
-      return;
-    }
-    checkReset({ c1, c2 })
-      .then(res => setLinkValid(res.valid))
-      .catch(() => setLinkValid(false));
-  }, [c1, c2]);
+  const linkQuery = useQuery(authQueries.resetLink(c1, c2));
 
   const passwordRequirements = getPasswordRequirements(password);
   const passwordValid = passwordRequirements.every(req => req.met);
@@ -65,11 +61,16 @@ export function SetPassword() {
       window.location.href = isActivation ? `${siteRoot}?welcome=1` : siteRoot;
     } catch (err) {
       setStatus('error');
-      setError(err instanceof Error ? err.message : t('set_password_form_error'));
+      setError(t(reportAuthError(err, 'set_password_form_error')));
     }
   };
 
-  if (!c1 || !c2 || linkValid === false) {
+  // A fault while checking the link is not an expired link.
+  if (failedToLoad(linkQuery)) {
+    return <PageLoadError />;
+  }
+
+  if (!c1 || !c2 || linkQuery.data?.valid === false) {
     return (
       <CsPage>
         <PageBody width="narrow">

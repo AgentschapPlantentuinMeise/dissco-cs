@@ -5,6 +5,8 @@ import { reviewQueries } from '../../api/queries/review';
 import { currentLocation, withQuery } from '../../api/url';
 import { useCurrentUser } from '../../hooks/use-current-user';
 import { NoAccessRedirect } from './NoAccessRedirect';
+import { PageLoadError } from './PageLoadError';
+import { failedToLoad } from '../../api/query-state';
 
 export function AuthGate({
   requireAdmin,
@@ -16,7 +18,7 @@ export function AuthGate({
 
   // Same query key as UserMenu's reviewer check, so react-query shares the call instead of
   // fetching it twice.
-  const { data: isReviewer, isLoading: reviewerLoading } = useQuery({
+  const reviewerQuery = useQuery({
     ...reviewQueries.isReviewer(),
     enabled: !!requireReviewer && !!user && !isAdmin,
     staleTime: 5 * 60 * 1000,
@@ -34,8 +36,11 @@ export function AuthGate({
   }
 
   if (requireReviewer && !isAdmin) {
-    if (reviewerLoading) return null;
-    if (!isReviewer) return <NoAccessRedirect />;
+    // A failed check is not "no access". Checked before loading: the error page's own Navbar runs
+    // the same check again, and the retry must not swap the error page for an empty screen.
+    if (failedToLoad(reviewerQuery)) return <PageLoadError />;
+    if (reviewerQuery.isLoading) return null;
+    if (!reviewerQuery.data) return <NoAccessRedirect />;
   }
 
   return <>{children}</>;

@@ -3,6 +3,8 @@ import { CsPage } from '../../components/layout/CsPage';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PageSection } from '../../components/layout/PageSection';
+import { PageLoadError } from '../../components/layout/PageLoadError';
+import { SectionLoadError } from '../../components/layout/SectionLoadError';
 import { FeedbackThreadRow } from './FeedbackThreadRow';
 import { MyTasksSection } from './MyTasksSection';
 import { YourYear } from './YourYear';
@@ -16,10 +18,17 @@ import { useSiteName } from '../../hooks/use-site-name';
 export function UserDashboard() {
   const { t, i18n } = useTranslation('dissco-cs');
   const platformName = useSiteName();
-  const { user, summary, percentage, tasksLoading, list, year, helpedInstitutions, unansweredCount, feedback, release } = useUserDashboard();
+  const { user, summary, percentage, tasksLoading, tasksError, list, year, helpedInstitutions, unansweredCount, feedback, release } =
+    useUserDashboard();
 
   // The route sits behind <AuthGate>, which already sends a visitor without a session to login.
   if (!user) return null;
+
+  // The header, the task list, the year and the institutions are all counted from the tasks:
+  // without them every section would show zero.
+  if (tasksError) {
+    return <PageLoadError />;
+  }
 
   return (
     <CsPage>
@@ -50,6 +59,8 @@ export function UserDashboard() {
       >
         {feedback.loading ? (
           <p className="text-center py-10 text-gray-500 m-0">{t('my_tasks_loading')}</p>
+        ) : feedback.error ? (
+          <SectionLoadError />
         ) : feedback.threads.length === 0 ? (
           <p className="text-gray-500 m-0">{t('dashboard_feedback_empty')}</p>
         ) : (

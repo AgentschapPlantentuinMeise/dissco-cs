@@ -4,6 +4,7 @@ import { shuffle } from 'lodash-es';
 import { useQuery } from '@tanstack/react-query';
 import { institutionQueries } from '../../api/queries/institutions';
 import { PageSection } from '../../components/layout/PageSection';
+import { SectionLoadError } from '../../components/layout/SectionLoadError';
 import { InstitutionCard } from '../../components/institutions/InstitutionCard';
 import { useGridColumnCount } from '../../hooks/use-grid-column-count';
 import { useNavItems } from '../../hooks/use-nav-items';
@@ -14,12 +15,12 @@ import { useNavItems } from '../../hooks/use-nav-items';
 export function HomeInstitutionsSection() {
   const { t } = useTranslation('dissco-cs');
   const { isActive } = useNavItems();
-  const { data: institutions } = useQuery(institutionQueries.active());
+  const { data: institutions, isError } = useQuery(institutionQueries.active());
   const [gridRef, columns] = useGridColumnCount<HTMLDivElement>();
   // Shuffled once per load of the data, not on every render: a resize must not swap the tiles.
   const shuffled = useMemo(() => shuffle(institutions ?? []), [institutions]);
 
-  if (!isActive('institutions') || !institutions || institutions.length === 0) {
+  if (!isActive('institutions') || (!isError && (!institutions || institutions.length === 0))) {
     return null;
   }
 
@@ -28,11 +29,15 @@ export function HomeInstitutionsSection() {
       title={t('home_institutions_title')}
       action={{ href: '/institutions', label: t('institutions_all') }}
     >
-      <div ref={gridRef} className="cs-card-grid cs-card-grid--dense">
-        {shuffled.slice(0, columns).map(institution => (
-          <InstitutionCard key={institution.id} institution={institution} />
-        ))}
-      </div>
+      {isError ? (
+        <SectionLoadError />
+      ) : (
+        <div ref={gridRef} className="cs-card-grid cs-card-grid--dense">
+          {shuffled.slice(0, columns).map(institution => (
+            <InstitutionCard key={institution.id} institution={institution} />
+          ))}
+        </div>
+      )}
     </PageSection>
   );
 }

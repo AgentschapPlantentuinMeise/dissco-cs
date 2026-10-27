@@ -7,6 +7,8 @@ import { institutionQueries } from '../../../api/queries/institutions';
 import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
+import { ManageLoadError } from '../ManageLoadError';
+import { failedToLoad } from '../../../api/query-state';
 import { projectsApi } from '../../../api/cs-client/projects';
 import { Tabs } from '../../../components/ui/Tabs';
 import { ProjectsSubview } from './ProjectsSubview';
@@ -23,16 +25,20 @@ export function ProjectManagement() {
   // All projects, every status, every page -- unlike the public Homepage/Projects pages (which
   // deliberately only show published/active ones), project management needs to see drafts and
   // paused projects too, e.g. to link them to an institution before they go live.
-  const { data: allProjects, status: allProjectsStatus } = useQuery(projectQueries.listAll());
+  const allProjectsQuery = useQuery(projectQueries.listAll());
+  const { data: allProjects, status: allProjectsStatus } = allProjectsQuery;
   const projects = allProjects ?? [];
 
   const queryClient = useQueryClient();
 
-  const { data: manuals = [], status: manualsStatus } = useQuery(manualQueries.list());
+  const manualsQuery = useQuery(manualQueries.list());
+  const { data: manuals = [], status: manualsStatus } = manualsQuery;
 
-  const { data: institutions = [] } = useQuery(institutionQueries.admin());
+  const institutionsQuery = useQuery(institutionQueries.admin());
+  const { data: institutions = [] } = institutionsQuery;
 
-  const { data: institutionLinks = {}, status: institutionLinksStatus } = useQuery(projectQueries.institutionLinks());
+  const institutionLinksQuery = useQuery(projectQueries.institutionLinks());
+  const { data: institutionLinks = {}, status: institutionLinksStatus } = institutionLinksQuery;
 
   // Madoc knows nothing about dissco-cs: when a project is deleted there, its institution/manual
   // links stay behind here. So once the full project list (every page and status) and both link
@@ -69,6 +75,10 @@ export function ProjectManagement() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once all three lists are loaded; the data itself is read inside
   }, [allProjectsStatus, manualsStatus, institutionLinksStatus]);
+
+  if ([allProjectsQuery, manualsQuery, institutionsQuery, institutionLinksQuery].some(failedToLoad)) {
+    return <ManageLoadError />;
+  }
 
   return (
     <CsPage>

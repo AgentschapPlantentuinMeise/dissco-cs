@@ -4,6 +4,7 @@ import { SITE_COLOR_KEYS } from '@dissco-cs/shared-types';
 import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
+import { ManageLoadError } from '../ManageLoadError';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { SaveButton } from '../../../components/ui/SaveButton';
 import { SavedNotice } from '../../../components/ui/SavedNotice';
@@ -15,8 +16,13 @@ import { PalettePreview } from './PalettePreview';
 
 export function SiteColors() {
   const { t } = useTranslation('dissco-cs');
-  const { colors, isLoading, isDirty, isValid, hasOwnPalette, warnings, setColor, discard, save, reset } = useSiteColors();
+  const { colors, isLoading, isError, isDirty, isValid, hasOwnPalette, warnings, setColor, discard, save, reset } = useSiteColors();
   const [confirmReset, setConfirmReset] = useState(false);
+
+  // The form would show the default palette, and saving it would replace the site's own colors.
+  if (isError) {
+    return <ManageLoadError />;
+  }
 
   return (
     <CsPage>

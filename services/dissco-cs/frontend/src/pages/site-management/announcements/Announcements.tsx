@@ -5,6 +5,8 @@ import { projectQueries } from '../../../api/queries/projects';
 import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
+import { ManageLoadError } from '../ManageLoadError';
+import { failedToLoad } from '../../../api/query-state';
 import { ListWithPanel } from '../../../components/layout/ListWithPanel';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { Button } from '../../../components/ui/Button';
@@ -53,9 +55,11 @@ const emptyDraft: AnnouncementInput = {
 export function Announcements() {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
-  const { data, isLoading } = useQuery(announcementQueries.admin());
+  const announcementsQuery = useQuery(announcementQueries.admin());
+  const { data, isLoading } = announcementsQuery;
   // 'published' also includes Madoc's status 2 (complete) -- only active projects can be targeted.
-  const { data: publishedProjects } = useQuery(projectQueries.listAll({ published: true }));
+  const projectsQuery = useQuery(projectQueries.listAll({ published: true }));
+  const publishedProjects = projectsQuery.data;
   const announcements = data ?? [];
   const projects = (publishedProjects ?? []).filter((p: MadocProjectDto) => p.status === 1);
 
@@ -113,6 +117,10 @@ export function Announcements() {
   const toggleActive = (announcement: AnnouncementDto) => {
     upsert({ id: announcement.id, input: { ...toAnnouncementInput(announcement), isActive: !announcement.isActive } });
   };
+
+  if (failedToLoad(announcementsQuery) || failedToLoad(projectsQuery)) {
+    return <ManageLoadError />;
+  }
 
   return (
     <CsPage>

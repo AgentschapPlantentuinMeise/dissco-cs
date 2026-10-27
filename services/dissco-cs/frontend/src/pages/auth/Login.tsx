@@ -11,6 +11,7 @@ import { login, getTerms, acceptTerms } from '../../api/madoc-auth/auth';
 import { MadocSiteTermsDto } from '@dissco-cs/shared-types';
 import { clearJwt } from '../../api/jwt';
 import { inputClass } from '../../components/ui/input-styles';
+import { reportAuthError } from './auth-error';
 
 export function Login() {
   const { t } = useTranslation('dissco-cs');
@@ -53,7 +54,7 @@ export function Login() {
       redirectAfterLogin();
     } catch (err) {
       setStatus('error');
-      setError(err instanceof Error ? err.message : t('login_form_error'));
+      setError(t(reportAuthError(err, 'login_form_error')));
     }
   };
 
@@ -64,7 +65,7 @@ export function Login() {
       redirectAfterLogin();
     } catch (err) {
       setStatus('error');
-      setError(err instanceof Error ? err.message : t('login_terms_accept_error'));
+      setError(t(reportAuthError(err, 'login_terms_accept_error')));
       setPendingTerms(null);
     }
   };

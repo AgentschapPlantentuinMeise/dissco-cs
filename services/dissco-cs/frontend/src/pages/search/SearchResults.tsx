@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/layout/CsPage';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PageSection } from '../../components/layout/PageSection';
+import { SectionLoadError } from '../../components/layout/SectionLoadError';
 import { ProjectCard } from '../../components/projects/ProjectCard';
 import { InstitutionCard } from '../../components/institutions/InstitutionCard';
 import { useSearch } from './use-search';
@@ -12,7 +13,7 @@ export function SearchResults() {
   const { t } = useTranslation('dissco-cs');
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
-  const { isActive, projects, institutions, isLoading } = useSearch(query);
+  const { isActive, projects, institutions, isLoading, isError } = useSearch(query);
 
   const totalResults = projects.length + institutions.length;
 
@@ -21,9 +22,15 @@ export function SearchResults() {
       <PageHeader
         variant="compact"
         title={t('search_results_title', { query })}
-        lead={isActive && !isLoading ? t('search_results_count', { count: totalResults }) : undefined}
+        lead={isActive && !isLoading && !isError ? t('search_results_count', { count: totalResults }) : undefined}
       />
-      {isActive && (isLoading || totalResults === 0) && (
+      {isActive && isError && (
+        <PageSection>
+          <SectionLoadError />
+        </PageSection>
+      )}
+
+      {isActive && !isError && (isLoading || totalResults === 0) && (
         <PageSection>
           <p className="text-gray-600 m-0">{isLoading ? t('loading_projects') : t('search_no_results', { query })}</p>
         </PageSection>

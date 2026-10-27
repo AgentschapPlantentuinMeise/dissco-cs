@@ -53,5 +53,6 @@ export function useSearch(query: string) {
     projects,
     institutions,
     isLoading: projectsQuery.isLoading || institutionsQuery.isLoading,
+    isError: projectsQuery.isError || institutionsQuery.isError,
   };
 }

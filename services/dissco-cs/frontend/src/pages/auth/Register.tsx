@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { useSearchParams } from 'react-router-dom';
@@ -7,11 +8,14 @@ import { PageHeader } from '../../components/layout/PageHeader';
 import { PageBody } from '../../components/layout/PageBody';
 import { TermsModal } from '../../components/auth/TermsModal';
 import { HrefLink } from '../../utility/href-link';
-import { register, getInvitation, getTerms } from '../../api/madoc-auth/auth';
-import { MadocSiteTermsDto, InvitationDto } from '@dissco-cs/shared-types';
+import { register } from '../../api/madoc-auth/auth';
+import { authQueries } from '../../api/queries/auth';
+import { failedToLoad } from '../../api/query-state';
+import { PageLoadError } from '../../components/layout/PageLoadError';
 import { useCurrentUser } from '../../hooks/use-current-user';
 import { getSiteSlug } from '../../api/slug';
 import { inputClass } from '../../components/ui/input-styles';
+import { reportAuthError } from './auth-error';
 
 export function Register() {
   const { t } = useTranslation('dissco-cs');
@@ -22,32 +26,24 @@ export function Register() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading-invitation' | 'sending' | 'error' | 'success'>(
-    code ? 'loading-invitation' : 'idle'
-  );
+  const [status, setStatus] = useState<'idle' | 'sending' | 'error' | 'success'>('idle');
   const [error, setError] = useState('');
-  const [invitation, setInvitation] = useState<InvitationDto | null>(null);
   const [emailSent, setEmailSent] = useState(true);
-  const [terms, setTerms] = useState<MadocSiteTermsDto | null | undefined>(undefined);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsPopup, setShowTermsPopup] = useState(false);
 
-  useEffect(() => {
-    if (!code) {
-      return;
-    }
-    getInvitation(code)
-      .then(setInvitation)
-      .catch(() => setInvitation({ expired: true }));
-  }, [code]);
+  const invitationQuery = useQuery(authQueries.invitation(code));
+  const termsQuery = useQuery(authQueries.terms());
+  const invitation = invitationQuery.data;
+  const terms = termsQuery.data?.latest;
 
-  useEffect(() => {
-    getTerms()
-      .then(res => setTerms(res.latest))
-      .catch(() => setTerms(null));
-  }, []);
+  // A fault, not an expired invitation. Without the terms the form would let the user submit
+  // without accepting them, and Madoc would refuse the registration.
+  if (failedToLoad(invitationQuery) || failedToLoad(termsQuery)) {
+    return <PageLoadError />;
+  }
 
-  if (code && status === 'loading-invitation' && !invitation) {
+  if (termsQuery.isPending || (code && !invitation)) {
     return (
       <CsPage>{null}</CsPage>
     );
@@ -85,7 +81,7 @@ export function Register() {
       setStatus('success');
     } catch (err) {
       setStatus('error');
-      setError(err instanceof Error ? err.message : t('register_form_error'));
+      setError(t(reportAuthError(err, 'register_form_error')));
     }
   };
 

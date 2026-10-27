@@ -5,6 +5,8 @@ import { institutionKeys, institutionQueries } from '../../../api/queries/instit
 import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
+import { ManageLoadError } from '../ManageLoadError';
+import { failedToLoad } from '../../../api/query-state';
 import { ListWithPanel } from '../../../components/layout/ListWithPanel';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { Button } from '../../../components/ui/Button';
@@ -53,7 +55,8 @@ function toInstitutionInput(institution: InstitutionDto): InstitutionInput {
 export function InstitutionManagement() {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
-  const { data, isLoading } = useQuery(institutionQueries.admin());
+  const institutionsQuery = useQuery(institutionQueries.admin());
+  const { data, isLoading } = institutionsQuery;
   const institutions = data ?? [];
 
   const {
@@ -110,6 +113,10 @@ export function InstitutionManagement() {
   const toggleActive = (institution: InstitutionDto) => {
     upsert({ id: institution.id, input: { ...toInstitutionInput(institution), isActive: !institution.isActive } });
   };
+
+  if (failedToLoad(institutionsQuery)) {
+    return <ManageLoadError />;
+  }
 
   return (
     <CsPage>

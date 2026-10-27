@@ -5,6 +5,7 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { institutionQueries } from '../../api/queries/institutions';
 import { statsQueries } from '../../api/queries/stats';
 import { CsPage } from '../../components/layout/CsPage';
+import { PageLoadError } from '../../components/layout/PageLoadError';
 import { InstitutionCard } from '../../components/institutions/InstitutionCard';
 import { HeaderMosaic, PageHeader } from '../../components/layout/PageHeader';
 import { PageHeaderPhoto } from '../../components/layout/PageHeaderPhoto';
@@ -21,7 +22,7 @@ const ROWS_PER_PAGE = 2;
 
 export function Institutions() {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data, isPending } = useQuery(institutionQueries.active());
+  const { data, isPending, isError } = useQuery(institutionQueries.active());
   const honourBoard = useSiteHonourBoard();
   const { isActive } = useNavItems();
 
@@ -46,6 +47,10 @@ export function Institutions() {
     combine: results =>
       results.every(result => result.data) ? results.reduce((sum, result) => sum + (result.data?.projectsActive ?? 0), 0) : null,
   });
+
+  if (isError) {
+    return <PageLoadError />;
+  }
 
   return (
     <CsPage>

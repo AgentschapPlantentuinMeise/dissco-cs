@@ -5,14 +5,17 @@ import { ApiError } from './request';
 import { withQuery } from '../url';
 
 /**
- * Whether the backend still has to hear about this error. An ApiError came from our own backend,
- * which already logged it (5xx) or answered as expected (4xx); everything else (network failure,
- * bug, render crash) it never saw.
+ * Whether the backend still has to hear about this error. A 4xx is an expected answer, and a 5xx
+ * from our own backend is already logged there; a 5xx it never saw (nginx's 502/504, Madoc via
+ * the login pages) and everything else (network failure, bug, render crash) has to be reported.
  * @param err any caught error
  * Returns: true when it should go to app_log.
  */
 export function shouldReport(err: unknown): boolean {
-  return !(err instanceof ApiError);
+  if (!(err instanceof ApiError)) {
+    return true;
+  }
+  return err.status >= 500 && !err.loggedByBackend;
 }
 
 function siteSlug(): string | undefined {

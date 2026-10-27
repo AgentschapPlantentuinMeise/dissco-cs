@@ -3,12 +3,21 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { homeStepQueries } from '../../api/queries/home-steps';
 import { PageSection } from '../../components/layout/PageSection';
+import { SectionLoadError } from '../../components/layout/SectionLoadError';
 import { siteLangText } from '../../utility/site-lang-text';
 
 // "How it works" on Home, with the steps set in page management. Left out when there are none.
 export function HomeStepsSection() {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data: steps } = useQuery(homeStepQueries.list());
+  const { data: steps, isError } = useQuery(homeStepQueries.list());
+
+  if (isError) {
+    return (
+      <PageSection tone="white" title={t('home_steps_title')}>
+        <SectionLoadError />
+      </PageSection>
+    );
+  }
 
   if (!steps || steps.length === 0) {
     return null;

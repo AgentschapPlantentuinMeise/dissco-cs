@@ -19,6 +19,16 @@ export async function bootstrap(): Promise<void> {
     void database.appLog.record({ level: 'error', source: 'backend', ...describeError(reason) });
   });
 
+  // A throw nobody caught leaves the process in an unknown state (Node's own advice: stop), so log
+  // it and exit; Docker restarts the container. The log write gets 2 seconds at most, so a database
+  // that is down cannot keep a broken process alive.
+  process.on('uncaughtException', error => {
+    console.error('[process] uncaught exception', error);
+    const logged = database.appLog.record({ level: 'error', source: 'backend', ...describeError(error) });
+    const timeout = new Promise(resolve => setTimeout(resolve, 2000));
+    void Promise.race([logged, timeout]).finally(() => process.exit(1));
+  });
+
   try {
     await database.waitUntilReady(appConfig.startupRetryCount, appConfig.startupRetryMs);
 

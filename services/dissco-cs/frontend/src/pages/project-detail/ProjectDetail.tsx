@@ -19,6 +19,8 @@ import { CsPage } from '../../components/layout/CsPage';
 import { HeaderImage, PageHeader } from '../../components/layout/PageHeader';
 import { ProjectAboutAside } from './ProjectAboutAside';
 import { PageSection } from '../../components/layout/PageSection';
+import { PageLoadError } from '../../components/layout/PageLoadError';
+import { SectionLoadError } from '../../components/layout/SectionLoadError';
 import { AboutColumns } from '../../components/layout/AboutColumns';
 import { localeText } from '../../utility/locale-text';
 import { projectImageUrl } from '../../utility/project-image-url';
@@ -35,7 +37,7 @@ function manualSeenKey(projectSlug: string): string {
 
 export function ProjectDetail() {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data: project } = useCurrentProject();
+  const { data: project, error: projectError } = useCurrentProject();
   const user = useCurrentUser();
   const navigate = useNavigate();
   const [manualOpen, setManualOpen] = useState(false);
@@ -64,7 +66,7 @@ export function ProjectDetail() {
   const { data: ownTasksData } = useQuery({ ...taskQueries.mineSaved(user?.id), enabled: !!project && !!user });
   const ownSavedTasks = (ownTasksData?.tasks ?? []).filter(task => task.metadata?.project?.slug === project?.slug);
 
-  const { data: progress } = useProjectProgress(project?.id);
+  const { data: progress, isError: progressError } = useProjectProgress(project?.id);
   const manifests = progress?.availableManifests ?? [];
   // The tiles are smaller than project cards, so a page holds more rows.
   const manifestGrid = usePagedGrid(manifests, 3);
@@ -95,6 +97,12 @@ export function ProjectDetail() {
     },
   });
 
+  if (projectError) {
+    return (
+      <PageLoadError error={projectError} notFoundText={t('project_not_found')} back={{ href: backToProjects, label: t('projects_all') }} />
+    );
+  }
+
   if (!project) {
     return (
       <CsPage>
@@ -110,7 +118,7 @@ export function ProjectDetail() {
 
   const imageUrl = projectImageUrl(project);
   const allTasksTaken = progress?.allTasksTaken ?? false;
-  const showManifests = allTasksTaken || manifests.length > 0;
+  const showManifests = progressError || allTasksTaken || manifests.length > 0;
 
   return (
     <CsPage>
@@ -124,8 +132,8 @@ export function ProjectDetail() {
           </Button>
         }
         stats={[
-          { value: `${transcribedPercentage}%`, label: t('pdp_completed') },
-          { value: totalTasks, label: t('pdp_tasks') },
+          { value: progress ? `${transcribedPercentage}%` : '—', label: t('pdp_completed') },
+          { value: progress ? totalTasks : '—', label: t('pdp_tasks') },
           { value: progress ? progress.volunteers : '—', label: t('institution_stats_volunteers') },
         ]}
         aside={imageUrl ? <HeaderImage src={imageUrl} /> : undefined}
@@ -150,6 +158,7 @@ export function ProjectDetail() {
 
       {showManifests && (
         <PageSection tone="white" title={t('pdp_manifests_title')}>
+          {progressError && <SectionLoadError />}
           {allTasksTaken && (
             <p className="m-0 px-5 py-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-[0.95rem]">
               {t('pdp_all_tasks_taken')}

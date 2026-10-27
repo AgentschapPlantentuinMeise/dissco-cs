@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SITE_IMAGE_MIME_TYPES, SiteImageDto, SiteImageKey, siteImageFileSchema } from '@dissco-cs/shared-types';
 import { siteImagesApi } from '../../../api/cs-client/site-images';
 import { siteImageKeys, siteImageQueries } from '../../../api/queries/site-images';
+import { siteThemeQueries } from '../../../api/queries/site-theme';
 import { Button } from '../../../components/ui/Button';
 import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
@@ -12,6 +13,8 @@ import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
+import { ManageLoadError } from '../ManageLoadError';
+import { failedToLoad } from '../../../api/query-state';
 import { rowHoverClass } from '../../../components/ui/list-styles';
 import { inputClass } from '../../../components/ui/input-styles';
 import { SiteNameRow } from './SiteNameRow';
@@ -29,8 +32,15 @@ const HEADER_PHOTO_KEYS: SiteImageKey[] = ['home', 'institutions', 'about'];
 // and About: choose, replace or remove each image, and the credit of a photo.
 export function SiteImages() {
   const { t } = useTranslation('dissco-cs');
-  const { data: images } = useQuery(siteImageQueries.list());
+  const imagesQuery = useQuery(siteImageQueries.list());
+  const images = imagesQuery.data;
+  // The same query SiteNameRow reads: without it the name field would be empty.
+  const themeQuery = useQuery(siteThemeQueries.get());
   const imageFor = (key: SiteImageKey) => images?.find(image => image.key === key);
+
+  if (failedToLoad(imagesQuery) || failedToLoad(themeQuery)) {
+    return <ManageLoadError />;
+  }
 
   return (
     <CsPage>

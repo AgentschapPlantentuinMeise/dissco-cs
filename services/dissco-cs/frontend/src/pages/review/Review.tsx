@@ -1,6 +1,7 @@
 import { CsPage } from '../../components/layout/CsPage';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PageSection } from '../../components/layout/PageSection';
+import { PageLoadError } from '../../components/layout/PageLoadError';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Button } from '../../components/ui/Button';
 import { LuMail } from 'react-icons/lu';
@@ -18,6 +19,10 @@ import { useReviewPage } from './use-review-page';
 export function Review() {
   const c = useReviewPage();
   const { t, i18n } = c;
+
+  if (c.queryStatus === 'error') {
+    return <PageLoadError />;
+  }
 
   return (
     <CsPage>

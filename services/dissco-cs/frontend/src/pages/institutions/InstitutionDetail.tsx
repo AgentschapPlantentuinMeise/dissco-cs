@@ -8,6 +8,8 @@ import { HeaderLogo, PageHeader } from '../../components/layout/PageHeader';
 import { LuMail, LuPhone, LuGlobe, LuMedal } from 'react-icons/lu';
 import { HonourBoardBand } from '../../components/stats/HonourBoardBand';
 import { PageSection } from '../../components/layout/PageSection';
+import { PageLoadError } from '../../components/layout/PageLoadError';
+import { SectionLoadError } from '../../components/layout/SectionLoadError';
 import { AboutColumns } from '../../components/layout/AboutColumns';
 import { useInstitutionStats } from './use-institution-stats';
 import { useInstitutionHonourBoard } from './use-institution-honour-board';
@@ -25,14 +27,16 @@ const ROWS_PER_PAGE = 2;
 export function InstitutionDetail() {
   const { t, i18n } = useTranslation('dissco-cs');
   const { slug } = useParams<{ slug: string }>();
-  const { data: institution, isLoading } = useQuery(institutionQueries.detail(slug));
+  const { data: institution, isLoading, error } = useQuery(institutionQueries.detail(slug));
 
-  const { data: projectSlugs = [] } = useQuery(institutionQueries.projectSlugs(slug));
+  const { data: projectSlugs = [], isPending: projectSlugsPending, isError: projectSlugsError } = useQuery(
+    institutionQueries.projectSlugs(slug)
+  );
 
   // All pages, published-only -- same reasoning as Homepage/Projects.tsx: a site-admin viewer
   // otherwise gets every status unfiltered from page 1 only, which can miss this institution's
   // linked projects entirely if enough other/older projects exist.
-  const { data: allProjects } = useQuery({
+  const { data: allProjects, isPending: allProjectsPending, isError: allProjectsError } = useQuery({
     ...projectQueries.listAll({ published: true }),
     staleTime: 5 * 60 * 1000,
   });
@@ -52,6 +56,16 @@ export function InstitutionDetail() {
   const hasContact = institution && (institution.email || institution.phone || institution.website);
   const name = institution ? siteLangText(institution.name, i18n.language, '') : '';
   const description = institution ? siteLangText(institution.description, i18n.language, '') : '';
+
+  if (error) {
+    return (
+      <PageLoadError
+        error={error}
+        notFoundText={t('institution_not_found')}
+        back={{ href: backToInstitutions, label: t('institutions_all') }}
+      />
+    );
+  }
 
   if (isLoading || !institution) {
     return (
@@ -121,7 +135,11 @@ export function InstitutionDetail() {
       )}
 
       <PageSection tone="white" title={t('institution_projects_title')}>
-        {linkedProjects.length === 0 ? (
+        {projectSlugsError || allProjectsError ? (
+          <SectionLoadError />
+        ) : projectSlugsPending || allProjectsPending ? (
+          <p className="text-gray-600 m-0">{t('loading_projects')}</p>
+        ) : linkedProjects.length === 0 ? (
           <p className="text-gray-600 m-0">{t('institution_projects_empty')}</p>
         ) : (
           <>

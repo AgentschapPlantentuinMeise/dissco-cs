@@ -29,6 +29,7 @@ import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
 import { ForgotPassword } from './pages/auth/ForgotPassword';
 import { SetPassword } from './pages/auth/SetPassword';
+import { NotFound } from './pages/not-found/NotFound';
 
 
 
@@ -67,6 +68,7 @@ export function App() {
           <Route path="/explore" element={<Projects />} />
           <Route path="/explore/:slug"element={<ProjectDetail />} />
           <Route path="/explore/:slug/manifests/:manifestId/annotate" element={<AuthGate><AnnotatePage /></AuthGate>} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </RouteErrorBoundary>
     </BrowserRouter>

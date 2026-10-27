@@ -27,7 +27,8 @@ export async function request<T>(path: string, opts: RequestOptions = {}): Promi
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    throw new ApiError(response.status, path, data.error);
+    // Madoc's own answer: our backend never saw it, so a 5xx has to be reported from here.
+    throw new ApiError(response.status, path, data.error, false);
   }
 
   if (response.status === 204) {
@@ -66,7 +67,7 @@ export async function publicPost<T>(endpoint: string, body: unknown): Promise<T>
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    throw new ApiError(response.status, path, data.error);
+    throw new ApiError(response.status, path, data.error, false);
   }
 
   return response.json();

@@ -213,6 +213,8 @@ export function useForumPage() {
 
   return {
     user,
+    topicsLoading: topicsQuery.isPending,
+    topicsError: topicsQuery.isError,
     projectOptions,
     displayTopics,
     pageTopics,

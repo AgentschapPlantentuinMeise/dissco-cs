@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
+import { ManageLoadError } from '../ManageLoadError';
+import { failedToLoad } from '../../../api/query-state';
 import { ToggleSwitch } from '../../../components/ui/ToggleSwitch';
 import { SaveButton } from '../../../components/ui/SaveButton';
 import { SavedNotice } from '../../../components/ui/SavedNotice';
@@ -45,8 +47,9 @@ const DEFAULT_INTRO_KEY: Partial<Record<NavItemKey, string>> = {
 
 export function PageManagement() {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { navItems: pages, loading, refresh } = useNavItems();
-  const { data: contactEmail, isPending: contactEmailLoading } = useQuery(navItemQueries.contactEmail());
+  const { navItems: pages, loading, isError: pagesError, refresh } = useNavItems();
+  const contactEmailQuery = useQuery(navItemQueries.contactEmail());
+  const { data: contactEmail, isPending: contactEmailLoading } = contactEmailQuery;
   const [selectedKey, setSelectedKey] = useState<NavItemKey | null>(null);
   const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
   const [draftContent, setDraftContent] = useState<NavItemDto['content']>({});
@@ -113,6 +116,11 @@ export function PageManagement() {
     if (!selectedKey || !canSave) return;
     saveAllContent(selectedKey);
   };
+
+  // Without the real pages the list would show defaults (every page on, every text empty).
+  if (pagesError || failedToLoad(contactEmailQuery)) {
+    return <ManageLoadError />;
+  }
 
   return (
     <CsPage>

@@ -96,6 +96,7 @@ export function useUserDashboard() {
     summary,
     percentage: sharePercentage(summary.userDoneCount, siteStats?.tasksCompleted ?? 0),
     tasksLoading: tasksStatus === 'pending',
+    tasksError: tasksStatus === 'error',
     list: {
       tab,
       setTab: (next: TaskTab) => setParam('tab', next === 'done' ? 'done' : ''),
@@ -127,6 +128,7 @@ export function useUserDashboard() {
     feedback: {
       threads: feedbackThreads,
       loading: feedbackStatus === 'pending',
+      error: feedbackStatus === 'error',
       unread: feedbackThreads.reduce((sum, thread) => sum + thread.unreadCount, 0),
       openThreadId,
       toggleThread: (id: number) => setOpenThreadId(current => (current === id ? null : id)),

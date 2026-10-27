@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { CsPage } from '../../components/layout/CsPage';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PageSection } from '../../components/layout/PageSection';
+import { PageLoadError } from '../../components/layout/PageLoadError';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { ForumTopicForm } from '../../components/forum/ForumTopicForm';
 import { isUnread } from '../../components/forum/forum-topics';
@@ -17,6 +18,10 @@ export function Forum() {
   const { t } = useTranslation('dissco-cs');
   const c = useForumPage();
   const isAdmin = !!c.user?.scope.includes('site.admin');
+
+  if (c.topicsError) {
+    return <PageLoadError />;
+  }
 
   return (
     <CsPage>
@@ -52,7 +57,9 @@ export function Forum() {
               />
             )}
 
-            {c.displayTopics.length === 0 && !c.showNewForm ? (
+            {c.topicsLoading ? (
+              <p className="text-gray-500 text-[0.95rem] text-center py-10 m-0">{t('forum_loading')}</p>
+            ) : c.displayTopics.length === 0 && !c.showNewForm ? (
               <p className="text-gray-500 text-[0.95rem] text-center py-10 m-0">
                 {c.activeFilter || c.searchQuery.trim() || c.projectFilterLabel ? t('forum_empty_search_or_filter') : t('forum_empty_start')}
               </p>

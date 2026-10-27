@@ -21,6 +21,8 @@ import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
+import { ManageLoadError } from '../ManageLoadError';
+import { failedToLoad } from '../../../api/query-state';
 import { defaultLang } from '../../../utility/site-lang-text';
 import { inputClass } from '../../../components/ui/input-styles';
 import { panelClass } from '../../../components/ui/panel-styles';
@@ -31,7 +33,8 @@ const EMPTY_STEP: HomeStepDto = { title: {}, body: {} };
 export function HomeSteps() {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
-  const { data: saved } = useQuery(homeStepQueries.list());
+  const stepsQuery = useQuery(homeStepQueries.list());
+  const saved = stepsQuery.data;
   // null while nothing was changed: the form then shows what is saved.
   const [draft, setDraft] = useState<HomeStepDto[] | null>(null);
   const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
@@ -61,6 +64,11 @@ export function HomeSteps() {
 
   const isMissing = (lang: SitePageLang) => steps.some(step => !step.title[lang]?.trim() || !step.body[lang]?.trim());
   const canSave = draft !== null && setHomeStepsSchema.safeParse({ steps }).success;
+
+  // Saving replaces the whole list, so steps added to an empty form would wipe the stored ones.
+  if (failedToLoad(stepsQuery)) {
+    return <ManageLoadError />;
+  }
 
   return (
     <CsPage>
