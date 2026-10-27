@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import { siteColorsSchema, siteNameSchema, SiteThemeDto } from '@dissco-cs/shared-types';
-import { SiteThemeRepository, toSiteColors } from '../repositories/site-theme.repository.js';
+import { siteColorsSchema, siteNameSchema } from '@dissco-cs/shared-types';
+import { SiteThemeRepository, toSiteThemeDto } from '../repositories/site-theme.repository.js';
 import { requireSiteAdmin, requireSiteId } from '../auth/auth.js';
 import { validateJson } from '../infrastructure/validate-json.js';
 
@@ -13,9 +13,7 @@ export function siteThemeController(siteThemeRepository: SiteThemeRepository): H
       return siteId;
     }
 
-    const row = await siteThemeRepository.get(siteId);
-    const result: SiteThemeDto = { colors: row ? toSiteColors(row) : null, name: row?.site_name ?? null };
-    return c.json(result);
+    return c.json(toSiteThemeDto(await siteThemeRepository.get(siteId)));
   });
 
   // The writes live under /colors and /name, not on / itself: the gateway lets /site-theme through

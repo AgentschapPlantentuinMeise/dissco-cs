@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { NAV_ITEM_KEYS, NavItemContentKey, NavItemDto, NavItemKey, SitePageLang } from '@dissco-cs/shared-types';
+import { NAV_ITEM_KEYS, NavItemContactEmailDto, NavItemContentKey, NavItemDto, NavItemKey, SitePageLang } from '@dissco-cs/shared-types';
 
 export type NavItemRow = {
   site_id: number;
@@ -143,4 +143,9 @@ export function toNavItemDto(row: NavItemRow): NavItemDto {
     showContactForm: row.show_contact_form,
     sortOrder: row.sort_order,
   };
+}
+
+// undefined: the site has no contact nav item yet.
+export function toNavItemContactEmailDto(contactRow: NavItemRow | undefined): NavItemContactEmailDto {
+  return { email: contactRow?.contact_email ?? null };
 }

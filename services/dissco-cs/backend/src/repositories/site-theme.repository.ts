@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { SiteColors } from '@dissco-cs/shared-types';
+import { SiteColors, SiteThemeDto } from '@dissco-cs/shared-types';
 
 export type SiteThemeRow = {
   site_id: number;
@@ -70,6 +70,11 @@ export class SiteThemeRepository {
 }
 
 // ---- DTO mapping ----
+
+// null: the site has no row yet (no palette and no name of its own).
+export function toSiteThemeDto(row: SiteThemeRow | null): SiteThemeDto {
+  return { colors: row ? toSiteColors(row) : null, name: row?.site_name ?? null };
+}
 
 // null while the site has no palette of its own (the colors are set and cleared together).
 export function toSiteColors(row: SiteThemeRow): SiteColors | null {

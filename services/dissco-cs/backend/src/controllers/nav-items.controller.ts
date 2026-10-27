@@ -1,10 +1,9 @@
 import { Hono } from 'hono';
-import { NavItemsRepository, toNavItemDto } from '../repositories/nav-items.repository.js';
+import { NavItemsRepository, toNavItemContactEmailDto, toNavItemDto } from '../repositories/nav-items.repository.js';
 import { requireSiteAdmin, requireSiteId } from '../auth/auth.js';
 import { validateJson } from '../infrastructure/validate-json.js';
 import { navItemContentKey, navItemKey, validateParams } from '../infrastructure/validate-params.js';
 import {
-  NavItemContactEmailDto,
   setContactEmailSchema,
   setNavItemActiveSchema,
   setNavItemContentSchema,
@@ -34,10 +33,7 @@ export function navItemsController(navItemsRepository: NavItemsRepository): Hono
     }
 
     const navItems = await navItemsRepository.getNavItems(identity.siteId);
-    const result: NavItemContactEmailDto = {
-      email: navItems.find(item => item.page_key === 'contact')?.contact_email ?? null,
-    };
-    return c.json(result);
+    return c.json(toNavItemContactEmailDto(navItems.find(item => item.page_key === 'contact')));
   });
 
   app.put('/contact/email', validateJson(setContactEmailSchema), async c => {

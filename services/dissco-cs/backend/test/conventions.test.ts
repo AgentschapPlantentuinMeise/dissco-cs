@@ -90,6 +90,13 @@ const rules: ConventionRule[] = [
     onlyIn: /\.logic\.ts$/,
   },
   {
+    // Madoc* types keep Madoc's own shape, so a controller may trim one down and pass it on.
+    name: 'A controller does not build a DTO itself',
+    pattern: /:\s*(?!Madoc)\w+Dto(\[\])?\s*=\s*[{[]|satisfies\s+(?!Madoc)\w+Dto\b/,
+    instead: "a toXDto(row) mapper at the bottom of the repository (// ---- DTO mapping ----) -- CLAUDE.md 'DTO's'",
+    onlyIn: /^controllers\//,
+  },
+  {
     name: 'No silently swallowed errors',
     pattern: /\.catch\(\(\) => \{\s*\}\)|catch\s*(\(\w*\))?\s*\{\s*\}/,
     instead: 'let the error through, or handle it visibly',
