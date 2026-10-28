@@ -7,21 +7,24 @@ import { PageBody } from '../../components/layout/PageBody';
 import { HrefLink } from '../../utility/href-link';
 import { forgotPassword } from '../../api/madoc-auth/auth';
 import { inputClass } from '../../components/ui/input-styles';
+import { isTooManyAttempts } from './auth-error';
 
 export function ForgotPassword() {
   const { t } = useTranslation('dissco-cs');
 
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'too-many'>('idle');
 
   const submit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setStatus('sending');
     try {
       await forgotPassword({ email });
-    } finally {
-      // Always show the same message, even on failure - never leak whether the email exists.
       setStatus('sent');
+    } catch (err) {
+      // Any other failure shows the same message as success, so it never leaks whether the email
+      // exists. The rate limit counts per IP, not per email, so saying so leaks nothing.
+      setStatus(isTooManyAttempts(err) ? 'too-many' : 'sent');
     }
   };
 
@@ -48,6 +51,8 @@ export function ForgotPassword() {
                 className={inputClass}
               />
             </label>
+
+            {status === 'too-many' && <p className="text-red-700">{t('auth_error_too_many_attempts')}</p>}
 
             <div className="flex items-center justify-between mt-2">
               <HrefLink href="/login" className="text-sm text-gray-600 hover:text-cs-primary">

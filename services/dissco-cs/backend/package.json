@@ -17,6 +17,7 @@
     "@hono/zod-validator": "^0.9.1",
     "file-type": "^22.2.0",
     "hono": "^4.10.5",
+    "hono-rate-limiter": "0.5.4",
     "nodemailer": "^6.6.3",
     "pg": "^8.16.3",
     "zod": "^4.6.5"

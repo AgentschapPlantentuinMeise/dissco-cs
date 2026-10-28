@@ -23,6 +23,9 @@ importers:
       hono:
         specifier: ^4.10.5
         version: 4.12.25
+      hono-rate-limiter:
+        specifier: 0.5.4
+        version: 0.5.4(hono@4.12.25)
       nodemailer:
         specifier: ^6.6.3
         version: 6.10.1
@@ -599,6 +602,15 @@ packages:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
+
+  hono-rate-limiter@0.5.4:
+    resolution: {integrity: sha512-P3/cscAmz1hA+MuM+Hn9gP/EyO2zWv2aXIFkVYuLZkPzrPa4oaWdVCS94vyDlsNBgeMnE/Hr2+LznIKQxrF0ng==}
+    peerDependencies:
+      hono: ^4.10.8
+      unstorage: ^1.17.3
+    peerDependenciesMeta:
+      unstorage:
+        optional: true
 
   hono@4.12.25:
     resolution: {integrity: sha512-2NFaIyNVgJmBs/ecmtGzlmluTFs5cHEWGTdu0t1HBwYzoGXOL5nUQBRMXsXWla5i4KkG//QMzVP88m1+I3fdAQ==}
@@ -1228,6 +1240,10 @@ snapshots:
 
   fsevents@2.3.3:
     optional: true
+
+  hono-rate-limiter@0.5.4(hono@4.12.25):
+    dependencies:
+      hono: 4.12.25
 
   hono@4.12.25: {}
 

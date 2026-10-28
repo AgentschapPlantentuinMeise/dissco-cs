@@ -18,14 +18,19 @@ const MADOC_MESSAGE_KEYS: Record<string, string> = {
     'auth_error_password_weak',
 };
 
+// The gateway's rate limit on the auth routes answers 429 with an HTML page, not Madoc's JSON.
+export function isTooManyAttempts(err: unknown): boolean {
+  return err instanceof ApiError && err.status === 429;
+}
+
 // The translation key a login, registration or password form shows when it fails: Madoc's own
-// refusal when we know it, "too many attempts" for the gateway's rate limit (429, an HTML page),
-// and otherwise the form's general message -- never the server's text itself.
+// refusal when we know it, "too many attempts" for the gateway's rate limit, and otherwise the
+// form's general message -- never the server's text itself.
 export function authErrorKey(err: unknown, fallbackKey: string): string {
   if (!(err instanceof ApiError)) {
     return fallbackKey;
   }
-  if (err.status === 429) {
+  if (isTooManyAttempts(err)) {
     return 'auth_error_too_many_attempts';
   }
   if (err.status < 500 && err.serverMessage) {

@@ -1,11 +1,10 @@
 import { Hono } from 'hono';
+import { rateLimiter } from 'hono-rate-limiter';
 
 import { requestMadocUserIdentity, resolveSiteId } from '../auth/auth.js';
-import { getClientIp, isRateLimited } from '../infrastructure/rate-limit.js';
+import { getClientIp } from '../infrastructure/rate-limit.js';
 import { AppLogRepository } from '../repositories/app-log.repository.js';
 import { clientErrorSchema } from '@dissco-cs/shared-types';
-
-const CLIENT_ERROR_RATE_LIMIT = { maxAttempts: 20, windowMs: 10 * 60 * 1000 };
 
 // This route is public on purpose: a crash for a visitor who is not logged in matters too. As a
 // result, the user and site stored with a report are whatever the browser sends; nothing checks
@@ -14,11 +13,14 @@ const CLIENT_ERROR_RATE_LIMIT = { maxAttempts: 20, windowMs: 10 * 60 * 1000 };
 export function clientErrorsController(appLog: AppLogRepository): Hono {
   const app = new Hono();
 
-  app.post('/', async c => {
-    if (isRateLimited(`client-errors:${getClientIp(c)}`, CLIENT_ERROR_RATE_LIMIT.maxAttempts, CLIENT_ERROR_RATE_LIMIT.windowMs)) {
-      return c.body(null, 204);
-    }
+  const clientErrorRateLimit = rateLimiter({
+    windowMs: 10 * 60 * 1000,
+    limit: 20,
+    keyGenerator: getClientIp,
+    handler: c => c.body(null, 204),
+  });
 
+  app.post('/', clientErrorRateLimit, async c => {
     const result = clientErrorSchema.safeParse(await c.req.json().catch(() => null));
     if (!result.success) {
       return c.body(null, 204);

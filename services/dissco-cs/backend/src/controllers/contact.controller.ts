@@ -1,13 +1,12 @@
-import { Hono } from 'hono';
+import { Hono, type Env } from 'hono';
+import { rateLimiter } from 'hono-rate-limiter';
 import { NavItemsRepository } from '../repositories/nav-items.repository.js';
-import { requireSiteId } from '../auth/auth.js';
+import { requireSiteId, resolveSiteId } from '../auth/auth.js';
 import { mailer } from '../infrastructure/mailer.js';
-import { getClientIp, isRateLimited } from '../infrastructure/rate-limit.js';
+import { getClientIp } from '../infrastructure/rate-limit.js';
 import { passErrorOn } from '../infrastructure/request-log.js';
 import { validateJson } from '../infrastructure/validate-json.js';
-import { contactSubmissionSchema } from '@dissco-cs/shared-types';
-
-const CONTACT_RATE_LIMIT = { maxAttempts: 5, windowMs: 10 * 60 * 1000 };
+import { contactSubmissionSchema, type ContactSubmissionInput } from '@dissco-cs/shared-types';
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
@@ -16,7 +15,18 @@ function isNonEmptyString(value: unknown): value is string {
 export function contactController(navItemsRepository: NavItemsRepository): Hono {
   const app = new Hono();
 
-  app.post('/', validateJson(contactSubmissionSchema), async c => {
+  // Typed with the validated body, so skip can read it: the limiter runs after validateJson.
+  const contactRateLimit = rateLimiter<Env, string, { out: { json: ContactSubmissionInput } }>({
+    windowMs: 10 * 60 * 1000,
+    limit: 5,
+    keyGenerator: async c => `${await resolveSiteId(c)}:${getClientIp(c)}`,
+    // A bot caught by the honeypot below gets a fake 204. Counting its attempts here would
+    // eventually answer it with a 429 instead, which tells it the trap exists.
+    skip: c => isNonEmptyString(c.req.valid('json').website),
+    message: { error: 'Too many requests, please try again later' },
+  });
+
+  app.post('/', validateJson(contactSubmissionSchema), contactRateLimit, async c => {
     const siteId = await requireSiteId(c);
     if (siteId instanceof Response) {
       return siteId;
@@ -28,10 +38,6 @@ export function contactController(navItemsRepository: NavItemsRepository): Hono 
     // act as if the message was sent, without sending it and without telling the bot why.
     if (isNonEmptyString(payload.website)) {
       return c.body(null, 204);
-    }
-
-    if (isRateLimited(`contact:${siteId}:${getClientIp(c)}`, CONTACT_RATE_LIMIT.maxAttempts, CONTACT_RATE_LIMIT.windowMs)) {
-      return c.json({ error: 'Too many requests, please try again later' }, 429);
     }
 
     const contactEmail = await navItemsRepository.getContactEmail(siteId);

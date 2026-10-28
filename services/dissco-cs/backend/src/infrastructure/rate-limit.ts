@@ -1,25 +1,8 @@
-const attemptsByKey = new Map<string, number[]>();
+// Client identity for the hono-rate-limiter middleware on public routes. Those limiters use the
+// library's default in-memory store: counts live in this process and reset on restart. Once the
+// service runs as more than one replica, give each limiter a shared store (e.g. RedisStore).
 
 export function getClientIp(c: { req: { header: (name: string) => string | undefined } }): string {
   const forwardedFor = c.req.header('x-forwarded-for');
   return c.req.header('x-real-ip') ?? forwardedFor?.split(',')[0]?.trim() ?? 'unknown';
-}
-
-/**
- * Minimal in-memory rate limiter. Resets on restart and is per-instance only —
- * good enough to blunt basic spam/abuse, not a substitute for a shared store
- * if this service is ever scaled to multiple replicas.
- */
-export function isRateLimited(key: string, maxAttempts: number, windowMs: number): boolean {
-  const now = Date.now();
-  const attempts = (attemptsByKey.get(key) ?? []).filter(time => now - time < windowMs);
-
-  if (attempts.length >= maxAttempts) {
-    attemptsByKey.set(key, attempts);
-    return true;
-  }
-
-  attempts.push(now);
-  attemptsByKey.set(key, attempts);
-  return false;
 }
