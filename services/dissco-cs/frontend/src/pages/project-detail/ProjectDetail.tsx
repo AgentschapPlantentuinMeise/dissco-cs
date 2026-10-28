@@ -9,7 +9,6 @@ import { useProjectProgress } from '../../hooks/use-project-progress';
 import { useCurrentUser } from '../../hooks/use-current-user';
 import { useBackHref } from '../../hooks/use-return-link';
 import { projectsApi } from '../../api/cs-client/projects';
-import { MadocInternationalString } from '@dissco-cs/shared-types';
 import { buildTaskLink } from '../../utility/build-task-link';
 import { taskDisplayName } from '../../utility/task-display-name';
 import { HrefLink } from '../../utility/href-link';
@@ -180,7 +179,7 @@ export function ProjectDetail() {
                     style={manifest.thumbnail ? { backgroundImage: `url(${manifest.thumbnail})` } : undefined}
                   />
                   <LocaleString className="py-[7px] px-[9px] text-[0.78rem] text-[#343a40] leading-[1.35] m-0 line-clamp-2">
-                    {(manifest.label as string | MadocInternationalString | undefined) || t('pdp_manifest_untitled')}
+                    {manifest.label || t('pdp_manifest_untitled')}
                   </LocaleString>
                 </button>
               ))}

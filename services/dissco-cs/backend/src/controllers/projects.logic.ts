@@ -1,12 +1,10 @@
 import {
+  MadocCollectionStructureItemDto,
   MadocCrowdsourcingTaskDto,
-  MadocInternationalString,
   MadocProjectConfig,
   ProjectDebugDto,
   ProjectProgressDto,
 } from '@dissco-cs/shared-types';
-
-export type ProjectManifestItem = { id: number; label: unknown };
 
 const MANIFEST_URN_PREFIX = 'urn:madoc:manifest:';
 
@@ -82,7 +80,7 @@ export function countVolunteers(tasks: MadocCrowdsourcingTaskDto[]): number {
  * Returns: the ProjectProgressDto the /progress route sends.
  */
 export function computeProjectProgress(input: {
-  manifestItems: ProjectManifestItem[];
+  manifestItems: MadocCollectionStructureItemDto[];
   thumbnails: Map<number, string | undefined>;
   tasks: MadocCrowdsourcingTaskDto[];
   config: MadocProjectConfig;
@@ -131,14 +129,14 @@ export function computeProjectProgress(input: {
  * @param tasks every crowdsourcing-task of the project
  * Returns: the ProjectDebugDto the /task-debug route sends; its percentage equals /progress's.
  */
-export function computeTaskDebug(manifestItems: ProjectManifestItem[], tasks: MadocCrowdsourcingTaskDto[]): ProjectDebugDto {
+export function computeTaskDebug(manifestItems: MadocCollectionStructureItemDto[], tasks: MadocCrowdsourcingTaskDto[]): ProjectDebugDto {
   const tasksByManifestId = groupTasksByManifestId(tasks);
 
   const manifests = manifestItems.map(item => {
     const manifestTasks = tasksByManifestId.get(String(item.id)) ?? [];
     return {
       manifestId: item.id,
-      label: item.label as MadocInternationalString | string | undefined,
+      label: item.label,
       countsAsTranscribed: countsAsTranscribed(manifestTasks),
       tasks: manifestTasks.map(t => ({
         id: t.id,

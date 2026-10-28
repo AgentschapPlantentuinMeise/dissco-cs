@@ -19,6 +19,19 @@ export type MadocManifestStructureDto = {
   items: MadocManifestStructureItemDto[];
 };
 
+// One item of a collection's structure (GET /collections/:id/structure): a manifest or a nested
+// sub-collection. Madoc builds the label from the item's metadata, so it is missing when the
+// item has none.
+export type MadocCollectionStructureItemDto = {
+  id: number;
+  type?: string;
+  label?: MadocInternationalString;
+};
+
+export type MadocCollectionStructureDto = {
+  items: MadocCollectionStructureItemDto[];
+};
+
 // One label/value pair of a manifest's IIIF metadata, e.g. { label: { en: ['Date'] }, value: { none: ['1890'] } }.
 // A value may hold a little HTML (IIIF allows <a>, <b>, <i>, ...).
 export type MadocMetadataItemDto = {

@@ -13,7 +13,7 @@ export type ProjectProgressDto = {
   allTasksTaken: boolean;
   // People with at least one submitted or accepted task in the project.
   volunteers: number;
-  availableManifests: Array<{ id: number; label: unknown; thumbnail?: string }>;
+  availableManifests: Array<{ id: number; label?: MadocInternationalString; thumbnail?: string }>;
 };
 
 export type ProjectDebugTaskEntryDto = {

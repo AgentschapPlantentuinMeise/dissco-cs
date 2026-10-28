@@ -1,7 +1,7 @@
 import { serviceJson } from './client.js';
 import { collectAllPages } from './pagination.js';
 import { madocPath } from './path-segment.js';
-import { MadocPagination } from '@dissco-cs/shared-types';
+import { MadocCollectionStructureDto, MadocCollectionStructureItemDto, MadocPagination } from '@dissco-cs/shared-types';
 
 /**
  * The items of a collection (manifests and sub-collections), in order, with only their labels.
@@ -10,7 +10,7 @@ import { MadocPagination } from '@dissco-cs/shared-types';
  * @param collectionId Madoc's collection id
  * Returns: { items }. Throws a MadocHttpError when Madoc answers with an error.
  */
-export function getMadocCollectionStructure(siteId: number, collectionId: number): Promise<{ items: unknown[] }> {
+export function getMadocCollectionStructure(siteId: number, collectionId: number): Promise<MadocCollectionStructureDto> {
   return serviceJson(madocPath`/api/madoc/iiif/collections/${collectionId}/structure`, { siteId });
 }
 
@@ -51,11 +51,9 @@ export async function getMadocCollectionManifestThumbnails(
 export async function getMadocProjectManifests(
   siteId: number,
   collectionId: number
-): Promise<Array<{ id: number; label: unknown; type?: string }>> {
+): Promise<MadocCollectionStructureItemDto[]> {
   const structure = await getMadocCollectionStructure(siteId, collectionId);
 
   // The structure endpoint doesn't filter by type -- it also returns nested sub-collections.
-  return (structure.items as Array<{ id: number; label: unknown; type?: string }>).filter(
-    item => item.type?.toLowerCase() === 'manifest'
-  );
+  return structure.items.filter(item => item.type?.toLowerCase() === 'manifest');
 }
