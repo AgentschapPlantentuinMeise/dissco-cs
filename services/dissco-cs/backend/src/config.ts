@@ -66,4 +66,7 @@ export const appConfig = {
   smtpUser: process.env.SMTP_USER,
   smtpPassword: process.env.SMTP_PASSWORD,
   mailFromUser: process.env.MAIL_FROM_USER,
+  // Uploaded files (manual attachments, site images). Must be a volume in Docker, or the files are
+  // gone with the next container.
+  filesDir: process.env.FILES_DIR ?? '/app/files',
 };

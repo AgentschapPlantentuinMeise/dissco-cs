@@ -190,12 +190,12 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         filename TEXT NOT NULL,
         mime_type TEXT NOT NULL,
         file_size INTEGER NOT NULL,
-        file_data BYTEA NOT NULL,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         UNIQUE (manual_id, lang)
       )
     `);
 
+    
     await client.query(`
       CREATE TABLE IF NOT EXISTS ${schemaRef}.feedback_threads (
         id BIGSERIAL PRIMARY KEY,
@@ -263,13 +263,13 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         image_key TEXT NOT NULL,
         mime_type TEXT NOT NULL,
         file_size INTEGER NOT NULL,
-        file_data BYTEA NOT NULL,
         credit TEXT,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         PRIMARY KEY (site_id, image_key)
       )
     `);
 
+    
     // "How it works" on Home: one list per site, saved as a whole (HomeStepDto[] as JSON).
     await client.query(`
       CREATE TABLE IF NOT EXISTS ${schemaRef}.home_steps (
@@ -310,3 +310,5 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
     client.release();
   }
 }
+
+

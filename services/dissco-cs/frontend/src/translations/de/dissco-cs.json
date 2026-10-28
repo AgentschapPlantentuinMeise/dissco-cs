@@ -503,6 +503,7 @@
   "sm_manuals_attachment_none": "Kein Anhang hinzugefügt",
   "sm_manuals_attachment_add": "Anhang hinzufügen",
   "sm_manuals_attachment_too_large": "Diese Datei ist größer als 8 MB.",
+  "sm_manuals_attachment_not_pdf": "Diese Datei ist kein PDF. Wählen Sie eine PDF-Datei.",
   "sm_manuals_table_title": "Titel",
   "sm_manuals_new": "Neue Anleitung",
   "sm_manuals_field_title": "Titel",

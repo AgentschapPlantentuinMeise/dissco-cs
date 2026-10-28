@@ -36,6 +36,8 @@ export async function bootstrap(): Promise<void> {
       await database.migrate();
     }
 
+    await database.files.removeTempFiles();
+
     serve(
       {
         fetch: app.fetch,

@@ -1,6 +1,7 @@
 import { fromBigint } from '../database/bigint.js';
 import { Pool } from 'pg';
 import { ManualAttachmentDto, ManualDetailDto, ManualDto, ManualInput, ManualSummaryDto, PerLanguage, SitePageLang } from '@dissco-cs/shared-types';
+import { FileStore } from '../infrastructure/file-store.js';
 
 export type ManualRow = {
   id: number;
@@ -26,14 +27,26 @@ export type ManualAttachmentFile = {
   buffer: Buffer;
 };
 
+export type ManualAttachmentUpload = ManualAttachmentFile & { lang: SitePageLang };
+
 export class ManualsRepository {
   constructor(
     private readonly pool: Pool,
-    private readonly schemaRef: string
+    private readonly schemaRef: string,
+    private readonly files: FileStore
   ) {}
 
   private table(name: string): string {
     return `${this.schemaRef}.${name}`;
+  }
+
+  // One folder per manual, so deleting the manual removes all its attachments at once.
+  private manualFolder(manualId: number): string {
+    return `manuals/${manualId}`;
+  }
+
+  private attachmentKey(manualId: number, lang: SitePageLang): string {
+    return `${this.manualFolder(manualId)}/${lang}`;
   }
 
   async listManuals(siteId: number): Promise<ManualSummary[]> {
@@ -99,35 +112,95 @@ export class ManualsRepository {
     return result.rows[0] ?? null;
   }
 
-  async createManual(siteId: number, input: ManualInput): Promise<ManualRow> {
-    const result = await this.pool.query<ManualRow>(
-      `INSERT INTO ${this.table('manuals')} (site_id, title, content) VALUES ($1, $2, $3) RETURNING *`,
-      [siteId, JSON.stringify(input.title), JSON.stringify(input.content)]
-    );
+  // Saves a manual's text and its attachment changes as one: all of it or none. The files are
+  // staged first and only put at their key after the commit, so a failed save leaves the stored
+  // attachments as they were. manualId null creates the manual.
+  // Returns null when manualId is not a manual of this site.
+  async saveManual(
+    siteId: number,
+    manualId: number | null,
+    input: ManualInput,
+    uploads: ManualAttachmentUpload[],
+    removeLangs: SitePageLang[]
+  ): Promise<ManualRow | null> {
+    const staged = await Promise.all(uploads.map(upload => this.files.stage(upload.buffer)));
+    const discardStaged = () => Promise.all(staged.map(file => this.files.discard(file)));
 
-    return result.rows[0];
+    const client = await this.pool.connect();
+    let manual: ManualRow | undefined;
+    try {
+      await client.query('BEGIN');
+
+      const title = JSON.stringify(input.title);
+      const content = JSON.stringify(input.content);
+      const result =
+        manualId === null
+          ? await client.query<ManualRow>(
+              `INSERT INTO ${this.table('manuals')} (site_id, title, content) VALUES ($1, $2, $3) RETURNING *`,
+              [siteId, title, content]
+            )
+          : await client.query<ManualRow>(
+              `UPDATE ${this.table('manuals')} SET title = $3, content = $4, updated_at = NOW() WHERE id = $1 AND site_id = $2 RETURNING *`,
+              [manualId, siteId, title, content]
+            );
+      manual = result.rows[0];
+
+      if (manual) {
+        for (const upload of uploads) {
+          await client.query(
+            `
+            INSERT INTO ${this.table('manual_attachments')} (manual_id, lang, filename, mime_type, file_size)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (manual_id, lang) DO UPDATE
+            SET filename = EXCLUDED.filename, mime_type = EXCLUDED.mime_type, file_size = EXCLUDED.file_size,
+                updated_at = NOW()
+          `,
+            [manual.id, upload.lang, upload.filename, upload.mimeType, upload.buffer.length]
+          );
+        }
+        if (removeLangs.length > 0) {
+          await client.query(
+            `DELETE FROM ${this.table('manual_attachments')} WHERE manual_id = $1 AND lang = ANY($2::text[])`,
+            [manual.id, removeLangs]
+          );
+        }
+      }
+
+      await client.query(manual ? 'COMMIT' : 'ROLLBACK');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      await discardStaged();
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    if (!manual) {
+      await discardStaged();
+      return null;
+    }
+
+    // After the commit: a crash here leaves a staged .tmp (removed at startup), never a changed
+    // attachment without its row.
+    const id = fromBigint(manual.id);
+    await Promise.all(uploads.map((upload, i) => this.files.place(staged[i], this.attachmentKey(id, upload.lang))));
+    await Promise.all(removeLangs.map(lang => this.files.remove(this.attachmentKey(id, lang))));
+    return manual;
   }
 
-  async updateManual(siteId: number, manualId: number, input: ManualInput): Promise<boolean> {
-    const result = await this.pool.query(
-      `
-      UPDATE ${this.table('manuals')}
-      SET title = $3, content = $4, updated_at = NOW()
-      WHERE id = $1 AND site_id = $2
-    `,
-      [manualId, siteId, JSON.stringify(input.title), JSON.stringify(input.content)]
-    );
-
-    return (result.rowCount ?? 0) > 0;
-  }
-
+  // The attachment rows go with the manual (ON DELETE CASCADE); their files do not, so the folder
+  // is removed here.
   async deleteManual(siteId: number, manualId: number): Promise<boolean> {
     const result = await this.pool.query(
       `DELETE FROM ${this.table('manuals')} WHERE id = $1 AND site_id = $2`,
       [manualId, siteId]
     );
 
-    return (result.rowCount ?? 0) > 0;
+    const deleted = (result.rowCount ?? 0) > 0;
+    if (deleted) {
+      await this.files.removeDir(this.manualFolder(manualId));
+    }
+    return deleted;
   }
 
   async setProjectLink(siteId: number, projectSlug: string, manualId: number | null): Promise<void> {
@@ -174,8 +247,8 @@ export class ManualsRepository {
   }
 
   async getAttachmentFile(manualId: number, lang: SitePageLang): Promise<ManualAttachmentFile | null> {
-    const result = await this.pool.query<{ filename: string; mime_type: string; file_data: Buffer }>(
-      `SELECT filename, mime_type, file_data FROM ${this.table('manual_attachments')} WHERE manual_id = $1 AND lang = $2`,
+    const result = await this.pool.query<{ filename: string; mime_type: string }>(
+      `SELECT filename, mime_type FROM ${this.table('manual_attachments')} WHERE manual_id = $1 AND lang = $2`,
       [manualId, lang]
     );
 
@@ -184,29 +257,7 @@ export class ManualsRepository {
       return null;
     }
 
-    return { filename: row.filename, mimeType: row.mime_type, buffer: row.file_data };
-  }
-
-  async upsertAttachment(manualId: number, lang: SitePageLang, input: ManualAttachmentFile): Promise<void> {
-    await this.pool.query(
-      `
-      INSERT INTO ${this.table('manual_attachments')} (manual_id, lang, filename, mime_type, file_size, file_data)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      ON CONFLICT (manual_id, lang) DO UPDATE
-      SET filename = EXCLUDED.filename, mime_type = EXCLUDED.mime_type, file_size = EXCLUDED.file_size,
-          file_data = EXCLUDED.file_data, updated_at = NOW()
-    `,
-      [manualId, lang, input.filename, input.mimeType, input.buffer.length, input.buffer]
-    );
-  }
-
-  async deleteAttachment(manualId: number, lang: SitePageLang): Promise<boolean> {
-    const result = await this.pool.query(
-      `DELETE FROM ${this.table('manual_attachments')} WHERE manual_id = $1 AND lang = $2`,
-      [manualId, lang]
-    );
-
-    return (result.rowCount ?? 0) > 0;
+    return { filename: row.filename, mimeType: row.mime_type, buffer: await this.files.read(this.attachmentKey(manualId, lang)) };
   }
 }
 

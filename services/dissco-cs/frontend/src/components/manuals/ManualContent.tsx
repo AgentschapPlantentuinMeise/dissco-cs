@@ -20,21 +20,8 @@ export function ManualContent({ manual, projectSlug }: { manual: ManualDetailDto
   const lang = attachmentLang(manual, i18n.language);
   const attachment = manual.attachments?.[lang];
   const attachmentUrl = attachment ? projectsApi.manualAttachmentUrl(projectSlug, lang) : null;
-  const isPdf = attachment?.mimeType === 'application/pdf';
-
   const attachmentNode =
-    attachment && attachmentUrl ? (
-      isPdf ? (
-        <PdfGallery url={attachmentUrl} filename={attachment.filename} />
-      ) : (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3.5 py-2.5 text-sm text-gray-700">
-          <span>{attachment.filename}</span>
-          <a href={attachmentUrl} download={attachment.filename} className="font-semibold text-cs-primary hover:underline">
-            {t('manual_pdf_download_original')}
-          </a>
-        </div>
-      )
-    ) : null;
+    attachment && attachmentUrl ? <PdfGallery url={attachmentUrl} filename={attachment.filename} /> : null;
 
   const markerUsed = attachmentNode !== null && content.includes(ATTACHMENT_MARKER);
 

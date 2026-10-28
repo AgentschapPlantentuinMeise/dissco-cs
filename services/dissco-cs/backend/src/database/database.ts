@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 
 import { appConfig } from '../config.js';
 import { runMigrations } from './migrations.js';
+import { FileStore } from '../infrastructure/file-store.js';
 import { AnnouncementsRepository } from '../repositories/announcements.repository.js';
 import { AppLogRepository } from '../repositories/app-log.repository.js';
 import { ForumRepository } from '../repositories/forum.repository.js';
@@ -25,6 +26,7 @@ export class DisscoCSDatabase {
   readonly siteTheme: SiteThemeRepository;
   readonly siteImages: SiteImagesRepository;
   readonly homeSteps: HomeStepsRepository;
+  readonly files: FileStore;
 
   private readonly pool: Pool;
   private readonly schemaRef: string;
@@ -47,15 +49,17 @@ export class DisscoCSDatabase {
       void client.query(`SET search_path TO ${this.schemaRef}, public`);
     });
 
+    this.files = new FileStore(appConfig.filesDir);
+
     this.forum = new ForumRepository(this.pool, this.schemaRef);
     this.navItems = new NavItemsRepository(this.pool, this.schemaRef);
-    this.manuals = new ManualsRepository(this.pool, this.schemaRef);
+    this.manuals = new ManualsRepository(this.pool, this.schemaRef, this.files);
     this.announcements = new AnnouncementsRepository(this.pool, this.schemaRef);
     this.institutions = new InstitutionsRepository(this.pool, this.schemaRef);
     this.feedback = new FeedbackRepository(this.pool, this.schemaRef);
     this.appLog = new AppLogRepository(this.pool, this.schemaRef);
     this.siteTheme = new SiteThemeRepository(this.pool, this.schemaRef);
-    this.siteImages = new SiteImagesRepository(this.pool, this.schemaRef);
+    this.siteImages = new SiteImagesRepository(this.pool, this.schemaRef, this.files);
     this.homeSteps = new HomeStepsRepository(this.pool, this.schemaRef);
   }
 

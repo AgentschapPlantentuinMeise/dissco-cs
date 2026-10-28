@@ -1,4 +1,4 @@
-import { csFetch, csFetchField, csUpload } from './request';
+import { csFetch, csFetchField, csSendForm } from './request';
 import { urlPath, withSite } from '../url';
 import { SiteImageDto, SiteImageKey } from '@dissco-cs/shared-types';
 
@@ -24,11 +24,16 @@ export const siteImagesApi = {
   /**
    * Uploads (or replaces) a site image, keeping its credit.
    * @param key which image (SITE_IMAGE_KEYS)
-   * @param file jpeg, png or webp, max MAX_SITE_IMAGE_SIZE (3 MB). Checked by siteImageFileSchema.
+   * @param file jpeg, png or webp, max MAX_SITE_IMAGE_SIZE (3 MB). Checked by siteImageFileSchema;
+   *   the server checks the type again from the file's content.
    * Who: site admin.
    * Returns: nothing (204); 413 file too large; 415 not an accepted image type.
    */
-  uploadFile: (key: SiteImageKey, file: File) => csUpload(urlPath`/site-images/${key}/file`, file),
+  uploadFile: (key: SiteImageKey, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return csSendForm<void>(urlPath`/site-images/${key}/file`, 'PUT', form);
+  },
 
   /**
    * Sets the credit shown in the corner of a header photo.

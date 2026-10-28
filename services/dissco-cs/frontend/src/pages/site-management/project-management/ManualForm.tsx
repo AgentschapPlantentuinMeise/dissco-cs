@@ -1,15 +1,18 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { manualQueries } from '../../../api/queries/manuals';
 import {
-  MAX_MANUAL_ATTACHMENT_LENGTH,
+  MANUAL_ATTACHMENT_MIME_TYPES,
   MAX_MANUAL_TITLE_LENGTH,
   MultilingualText,
   SITE_PAGE_LANGS,
   SitePageLang,
+  attachmentLangsAfterSave,
+  checkManualContent,
   manualInputSchema,
 } from '@dissco-cs/shared-types';
+import { reportActionError } from '../../../api/error-toast';
 import { SaveButton } from '../../../components/ui/SaveButton';
 import { CancelButton } from '../../../components/ui/CancelButton';
 import { Button } from '../../../components/ui/Button';
@@ -17,7 +20,7 @@ import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
 import { MarkdownToolbar } from '../../../components/ui/MarkdownToolbar';
 import { LanguageTabs } from '../../../components/ui/LanguageTabs';
 import { inputClass } from '../../../components/ui/input-styles';
-import { attachmentLangsAfterSave, checkManualContent } from './manual-content';
+import { AttachmentFileError, attachmentFileError } from './manual-content';
 
 export type ManualDraft = {
   title: MultilingualText;
@@ -62,12 +65,16 @@ export function ManualForm({ manualId, storedLangs, draft, setDraft, selectedLan
   const setText = (field: 'title' | 'content', value: string) =>
     setDraft(prev => ({ ...prev, [field]: { ...prev[field], [selectedLang]: value } }));
 
-  const pick = (file: File) => {
-    if (file.size > MAX_MANUAL_ATTACHMENT_LENGTH) {
-      window.alert(t('sm_manuals_attachment_too_large'));
-      return;
+  // Per language, so switching tabs does not show one language's error on another.
+  const [attachmentError, setAttachmentError] = useState<{ lang: SitePageLang; key: AttachmentFileError } | null>(null);
+
+  const pick = async (file: File) => {
+    const lang = selectedLang;
+    const error = await attachmentFileError(file);
+    setAttachmentError(error ? { lang, key: error } : null);
+    if (!error) {
+      setDraft(prev => ({ ...prev, picked: { ...prev.picked, [lang]: file } }));
     }
-    setDraft(prev => ({ ...prev, picked: { ...prev.picked, [selectedLang]: file } }));
   };
 
   const removeAttachment = () =>
@@ -154,14 +161,16 @@ export function ManualForm({ manualId, storedLangs, draft, setDraft, selectedLan
         <input
           ref={fileInputRef}
           type="file"
+          accept={MANUAL_ATTACHMENT_MIME_TYPES.join(',')}
           className="hidden"
           onChange={e => {
             const file = e.target.files?.[0];
-            if (file) pick(file);
+            if (file) pick(file).catch(err => reportActionError(err, 'error_upload_failed'));
             e.target.value = '';
           }}
         />
       </div>
+      {attachmentError?.lang === selectedLang && <p className="text-xs text-red-600 mt-1.5 mb-0">{t(attachmentError.key)}</p>}
 
       {missingLangs.length > 0 && (
         <p className="text-xs text-red-600 mt-3 mb-0">

@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { ManualSummaryDto } from '@dissco-cs/shared-types';
+import { ManualSummaryDto, attachmentLangsAfterSave, checkManualContent } from '@dissco-cs/shared-types';
 
-import {
-  attachmentLangsAfterSave,
-  checkManualContent,
-  manualHasContent,
-} from '../../../../src/pages/site-management/project-management/manual-content';
+import { manualHasContent } from '../../../../src/pages/site-management/project-management/manual-content';
 
 const allText = { nl: 'tekst', en: 'text', fr: 'texte', de: 'Text' };
 const ALL = ['nl', 'en', 'fr', 'de'] as const;

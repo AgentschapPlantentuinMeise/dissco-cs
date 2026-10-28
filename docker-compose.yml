@@ -217,8 +217,10 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - MAIL_FROM_USER=${MAIL_FROM_USER}
+      - FILES_DIR=/app/files
     volumes:
       - ./var/jwt:/app/service-jwt-responses
+      - ./var/files/dissco-cs:/app/files
     links:
       - shared-postgres
 

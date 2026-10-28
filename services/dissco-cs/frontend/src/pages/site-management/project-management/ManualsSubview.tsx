@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { manualKeys } from '../../../api/queries/manuals';
@@ -15,7 +14,7 @@ import { EMPTY_MANUAL_DRAFT, ManualDraft, ManualForm } from './ManualForm';
 import { manualHasContent } from './manual-content';
 import { localeText } from '../../../utility/locale-text';
 import { siteLangText } from '../../../utility/site-lang-text';
-import { MadocProjectDto, ManualSummaryDto, SITE_PAGE_LANGS, manualInputSchema } from '@dissco-cs/shared-types';
+import { MadocProjectDto, ManualSummaryDto, SITE_PAGE_LANGS, SitePageLang, manualSaveSchema } from '@dissco-cs/shared-types';
 import { rowHoverClass, savedRowClass } from '../../../components/ui/list-styles';
 import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { useSavedFlash } from '../../../hooks/use-saved-flash';
@@ -68,38 +67,31 @@ export function ManualsSubview({ projects, manuals }: {
     meta: { errorMessage: 'error_delete_failed' },
   });
 
-  // Set once a new manual exists on the server. When an attachment upload fails after that, the
-  // form closes, so a second Save does not create the manual twice; the list shows it as incomplete.
-  const createdIdRef = useRef<number | null>(null);
+  // One request with the text and every picked file: the server saves all of it or none, so on a
+  // failure the form stays open with everything still in it.
   const { savedId, flash } = useSavedFlash<number>();
   const { mutate: saveManual, isPending: saving } = useMutation({
     mutationFn: async ({ id, draft: saved }: { id: number | null; draft: ManualDraft }) => {
-      const input = manualInputSchema.parse({ title: saved.title, content: saved.content });
-      createdIdRef.current = null;
-      let manualId = id;
-      if (manualId === null) {
-        manualId = (await manualsApi.create(input)).id;
-        createdIdRef.current = manualId;
-      } else {
-        await manualsApi.update(manualId, input);
-      }
+      const input = manualSaveSchema.parse({
+        title: saved.title,
+        content: saved.content,
+        removeAttachments: SITE_PAGE_LANGS.filter(lang => saved.picked[lang] === null),
+      });
+      const files: Partial<Record<SitePageLang, File>> = {};
       for (const lang of SITE_PAGE_LANGS) {
-        if (!(lang in saved.picked)) continue;
         const file = saved.picked[lang];
-        await (file ? manualsApi.uploadAttachment(manualId, lang, file) : manualsApi.deleteAttachment(manualId, lang));
+        if (file) files[lang] = file;
       }
-      return manualId;
+      if (id === null) {
+        return (await manualsApi.create(input, files)).id;
+      }
+      await manualsApi.update(id, input, files);
+      return id;
     },
     onSuccess: async manualId => {
       await onWritten();
       cancelForm();
       flash(manualId);
-    },
-    onError: () => {
-      if (createdIdRef.current !== null) {
-        cancelForm();
-        onWritten();
-      }
     },
   });
 

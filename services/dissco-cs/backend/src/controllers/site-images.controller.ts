@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
-import { MAX_SITE_IMAGE_SIZE, siteImageFileSchema, setSiteImageCreditSchema } from '@dissco-cs/shared-types';
+import { MAX_SITE_IMAGE_SIZE, SITE_IMAGE_MIME_TYPES, setSiteImageCreditSchema } from '@dissco-cs/shared-types';
 import { SiteImagesRepository, toSiteImageDto } from '../repositories/site-images.repository.js';
 import { requireSiteAdmin, requireSiteId } from '../auth/auth.js';
 import { validateJson } from '../infrastructure/validate-json.js';
+import { readUpload, sendFile, uploadLimit } from '../infrastructure/file-http.js';
 import { siteImageKey, validateParams } from '../infrastructure/validate-params.js';
 
 export function siteImagesController(siteImagesRepository: SiteImagesRepository): Hono {
@@ -31,38 +32,25 @@ export function siteImagesController(siteImagesRepository: SiteImagesRepository)
 
     // The frontend adds ?v=<updatedAt> to the URL, so a new image gets a new URL and the browser
     // may keep this one for good.
-    c.header('Content-Type', file.mimeType);
     c.header('Cache-Control', 'public, max-age=31536000, immutable');
-    return c.body(new Uint8Array(file.buffer));
+    return sendFile(c, file.buffer, file.mimeType);
   });
 
   // The writes live under /file and /credit: the gateway lets /site-images and /site-images/:key
   // through without checking the JWT (anonymous visitors need the images), and requireSiteAdmin
   // only reads the JWT's payload.
-  app.put('/:key/file', validateParams({ key: siteImageKey }), async c => {
+  app.put('/:key/file', validateParams({ key: siteImageKey }), uploadLimit(MAX_SITE_IMAGE_SIZE), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const body = await c.req.parseBody().catch(() => null);
-    const file = body?.file;
-    if (!(file instanceof File)) {
-      return c.json({ error: 'Missing file' }, 400);
+    const upload = await readUpload(c, MAX_SITE_IMAGE_SIZE, SITE_IMAGE_MIME_TYPES);
+    if (upload instanceof Response) {
+      return upload;
     }
 
-    if (file.size > MAX_SITE_IMAGE_SIZE) {
-      return c.json({ error: 'File too large' }, 413);
-    }
-
-    if (!siteImageFileSchema.safeParse(file).success) {
-      return c.json({ error: 'Unsupported image type' }, 415);
-    }
-
-    await siteImagesRepository.upsertFile(identity.siteId, c.req.valid('param').key, {
-      mimeType: file.type,
-      buffer: Buffer.from(await file.arrayBuffer()),
-    });
+    await siteImagesRepository.upsertFile(identity.siteId, c.req.valid('param').key, upload);
     return c.body(null, 204);
   });
 

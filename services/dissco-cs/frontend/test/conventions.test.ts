@@ -15,6 +15,12 @@ import {
 // message says. Extend an allowedIn list only with a reason.
 const rules: ConventionRule[] = [
   {
+    name: "No browser dialogs: they ignore the site's style and language",
+    pattern: /(^|[^\w.]|window\.)(alert|confirm|prompt)\(/,
+    instead: 'a red text next to the field (as for site images), or <ConfirmDialog> for a confirmation',
+    allowedIn: { 'components/ui/MarkdownToolbar.tsx': 'asks for a link or image URL; there is no own input dialog for it yet' },
+  },
+  {
     name: 'No console output in production code',
     pattern: /\bconsole\.\w+\(/,
     instead: "reportClientError(err, kind), or let useMutation's MutationCache handle it -- CLAUDE.md 'Fouten en logging'",

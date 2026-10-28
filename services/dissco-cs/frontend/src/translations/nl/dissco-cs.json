@@ -503,6 +503,7 @@
   "sm_manuals_attachment_none": "Geen bijlage toegevoegd",
   "sm_manuals_attachment_add": "Bijlage toevoegen",
   "sm_manuals_attachment_too_large": "Dit bestand is groter dan 8MB.",
+  "sm_manuals_attachment_not_pdf": "Dit bestand is geen pdf. Kies een pdf-bestand.",
   "sm_manuals_table_title": "Titel",
   "sm_manuals_new": "Nieuwe handleiding",
   "sm_manuals_field_title": "Titel",

@@ -18,6 +18,7 @@ import { getMadocCollectionManifestThumbnails, getMadocProjectManifests } from '
 import { getMadocProjectTasks, getMadocTasksBySubjectAndType, resyncManifestTaskCounter } from '../madoc-client/tasks.js';
 import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
 import { validateJson } from '../infrastructure/validate-json.js';
+import { sendFile } from '../infrastructure/file-http.js';
 import { safeSegment, siteLang, validateParams } from '../infrastructure/validate-params.js';
 import { computeProjectProgress, computeTaskDebug } from './projects.logic.js';
 import {
@@ -298,9 +299,8 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
       return c.notFound();
     }
 
-    c.header('Content-Type', file.mimeType);
     c.header('Content-Disposition', `attachment; filename="${encodeURIComponent(file.filename)}"`);
-    return c.body(new Uint8Array(file.buffer));
+    return sendFile(c, file.buffer, file.mimeType);
   });
 
   app.put('/:projectId/manual-link', validateParams({ projectId: safeSegment }), validateJson(setManualLinkSchema), async c => {

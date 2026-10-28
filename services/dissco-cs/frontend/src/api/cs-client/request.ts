@@ -52,33 +52,24 @@ async function apiErrorFrom(response: Response, path: string): Promise<ApiError>
   return new ApiError(response.status, path, await readServerMessage(response), fromBackend);
 }
 
-/**
- * Calls our backend: adds the user's JWT and a breadcrumb, sends an expired session to the login
- * page, and throws an ApiError on any other non-2xx answer.
- * @param path the path after /api/dissco-cs, with its query
- * @param init optional fetch options (method, body, signal)
- * Returns: the JSON body as T; undefined for 204 or a non-JSON answer.
- */
-export async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
+function authHeader(): Record<string, string> {
   const jwt = getJwt();
-  const call = `${init?.method ?? 'GET'} ${withoutQuery(path)}`;
+  return jwt ? { Authorization: `Bearer ${jwt}` } : {};
+}
 
-  let response: Response;
+async function sendRequest(path: string, init: RequestInit): Promise<Response> {
+  const call = `${init.method ?? 'GET'} ${withoutQuery(path)}`;
   try {
-    response = await fetch(`/api/dissco-cs${path}`, {
-      ...init,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
-        ...(init?.headers || {}),
-      },
-    });
+    const response = await fetch(`/api/dissco-cs${path}`, init);
+    addBreadcrumb('api', `${call} ${response.status}`);
+    return response;
   } catch (err) {
     addBreadcrumb('api', `${call} network error`);
     throw err;
   }
-  addBreadcrumb('api', `${call} ${response.status}`);
+}
 
+async function readAnswer<T>(response: Response, path: string): Promise<T> {
   if (response.status === 401) {
     return redirectToExpiredLogin<T>();
   }
@@ -97,33 +88,31 @@ export async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 /**
- * Uploads one file to our backend as multipart form data (field 'file'), with the user's JWT.
- * Its own fetch: csFetch sets Content-Type to JSON, while the browser must set the multipart
- * boundary itself.
- * @param path the path after /api/dissco-cs
- * @param file the file to send
- * Returns: nothing; sends an expired session to the login page, throws an ApiError on any other
- * non-2xx answer.
+ * Calls our backend: adds the user's JWT and a breadcrumb, sends an expired session to the login
+ * page, and throws an ApiError on any other non-2xx answer.
+ * @param path the path after /api/dissco-cs, with its query
+ * @param init optional fetch options (method, body, signal)
+ * Returns: the JSON body as T; undefined for 204 or a non-JSON answer.
  */
-export async function csUpload(path: string, file: File): Promise<void> {
-  const jwt = getJwt();
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const response = await fetch(`/api/dissco-cs${path}`, {
-    method: 'PUT',
-    headers: jwt ? { Authorization: `Bearer ${jwt}` } : undefined,
-    body: formData,
+export async function csFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await sendRequest(path, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...authHeader(), ...(init?.headers || {}) },
   });
-  addBreadcrumb('api', `PUT ${withoutQuery(path)} ${response.status}`);
+  return readAnswer<T>(response, path);
+}
 
-  if (response.status === 401) {
-    return redirectToExpiredLogin<void>();
-  }
-
-  if (!response.ok) {
-    throw await apiErrorFrom(response, path);
-  }
+/**
+ * Sends a multipart form (files and other fields) to our backend, with the user's JWT. No
+ * Content-Type header: the browser sets it itself, with the multipart boundary in it.
+ * @param path the path after /api/dissco-cs
+ * @param method POST to create, PUT to replace
+ * @param form the fields and files to send
+ * Returns: like csFetch: the JSON body as T, undefined for 204; throws an ApiError on a non-2xx answer.
+ */
+export async function csSendForm<T>(path: string, method: 'POST' | 'PUT', form: FormData): Promise<T> {
+  const response = await sendRequest(path, { method, headers: authHeader(), body: form });
+  return readAnswer<T>(response, path);
 }
 
 /**

@@ -503,6 +503,7 @@
   "sm_manuals_attachment_none": "No attachment added",
   "sm_manuals_attachment_add": "Add attachment",
   "sm_manuals_attachment_too_large": "This file is larger than 8MB.",
+  "sm_manuals_attachment_not_pdf": "This file is not a PDF. Choose a PDF file.",
   "sm_manuals_table_title": "Title",
   "sm_manuals_new": "New manual",
   "sm_manuals_field_title": "Title",

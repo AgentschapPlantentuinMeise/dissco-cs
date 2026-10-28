@@ -16,6 +16,7 @@
     "@dissco-cs/shared-types": "file:../shared",
     "@headlessui/react": "^2.2.9",
     "@tanstack/react-query": "^5",
+    "file-type": "^22.2.0",
     "i18next": "^26.5.11",
     "js-cookie": "^3.0.8",
     "lodash-es": "^4.17.21",

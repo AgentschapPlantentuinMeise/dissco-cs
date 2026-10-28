@@ -97,6 +97,18 @@ const rules: ConventionRule[] = [
     onlyIn: /^controllers\//,
   },
   {
+    name: 'Files are not stored in the database',
+    pattern: /\bBYTEA\b/i,
+    instead: 'the file on disk through FileStore (infrastructure/file-store.ts), only its metadata in a table',
+  },
+  {
+    name: 'Only FileStore writes to disk',
+    pattern:
+      /from ['"](node:)?fs\/promises['"]|\b(writeFile|writeFileSync|createWriteStream|rename|renameSync|rm|rmSync|unlink|unlinkSync|mkdir|mkdirSync)\(/,
+    instead: 'a FileStore method (infrastructure/file-store.ts), which keeps every path inside the files folder',
+    allowedIn: { 'infrastructure/file-store.ts': 'FileStore itself' },
+  },
+  {
     name: 'No silently swallowed errors',
     pattern: /\.catch\(\(\) => \{\s*\}\)|catch\s*(\(\w*\))?\s*\{\s*\}/,
     instead: 'let the error through, or handle it visibly',

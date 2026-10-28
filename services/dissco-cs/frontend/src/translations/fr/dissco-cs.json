@@ -503,6 +503,7 @@
   "sm_manuals_attachment_none": "Aucune pièce jointe ajoutée",
   "sm_manuals_attachment_add": "Ajouter une pièce jointe",
   "sm_manuals_attachment_too_large": "Ce fichier dépasse 8 Mo.",
+  "sm_manuals_attachment_not_pdf": "Ce fichier n'est pas un PDF. Choisissez un fichier PDF.",
   "sm_manuals_table_title": "Titre",
   "sm_manuals_new": "Nouveau guide",
   "sm_manuals_field_title": "Titre",
