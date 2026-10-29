@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { manualQueries } from '../../../api/queries/manuals';
 import {
   MANUAL_ATTACHMENT_MIME_TYPES,
+  MAX_MANUAL_CONTENT_LENGTH,
   MAX_MANUAL_TITLE_LENGTH,
   MultilingualText,
   SITE_PAGE_LANGS,
@@ -128,6 +129,7 @@ export function ManualForm({ manualId, storedLangs, draft, setDraft, selectedLan
         ref={textareaRef}
         value={draft.content[selectedLang] ?? ''}
         onChange={e => setText('content', e.target.value)}
+        maxLength={MAX_MANUAL_CONTENT_LENGTH}
         placeholder={t('sm_manuals_content_placeholder')}
         className={`${inputClass} w-full min-h-[220px] rounded-t-none font-mono`}
       />

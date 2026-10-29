@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { institutionQueries } from '../../api/queries/institutions';
+import { institutionsApi } from '../../api/cs-client/institutions';
 import { projectQueries } from '../../api/queries/projects';
 import { CsPage } from '../../components/layout/CsPage';
 import { HeaderLogo, PageHeader } from '../../components/layout/PageHeader';
@@ -77,6 +78,8 @@ export function InstitutionDetail() {
     );
   }
 
+  const logoUrl = institutionsApi.logoUrl(institution);
+
   return (
     <CsPage>
       <PageHeader
@@ -93,7 +96,7 @@ export function InstitutionDetail() {
           { value: overview ? overview.projectsCompleted : '—', label: t('institution_projects_completed') },
           { value: overview ? formatNumber(overview.volunteers) : '—', label: t('institution_stats_volunteers') },
         ]}
-        aside={institution.logo ? <HeaderLogo src={institution.logo} alt={name} /> : undefined}
+        aside={logoUrl ? <HeaderLogo src={logoUrl} alt={name} /> : undefined}
       >
         {legendLeader && (
           <div className="flex items-center gap-2 text-sm text-white/85">

@@ -10,8 +10,13 @@ export type SitePageLang = (typeof SITE_PAGE_LANGS)[number];
 export type PerLanguage<T> = Partial<Record<SitePageLang, T>>;
 export type MultilingualText = PerLanguage<string>;
 
+// The longest address SMTP allows (RFC 5321).
+export const MAX_EMAIL_LENGTH = 254;
+// Madoc's project slugs, as stored with a forum topic or an announcement.
+export const MAX_PROJECT_SLUG_LENGTH = 200;
+
 // Zod's built-in email check, so there is no hand-written regex to maintain.
-export const emailSchema = z.string().trim().pipe(z.email());
+export const emailSchema = z.string().trim().max(MAX_EMAIL_LENGTH).pipe(z.email());
 
 /**
  * The zod schema of a text in every site language (nl, en, fr, de), each one trimmed.

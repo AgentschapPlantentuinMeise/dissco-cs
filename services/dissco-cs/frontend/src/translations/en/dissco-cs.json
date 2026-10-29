@@ -143,7 +143,7 @@
   "sm_site_images_none": "No image",
   "sm_site_images_choose": "Choose",
   "sm_site_images_replace": "Replace",
-  "sm_site_images_invalid_file": "Choose a jpg, png or webp of at most 3 MB.",
+  "common_invalid_image_file": "Choose a jpg, png or webp of at most 3 MB.",
   "sm_site_images_credit_label": "Photo credit",
   "sm_site_images_credit_placeholder": "Photo credit, e.g. Jane Smith",
   "sm_site_images_delete_title": "{{image}}: remove the image?",

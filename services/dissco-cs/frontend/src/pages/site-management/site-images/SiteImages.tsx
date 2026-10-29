@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { SITE_IMAGE_MIME_TYPES, SiteImageDto, SiteImageKey, siteImageFileSchema } from '@dissco-cs/shared-types';
+import { IMAGE_UPLOAD_MIME_TYPES, MAX_SITE_IMAGE_CREDIT_LENGTH, SiteImageDto, SiteImageKey, imageFileSchema } from '@dissco-cs/shared-types';
 import { siteImagesApi } from '../../../api/cs-client/site-images';
 import { siteImageKeys, siteImageQueries } from '../../../api/queries/site-images';
 import { Button } from '../../../components/ui/Button';
@@ -95,7 +95,7 @@ function SiteImageRow({ imageKey, image, hint }: { imageKey: SiteImageKey; image
   });
 
   const onPickFile = (file: File) => {
-    const valid = siteImageFileSchema.safeParse(file).success;
+    const valid = imageFileSchema.safeParse(file).success;
     setInvalidFile(!valid);
     if (valid) {
       upload(file);
@@ -127,7 +127,7 @@ function SiteImageRow({ imageKey, image, hint }: { imageKey: SiteImageKey; image
           {image && <DeleteIconButton onClick={() => setConfirmingDelete(true)} />}
         </span>
         {hint && <span className="text-sm text-gray-500">{hint}</span>}
-        {invalidFile && <span className="text-sm text-red-600">{t('sm_site_images_invalid_file')}</span>}
+        {invalidFile && <span className="text-sm text-red-600">{t('common_invalid_image_file')}</span>}
 
         {image && !isLogo && (
           <span className="flex flex-wrap items-center gap-2">
@@ -135,6 +135,7 @@ function SiteImageRow({ imageKey, image, hint }: { imageKey: SiteImageKey; image
               type="text"
               value={draftCredit}
               onChange={e => setDraftCredit(e.target.value)}
+              maxLength={MAX_SITE_IMAGE_CREDIT_LENGTH}
               aria-label={t('sm_site_images_credit_label')}
               placeholder={t('sm_site_images_credit_placeholder')}
               className={`${inputClass} w-72 max-w-full`}
@@ -148,7 +149,7 @@ function SiteImageRow({ imageKey, image, hint }: { imageKey: SiteImageKey; image
       <input
         ref={fileInputRef}
         type="file"
-        accept={SITE_IMAGE_MIME_TYPES.join(',')}
+        accept={IMAGE_UPLOAD_MIME_TYPES.join(',')}
         className="hidden"
         onChange={e => {
           const file = e.target.files?.[0];

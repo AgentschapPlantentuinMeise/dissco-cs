@@ -6,6 +6,7 @@ import { CancelButton } from '../../components/ui/CancelButton';
 import { LuMail } from 'react-icons/lu';
 import { FeedbackComposeTarget } from './use-review-page';
 import { inputClass } from '../../components/ui/input-styles';
+import { MAX_FEEDBACK_BODY_LENGTH, MAX_FEEDBACK_SUBJECT_LENGTH } from '@dissco-cs/shared-types';
 
 interface FeedbackModalProps {
   target: FeedbackComposeTarget;
@@ -51,6 +52,7 @@ export function FeedbackModal({ target, onSend, onClose, sending }: FeedbackModa
         type="text"
         value={subject}
         onChange={e => setSubject(e.target.value)}
+        maxLength={MAX_FEEDBACK_SUBJECT_LENGTH}
         placeholder={t('feedback_subject_placeholder')}
         autoFocus
         className={`${inputClass} w-full mb-4`}
@@ -62,6 +64,7 @@ export function FeedbackModal({ target, onSend, onClose, sending }: FeedbackModa
         id="feedback-body"
         value={body}
         onChange={e => setBody(e.target.value)}
+        maxLength={MAX_FEEDBACK_BODY_LENGTH}
         rows={4}
         className={`${inputClass} w-full`}
       />

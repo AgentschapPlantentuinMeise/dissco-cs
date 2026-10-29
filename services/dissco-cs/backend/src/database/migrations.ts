@@ -1,8 +1,20 @@
 import { Pool } from 'pg';
+import {
+  MAX_EMAIL_LENGTH,
+  MAX_FEEDBACK_BODY_LENGTH,
+  MAX_FEEDBACK_SUBJECT_LENGTH,
+  MAX_FORUM_BODY_LENGTH,
+  MAX_FORUM_PROJECT_LABEL_LENGTH,
+  MAX_FORUM_TASK_URL_LENGTH,
+  MAX_FORUM_TITLE_LENGTH,
+  MAX_INSTITUTION_PHONE_LENGTH,
+  MAX_INSTITUTION_SLUG_LENGTH,
+  MAX_INSTITUTION_WEBSITE_LENGTH,
+  MAX_PROJECT_SLUG_LENGTH,
+  MAX_SITE_IMAGE_CREDIT_LENGTH,
+} from '@dissco-cs/shared-types';
 
-import { appConfig } from '../config.js';
-
-// Creates/updates our own tables. Idempotent (IF NOT EXISTS + guarded ALTERs), runs at startup
+// Creates/updates our own tables. Idempotent (IF NOT EXISTS), runs at startup
 // when appConfig.migrate is on.
 export async function runMigrations(pool: Pool, schemaRef: string): Promise<void> {
   const client = await pool.connect();
@@ -17,11 +29,11 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         site_id INTEGER NOT NULL,
         author_user_id INTEGER NOT NULL,
         author_name TEXT NOT NULL,
-        title TEXT NOT NULL,
-        task_url TEXT,
-        project_slug TEXT,
-        project_label TEXT,
-        body TEXT NOT NULL,
+        title VARCHAR(${MAX_FORUM_TITLE_LENGTH}) NOT NULL,
+        task_url VARCHAR(${MAX_FORUM_TASK_URL_LENGTH}),
+        project_slug VARCHAR(${MAX_PROJECT_SLUG_LENGTH}),
+        project_label VARCHAR(${MAX_FORUM_PROJECT_LABEL_LENGTH}),
+        body VARCHAR(${MAX_FORUM_BODY_LENGTH}) NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         last_activity TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         closed_at TIMESTAMPTZ
@@ -40,7 +52,7 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         site_id INTEGER NOT NULL,
         author_user_id INTEGER NOT NULL,
         author_name TEXT NOT NULL,
-        body TEXT NOT NULL,
+        body VARCHAR(${MAX_FORUM_BODY_LENGTH}) NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
@@ -66,7 +78,7 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         page_key TEXT NOT NULL,
         is_active BOOLEAN NOT NULL DEFAULT TRUE,
         content JSONB NOT NULL DEFAULT '{}'::jsonb,
-        contact_email TEXT,
+        contact_email VARCHAR(${MAX_EMAIL_LENGTH}),
         sort_order INTEGER NOT NULL DEFAULT 0,
         show_contact_form BOOLEAN NOT NULL DEFAULT FALSE,
         intro JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -82,7 +94,7 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         title JSONB NOT NULL DEFAULT '{}'::jsonb,
         description JSONB NOT NULL DEFAULT '{}'::jsonb,
         target_type TEXT NOT NULL,
-        target_project_slug TEXT,
+        target_project_slug VARCHAR(${MAX_PROJECT_SLUG_LENGTH}),
         is_active BOOLEAN NOT NULL DEFAULT TRUE,
         start_date TIMESTAMPTZ,
         end_date TIMESTAMPTZ,
@@ -96,32 +108,17 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
     `);
 
     await client.query(`
-      DO $$
-      BEGIN
-        IF (
-          SELECT data_type FROM information_schema.columns
-          WHERE table_schema = '${appConfig.postgresSchema}' AND table_name = 'announcements' AND column_name = 'title'
-        ) = 'text' THEN
-          ALTER TABLE ${schemaRef}.announcements
-            ALTER COLUMN title TYPE JSONB USING jsonb_build_object('nl', title, 'en', title, 'fr', title, 'de', title),
-            ALTER COLUMN title SET DEFAULT '{}'::jsonb,
-            ALTER COLUMN description TYPE JSONB USING jsonb_build_object('nl', description, 'en', description, 'fr', description, 'de', description),
-            ALTER COLUMN description SET DEFAULT '{}'::jsonb;
-        END IF;
-      END $$;
-    `);
-
-    await client.query(`
       CREATE TABLE IF NOT EXISTS ${schemaRef}.institutions (
         id BIGSERIAL PRIMARY KEY,
         site_id INTEGER NOT NULL,
-        slug TEXT NOT NULL,
+        slug VARCHAR(${MAX_INSTITUTION_SLUG_LENGTH}) NOT NULL,
         name JSONB NOT NULL DEFAULT '{}'::jsonb,
         description JSONB NOT NULL DEFAULT '{}'::jsonb,
-        email TEXT,
-        phone TEXT,
-        website TEXT,
-        logo TEXT,
+        email VARCHAR(${MAX_EMAIL_LENGTH}),
+        phone VARCHAR(${MAX_INSTITUTION_PHONE_LENGTH}),
+        website VARCHAR(${MAX_INSTITUTION_WEBSITE_LENGTH}),
+        logo_mime_type TEXT,
+        logo_updated_at TIMESTAMPTZ,
         is_active BOOLEAN NOT NULL DEFAULT TRUE,
         sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -204,7 +201,7 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         reviewer_name TEXT NOT NULL,
         recipient_user_id INTEGER NOT NULL,
         recipient_name TEXT NOT NULL,
-        subject TEXT NOT NULL,
+        subject VARCHAR(${MAX_FEEDBACK_SUBJECT_LENGTH}) NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         last_activity TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         reviewer_hidden_at TIMESTAMPTZ,
@@ -228,7 +225,7 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         thread_id BIGINT NOT NULL REFERENCES ${schemaRef}.feedback_threads (id) ON DELETE CASCADE,
         author_user_id INTEGER NOT NULL,
         author_name TEXT NOT NULL,
-        body TEXT NOT NULL,
+        body VARCHAR(${MAX_FEEDBACK_BODY_LENGTH}) NOT NULL,
         read_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
@@ -261,7 +258,7 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         image_key TEXT NOT NULL,
         mime_type TEXT NOT NULL,
         file_size INTEGER NOT NULL,
-        credit TEXT,
+        credit VARCHAR(${MAX_SITE_IMAGE_CREDIT_LENGTH}),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         PRIMARY KEY (site_id, image_key)
       )

@@ -7,7 +7,15 @@ import { Select } from '../../../components/ui/Select';
 import { LanguageTabs } from '../../../components/ui/LanguageTabs';
 import { MarkdownToolbar } from '../../../components/ui/MarkdownToolbar';
 import { localeText } from '../../../utility/locale-text';
-import { MadocProjectDto, AnnouncementInput, AnnouncementTargetType, SitePageLang, announcementInputSchema } from '@dissco-cs/shared-types';
+import {
+  MAX_ANNOUNCEMENT_DESCRIPTION_LENGTH,
+  MAX_ANNOUNCEMENT_TITLE_LENGTH,
+  MadocProjectDto,
+  AnnouncementInput,
+  AnnouncementTargetType,
+  SitePageLang,
+  announcementInputSchema,
+} from '@dissco-cs/shared-types';
 import { inputClass } from '../../../components/ui/input-styles';
 
 export function toDateInputValue(iso: string | null): string {
@@ -52,6 +60,7 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
           type="text"
           value={draft.title[selectedLang] ?? ''}
           onChange={e => setDraft(prev => ({ ...prev, title: { ...prev.title, [selectedLang]: e.target.value } }))}
+          maxLength={MAX_ANNOUNCEMENT_TITLE_LENGTH}
           className={inputClass}
         />
       </label>
@@ -69,6 +78,7 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
           onChange={e =>
             setDraft(prev => ({ ...prev, description: { ...prev.description, [selectedLang]: e.target.value } }))
           }
+          maxLength={MAX_ANNOUNCEMENT_DESCRIPTION_LENGTH}
           className={`${inputClass} rounded-t-none min-h-[90px]`}
         />
       </label>

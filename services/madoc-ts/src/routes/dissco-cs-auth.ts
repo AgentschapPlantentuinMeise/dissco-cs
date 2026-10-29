@@ -93,6 +93,10 @@ export const invitationJson: RouteMiddleware<{ slug: string }> = async context =
   context.response.body = mapInvitationForForm(invitation);
 };
 
+// Madoc itself sets no limit on a user's name; this registration does. The same number is
+// MAX_USER_NAME_LENGTH in dissco-cs's shared types (the registration form): change both together.
+const MAX_USER_NAME_LENGTH = 100;
+
 export const registerJson: RouteMiddleware<
   { slug: string },
   { name: string; email: string; capToken: string; code?: string; termsAccepted?: boolean }
@@ -112,7 +116,13 @@ export const registerJson: RouteMiddleware<
   }
 
   const isValidCaptcha = capToken ? await context.captcha.validateToken(capToken) : false;
-  if (!isValidCaptcha || !name?.trim() || !email?.trim() || !validateEmail(email)) {
+  if (
+    !isValidCaptcha ||
+    !name?.trim() ||
+    name.trim().length > MAX_USER_NAME_LENGTH ||
+    !email?.trim() ||
+    !validateEmail(email)
+  ) {
     throw new RequestError('Invalid registration details');
   }
 

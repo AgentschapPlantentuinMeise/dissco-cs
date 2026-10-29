@@ -24,7 +24,7 @@ export const siteImagesApi = {
   /**
    * Uploads (or replaces) a site image, keeping its credit.
    * @param key which image (SITE_IMAGE_KEYS)
-   * @param file jpeg, png or webp, max MAX_SITE_IMAGE_SIZE (3 MB). Checked by siteImageFileSchema;
+   * @param file jpeg, png or webp, max MAX_IMAGE_UPLOAD_SIZE (3 MB). Checked by imageFileSchema;
    *   the server checks the type again from the file's content.
    * Who: site admin.
    * Returns: nothing (204); 413 file too large; 415 not an accepted image type.

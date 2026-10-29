@@ -143,7 +143,7 @@
   "sm_site_images_none": "Kein Bild",
   "sm_site_images_choose": "Wählen",
   "sm_site_images_replace": "Ersetzen",
-  "sm_site_images_invalid_file": "Wählen Sie ein jpg, png oder webp von höchstens 3 MB.",
+  "common_invalid_image_file": "Wählen Sie ein jpg, png oder webp von höchstens 3 MB.",
   "sm_site_images_credit_label": "Bildnachweis",
   "sm_site_images_credit_placeholder": "Bildnachweis, z. B. Anna Schmidt",
   "sm_site_images_delete_title": "{{image}}: Bild entfernen?",

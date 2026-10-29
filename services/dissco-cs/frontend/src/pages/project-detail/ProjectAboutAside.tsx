@@ -5,12 +5,14 @@ import { Button } from '../../components/ui/Button';
 import { HrefLink } from '../../utility/href-link';
 import { siteLangText } from '../../utility/site-lang-text';
 import { urlPath } from '../../api/url';
+import { institutionsApi } from '../../api/cs-client/institutions';
 
 // The column beside "About this project": the institution behind it, and the manual. The manual
 // button lives only here, next to the text about the project, so the header keeps one action.
 export function ProjectAboutAside({ institution, onOpenManual }: { institution?: InstitutionDto; onOpenManual: () => void }) {
   const { t, i18n } = useTranslation('dissco-cs');
   const name = institution ? siteLangText(institution.name, i18n.language, institution.slug) : '';
+  const logoUrl = institution ? institutionsApi.logoUrl(institution) : null;
 
   return (
     <>
@@ -21,7 +23,7 @@ export function ProjectAboutAside({ institution, onOpenManual }: { institution?:
             href={urlPath`/institutions/${institution.slug}`}
             className="inline-flex items-center gap-3 font-semibold text-cs-primary no-underline hover:underline"
           >
-            {institution.logo && <img src={institution.logo} alt="" className="h-9 w-auto max-w-[110px] object-contain" />}
+            {logoUrl && <img src={logoUrl} alt="" className="h-9 w-auto max-w-[110px] object-contain" />}
             {name}
           </HrefLink>
         </div>

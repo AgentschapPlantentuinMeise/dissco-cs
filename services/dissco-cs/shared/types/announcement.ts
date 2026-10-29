@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MultilingualText, multilingualTextSchema } from './common.js';
+import { MAX_PROJECT_SLUG_LENGTH, MultilingualText, multilingualTextSchema } from './common.js';
 
 export const ANNOUNCEMENT_TARGET_TYPES = ['homepage', 'projects', 'project'] as const;
 export type AnnouncementTargetType = (typeof ANNOUNCEMENT_TARGET_TYPES)[number];
@@ -35,12 +35,15 @@ function endOfDayIfDateOnly(value: string | null): string | null {
   return `${value}T23:59:59.999`;
 }
 
+export const MAX_ANNOUNCEMENT_TITLE_LENGTH = 200;
+export const MAX_ANNOUNCEMENT_DESCRIPTION_LENGTH = 2_000;
+
 export const announcementInputSchema = z
   .object({
-    title: multilingualTextSchema(true),
-    description: multilingualTextSchema(true),
+    title: multilingualTextSchema(true, MAX_ANNOUNCEMENT_TITLE_LENGTH),
+    description: multilingualTextSchema(true, MAX_ANNOUNCEMENT_DESCRIPTION_LENGTH),
     targetType: z.enum(ANNOUNCEMENT_TARGET_TYPES),
-    targetProjectSlug: z.string().trim().min(1).nullable(),
+    targetProjectSlug: z.string().trim().min(1).max(MAX_PROJECT_SLUG_LENGTH).nullable(),
     isActive: z.boolean(),
     startDate: isoDateOrNull,
     endDate: isoDateOrNull,

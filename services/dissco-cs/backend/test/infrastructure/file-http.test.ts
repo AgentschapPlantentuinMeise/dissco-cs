@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MANUAL_ATTACHMENT_MIME_TYPES, SITE_IMAGE_MIME_TYPES } from '@dissco-cs/shared-types';
+import { MANUAL_ATTACHMENT_MIME_TYPES, IMAGE_UPLOAD_MIME_TYPES } from '@dissco-cs/shared-types';
 
 import { detectFileType } from '../../src/infrastructure/file-http';
 
@@ -18,7 +18,7 @@ describe('detectFileType', () => {
   });
 
   it('accepts a JPEG as a site image, but not a PDF', async () => {
-    expect(await detectFileType(jpeg, SITE_IMAGE_MIME_TYPES)).toBe('image/jpeg');
-    expect(await detectFileType(pdf, SITE_IMAGE_MIME_TYPES)).toBeNull();
+    expect(await detectFileType(jpeg, IMAGE_UPLOAD_MIME_TYPES)).toBe('image/jpeg');
+    expect(await detectFileType(pdf, IMAGE_UPLOAD_MIME_TYPES)).toBeNull();
   });
 });

@@ -31,7 +31,6 @@ const emptyDraft: InstitutionInput = {
   email: '',
   phone: '',
   website: '',
-  logo: '',
   isActive: true,
 };
 
@@ -47,7 +46,6 @@ function toInstitutionInput(institution: InstitutionDto): InstitutionInput {
     email: institution.email ?? '',
     phone: institution.phone ?? '',
     website: institution.website ?? '',
-    logo: institution.logo ?? '',
     isActive: institution.isActive,
   };
 }
@@ -77,12 +75,14 @@ export function InstitutionManagement() {
   const onWritten = () => queryClient.invalidateQueries({ queryKey: institutionKeys.all });
 
   const { mutate: upsert, isPending: saving } = useMutation({
-    mutationFn: async ({ id, input }: { id: InstitutionDto['id'] | null; input: InstitutionInput }) => {
+    mutationFn: async ({ id, input, logo }: { id: InstitutionDto['id'] | null; input: InstitutionInput; logo: File | null }) => {
       if (id !== null) {
-        await institutionsApi.update(id, input);
+        await institutionsApi.update(id, input, logo);
         return id;
       }
-      return (await institutionsApi.create(input)).id;
+      // The form only allows saving a new institution once a logo is picked.
+      if (!logo) throw new Error('A new institution needs a logo');
+      return (await institutionsApi.create(input, logo)).id;
     },
     onSuccess: onWritten,
   });
@@ -97,8 +97,8 @@ export function InstitutionManagement() {
     meta: { errorMessage: 'error_delete_failed' },
   });
 
-  const save = (input: InstitutionInput) =>
-    upsert({ id: editingId, input }, {
+  const save = (input: InstitutionInput, logo: File | null) =>
+    upsert({ id: editingId, input, logo }, {
       onSuccess: id => {
         cancelForm();
         flash(id);
@@ -111,8 +111,10 @@ export function InstitutionManagement() {
   };
 
   const toggleActive = (institution: InstitutionDto) => {
-    upsert({ id: institution.id, input: { ...toInstitutionInput(institution), isActive: !institution.isActive } });
+    upsert({ id: institution.id, input: { ...toInstitutionInput(institution), isActive: !institution.isActive }, logo: null });
   };
+
+  const editingInstitution = institutions.find(institution => institution.id === editingId);
 
   if (failedToLoad(institutionsQuery)) {
     return <ManageLoadError />;
@@ -164,7 +166,7 @@ export function InstitutionManagement() {
                   <div className="flex items-center gap-3 min-w-0">
                     <div
                       className="h-10 w-10 flex-shrink-0 bg-contain bg-center bg-no-repeat bg-gray-100 rounded"
-                      style={{ backgroundImage: institution.logo ? `url(${institution.logo})` : undefined }}
+                      style={{ backgroundImage: institution.logoUpdatedAt ? `url(${institutionsApi.logoUrl(institution)})` : undefined }}
                     />
                     <p className="font-semibold m-0 truncate">{siteLangText(institution.name, i18n.language, institution.slug)}</p>
                   </div>
@@ -188,6 +190,7 @@ export function InstitutionManagement() {
                 key={editingId ?? 'new'}
                 draft={draft}
                 setDraft={setDraft}
+                currentLogoUrl={editingInstitution ? institutionsApi.logoUrl(editingInstitution) : null}
                 selectedLang={selectedLang}
                 onSelectLang={setSelectedLang}
                 saving={saving}

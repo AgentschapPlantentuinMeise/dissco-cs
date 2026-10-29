@@ -3,6 +3,7 @@ import { shuffle } from 'lodash-es';
 import { useTranslation } from 'react-i18next';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { institutionQueries } from '../../api/queries/institutions';
+import { institutionsApi } from '../../api/cs-client/institutions';
 import { statsQueries } from '../../api/queries/stats';
 import { CsPage } from '../../components/layout/CsPage';
 import { PageLoadError } from '../../components/layout/PageLoadError';
@@ -34,7 +35,7 @@ export function Institutions() {
       shuffle(data ?? []).map(institution => ({
         href: `/institutions/${institution.slug}`,
         label: siteLangText(institution.name, i18n.language, institution.slug),
-        image: institution.logo ?? undefined,
+        image: institutionsApi.logoUrl(institution) ?? undefined,
       })),
     [data, i18n.language]
   );

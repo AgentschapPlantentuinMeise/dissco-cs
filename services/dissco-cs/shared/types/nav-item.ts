@@ -28,9 +28,11 @@ export const setNavItemActiveSchema = z.object({ isActive: z.boolean() });
 export const setShowContactFormSchema = z.object({ showContactForm: z.boolean() });
 // About two lines in the header.
 export const MAX_NAV_ITEM_INTRO_LENGTH = 200;
+// The navigation list, with every page's text, loads on every page for every visitor.
+export const MAX_NAV_ITEM_CONTENT_LENGTH = 50_000;
 
 export const setNavItemContentSchema = z.object({
   lang: sitePageLangSchema,
-  contentMd: z.string(),
+  contentMd: z.string().max(MAX_NAV_ITEM_CONTENT_LENGTH),
   intro: z.string().trim().max(MAX_NAV_ITEM_INTRO_LENGTH),
 });

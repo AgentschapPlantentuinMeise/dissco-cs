@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { InstitutionDto, InstitutionStatsDto } from '@dissco-cs/shared-types';
 import { statsQueries } from '../../api/queries/stats';
+import { institutionsApi } from '../../api/cs-client/institutions';
 import { siteLangText } from '../../utility/site-lang-text';
 import { formatNumber } from '../../utility/format-number';
 import { useReturnState } from '../../hooks/use-return-link';
@@ -26,6 +27,7 @@ export function InstitutionCard({ institution, footer }: InstitutionCardProps) {
   const { data: stats } = useQuery({ ...statsQueries.institution(institution.slug), refetchOnWindowFocus: false });
   const name = siteLangText(institution.name, i18n.language, institution.slug);
   const returnState = useReturnState();
+  const logoUrl = institutionsApi.logoUrl(institution);
 
   return (
     <Link
@@ -34,10 +36,10 @@ export function InstitutionCard({ institution, footer }: InstitutionCardProps) {
       className="flex flex-col bg-white rounded-md overflow-hidden h-full no-underline text-inherit transition-transform duration-200 hover:-translate-y-1"
     >
       <div className="h-[120px] grid place-items-center px-6 border-b border-gray-100">
-        {institution.logo && (
+        {logoUrl && (
           <div
             className="w-[60%] h-16 bg-contain bg-center bg-no-repeat"
-            style={{ backgroundImage: `url(${institution.logo})` }}
+            style={{ backgroundImage: `url(${logoUrl})` }}
           />
         )}
       </div>

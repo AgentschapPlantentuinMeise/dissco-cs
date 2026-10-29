@@ -8,6 +8,7 @@ import { PageHeader } from '../../components/layout/PageHeader';
 import { PageBody } from '../../components/layout/PageBody';
 import { TermsModal } from '../../components/auth/TermsModal';
 import { HrefLink } from '../../utility/href-link';
+import { MAX_EMAIL_LENGTH, MAX_USER_NAME_LENGTH } from '@dissco-cs/shared-types';
 import { register } from '../../api/madoc-auth/auth';
 import { authQueries } from '../../api/queries/auth';
 import { failedToLoad } from '../../api/query-state';
@@ -139,6 +140,7 @@ export function Register() {
               required
               value={name}
               onChange={e => setName(e.target.value)}
+              maxLength={MAX_USER_NAME_LENGTH}
               className={inputClass}
             />
           </label>
@@ -150,6 +152,7 @@ export function Register() {
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
+              maxLength={MAX_EMAIL_LENGTH}
               className={inputClass}
             />
           </label>

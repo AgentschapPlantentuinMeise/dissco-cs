@@ -55,7 +55,7 @@ export class DisscoCSDatabase {
     this.navItems = new NavItemsRepository(this.pool, this.schemaRef);
     this.manuals = new ManualsRepository(this.pool, this.schemaRef, this.files);
     this.announcements = new AnnouncementsRepository(this.pool, this.schemaRef);
-    this.institutions = new InstitutionsRepository(this.pool, this.schemaRef);
+    this.institutions = new InstitutionsRepository(this.pool, this.schemaRef, this.files);
     this.feedback = new FeedbackRepository(this.pool, this.schemaRef);
     this.appLog = new AppLogRepository(this.pool, this.schemaRef);
     this.siteTheme = new SiteThemeRepository(this.pool, this.schemaRef);

@@ -9,6 +9,7 @@ import { PageSection } from '../../components/layout/PageSection';
 import { useNavItems } from '../../hooks/use-nav-items';
 import { contactApi } from '../../api/cs-client/contact';
 import { inputClass } from '../../components/ui/input-styles';
+import { MAX_CONTACT_MESSAGE_LENGTH, MAX_CONTACT_NAME_LENGTH, MAX_EMAIL_LENGTH } from '@dissco-cs/shared-types';
 import { SavedNotice } from '../../components/ui/SavedNotice';
 
 export function Contact() {
@@ -69,6 +70,7 @@ export function Contact() {
                 required
                 value={name}
                 onChange={e => setName(e.target.value)}
+                maxLength={MAX_CONTACT_NAME_LENGTH}
                 className={inputClass}
               />
             </label>
@@ -80,6 +82,7 @@ export function Contact() {
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
+                maxLength={MAX_EMAIL_LENGTH}
                 className={inputClass}
               />
             </label>
@@ -90,6 +93,7 @@ export function Contact() {
                 required
                 value={message}
                 onChange={e => setMessage(e.target.value)}
+                maxLength={MAX_CONTACT_MESSAGE_LENGTH}
                 className={`${inputClass} min-h-[160px]`}
               />
             </label>

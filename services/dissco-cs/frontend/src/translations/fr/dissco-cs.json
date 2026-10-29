@@ -143,7 +143,7 @@
   "sm_site_images_none": "Pas d'image",
   "sm_site_images_choose": "Choisir",
   "sm_site_images_replace": "Remplacer",
-  "sm_site_images_invalid_file": "Choisissez un jpg, png ou webp de 3 Mo au maximum.",
+  "common_invalid_image_file": "Choisissez un jpg, png ou webp de 3 Mo au maximum.",
   "sm_site_images_credit_label": "Crédit photo",
   "sm_site_images_credit_placeholder": "Crédit photo, par exemple Marie Dupont",
   "sm_site_images_delete_title": "{{image}} : supprimer l'image ?",

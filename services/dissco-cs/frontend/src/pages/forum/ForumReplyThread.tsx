@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { ForumReplyDto } from '@dissco-cs/shared-types';
+import { ForumReplyDto, MAX_FORUM_BODY_LENGTH } from '@dissco-cs/shared-types';
 import { DeleteIconButton } from '../../components/ui/DeleteIconButton';
 import { formatDate } from '../../utility/format-date';
 import { inputClass } from '../../components/ui/input-styles';
@@ -47,6 +47,7 @@ export function ForumReplyThread({ replies, closed, canDeleteReply, onDeleteRepl
             className={inputClass}
             value={replyDraft}
             onChange={e => onReplyDraftChange(e.target.value)}
+            maxLength={MAX_FORUM_BODY_LENGTH}
             placeholder={t('forum_form_placeholder_reply')}
             rows={2}
             required

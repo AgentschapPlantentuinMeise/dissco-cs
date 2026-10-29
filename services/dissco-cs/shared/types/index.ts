@@ -18,4 +18,5 @@ export * from './madoc-iiif.js';
 export * from './madoc-auth.js';
 export * from './site-theme.js';
 export * from './site-image.js';
+export * from './image-upload.js';
 export * from './home-step.js';

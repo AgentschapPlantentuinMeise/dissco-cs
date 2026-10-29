@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
 import { inputClass } from '../ui/input-styles';
-import { ForumTopicInput } from '@dissco-cs/shared-types';
+import { ForumTopicInput, MAX_FORUM_BODY_LENGTH, MAX_FORUM_TASK_URL_LENGTH, MAX_FORUM_TITLE_LENGTH } from '@dissco-cs/shared-types';
 
 type ProjectOption = { slug: string; label: string };
 
@@ -62,6 +62,7 @@ export function ForumTopicForm({
           type="text"
           value={fields.title}
           onChange={e => setFields(p => ({ ...p, title: e.target.value }))}
+          maxLength={MAX_FORUM_TITLE_LENGTH}
           placeholder={t('forum_form_placeholder_title') || 'Korte omschrijving van je vraag'}
           required
         />
@@ -73,6 +74,7 @@ export function ForumTopicForm({
           type="url"
           value={fields.taskUrl ?? ''}
           onChange={e => setFields(p => ({ ...p, taskUrl: e.target.value }))}
+          maxLength={MAX_FORUM_TASK_URL_LENGTH}
           placeholder={'https://...'}
           readOnly={taskUrlReadOnly}
         />
@@ -108,6 +110,7 @@ export function ForumTopicForm({
           className={inputClass}
           value={fields.body}
           onChange={e => setFields(p => ({ ...p, body: e.target.value }))}
+          maxLength={MAX_FORUM_BODY_LENGTH}
           placeholder={t('forum_form_placeholder_body') || 'Beschrijf je vraag...'}
           rows={4}
           required

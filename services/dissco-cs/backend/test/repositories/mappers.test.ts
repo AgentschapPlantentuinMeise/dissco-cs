@@ -31,10 +31,11 @@ describe('DTO mappers', () => {
   it('toInstitutionDto', () => {
     const dto = toInstitutionDto({
       id: 1, site_id: 3, slug: 'meise', name: { nl: 'Meise' }, description: {}, email: null, phone: null,
-      website: null, logo: null, is_active: false, sort_order: 2, created_at: created, updated_at: later,
+      website: null, logo_mime_type: null, logo_updated_at: null, is_active: false, sort_order: 2,
+      created_at: created, updated_at: later,
     });
     expect(Object.keys(dto).sort()).toEqual(
-      ['description', 'email', 'id', 'isActive', 'logo', 'name', 'phone', 'slug', 'sortOrder', 'website']
+      ['description', 'email', 'id', 'isActive', 'logoUpdatedAt', 'name', 'phone', 'slug', 'sortOrder', 'website']
     );
     expect(dto).toMatchObject({ isActive: false, sortOrder: 2 });
   });

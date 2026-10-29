@@ -17,7 +17,15 @@ import { useSavedFlash } from '../../../hooks/use-saved-flash';
 import { IconButton } from '../../../components/ui/IconButton';
 import { navItemsApi } from '../../../api/cs-client/nav-items';
 import { navItemKeys, navItemQueries } from '../../../api/queries/nav-items';
-import { MAX_NAV_ITEM_INTRO_LENGTH, setContactEmailSchema, NavItemDto, NavItemKey, SitePageLang } from '@dissco-cs/shared-types';
+import {
+  MAX_EMAIL_LENGTH,
+  MAX_NAV_ITEM_CONTENT_LENGTH,
+  MAX_NAV_ITEM_INTRO_LENGTH,
+  setContactEmailSchema,
+  NavItemDto,
+  NavItemKey,
+  SitePageLang,
+} from '@dissco-cs/shared-types';
 import { LANGUAGES, defaultLang } from '../../../utility/site-lang-text';
 import { LanguageTabs } from '../../../components/ui/LanguageTabs';
 import { useNavItems } from '../../../hooks/use-nav-items';
@@ -210,6 +218,7 @@ export function PageManagement() {
                 onChange={e => {
                   setDraftContent(prev => ({ ...prev, [selectedLang]: e.target.value }));
                 }}
+                maxLength={MAX_NAV_ITEM_CONTENT_LENGTH}
                 placeholder={t('sm_pages_content_placeholder')}
                 className={`${inputClass} w-full min-h-[260px] rounded-t-none font-mono`}
               />
@@ -240,6 +249,7 @@ export function PageManagement() {
                         onChange={e => {
                           setDraftContactEmail(e.target.value);
                         }}
+                        maxLength={MAX_EMAIL_LENGTH}
                         placeholder={t('sm_pages_contact_email_placeholder')}
                         className={`${inputClass} max-w-sm`}
                       />

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_PROJECT_SLUG_LENGTH } from './common.js';
 
 export type ForumTopicDto = {
   id: number;
@@ -25,19 +26,30 @@ export type ForumReplyDto = {
   createdAt: string;
 };
 
-const optionalTrimmedString = z
-  .string()
-  .nullable()
-  .optional()
-  .transform(v => (v && v.trim().length > 0 ? v.trim() : null));
+export const MAX_FORUM_TITLE_LENGTH = 200;
+// The annotation page's own URL (project slug, manifest and canvas ids, a query string).
+export const MAX_FORUM_TASK_URL_LENGTH = 500;
+export const MAX_FORUM_PROJECT_LABEL_LENGTH = 200;
+export const MAX_FORUM_BODY_LENGTH = 10_000;
+
+const optionalTrimmedString = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .nullable()
+    .optional()
+    .transform(v => v || null);
+
+const forumBodySchema = z.string().trim().min(1, 'Body is required').max(MAX_FORUM_BODY_LENGTH);
 
 export const forumTopicInputSchema = z.object({
-  title: z.string().trim().min(1, 'Title is required'),
-  taskUrl: optionalTrimmedString,
-  projectSlug: optionalTrimmedString,
-  projectLabel: optionalTrimmedString,
-  body: z.string().trim().min(1, 'Body is required'),
+  title: z.string().trim().min(1, 'Title is required').max(MAX_FORUM_TITLE_LENGTH),
+  taskUrl: optionalTrimmedString(MAX_FORUM_TASK_URL_LENGTH),
+  projectSlug: optionalTrimmedString(MAX_PROJECT_SLUG_LENGTH),
+  projectLabel: optionalTrimmedString(MAX_FORUM_PROJECT_LABEL_LENGTH),
+  body: forumBodySchema,
 });
 export type ForumTopicInput = z.infer<typeof forumTopicInputSchema>;
 
-export const forumReplyInputSchema = z.object({ body: z.string().trim().min(1, 'Body is required') });
+export const forumReplyInputSchema = z.object({ body: forumBodySchema });

@@ -1,36 +1,56 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SaveButton } from '../../../components/ui/SaveButton';
 import { CancelButton } from '../../../components/ui/CancelButton';
 import { buttonClass } from '../../../components/ui/Button';
 import { ActiveToggleField } from '../../../components/ui/ActiveToggleField';
 import { LanguageTabs } from '../../../components/ui/LanguageTabs';
-import { InstitutionInput, SitePageLang, institutionInputSchema } from '@dissco-cs/shared-types';
+import {
+  IMAGE_UPLOAD_MIME_TYPES,
+  InstitutionInput,
+  MAX_EMAIL_LENGTH,
+  MAX_INSTITUTION_DESCRIPTION_LENGTH,
+  MAX_INSTITUTION_NAME_LENGTH,
+  MAX_INSTITUTION_PHONE_LENGTH,
+  MAX_INSTITUTION_WEBSITE_LENGTH,
+  SitePageLang,
+  imageFileSchema,
+  institutionInputSchema,
+} from '@dissco-cs/shared-types';
 import { inputClass } from '../../../components/ui/input-styles';
 
-function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 // The side form of the institutions page: one institution, created or edited. The page gives it a
-// new key per item, so the picked logo name starts empty for each one.
-export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, saving, onSave, onCancel }: {
+// new key per item, so the picked logo starts empty for each one.
+export function InstitutionForm({
+  draft,
+  setDraft,
+  currentLogoUrl,
+  selectedLang,
+  onSelectLang,
+  saving,
+  onSave,
+  onCancel,
+}: {
   draft: InstitutionInput;
   setDraft: React.Dispatch<React.SetStateAction<InstitutionInput>>;
+  // The stored logo of the institution being edited; null for a new one or one without a logo.
+  currentLogoUrl: string | null;
   selectedLang: SitePageLang;
   onSelectLang: (lang: SitePageLang) => void;
   saving: boolean;
-  onSave: (input: InstitutionInput) => void;
+  onSave: (input: InstitutionInput, logo: File | null) => void;
   onCancel: () => void;
 }) {
   const { t } = useTranslation('dissco-cs');
-  // Name of a logo picked in this form session; not part of the saved institution.
-  const [logoFileName, setLogoFileName] = useState<string | null>(null);
+  // A logo picked in this form session, sent along on save.
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [invalidLogo, setInvalidLogo] = useState(false);
+
+  const logoPreview = useMemo(() => (logoFile ? URL.createObjectURL(logoFile) : null), [logoFile]);
+  useEffect(() => () => {
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+  }, [logoPreview]);
+  const shownLogo = logoPreview ?? currentLogoUrl;
 
   const validation = institutionInputSchema.safeParse(draft);
   const issues = validation.success ? [] : validation.error.issues;
@@ -39,18 +59,18 @@ export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, s
 
   const emailValid = !issueAt('email');
   const phoneValid = !issueAt('phone');
-  const canSave = validation.success;
+  const canSave = validation.success && shownLogo !== null;
 
   const save = () => {
-    if (validation.success) onSave(validation.data);
+    if (validation.success) onSave(validation.data, logoFile);
   };
 
-  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const dataUrl = await fileToDataUrl(file);
-    setDraft(prev => ({ ...prev, logo: dataUrl }));
-    setLogoFileName(file.name);
+    const valid = imageFileSchema.safeParse(file).success;
+    setInvalidLogo(!valid);
+    if (valid) setLogoFile(file);
   };
 
   return (
@@ -68,6 +88,7 @@ export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, s
           type="text"
           value={draft.name[selectedLang]}
           onChange={e => setDraft(prev => ({ ...prev, name: { ...prev.name, [selectedLang]: e.target.value } }))}
+          maxLength={MAX_INSTITUTION_NAME_LENGTH}
           className={inputClass}
         />
       </label>
@@ -79,6 +100,7 @@ export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, s
           onChange={e =>
             setDraft(prev => ({ ...prev, description: { ...prev.description, [selectedLang]: e.target.value } }))
           }
+          maxLength={MAX_INSTITUTION_DESCRIPTION_LENGTH}
           className={`${inputClass} min-h-[90px]`}
         />
       </label>
@@ -90,6 +112,7 @@ export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, s
             type="email"
             value={draft.email}
             onChange={e => setDraft(prev => ({ ...prev, email: e.target.value }))}
+            maxLength={MAX_EMAIL_LENGTH}
             className={`border rounded-lg p-2 ${emailValid ? 'border-gray-300' : 'border-red-500'}`}
           />
           {!emailValid && <span className="text-xs text-red-600">{t('sm_institutions_invalid_email')}</span>}
@@ -101,6 +124,7 @@ export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, s
             type="text"
             value={draft.phone}
             onChange={e => setDraft(prev => ({ ...prev, phone: e.target.value }))}
+            maxLength={MAX_INSTITUTION_PHONE_LENGTH}
             className={`border rounded-lg p-2 ${phoneValid ? 'border-gray-300' : 'border-red-500'}`}
           />
           {!phoneValid && <span className="text-xs text-red-600">{t('sm_institutions_invalid_phone')}</span>}
@@ -113,6 +137,7 @@ export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, s
           type="text"
           value={draft.website}
           onChange={e => setDraft(prev => ({ ...prev, website: e.target.value }))}
+          maxLength={MAX_INSTITUTION_WEBSITE_LENGTH}
           className={inputClass}
         />
       </label>
@@ -121,18 +146,24 @@ export function InstitutionForm({ draft, setDraft, selectedLang, onSelectLang, s
         <div className="flex flex-col gap-1">
           <span className="text-sm font-medium text-gray-700">{t('sm_institutions_field_logo')}*</span>
           <div className="flex items-center gap-3">
-            {draft.logo && (
+            {shownLogo && (
               <div
                 className="h-12 w-12 flex-shrink-0 bg-contain bg-center bg-no-repeat bg-gray-100 rounded"
-                style={{ backgroundImage: `url(${draft.logo})` }}
+                style={{ backgroundImage: `url(${shownLogo})` }}
               />
             )}
             <label className={buttonClass({ variant: 'secondary', size: 'sm' })}>
               {t('sm_institutions_choose_file')}
-              <input type="file" accept="image/*" className="hidden" onChange={e => void handleLogoChange(e)} />
+              <input
+                type="file"
+                accept={IMAGE_UPLOAD_MIME_TYPES.join(',')}
+                className="hidden"
+                onChange={handleLogoChange}
+              />
             </label>
-            {logoFileName && <span className="text-sm text-gray-600 truncate">{logoFileName}</span>}
+            {logoFile && <span className="text-sm text-gray-600 truncate">{logoFile.name}</span>}
           </div>
+          {invalidLogo && <span className="text-xs text-red-600">{t('common_invalid_image_file')}</span>}
         </div>
 
         <ActiveToggleField

@@ -5,6 +5,7 @@ import { feedbackKeys, feedbackQueries } from '../../api/queries/feedback';
 import { feedbackApi } from '../../api/cs-client/feedback';
 import { Button } from '../../components/ui/Button';
 import { inputClass } from '../../components/ui/input-styles';
+import { MAX_FEEDBACK_BODY_LENGTH } from '@dissco-cs/shared-types';
 
 // An opened feedback thread: its messages and a reply box.
 export function FeedbackThreadDetail({ threadId }: { threadId: number }) {
@@ -54,6 +55,7 @@ export function FeedbackThreadDetail({ threadId }: { threadId: number }) {
         <textarea
           value={replyBody}
           onChange={e => setReplyBody(e.target.value)}
+          maxLength={MAX_FEEDBACK_BODY_LENGTH}
           rows={2}
           placeholder={t('dashboard_feedback_reply_placeholder')}
           className={`${inputClass} flex-1`}

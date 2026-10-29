@@ -27,12 +27,20 @@ export type FeedbackMessageDto = {
   createdAt: string;
 };
 
+export const MAX_FEEDBACK_SUBJECT_LENGTH = 200;
+export const MAX_FEEDBACK_BODY_LENGTH = 10_000;
+// The recipient's Madoc name. Madoc itself sets no limit, so this only stops a request that sends
+// something absurd; it is not a rule for names.
+export const MAX_FEEDBACK_RECIPIENT_NAME_LENGTH = 255;
+
+const feedbackBodySchema = z.string().trim().min(1).max(MAX_FEEDBACK_BODY_LENGTH);
+
 export const feedbackThreadInputSchema = z.object({
   recipientUserId: z.number().int(),
-  recipientName: z.string().trim().min(1),
-  subject: z.string().trim().min(1),
-  body: z.string().trim().min(1),
+  recipientName: z.string().trim().min(1).max(MAX_FEEDBACK_RECIPIENT_NAME_LENGTH),
+  subject: z.string().trim().min(1).max(MAX_FEEDBACK_SUBJECT_LENGTH),
+  body: feedbackBodySchema,
 });
 export type FeedbackThreadInput = z.infer<typeof feedbackThreadInputSchema>;
 
-export const feedbackReplyInputSchema = z.object({ body: z.string().trim().min(1) });
+export const feedbackReplyInputSchema = z.object({ body: feedbackBodySchema });
