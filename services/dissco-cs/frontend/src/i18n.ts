@@ -24,10 +24,10 @@ void i18n.use(initReactI18next).init({
     fr: { 'dissco-cs': fr },
     de: { 'dissco-cs': de },
   },
-  // platformName in a translation is the site's name (white-label software). The site's own name
-  // from site management is passed per call (useSiteName); this default only keeps a forgotten
-  // call from showing the raw {{platformName}}.
-  interpolation: { escapeValue: false, defaultVariables: { platformName: disscoCSConfig.platformName } },
+  // platformName in a translation is the site's name (white-label software). Madoc's site title is
+  // passed per call (useSiteName); this default only keeps a forgotten call from showing the raw
+  // {{platformName}}.
+  interpolation: { escapeValue: false, defaultVariables: { platformName: '' } },
 });
 
 export default i18n;

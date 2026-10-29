@@ -34,3 +34,23 @@ export async function getSiteIdBySlug(slug: string): Promise<number | null> {
   siteIdBySlugCache.set(slug, site.id);
   return site.id;
 }
+
+/**
+ * The site's title, as set when the site was created in Madoc or later in Madoc's site admin.
+ * Not cached, so a rename in Madoc shows on the next page load. Uses the service token.
+ * @param slug the site's slug, e.g. from the `slug` query parameter
+ * Returns: the title, or null when the slug is not safe or Madoc does not know it.
+ */
+export async function getSiteTitle(slug: string): Promise<string | null> {
+  if (!isSafeSegment(slug)) {
+    return null;
+  }
+
+  const response = await serviceFetch(madocPath`/s/${slug}/madoc/api/site`);
+  if (!response.ok) {
+    return null;
+  }
+
+  const site = (await response.json()) as { title?: unknown };
+  return typeof site.title === 'string' && site.title ? site.title : null;
+}

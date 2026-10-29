@@ -10,18 +10,8 @@ const LANGUAGE_NAMES: Record<SitePageLang, string> = {
 };
 
 export const disscoCSConfig = {
-  platformName: 'DiSSCo Flanders',
-  developer: 'Plantentuin Meise',
-  developerUrl: 'https://www.plantentuinmeise.be',
 
-  organisation: {
-    nl: 'Plantentuin Meise',
-    en: 'Meise Botanic Garden',
-    fr: 'Jardin botanique de Meise',
-    de: 'Botanischer Garten Meise',
-  },
 
-  logoUrl: new URL('./images/disscoflanders_logo.png', import.meta.url).href,
   // The logos at the bottom of the footer, on every site of this installation: the project that
   // built the platform, its funder and the open-source platform it is built on. labelKey: an
   // optional text before the logo.

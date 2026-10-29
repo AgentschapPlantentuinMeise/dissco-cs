@@ -42,17 +42,17 @@ describe('DTO mappers', () => {
   it('toSiteColors', () => {
     const colors = toSiteColors({
       site_id: 3, primary_color: '#111111', secondary_color: '#222222', accent_color: '#333333',
-      dark_color: '#444444', tertiary_color: '#555555', site_name: 'DoeDat', updated_at: later,
+      dark_color: '#444444', tertiary_color: '#555555', updated_at: later,
     });
     expect(colors).toEqual({
       primary: '#111111', secondary: '#222222', accent: '#333333', dark: '#444444', tertiary: '#555555',
     });
   });
 
-  it('toSiteColors is null for a site with only a name of its own', () => {
+  it('toSiteColors is null for a site without a palette of its own', () => {
     const colors = toSiteColors({
       site_id: 3, primary_color: null, secondary_color: null, accent_color: null,
-      dark_color: null, tertiary_color: null, site_name: 'DoeDat', updated_at: later,
+      dark_color: null, tertiary_color: null, updated_at: later,
     });
     expect(colors).toBeNull();
   });

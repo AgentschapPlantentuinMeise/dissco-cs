@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
-import { siteColorsSchema, siteNameSchema } from '@dissco-cs/shared-types';
+import { siteColorsSchema } from '@dissco-cs/shared-types';
 import { SiteThemeRepository, toSiteThemeDto } from '../repositories/site-theme.repository.js';
 import { requireSiteAdmin, requireSiteId } from '../auth/auth.js';
 import { validateJson } from '../infrastructure/validate-json.js';
+import { getSiteTitle } from '../madoc-client/site.js';
 
 export function siteThemeController(siteThemeRepository: SiteThemeRepository): Hono {
   const app = new Hono();
@@ -13,12 +14,15 @@ export function siteThemeController(siteThemeRepository: SiteThemeRepository): H
       return siteId;
     }
 
-    return c.json(toSiteThemeDto(await siteThemeRepository.get(siteId)));
+    // The name is Madoc's own site title: it is set and changed in Madoc's site admin, not here.
+    const slug = c.req.query('slug');
+    const [row, name] = await Promise.all([siteThemeRepository.get(siteId), slug ? getSiteTitle(slug) : null]);
+    return c.json(toSiteThemeDto(row, name));
   });
 
-  // The writes live under /colors and /name, not on / itself: the gateway lets /site-theme through
-  // without checking the JWT (anonymous visitors need the palette and the name), and
-  // requireSiteAdmin only reads the JWT's payload.
+  // The writes live under /colors, not on / itself: the gateway lets /site-theme through without
+  // checking the JWT (anonymous visitors need the palette and the name), and requireSiteAdmin only
+  // reads the JWT's payload.
   app.put('/colors', validateJson(siteColorsSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
@@ -36,17 +40,6 @@ export function siteThemeController(siteThemeRepository: SiteThemeRepository): H
     }
 
     await siteThemeRepository.clearColors(identity.siteId);
-    return c.body(null, 204);
-  });
-
-  app.put('/name', validateJson(siteNameSchema), async c => {
-    const identity = requireSiteAdmin(c);
-    if (identity instanceof Response) {
-      return identity;
-    }
-
-    const { name } = c.req.valid('json');
-    await siteThemeRepository.setName(identity.siteId, name || null);
     return c.body(null, 204);
   });
 

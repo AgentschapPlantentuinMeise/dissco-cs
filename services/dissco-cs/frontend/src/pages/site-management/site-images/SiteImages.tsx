@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SITE_IMAGE_MIME_TYPES, SiteImageDto, SiteImageKey, siteImageFileSchema } from '@dissco-cs/shared-types';
 import { siteImagesApi } from '../../../api/cs-client/site-images';
 import { siteImageKeys, siteImageQueries } from '../../../api/queries/site-images';
-import { siteThemeQueries } from '../../../api/queries/site-theme';
 import { Button } from '../../../components/ui/Button';
 import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
@@ -17,7 +16,6 @@ import { ManageLoadError } from '../ManageLoadError';
 import { failedToLoad } from '../../../api/query-state';
 import { rowHoverClass } from '../../../components/ui/list-styles';
 import { inputClass } from '../../../components/ui/input-styles';
-import { SiteNameRow } from './SiteNameRow';
 
 const LABEL_KEY: Record<SiteImageKey, string> = {
   logo: 'sm_site_images_logo',
@@ -28,17 +26,15 @@ const LABEL_KEY: Record<SiteImageKey, string> = {
 
 const HEADER_PHOTO_KEYS: SiteImageKey[] = ['home', 'institutions', 'about'];
 
-// The site's name, its logo (navbar and footer) and the photo in the header of Home, Institutions
-// and About: choose, replace or remove each image, and the credit of a photo.
+// The site's logo (navbar and footer) and the photo in the header of Home, Institutions and
+// About: choose, replace or remove each image, and the credit of a photo.
 export function SiteImages() {
   const { t } = useTranslation('dissco-cs');
   const imagesQuery = useQuery(siteImageQueries.list());
   const images = imagesQuery.data;
-  // The same query SiteNameRow reads: without it the name field would be empty.
-  const themeQuery = useQuery(siteThemeQueries.get());
   const imageFor = (key: SiteImageKey) => images?.find(image => image.key === key);
 
-  if (failedToLoad(imagesQuery) || failedToLoad(themeQuery)) {
+  if (failedToLoad(imagesQuery)) {
     return <ManageLoadError />;
   }
 
@@ -53,7 +49,6 @@ export function SiteImages() {
         />
 
       <ul className="list-none m-0 p-0 bg-white border-t border-gray-200 divide-y divide-gray-100">
-        <SiteNameRow />
         <SiteImageRow imageKey="logo" image={imageFor('logo')} hint={t('sm_site_images_logo_hint')} />
       </ul>
 

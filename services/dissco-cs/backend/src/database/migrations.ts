@@ -239,8 +239,7 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
       ON ${schemaRef}.feedback_messages (thread_id, created_at ASC)
     `);
 
-    // One row per site that set its own palette or name. NULL colors = the frontend's default
-    // colors; a NULL site_name = the platform's name from the frontend's config.
+    // One row per site that set its own palette. NULL colors = the frontend's default colors.
     await client.query(`
       CREATE TABLE IF NOT EXISTS ${schemaRef}.site_theme (
         site_id INTEGER PRIMARY KEY,
@@ -249,7 +248,6 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         accent_color TEXT,
         dark_color TEXT,
         tertiary_color TEXT,
-        site_name TEXT,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);

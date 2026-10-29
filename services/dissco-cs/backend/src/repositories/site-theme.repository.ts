@@ -8,7 +8,6 @@ export type SiteThemeRow = {
   accent_color: string | null;
   dark_color: string | null;
   tertiary_color: string | null;
-  site_name: string | null;
   updated_at: Date;
 };
 
@@ -44,7 +43,6 @@ export class SiteThemeRepository {
     );
   }
 
-  // The row stays: it may also hold the site's name.
   async clearColors(siteId: number): Promise<void> {
     await this.pool.query(
       `
@@ -57,23 +55,13 @@ export class SiteThemeRepository {
     );
   }
 
-  // null removes the site's own name.
-  async setName(siteId: number, name: string | null): Promise<void> {
-    await this.pool.query(
-      `
-      INSERT INTO ${this.table} (site_id, site_name) VALUES ($1, $2)
-      ON CONFLICT (site_id) DO UPDATE SET site_name = EXCLUDED.site_name, updated_at = NOW()
-    `,
-      [siteId, name]
-    );
-  }
 }
 
 // ---- DTO mapping ----
 
-// null: the site has no row yet (no palette and no name of its own).
-export function toSiteThemeDto(row: SiteThemeRow | null): SiteThemeDto {
-  return { colors: row ? toSiteColors(row) : null, name: row?.site_name ?? null };
+// row null: the site has no palette of its own. name: Madoc's site title (getSiteTitle).
+export function toSiteThemeDto(row: SiteThemeRow | null, name: string | null): SiteThemeDto {
+  return { colors: row ? toSiteColors(row) : null, name };
 }
 
 // null while the site has no palette of its own (the colors are set and cleared together).
