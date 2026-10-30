@@ -12,6 +12,9 @@ export type AnnouncementRow = {
   start_date: Date | null;
   end_date: Date | null;
   created_at: Date;
+  created_by: number;
+  updated_at: Date;
+  updated_by: number;
 };
 
 export class AnnouncementsRepository {
@@ -26,7 +29,7 @@ export class AnnouncementsRepository {
 
   async listAnnouncements(siteId: number): Promise<AnnouncementRow[]> {
     const result = await this.pool.query<AnnouncementRow>(
-      `SELECT * FROM ${this.table('announcements')} WHERE site_id = $1 ORDER BY created_at DESC`,
+      `SELECT * FROM ${this.table('announcements')} WHERE site_id = $1 ORDER BY updated_at DESC`,
       [siteId]
     );
 
@@ -47,7 +50,7 @@ export class AnnouncementsRepository {
         AND (target_project_slug = $3 OR ($3 IS NULL AND target_project_slug IS NULL))
         AND (start_date IS NULL OR start_date <= NOW())
         AND (end_date IS NULL OR end_date >= NOW())
-      ORDER BY created_at DESC
+      ORDER BY updated_at DESC
     `,
       [siteId, targetType, targetProjectSlug]
     );
@@ -57,6 +60,7 @@ export class AnnouncementsRepository {
 
   async createAnnouncement(input: {
     siteId: number;
+    userId: number;
     title: Partial<Record<SitePageLang, string>>;
     description: Partial<Record<SitePageLang, string>>;
     targetType: AnnouncementTargetType;
@@ -68,8 +72,9 @@ export class AnnouncementsRepository {
     const result = await this.pool.query<AnnouncementRow>(
       `
       INSERT INTO ${this.table('announcements')} (
-        site_id, title, description, target_type, target_project_slug, is_active, start_date, end_date
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        site_id, title, description, target_type, target_project_slug, is_active, start_date, end_date,
+        created_by, updated_by
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)
       RETURNING *
     `,
       [
@@ -81,6 +86,7 @@ export class AnnouncementsRepository {
         input.isActive,
         input.startDate,
         input.endDate,
+        input.userId,
       ]
     );
 
@@ -89,6 +95,7 @@ export class AnnouncementsRepository {
 
   async updateAnnouncement(
     siteId: number,
+    userId: number,
     id: number,
     input: {
       title: Partial<Record<SitePageLang, string>>;
@@ -104,7 +111,7 @@ export class AnnouncementsRepository {
       `
       UPDATE ${this.table('announcements')}
       SET title = $3, description = $4, target_type = $5, target_project_slug = $6,
-          is_active = $7, start_date = $8, end_date = $9, created_at = NOW()
+          is_active = $7, start_date = $8, end_date = $9, updated_at = NOW(), updated_by = $10
       WHERE id = $1 AND site_id = $2
       RETURNING *
     `,
@@ -118,6 +125,7 @@ export class AnnouncementsRepository {
         input.isActive,
         input.startDate,
         input.endDate,
+        userId,
       ]
     );
 

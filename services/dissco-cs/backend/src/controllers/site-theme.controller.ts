@@ -29,7 +29,7 @@ export function siteThemeController(siteThemeRepository: SiteThemeRepository): H
       return identity;
     }
 
-    await siteThemeRepository.upsertColors(identity.siteId, c.req.valid('json'));
+    await siteThemeRepository.upsertColors(identity.siteId, identity.userId, c.req.valid('json'));
     return c.body(null, 204);
   });
 
@@ -39,7 +39,7 @@ export function siteThemeController(siteThemeRepository: SiteThemeRepository): H
       return identity;
     }
 
-    await siteThemeRepository.clearColors(identity.siteId);
+    await siteThemeRepository.clearColors(identity.siteId, identity.userId);
     return c.body(null, 204);
   });
 

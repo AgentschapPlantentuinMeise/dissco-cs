@@ -20,7 +20,9 @@ export type InstitutionRow = {
   is_active: boolean;
   sort_order: number;
   created_at: Date;
+  created_by: number;
   updated_at: Date;
+  updated_by: number;
 };
 
 export class InstitutionsRepository {
@@ -113,15 +115,16 @@ export class InstitutionsRepository {
     return result.rows.map(row => row.project_slug);
   }
 
-  async createInstitution(siteId: number, input: InstitutionInput, logo: InstitutionLogo): Promise<InstitutionRow> {
+  async createInstitution(siteId: number, userId: number, input: InstitutionInput, logo: InstitutionLogo): Promise<InstitutionRow> {
     const slug = await this.uniqueInstitutionSlug(siteId, firstFilledLang(input.name) ?? '', null);
 
     return this.saveWithLogo(logo, async () => {
       const result = await this.pool.query<InstitutionRow>(
         `
         INSERT INTO ${this.table('institutions')} (
-          site_id, slug, name, description, email, phone, website, logo_mime_type, logo_updated_at, is_active
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9)
+          site_id, slug, name, description, email, phone, website, logo_mime_type, logo_updated_at, is_active,
+          created_by, updated_by
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $10)
         RETURNING *
       `,
         [
@@ -134,6 +137,7 @@ export class InstitutionsRepository {
           input.website,
           logo.mimeType,
           input.isActive,
+          userId,
         ]
       );
       return result.rows[0];
@@ -143,6 +147,7 @@ export class InstitutionsRepository {
   // logo null keeps the stored logo.
   async updateInstitution(
     siteId: number,
+    userId: number,
     id: number,
     input: InstitutionInput,
     logo: InstitutionLogo | null
@@ -165,7 +170,7 @@ export class InstitutionsRepository {
         SET slug = $3, name = $4, description = $5, email = $6, phone = $7, website = $8,
             logo_mime_type = COALESCE($9, logo_mime_type),
             logo_updated_at = CASE WHEN $9::text IS NULL THEN logo_updated_at ELSE NOW() END,
-            is_active = $10, updated_at = NOW()
+            is_active = $10, updated_at = NOW(), updated_by = $11
         WHERE id = $1 AND site_id = $2
         RETURNING *
       `,
@@ -180,6 +185,7 @@ export class InstitutionsRepository {
           input.website,
           logo?.mimeType ?? null,
           input.isActive,
+          userId,
         ]
       );
       return result.rows[0] ?? null;
@@ -219,7 +225,7 @@ export class InstitutionsRepository {
     return links;
   }
 
-  async setProjectLink(siteId: number, projectSlug: string, institutionId: number | null): Promise<void> {
+  async setProjectLink(siteId: number, userId: number, projectSlug: string, institutionId: number | null): Promise<void> {
     if (institutionId === null) {
       await this.pool.query(
         `DELETE FROM ${this.table('project_institution_links')} WHERE site_id = $1 AND project_slug = $2`,
@@ -230,11 +236,12 @@ export class InstitutionsRepository {
 
     await this.pool.query(
       `
-      INSERT INTO ${this.table('project_institution_links')} (site_id, project_slug, institution_id)
-      VALUES ($1, $2, $3)
-      ON CONFLICT (site_id, project_slug) DO UPDATE SET institution_id = EXCLUDED.institution_id
+      INSERT INTO ${this.table('project_institution_links')} (site_id, project_slug, institution_id, updated_by)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (site_id, project_slug) DO UPDATE
+      SET institution_id = EXCLUDED.institution_id, updated_at = NOW(), updated_by = EXCLUDED.updated_by
     `,
-      [siteId, projectSlug, institutionId]
+      [siteId, projectSlug, institutionId, userId]
     );
   }
 

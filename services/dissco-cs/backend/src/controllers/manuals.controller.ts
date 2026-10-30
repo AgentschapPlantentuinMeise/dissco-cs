@@ -35,6 +35,7 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
   async function save(
     c: Context,
     siteId: number,
+    userId: number,
     manualId: number | null,
     stored: SitePageLang[],
     { data, files }: MultipartBody<ManualSave>
@@ -55,7 +56,7 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
       return c.json({ error: plan.error }, 400);
     }
 
-    return manualsRepository.saveManual(siteId, manualId, { title: data.title, content: data.content }, uploads, plan.remove);
+    return manualsRepository.saveManual(siteId, userId, manualId, { title: data.title, content: data.content }, uploads, plan.remove);
   }
 
   app.get('/', async c => {
@@ -74,7 +75,7 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
       return identity;
     }
 
-    const saved = await save(c, identity.siteId, null, [], c.req.valid('form'));
+    const saved = await save(c, identity.siteId, identity.userId, null, [], c.req.valid('form'));
     if (saved instanceof Response) {
       return saved;
     }
@@ -104,7 +105,7 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
       }
 
       const stored = (await manualsRepository.listAttachmentMeta(manualId)).map(meta => meta.lang);
-      const saved = await save(c, identity.siteId, manualId, stored, c.req.valid('form'));
+      const saved = await save(c, identity.siteId, identity.userId, manualId, stored, c.req.valid('form'));
       if (saved instanceof Response) {
         return saved;
       }

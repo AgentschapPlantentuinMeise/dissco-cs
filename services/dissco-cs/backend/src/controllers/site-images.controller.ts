@@ -50,7 +50,7 @@ export function siteImagesController(siteImagesRepository: SiteImagesRepository)
       return upload;
     }
 
-    await siteImagesRepository.upsertFile(identity.siteId, c.req.valid('param').key, upload);
+    await siteImagesRepository.upsertFile(identity.siteId, identity.userId, c.req.valid('param').key, upload);
     return c.body(null, 204);
   });
 
@@ -60,7 +60,7 @@ export function siteImagesController(siteImagesRepository: SiteImagesRepository)
       return identity;
     }
 
-    const updated = await siteImagesRepository.setCredit(identity.siteId, c.req.valid('param').key, c.req.valid('json').credit);
+    const updated = await siteImagesRepository.setCredit(identity.siteId, identity.userId, c.req.valid('param').key, c.req.valid('json').credit);
     if (!updated) {
       return c.notFound();
     }

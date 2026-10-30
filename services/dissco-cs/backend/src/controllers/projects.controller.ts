@@ -19,7 +19,7 @@ import { getMadocProjectTasks, getMadocTasksBySubjectAndType, resyncManifestTask
 import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
 import { validateJson } from '../infrastructure/validate-json.js';
 import { sendFile } from '../infrastructure/file-http.js';
-import { safeSegment, siteLang, validateParams } from '../infrastructure/validate-params.js';
+import { projectSlug, safeSegment, siteLang, validateParams } from '../infrastructure/validate-params.js';
 import { computeProjectProgress, computeTaskDebug } from './projects.logic.js';
 import {
   MadocProjectListPageDto,
@@ -303,7 +303,7 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     return sendFile(c, file.buffer, file.mimeType);
   });
 
-  app.put('/:projectId/manual-link', validateParams({ projectId: safeSegment }), validateJson(setManualLinkSchema), async c => {
+  app.put('/:projectId/manual-link', validateParams({ projectId: projectSlug }), validateJson(setManualLinkSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
@@ -318,7 +318,7 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
       }
     }
 
-    await manualsRepository.setProjectLink(identity.siteId, c.req.valid('param').projectId, input.manualId);
+    await manualsRepository.setProjectLink(identity.siteId, identity.userId, c.req.valid('param').projectId, input.manualId);
     return c.body(null, 204);
   });
 
@@ -338,7 +338,7 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     return c.json(toInstitutionDto(institution));
   });
 
-  app.put('/:projectId/institution-link', validateParams({ projectId: safeSegment }), validateJson(setInstitutionLinkSchema), async c => {
+  app.put('/:projectId/institution-link', validateParams({ projectId: projectSlug }), validateJson(setInstitutionLinkSchema), async c => {
     const identity = requireSiteAdmin(c);
     if (identity instanceof Response) {
       return identity;
@@ -353,7 +353,7 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
       }
     }
 
-    await institutionsRepository.setProjectLink(identity.siteId, c.req.valid('param').projectId, input.institutionId);
+    await institutionsRepository.setProjectLink(identity.siteId, identity.userId, c.req.valid('param').projectId, input.institutionId);
     return c.body(null, 204);
   });
 

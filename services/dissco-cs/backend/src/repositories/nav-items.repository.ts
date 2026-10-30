@@ -11,6 +11,7 @@ export type NavItemRow = {
   show_contact_form: boolean;
   sort_order: number;
   updated_at: Date;
+  updated_by: number | null;
 };
 
 export class NavItemsRepository {
@@ -49,6 +50,7 @@ export class NavItemsRepository {
         show_contact_form: false,
         sort_order: defaultIndex,
         updated_at: new Date(),
+        updated_by: null,
       };
     });
 
@@ -60,20 +62,21 @@ export class NavItemsRepository {
     });
   }
 
-  async setNavItemActive(siteId: number, pageKey: NavItemKey, isActive: boolean): Promise<void> {
+  async setNavItemActive(siteId: number, userId: number, pageKey: NavItemKey, isActive: boolean): Promise<void> {
     await this.pool.query(
       `
-      INSERT INTO ${this.table('nav_items')} (site_id, page_key, is_active)
-      VALUES ($1, $2, $3)
+      INSERT INTO ${this.table('nav_items')} (site_id, page_key, is_active, updated_by)
+      VALUES ($1, $2, $3, $4)
       ON CONFLICT (site_id, page_key) DO UPDATE
-      SET is_active = EXCLUDED.is_active, updated_at = NOW()
+      SET is_active = EXCLUDED.is_active, updated_at = NOW(), updated_by = EXCLUDED.updated_by
     `,
-      [siteId, pageKey, isActive]
+      [siteId, pageKey, isActive, userId]
     );
   }
 
   async upsertNavItemContent(
     siteId: number,
+    userId: number,
     pageKey: NavItemContentKey,
     lang: SitePageLang,
     contentMd: string,
@@ -81,38 +84,38 @@ export class NavItemsRepository {
   ): Promise<void> {
     await this.pool.query(
       `
-      INSERT INTO ${this.table('nav_items')} (site_id, page_key, content, intro)
-      VALUES ($1, $2, jsonb_build_object($3::text, $4::text), jsonb_build_object($3::text, $5::text))
+      INSERT INTO ${this.table('nav_items')} (site_id, page_key, content, intro, updated_by)
+      VALUES ($1, $2, jsonb_build_object($3::text, $4::text), jsonb_build_object($3::text, $5::text), $6)
       ON CONFLICT (site_id, page_key) DO UPDATE
       SET content = jsonb_set(${this.table('nav_items')}.content, ARRAY[$3::text], to_jsonb($4::text)),
           intro = jsonb_set(${this.table('nav_items')}.intro, ARRAY[$3::text], to_jsonb($5::text)),
-          updated_at = NOW()
+          updated_at = NOW(), updated_by = EXCLUDED.updated_by
     `,
-      [siteId, pageKey, lang, contentMd, intro]
+      [siteId, pageKey, lang, contentMd, intro, userId]
     );
   }
 
-  async setContactEmail(siteId: number, email: string): Promise<void> {
+  async setContactEmail(siteId: number, userId: number, email: string): Promise<void> {
     await this.pool.query(
       `
-      INSERT INTO ${this.table('nav_items')} (site_id, page_key, contact_email)
-      VALUES ($1, 'contact', $2)
+      INSERT INTO ${this.table('nav_items')} (site_id, page_key, contact_email, updated_by)
+      VALUES ($1, 'contact', $2, $3)
       ON CONFLICT (site_id, page_key) DO UPDATE
-      SET contact_email = EXCLUDED.contact_email, updated_at = NOW()
+      SET contact_email = EXCLUDED.contact_email, updated_at = NOW(), updated_by = EXCLUDED.updated_by
     `,
-      [siteId, email]
+      [siteId, email, userId]
     );
   }
 
-  async setShowContactForm(siteId: number, showForm: boolean): Promise<void> {
+  async setShowContactForm(siteId: number, userId: number, showForm: boolean): Promise<void> {
     await this.pool.query(
       `
-      INSERT INTO ${this.table('nav_items')} (site_id, page_key, show_contact_form)
-      VALUES ($1, 'contact', $2)
+      INSERT INTO ${this.table('nav_items')} (site_id, page_key, show_contact_form, updated_by)
+      VALUES ($1, 'contact', $2, $3)
       ON CONFLICT (site_id, page_key) DO UPDATE
-      SET show_contact_form = EXCLUDED.show_contact_form, updated_at = NOW()
+      SET show_contact_form = EXCLUDED.show_contact_form, updated_at = NOW(), updated_by = EXCLUDED.updated_by
     `,
-      [siteId, showForm]
+      [siteId, showForm, userId]
     );
   }
 

@@ -19,14 +19,14 @@ export class HomeStepsRepository {
     return result.rows[0]?.steps ?? [];
   }
 
-  async replace(siteId: number, steps: HomeStepJson[]): Promise<void> {
+  async replace(siteId: number, userId: number, steps: HomeStepJson[]): Promise<void> {
     await this.pool.query(
       `
-      INSERT INTO ${this.table} (site_id, steps)
-      VALUES ($1, $2::jsonb)
-      ON CONFLICT (site_id) DO UPDATE SET steps = EXCLUDED.steps, updated_at = NOW()
+      INSERT INTO ${this.table} (site_id, steps, updated_by)
+      VALUES ($1, $2::jsonb, $3)
+      ON CONFLICT (site_id) DO UPDATE SET steps = EXCLUDED.steps, updated_at = NOW(), updated_by = EXCLUDED.updated_by
     `,
-      [siteId, JSON.stringify(steps)]
+      [siteId, JSON.stringify(steps), userId]
     );
   }
 }

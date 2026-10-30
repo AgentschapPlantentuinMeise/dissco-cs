@@ -117,7 +117,7 @@ export function institutionsController(institutionsRepository: InstitutionsRepos
       return c.json({ error: 'Logo is required' }, 400);
     }
 
-    const institution = await institutionsRepository.createInstitution(identity.siteId, data, logo);
+    const institution = await institutionsRepository.createInstitution(identity.siteId, identity.userId, data, logo);
     return c.json(toInstitutionDto(institution), 201);
   });
 
@@ -148,7 +148,7 @@ export function institutionsController(institutionsRepository: InstitutionsRepos
         return c.json({ error: 'Logo is required' }, 400);
       }
 
-      const institution = await institutionsRepository.updateInstitution(identity.siteId, id, data, logo);
+      const institution = await institutionsRepository.updateInstitution(identity.siteId, identity.userId, id, data, logo);
       if (!institution) {
         return c.notFound();
       }

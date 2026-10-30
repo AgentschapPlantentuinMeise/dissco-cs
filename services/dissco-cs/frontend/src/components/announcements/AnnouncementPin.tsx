@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
-import { LuMegaphone } from 'react-icons/lu';
+import { VscMegaphone } from 'react-icons/vsc';
 import { useAnnouncements } from './use-announcements';
 import { AnnouncementText } from './AnnouncementText';
 
@@ -24,7 +24,7 @@ export function AnnouncementPin() {
           unseenCount > 0 ? 'bg-amber-50 text-amber-700' : 'bg-transparent text-gray-500 hover:text-cs-primary'
         }`}
       >
-        <LuMegaphone aria-hidden="true" />
+        <VscMegaphone aria-hidden="true" />
         {unseenCount > 0 && (
           <span className="absolute top-[3px] right-[3px] w-2.5 h-2.5 rounded-full bg-amber-500 border-2 border-amber-50 box-content" />
         )}

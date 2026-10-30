@@ -26,7 +26,7 @@ export function homeStepsController(homeStepsRepository: HomeStepsRepository): H
       return identity;
     }
 
-    await homeStepsRepository.replace(identity.siteId, c.req.valid('json').steps);
+    await homeStepsRepository.replace(identity.siteId, identity.userId, c.req.valid('json').steps);
     return c.body(null, 204);
   });
 

@@ -44,7 +44,7 @@ export function navItemsController(navItemsRepository: NavItemsRepository): Hono
 
     const input = c.req.valid('json');
 
-    await navItemsRepository.setContactEmail(identity.siteId, input.email);
+    await navItemsRepository.setContactEmail(identity.siteId, identity.userId, input.email);
     return c.body(null, 204);
   });
 
@@ -56,7 +56,7 @@ export function navItemsController(navItemsRepository: NavItemsRepository): Hono
 
     const input = c.req.valid('json');
 
-    await navItemsRepository.setShowContactForm(identity.siteId, input.showContactForm);
+    await navItemsRepository.setShowContactForm(identity.siteId, identity.userId, input.showContactForm);
     return c.body(null, 204);
   });
 
@@ -70,7 +70,7 @@ export function navItemsController(navItemsRepository: NavItemsRepository): Hono
 
     const input = c.req.valid('json');
 
-    await navItemsRepository.upsertNavItemContent(identity.siteId, pageKey, input.lang, input.contentMd, input.intro);
+    await navItemsRepository.upsertNavItemContent(identity.siteId, identity.userId, pageKey, input.lang, input.contentMd, input.intro);
     return c.body(null, 204);
   });
 
@@ -84,7 +84,7 @@ export function navItemsController(navItemsRepository: NavItemsRepository): Hono
 
     const input = c.req.valid('json');
 
-    await navItemsRepository.setNavItemActive(identity.siteId, pageKey, input.isActive);
+    await navItemsRepository.setNavItemActive(identity.siteId, identity.userId, pageKey, input.isActive);
     return c.body(null, 204);
   });
 

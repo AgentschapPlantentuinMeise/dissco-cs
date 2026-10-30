@@ -46,23 +46,24 @@ export class SiteImagesRepository {
 
   // Replacing the image keeps the credit: the admin changes it separately (setCredit). The file is
   // written before the row, so a failure in between never leaves a row without a file.
-  async upsertFile(siteId: number, key: SiteImageKey, file: SiteImageFile): Promise<void> {
+  async upsertFile(siteId: number, userId: number, key: SiteImageKey, file: SiteImageFile): Promise<void> {
     await this.files.write(this.fileKey(siteId, key), file.buffer);
     await this.pool.query(
       `
-      INSERT INTO ${this.table} (site_id, image_key, mime_type, file_size)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO ${this.table} (site_id, image_key, mime_type, file_size, updated_by)
+      VALUES ($1, $2, $3, $4, $5)
       ON CONFLICT (site_id, image_key) DO UPDATE
-      SET mime_type = EXCLUDED.mime_type, file_size = EXCLUDED.file_size, updated_at = NOW()
+      SET mime_type = EXCLUDED.mime_type, file_size = EXCLUDED.file_size, updated_at = NOW(),
+          updated_by = EXCLUDED.updated_by
     `,
-      [siteId, key, file.mimeType, file.buffer.length]
+      [siteId, key, file.mimeType, file.buffer.length, userId]
     );
   }
 
-  async setCredit(siteId: number, key: SiteImageKey, credit: string | null): Promise<boolean> {
+  async setCredit(siteId: number, userId: number, key: SiteImageKey, credit: string | null): Promise<boolean> {
     const result = await this.pool.query(
-      `UPDATE ${this.table} SET credit = $3, updated_at = NOW() WHERE site_id = $1 AND image_key = $2`,
-      [siteId, key, credit]
+      `UPDATE ${this.table} SET credit = $3, updated_at = NOW(), updated_by = $4 WHERE site_id = $1 AND image_key = $2`,
+      [siteId, key, credit, userId]
     );
     return (result.rowCount ?? 0) > 0;
   }

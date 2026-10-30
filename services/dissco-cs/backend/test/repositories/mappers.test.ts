@@ -21,6 +21,7 @@ describe('DTO mappers', () => {
     const dto = toAnnouncementDto({
       id: '7', site_id: 3, title: { nl: 'T' }, description: { nl: 'D' }, target_type: 'project',
       target_project_slug: 'p', is_active: true, start_date: created, end_date: null, created_at: created,
+      created_by: 10, updated_at: later, updated_by: 10,
     });
     expect(dto).toEqual({
       id: '7', title: { nl: 'T' }, description: { nl: 'D' }, targetType: 'project', targetProjectSlug: 'p',
@@ -32,7 +33,7 @@ describe('DTO mappers', () => {
     const dto = toInstitutionDto({
       id: 1, site_id: 3, slug: 'meise', name: { nl: 'Meise' }, description: {}, email: null, phone: null,
       website: null, logo_mime_type: null, logo_updated_at: null, is_active: false, sort_order: 2,
-      created_at: created, updated_at: later,
+      created_at: created, created_by: 10, updated_at: later, updated_by: 10,
     });
     expect(Object.keys(dto).sort()).toEqual(
       ['description', 'email', 'id', 'isActive', 'logoUpdatedAt', 'name', 'phone', 'slug', 'sortOrder', 'website']
@@ -43,7 +44,7 @@ describe('DTO mappers', () => {
   it('toSiteColors', () => {
     const colors = toSiteColors({
       site_id: 3, primary_color: '#111111', secondary_color: '#222222', accent_color: '#333333',
-      dark_color: '#444444', tertiary_color: '#555555', updated_at: later,
+      dark_color: '#444444', tertiary_color: '#555555', updated_at: later, updated_by: 10,
     });
     expect(colors).toEqual({
       primary: '#111111', secondary: '#222222', accent: '#333333', dark: '#444444', tertiary: '#555555',
@@ -53,7 +54,7 @@ describe('DTO mappers', () => {
   it('toSiteColors is null for a site without a palette of its own', () => {
     const colors = toSiteColors({
       site_id: 3, primary_color: null, secondary_color: null, accent_color: null,
-      dark_color: null, tertiary_color: null, updated_at: later,
+      dark_color: null, tertiary_color: null, updated_at: later, updated_by: 10,
     });
     expect(colors).toBeNull();
   });

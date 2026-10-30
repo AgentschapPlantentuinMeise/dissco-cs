@@ -1,12 +1,21 @@
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { HONOUR_BOARD_PERIODS, NAV_ITEM_CONTENT_KEYS, NAV_ITEM_KEYS, SITE_IMAGE_KEYS, SITE_PAGE_LANGS } from '@dissco-cs/shared-types';
+import {
+  HONOUR_BOARD_PERIODS,
+  MAX_PROJECT_SLUG_LENGTH,
+  NAV_ITEM_CONTENT_KEYS,
+  NAV_ITEM_KEYS,
+  SITE_IMAGE_KEYS,
+  SITE_PAGE_LANGS,
+} from '@dissco-cs/shared-types';
 
 import { isSafeSegment } from '../madoc-client/path-segment.js';
 
 // Building blocks for validateParams: an id or slug (no '/', '..', etc., so it is also safe in a
 // Madoc URL), a numeric id from our own database, and the fixed lists below.
 export const safeSegment = z.string().refine(isSafeSegment, 'not a safe path segment');
+// A project slug that we store: longer than its column allows would fail the insert with a 500.
+export const projectSlug = z.string().max(MAX_PROJECT_SLUG_LENGTH).refine(isSafeSegment, 'not a safe path segment');
 export const intId = z.coerce.number().int();
 // One of the site's content languages (nl/en/fr/de).
 export const siteLang = z.enum(SITE_PAGE_LANGS);

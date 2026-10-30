@@ -16,6 +16,8 @@ import {
 
 // Creates/updates our own tables. Idempotent (IF NOT EXISTS), runs at startup
 // when appConfig.migrate is on.
+// created_by/updated_by: the Madoc user id of the admin who created or last changed the row. Only a
+// trace for questions about a change (who to ask); no DTO exposes them.
 export async function runMigrations(pool: Pool, schemaRef: string): Promise<void> {
   const client = await pool.connect();
 
@@ -83,6 +85,7 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         show_contact_form BOOLEAN NOT NULL DEFAULT FALSE,
         intro JSONB NOT NULL DEFAULT '{}'::jsonb,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_by INTEGER NOT NULL,
         PRIMARY KEY (site_id, page_key)
       )
     `);
@@ -98,7 +101,10 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         is_active BOOLEAN NOT NULL DEFAULT TRUE,
         start_date TIMESTAMPTZ,
         end_date TIMESTAMPTZ,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        created_by INTEGER NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_by INTEGER NOT NULL
       )
     `);
 
@@ -122,7 +128,9 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         is_active BOOLEAN NOT NULL DEFAULT TRUE,
         sort_order INTEGER NOT NULL DEFAULT 0,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        created_by INTEGER NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_by INTEGER NOT NULL
       )
     `);
 
@@ -139,8 +147,10 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
     await client.query(`
       CREATE TABLE IF NOT EXISTS ${schemaRef}.project_institution_links (
         site_id INTEGER NOT NULL,
-        project_slug TEXT NOT NULL,
+        project_slug VARCHAR(${MAX_PROJECT_SLUG_LENGTH}) NOT NULL,
         institution_id BIGINT NOT NULL REFERENCES ${schemaRef}.institutions (id) ON DELETE CASCADE,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_by INTEGER NOT NULL,
         PRIMARY KEY (site_id, project_slug)
       )
     `);
@@ -156,7 +166,10 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         site_id INTEGER NOT NULL,
         title JSONB NOT NULL DEFAULT '{}'::jsonb,
         content JSONB NOT NULL DEFAULT '{}'::jsonb,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        created_by INTEGER NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_by INTEGER NOT NULL
       )
     `);
 
@@ -168,8 +181,10 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
     await client.query(`
       CREATE TABLE IF NOT EXISTS ${schemaRef}.project_manual_links (
         site_id INTEGER NOT NULL,
-        project_slug TEXT NOT NULL,
+        project_slug VARCHAR(${MAX_PROJECT_SLUG_LENGTH}) NOT NULL,
         manual_id BIGINT NOT NULL REFERENCES ${schemaRef}.manuals (id) ON DELETE CASCADE,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_by INTEGER NOT NULL,
         PRIMARY KEY (site_id, project_slug)
       )
     `);
@@ -188,6 +203,7 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         mime_type TEXT NOT NULL,
         file_size INTEGER NOT NULL,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_by INTEGER NOT NULL,
         UNIQUE (manual_id, lang)
       )
     `);
@@ -245,7 +261,8 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         accent_color TEXT,
         dark_color TEXT,
         tertiary_color TEXT,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_by INTEGER NOT NULL
       )
     `);
 
@@ -260,6 +277,7 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         file_size INTEGER NOT NULL,
         credit VARCHAR(${MAX_SITE_IMAGE_CREDIT_LENGTH}),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_by INTEGER NOT NULL,
         PRIMARY KEY (site_id, image_key)
       )
     `);
@@ -270,7 +288,8 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
       CREATE TABLE IF NOT EXISTS ${schemaRef}.home_steps (
         site_id INTEGER PRIMARY KEY,
         steps JSONB NOT NULL DEFAULT '[]'::jsonb,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_by INTEGER NOT NULL
       )
     `);
 

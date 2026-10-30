@@ -50,7 +50,7 @@ export function announcementsController(announcementsRepository: AnnouncementsRe
 
     const input = c.req.valid('json');
 
-    const announcement = await announcementsRepository.createAnnouncement({ siteId: identity.siteId, ...input });
+    const announcement = await announcementsRepository.createAnnouncement({ siteId: identity.siteId, userId: identity.userId, ...input });
     return c.json(toAnnouncementDto(announcement), 201);
   });
 
@@ -64,7 +64,7 @@ export function announcementsController(announcementsRepository: AnnouncementsRe
 
     const input = c.req.valid('json');
 
-    const announcement = await announcementsRepository.updateAnnouncement(identity.siteId, id, input);
+    const announcement = await announcementsRepository.updateAnnouncement(identity.siteId, identity.userId, id, input);
     if (!announcement) {
       return c.notFound();
     }

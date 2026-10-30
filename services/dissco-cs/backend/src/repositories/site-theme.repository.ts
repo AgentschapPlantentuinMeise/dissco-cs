@@ -9,6 +9,7 @@ export type SiteThemeRow = {
   dark_color: string | null;
   tertiary_color: string | null;
   updated_at: Date;
+  updated_by: number;
 };
 
 export class SiteThemeRepository {
@@ -26,32 +27,33 @@ export class SiteThemeRepository {
     return result.rows[0] ?? null;
   }
 
-  async upsertColors(siteId: number, colors: SiteColors): Promise<void> {
+  async upsertColors(siteId: number, userId: number, colors: SiteColors): Promise<void> {
     await this.pool.query(
       `
-      INSERT INTO ${this.table} (site_id, primary_color, secondary_color, accent_color, dark_color, tertiary_color)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO ${this.table} (site_id, primary_color, secondary_color, accent_color, dark_color, tertiary_color, updated_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       ON CONFLICT (site_id) DO UPDATE
       SET primary_color = EXCLUDED.primary_color,
           secondary_color = EXCLUDED.secondary_color,
           accent_color = EXCLUDED.accent_color,
           dark_color = EXCLUDED.dark_color,
           tertiary_color = EXCLUDED.tertiary_color,
-          updated_at = NOW()
+          updated_at = NOW(),
+          updated_by = EXCLUDED.updated_by
     `,
-      [siteId, colors.primary, colors.secondary, colors.accent, colors.dark, colors.tertiary]
+      [siteId, colors.primary, colors.secondary, colors.accent, colors.dark, colors.tertiary, userId]
     );
   }
 
-  async clearColors(siteId: number): Promise<void> {
+  async clearColors(siteId: number, userId: number): Promise<void> {
     await this.pool.query(
       `
       UPDATE ${this.table}
       SET primary_color = NULL, secondary_color = NULL, accent_color = NULL, dark_color = NULL, tertiary_color = NULL,
-          updated_at = NOW()
+          updated_at = NOW(), updated_by = $2
       WHERE site_id = $1
     `,
-      [siteId]
+      [siteId, userId]
     );
   }
 

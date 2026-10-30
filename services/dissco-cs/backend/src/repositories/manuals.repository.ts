@@ -8,7 +8,10 @@ export type ManualRow = {
   site_id: number;
   title: Partial<Record<SitePageLang, string>>;
   content: Partial<Record<SitePageLang, string>>;
+  created_at: Date;
+  created_by: number;
   updated_at: Date;
+  updated_by: number;
 };
 
 export type ManualSummary = ManualRow & { linkedProjectSlugs: string[]; attachmentLangs: SitePageLang[] };
@@ -118,6 +121,7 @@ export class ManualsRepository {
   // Returns null when manualId is not a manual of this site.
   async saveManual(
     siteId: number,
+    userId: number,
     manualId: number | null,
     input: ManualInput,
     uploads: ManualAttachmentUpload[],
@@ -136,12 +140,12 @@ export class ManualsRepository {
       const result =
         manualId === null
           ? await client.query<ManualRow>(
-              `INSERT INTO ${this.table('manuals')} (site_id, title, content) VALUES ($1, $2, $3) RETURNING *`,
-              [siteId, title, content]
+              `INSERT INTO ${this.table('manuals')} (site_id, title, content, created_by, updated_by) VALUES ($1, $2, $3, $4, $4) RETURNING *`,
+              [siteId, title, content, userId]
             )
           : await client.query<ManualRow>(
-              `UPDATE ${this.table('manuals')} SET title = $3, content = $4, updated_at = NOW() WHERE id = $1 AND site_id = $2 RETURNING *`,
-              [manualId, siteId, title, content]
+              `UPDATE ${this.table('manuals')} SET title = $3, content = $4, updated_at = NOW(), updated_by = $5 WHERE id = $1 AND site_id = $2 RETURNING *`,
+              [manualId, siteId, title, content, userId]
             );
       manual = result.rows[0];
 
@@ -149,13 +153,13 @@ export class ManualsRepository {
         for (const upload of uploads) {
           await client.query(
             `
-            INSERT INTO ${this.table('manual_attachments')} (manual_id, lang, filename, mime_type, file_size)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO ${this.table('manual_attachments')} (manual_id, lang, filename, mime_type, file_size, updated_by)
+            VALUES ($1, $2, $3, $4, $5, $6)
             ON CONFLICT (manual_id, lang) DO UPDATE
             SET filename = EXCLUDED.filename, mime_type = EXCLUDED.mime_type, file_size = EXCLUDED.file_size,
-                updated_at = NOW()
+                updated_at = NOW(), updated_by = EXCLUDED.updated_by
           `,
-            [manual.id, upload.lang, upload.filename, upload.mimeType, upload.buffer.length]
+            [manual.id, upload.lang, upload.filename, upload.mimeType, upload.buffer.length, userId]
           );
         }
         if (removeLangs.length > 0) {
@@ -203,7 +207,7 @@ export class ManualsRepository {
     return deleted;
   }
 
-  async setProjectLink(siteId: number, projectSlug: string, manualId: number | null): Promise<void> {
+  async setProjectLink(siteId: number, userId: number, projectSlug: string, manualId: number | null): Promise<void> {
     if (manualId === null) {
       await this.pool.query(
         `DELETE FROM ${this.table('project_manual_links')} WHERE site_id = $1 AND project_slug = $2`,
@@ -214,11 +218,12 @@ export class ManualsRepository {
 
     await this.pool.query(
       `
-      INSERT INTO ${this.table('project_manual_links')} (site_id, project_slug, manual_id)
-      VALUES ($1, $2, $3)
-      ON CONFLICT (site_id, project_slug) DO UPDATE SET manual_id = EXCLUDED.manual_id
+      INSERT INTO ${this.table('project_manual_links')} (site_id, project_slug, manual_id, updated_by)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (site_id, project_slug) DO UPDATE
+      SET manual_id = EXCLUDED.manual_id, updated_at = NOW(), updated_by = EXCLUDED.updated_by
     `,
-      [siteId, projectSlug, manualId]
+      [siteId, projectSlug, manualId, userId]
     );
   }
 
