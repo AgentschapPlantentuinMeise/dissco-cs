@@ -2,10 +2,15 @@
 
 import deepmerge from 'deepmerge';
 import * as path from 'path';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, renameSync, writeFileSync } from 'fs';
 import send from 'koa-send';
 import { TRANSLATIONS_PATH } from '../paths';
 import { RouteMiddleware } from '../types/route-middleware';
+import { cachePromiseSWR } from '../utility/cache-helper';
+
+const LOCALE_CACHE_SECONDS = 60 * 60 * 2;
+const LOCALE_CACHE_MS = LOCALE_CACHE_SECONDS * 1000;
+const LOCALE_STALE_CACHE_MS = 60 * 60 * 24 * 1000;
 
 export const getLocale: RouteMiddleware<{ lng: string; ns: string }> = async context => {
   if (context.params.lng.match(/\.\./) || (context.params.ns && context.params.ns.match(/\.\./))) {
@@ -14,10 +19,16 @@ export const getLocale: RouteMiddleware<{ lng: string; ns: string }> = async con
   }
 
   if (context.params.ns === 'madoc' || context.params.ns === 'capture-models') {
-    const { siteApi } = context.state;
-    const locale = await siteApi.getLocale(context.params.lng, context.params.ns);
+    const { site, siteApi } = context.state;
+    const locale = await cachePromiseSWR(
+      `site-locale:${site.id}:${context.params.lng}:${context.params.ns}`,
+      () => siteApi.getLocale(context.params.lng, context.params.ns, false, true),
+      LOCALE_CACHE_MS,
+      LOCALE_STALE_CACHE_MS
+    );
 
-    context.response.body = locale.content;
+    context.set('Cache-Control', `public, max-age=${LOCALE_CACHE_SECONDS}, stale-while-revalidate=86400`);
+    context.response.body = { ...locale.content };
     context.response.status = 200;
 
     return;
@@ -48,7 +59,11 @@ export const saveMissingLocale: RouteMiddleware<{ lng: string; ns: string }> = a
           const file = readFileSync(bundle);
           const bundleJson = JSON.parse(file.toString('utf-8'));
           const newBundle = deepmerge(bundleJson, context.requestBody);
-          await writeFileSync(bundle, JSON.stringify(newBundle, Object.keys(newBundle as any).sort(), 2));
+          // Each PM2 worker can save at the same time. Writing in place let a shorter write land over a
+          // longer one and leave its tail behind (invalid JSON), so write a temporary file and rename it.
+          const temporary = `${bundle}.${process.pid}.tmp`;
+          writeFileSync(temporary, JSON.stringify(newBundle, Object.keys(newBundle as any).sort(), 2) + '\n');
+          renameSync(temporary, bundle);
         }
       } catch (e) {
         console.log(e);

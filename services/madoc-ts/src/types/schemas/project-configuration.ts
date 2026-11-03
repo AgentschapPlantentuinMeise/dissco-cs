@@ -14,6 +14,14 @@ type TabularModelPageOptions = {
   disableZoomTrackingOverlay?: boolean;
 };
 
+export type TypesenseSearchOptions = {
+  allResources?: boolean;
+  projects?: boolean;
+  collections?: boolean;
+  manifests?: boolean;
+  canvases?: boolean;
+};
+
 export type ProjectConfiguration = TabularProjectConfigurationFields & {
   _version?: 1;
   _source?: {
@@ -38,6 +46,7 @@ export type ProjectConfiguration = TabularProjectConfigurationFields & {
   skipAutomaticOCRImport?: boolean;
   allowPersonalNotes?: boolean;
   defaultEditorOrientation: 'vertical' | 'horizontal';
+  defaultPolygonTool?: 'pen' | 'box';
   skipManifestListingPage?: boolean; // @todo move to manifest page options
   hideStatistics?: boolean; // @todo move to project page options
   hideProjectCollectionNavigation?: boolean; // @todo move to project page options
@@ -57,7 +66,9 @@ export type ProjectConfiguration = TabularProjectConfigurationFields & {
     nonLatinFulltext?: boolean;
     searchMultipleFields?: boolean;
     onlyShowManifests?: boolean;
+    infiniteScroll?: boolean;
   };
+  typesenseOptions?: TypesenseSearchOptions;
   shortExpiryTime?: string;
   longExpiryTime?: string;
 
@@ -75,18 +86,21 @@ export type ProjectConfiguration = TabularProjectConfigurationFields & {
     preventContributionAfterManifestUnassign?: boolean;
     hideViewerControls?: boolean;
     disableSaveForLater?: boolean;
+    showSaveForLaterAlongsideSubmit?: boolean;
     disablePreview?: boolean;
     disableNextCanvas?: boolean;
     enableRotation?: boolean;
     enableAutoSave?: boolean;
     enableTooltipDescriptions?: boolean;
     enableSplitView?: boolean;
+    enableEditorResizing?: boolean;
   };
   projectPageOptions?: {
     hideStartContributing?: boolean;
     hideSearchButton?: boolean;
     hideRandomManifest?: boolean;
     hideRandomCanvas?: boolean;
+    hideOpenInTheseus?: boolean;
   };
   reviewOptions?: {
     allowMerging?: boolean;
@@ -158,6 +172,7 @@ export type ProjectConfigurationNEW = TabularProjectConfigurationFields & {
     hideSearchButton?: boolean;
     hideRandomManifest?: boolean;
     hideRandomCanvas?: boolean;
+    hideOpenInTheseus?: boolean;
   };
 
   // collectionPageOptions?: {
@@ -204,7 +219,9 @@ export type ProjectConfigurationNEW = TabularProjectConfigurationFields & {
     searchMultipleFields?: boolean;
     onlyShowManifests?: boolean;
     showSearchFacetCount?: boolean; // changed to sub-item
+    infiniteScroll?: boolean;
   };
+  typesenseOptions?: TypesenseSearchOptions;
 
   contributionMode?: 'transcription' | 'annotation';
   maxContributionsPerResource: false | number;
@@ -220,6 +237,7 @@ export type ProjectConfigurationNEW = TabularProjectConfigurationFields & {
   };
   randomCanvas?: boolean;
   defaultEditorOrientation: 'vertical' | 'horizontal';
+  defaultPolygonTool?: 'pen' | 'box';
   modelPageOptions?: TabularModelPageOptions & {
     hideViewerControls?: boolean;
     enableRotation?: boolean;
@@ -229,6 +247,7 @@ export type ProjectConfigurationNEW = TabularProjectConfigurationFields & {
     enableAutoSave?: boolean;
     enableTooltipDescriptions?: boolean;
     enableSplitView?: boolean;
+    enableEditorResizing?: boolean;
   };
   contributionWarningTime: false | number;
   shortExpiryTime?: string;
@@ -236,6 +255,7 @@ export type ProjectConfigurationNEW = TabularProjectConfigurationFields & {
 
   //new parent
   submissionOptions?: {
+    showSaveForLaterAlongsideSubmit?: boolean;
     disablePreview?: boolean; //changed parent
     disableNextCanvas?: boolean; // changed parent
     preventContributionAfterManifestUnassign?: boolean; // changed parent

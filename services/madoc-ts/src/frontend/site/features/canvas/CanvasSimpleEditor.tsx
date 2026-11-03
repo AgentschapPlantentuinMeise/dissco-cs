@@ -34,10 +34,12 @@ export function CanvasSimpleEditor({ revision, isSegmentation }: CanvasSimpleEdi
   const config = useSiteConfiguration();
   const {
     disableSaveForLater = false,
+    showSaveForLaterAlongsideSubmit = false,
     disablePreview = false,
     disableNextCanvas = false,
     enableRotation = false,
     enableTooltipDescriptions = false,
+    enableEditorResizing = true,
   } = useModelPageConfiguration();
   const mode = useContributionMode();
   const isVertical = config.project.defaultEditorOrientation === 'vertical';
@@ -88,7 +90,9 @@ export function CanvasSimpleEditor({ revision, isSegmentation }: CanvasSimpleEdi
         autosave={autosave}
         hideViewerControls={hideViewerControls}
         isVertical={isVertical}
+        enableEditorResizing={enableEditorResizing}
         disableSaveForLater={disableSaveForLater}
+        showSaveForLaterAlongsideSubmit={showSaveForLaterAlongsideSubmit}
         modelRefetch={modelRefetch}
         markedAsUnusable={markedAsUnusable}
         preventFurtherSubmission={preventFurtherSubmission}

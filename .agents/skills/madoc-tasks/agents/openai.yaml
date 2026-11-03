@@ -1,0 +1,4 @@
+interface:
+  display_name: "Madoc Tasks"
+  short_description: "Background dispatch, retries, bots, and cron"
+  default_prompt: "Use $madoc-tasks to change Madoc asynchronous task execution or scheduling."

@@ -1,3 +1,4 @@
+import { presentation3 } from '../../iiif/properties';
 import fs from 'fs';
 import { dirname } from 'path';
 import { generateId } from '../../frontend/shared/capture-models/helpers/generate-id';
@@ -8,12 +9,12 @@ import * as manifestOcr from './process-manifest-ocr';
 import { createTask as createSearchIndexTask } from './search-index-task';
 import * as tasks from './task-helpers';
 import { Vault } from '@iiif/helpers/vault';
-import fetch from 'node-fetch';
 import { ImportCanvasTask } from './import-canvas';
 import { iiifGetLabel } from '../../utility/iiif-get-label';
 import { ApiClient } from '../api';
 import { deleteAsync } from 'del';
 import { trimInternationalString } from '../helpers/trim-international-string';
+import { fetchIiifResource } from './fetch-iiif-resource';
 export const type = 'madoc-manifest-import';
 
 export const status = [
@@ -76,9 +77,10 @@ export const jobHandler = async (name: string, taskId: string, api: ApiClient) =
 
       // 1. Fetch manifest
       const subject = decodeURI(task.subject);
-      const text = await fetch(subject).then(r => r.text());
+      const text = await fetchIiifResource(subject);
       const json = JSON.parse(text);
-      const iiifManifest = await vault.loadManifest(subject, json);
+      const rawManifest = presentation3(json);
+      const iiifManifest = await vault.loadManifest(subject, structuredClone(json));
 
       if (!iiifManifest) {
         throw new Error(`Error loading manifest ${subject}`);
@@ -107,6 +109,9 @@ export const jobHandler = async (name: string, taskId: string, api: ApiClient) =
         let manifestToAdd: any;
         try {
           manifestToAdd = {
+            ...rawManifest,
+            // Canvas documents are submitted separately by the canvas import tasks.
+            items: undefined,
             id: iiifManifest.id,
             label: label ? trimInternationalString(label) : { none: ['Untitled Manifest'] },
             summary: summary ? trimInternationalString(summary) : undefined,
@@ -199,7 +204,12 @@ export const jobHandler = async (name: string, taskId: string, api: ApiClient) =
 
       // 6. Mark as done if no canvases
       if (subtasks.length === 0 && subtasksToReTrigger.length === 0) {
-        await api.updateTask(task.id, changeStatus('done', { state: { diskCacheLocation: fileLocation } }));
+        await api.updateTask(
+          task.id,
+          changeStatus('done', {
+            state: { resourceId: item.id, isDuplicate: false, diskCacheLocation: fileLocation },
+          })
+        );
         return;
       }
 
@@ -231,8 +241,8 @@ export const jobHandler = async (name: string, taskId: string, api: ApiClient) =
               await deleteAsync(dirname(task.state.diskCacheLocation));
             }
           }
-        } catch (e) {
-          console.log('Unable to delete local manifest file', e);
+        } catch (error) {
+          console.log('Unable to delete local manifest file', error);
         }
       }
 
@@ -310,7 +320,7 @@ export const jobHandler = async (name: string, taskId: string, api: ApiClient) =
               user: userId,
             });
           }
-        } catch (e) {
+        } catch {
           // no-op
         }
       }

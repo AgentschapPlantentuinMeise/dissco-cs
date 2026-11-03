@@ -1,3 +1,6 @@
+import { recordContributionAnalytics } from '../repository/analytics-repository';
+import { RequestError } from '../utility/errors/request-error';
+import { isTabularAlignmentSnapshot } from '../frontend/shared/utility/tabular-alignment-snapshot';
 import { DatabaseTransactionConnectionType, sql } from 'slonik';
 import invariant from 'tiny-invariant';
 import { createRevisionRequestFromStructure } from '../frontend/shared/capture-models/helpers/create-revision-request';
@@ -21,6 +24,7 @@ import { parseUrn } from '../utility/parse-urn';
 import { upsert } from '../utility/slonik-helpers';
 import { BaseRepository } from '../repository/base-repository';
 import { cloneModel } from './server-filters/clone-model';
+import { migrateOcrStructure } from './migration/migrate-ocr-structure';
 import { filterModelGetOptions } from './server-filters/filter-model-get-options';
 import { updateRevisionInDocument } from './server-filters/update-revision-in-document';
 import { CaptureModelGetOptions } from './types';
@@ -240,16 +244,17 @@ export class CaptureModelRepository extends BaseRepository<'capture_model_api_mi
                                       (select p.capture_model_id from iiif_project p where p.id = ${projectId} and p.site_id = ${siteId}))
                    select entity.properties as doc,
                           entity.id         as doc_id,
+                          entity.row_position as row_position,
                           cmd.model_id      as model_id,
                           cmd.target        as target
                    from cmd,
-                        ${entityQuery} as entity(
-                           "id" text,
-                           "label" text,
-                           "properties" jsonb,
-                           "revision" text,
-                           "allowMultiple" bool
-                        ))
+                        rows from (${entityQuery} as (
+                          "id" text,
+                          "label" text,
+                          "properties" jsonb,
+                          "revision" text,
+                          "allowMultiple" bool
+                        )) with ordinality as entity(id, label, properties, revision, "allowMultiple", row_position))
         select d.model_id, r.key, d.doc_id, d.target, field.*
         from d,
              jsonb_each(d.doc) as r,
@@ -257,7 +262,8 @@ export class CaptureModelRepository extends BaseRepository<'capture_model_api_mi
                  left join capture_model_revision cmr on cmr.id = revision::uuid
         where type != 'entity'
           and revision != ''
-          ${approvedQuery};
+          ${approvedQuery}
+        order by d.model_id, d.row_position;
       `;
     },
   };
@@ -428,6 +434,12 @@ export class CaptureModelRepository extends BaseRepository<'capture_model_api_mi
       `;
     },
 
+    updateRevisionAlignment: (revision: Revision, site_id: number) => sql`
+      update capture_model_revision
+      set revision_data = (revision_data::jsonb || ${sql.json({ tabularAlignment: revision.tabularAlignment })}::jsonb)::json
+      where id = ${revision.id} and site_id = ${site_id}
+    `,
+
     updateRevisionStatus: (revision: Revision | string, newStatus: Revision['status'], site_id: number) => {
       const id = typeof revision === 'string' ? revision : revision.id;
 
@@ -575,7 +587,7 @@ export class CaptureModelRepository extends BaseRepository<'capture_model_api_mi
       [{}, {}] as [Record<string, Revision>, Record<string, Contributor>]
     );
     const document = CaptureModelRepository.parseDocumentRow(row);
-    const structure = CaptureModelRepository.parseStructureRow(row);
+    const structure = migrateOcrStructure(CaptureModelRepository.parseStructureRow(row), document);
 
     return {
       id: row.id,
@@ -773,9 +785,9 @@ export class CaptureModelRepository extends BaseRepository<'capture_model_api_mi
     await this.connection.query(CaptureModelRepository.mutations.deleteRevision(revision, siteId));
   }
 
-  async getRevisionRow(id: string, siteId: number) {
+  async getRevisionRow(id: string, siteId: number, transaction?: DatabaseTransactionConnectionType) {
     return CaptureModelRepository.parseRevisionRow(
-      await this.connection.one(CaptureModelRepository.queries.getRevisionById(id, siteId))
+      await (transaction || this.connection).one(CaptureModelRepository.queries.getRevisionById(id, siteId))
     );
   }
 
@@ -867,6 +879,10 @@ export class CaptureModelRepository extends BaseRepository<'capture_model_api_mi
     }
   ) {
     console.log('Update revision =>');
+    if (req.revision.tabularAlignment !== undefined && !isTabularAlignmentSnapshot(req.revision.tabularAlignment)) {
+      throw new RequestError('Invalid tabular alignment snapshot');
+    }
+
     await this.connection.transaction(async transaction => {
       console.log('  Start transaction');
       invariant(req.captureModelId, 'Missing Capture model id');
@@ -882,7 +898,7 @@ export class CaptureModelRepository extends BaseRepository<'capture_model_api_mi
 
       console.log('  Loaded capture model', captureModel.id);
 
-      const [storedRevision] = await this.getRevisionRow(req.revision.id, siteId);
+      const [storedRevision] = await this.getRevisionRow(req.revision.id, siteId, transaction);
 
       console.log('  Loaded stored revision', storedRevision);
 
@@ -909,6 +925,10 @@ export class CaptureModelRepository extends BaseRepository<'capture_model_api_mi
       });
 
       console.log('  Updated revision in document');
+
+      if (req.revision.tabularAlignment !== undefined) {
+        await transaction.query(CaptureModelRepository.mutations.updateRevisionAlignment(req.revision, siteId));
+      }
 
       // Update with the new document.
       await transaction.query(CaptureModelRepository.mutations.updateDocument(captureModel.document, siteId));
@@ -939,6 +959,7 @@ export class CaptureModelRepository extends BaseRepository<'capture_model_api_mi
       } catch (err) {
         console.log('ERR', err);
       }
+      await recordContributionAnalytics(transaction, req.revision.id, siteId);
     });
 
     console.log('  Updated revision fields');
@@ -966,6 +987,10 @@ export class CaptureModelRepository extends BaseRepository<'capture_model_api_mi
   ) {
     if (userId) {
       req.author = { id: `urn:madoc:user:${userId}`, type: 'Person' };
+    }
+
+    if (req.revision.tabularAlignment !== undefined && !isTabularAlignmentSnapshot(req.revision.tabularAlignment)) {
+      throw new RequestError('Invalid tabular alignment snapshot');
     }
 
     await this.connection.transaction(async transaction => {
@@ -1016,6 +1041,7 @@ export class CaptureModelRepository extends BaseRepository<'capture_model_api_mi
       await transaction.query(
         CaptureModelRepository.mutations.updateRevisionStatus(req.revision, req.revision.status, siteId)
       );
+      await recordContributionAnalytics(transaction, req.revision.id, siteId, true);
     });
 
     return this.getRevision(req.revision.id, siteId, { userId, showRevised });

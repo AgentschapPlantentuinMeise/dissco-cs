@@ -1,3 +1,7 @@
+import { AnnotationPageInput, CompleteAnnotationPageRequest } from '../types/schemas/annotations';
+import { AnnotationPageRecord, JsonObject } from '../iiif/types';
+import type { AnalyticsQuery, AnalyticsReport } from '../types/analytics';
+import type { RecordPageViewRequest } from '../types/schemas/analytics';
 import invariant from 'tiny-invariant';
 import {
   ActivityOptions,
@@ -42,8 +46,9 @@ import {
 import { PublicUserProfile, Site, SiteUser, UserInformationRequest } from '../extensions/site-manager/types';
 import { ProjectManifestTasks } from '../types/manifest-tasks';
 import { NoteListResponse } from '../types/personal-notes';
-import { Pm2Status } from '../types/pm2';
-import { ProjectFeedback, ProjectMember, ProjectUpdate } from '../types/projects';
+import { Pm2StatusResponse } from '../types/pm2';
+import type { IIIFBackfillTask } from './tasks/backfill-all-iiif-properties';
+import { CreateProjectUpdate, ProjectFeedback, ProjectMember, ProjectUpdate } from '../types/projects';
 import { BullMqCancelSearchIndexResult, BullMqResumeQueueResult, BullMqSnapshot } from '../types/bullmq-status';
 import { ResourceLinkResponse } from '../types/schemas/linking';
 import { ProjectConfiguration } from '../types/schemas/project-configuration';
@@ -91,6 +96,13 @@ import { SearchIndexTask } from './tasks/search-index-task';
 import { JsonProjectTemplate, ProjectTemplate } from '../extensions/projects/types';
 import { ApiKey } from '../types/api-key';
 import { TabularProjectTemplateConfig } from '../types/tabular-project-template-config';
+import type { TabularProjectMetadataUpdate } from '../types/schemas/tabular-project-metadata';
+import {
+  ProjectSearchIndexConfiguration,
+  ProjectSearchIndexDefinition,
+  ProjectSearchIndexRequest,
+  PublicProjectSearchIndex,
+} from '../types/schemas/project-search-index';
 
 export type ApiClientWithoutExtensions = Omit<
   ApiClient,
@@ -245,17 +257,21 @@ export class ApiClient {
   }
 
   dispose() {
-    this.pageBlocks.dispose();
-    this.media.dispose();
+    this.pageBlocks?.dispose();
+    this.media?.dispose();
     this.tasks.dispose();
-    this.system.dispose();
-    this.themes.dispose();
+    this.system?.dispose();
+    this.themes?.dispose();
     this.notifications.dispose();
-    this.siteManager.dispose();
-    this.projectTemplates.dispose();
+    this.siteManager?.dispose();
+    this.projectTemplates?.dispose();
+    this.projectExport?.dispose();
+    this.webhooks?.dispose();
     this.crowdsourcing.dispose();
     this.errorHandlers = [];
     this.errorRecoveryHandlers = [];
+    this.debugRequestHandlers = [];
+    this.debugRequests = [];
   }
 
   private getJwt() {
@@ -445,6 +461,9 @@ export class ApiClient {
     }
 
     this.debugRequests.push(request);
+    if (this.debugRequests.length > 200) {
+      this.debugRequests.shift();
+    }
     for (const handler of this.debugRequestHandlers) {
       handler(request);
     }
@@ -483,50 +502,55 @@ export class ApiClient {
           return;
         }
         loading = true;
-        this.getTask(taskId, { all: true, root_statistics: root }).then(latestTask => {
-          loading = false;
-          if (latestTask.status === 3) {
-            clearInterval(intervalId);
-            resolve(after(latestTask as any));
-            return;
-          }
-          if (latestTask.status === -1) {
-            clearInterval(intervalId);
-            reject(latestTask);
-          }
-
-          if (setRootStatistics) {
-            if (latestTask.root_statistics) {
-              setRootStatistics(latestTask.root_statistics);
+        this.getTask(taskId, { all: true, root_statistics: root })
+          .then(latestTask => {
+            loading = false;
+            if (latestTask.status === 3) {
+              clearInterval(intervalId);
+              resolve(after(latestTask as any));
+              return;
             }
-          }
+            if (latestTask.status === -1) {
+              clearInterval(intervalId);
+              reject(latestTask);
+            }
 
-          if (percent) {
-            if (latestTask.root_statistics) {
-              const remaining = latestTask.root_statistics.done + latestTask.root_statistics.error;
-              const total =
-                remaining +
-                latestTask.root_statistics.progress +
-                latestTask.root_statistics.accepted +
-                latestTask.root_statistics.not_started;
+            if (setRootStatistics) {
+              if (latestTask.root_statistics) {
+                setRootStatistics(latestTask.root_statistics);
+              }
+            }
 
-              if (total > 0) {
+            if (percent) {
+              if (latestTask.root_statistics) {
+                const remaining = latestTask.root_statistics.done + latestTask.root_statistics.error;
+                const total =
+                  remaining +
+                  latestTask.root_statistics.progress +
+                  latestTask.root_statistics.accepted +
+                  latestTask.root_statistics.not_started;
+
+                if (total > 0) {
+                  percent(remaining / total);
+                }
+              } else if (latestTask.subtasks) {
+                const remaining = latestTask.subtasks.filter(t => t.status === 3 || t.status === -1).length || 0;
+                const total = latestTask.subtasks.length;
+
                 percent(remaining / total);
               }
-            } else if (latestTask.subtasks) {
-              const remaining = latestTask.subtasks.filter(t => t.status === 3 || t.status === -1).length || 0;
-              const total = latestTask.subtasks.length;
-
-              percent(remaining / total);
             }
-          }
 
-          if (progress) {
-            const remaining = latestTask.subtasks?.filter(t => t.status !== 3).length || 0;
+            if (progress) {
+              const remaining = latestTask.subtasks?.filter(t => t.status !== 3).length || 0;
 
-            progress(remaining);
-          }
-        });
+              progress(remaining);
+            }
+          })
+          .catch(error => {
+            clearInterval(intervalId);
+            reject(error);
+          });
       };
 
       intervalId = setInterval(tryReturn, interval) as any;
@@ -606,13 +630,13 @@ export class ApiClient {
         throw new NotFound(`${method} ${endpoint} not found`);
       }
 
-      if (response.status === 502) {
+      if (response.status === 502 && !this.isServer) {
         this.isDown = true;
         for (const err of this.errorHandlers) {
           err();
         }
         await new Promise(resolve => setTimeout(resolve, 3000));
-        // Always retry this error.
+        // Browser clients can wait for recovery; server requests must release their resources.
         return this.request(endpoint, { method, body, jwt });
       }
 
@@ -725,9 +749,11 @@ export class ApiClient {
     options: { siteSlug?: string } = {}
   ): Promise<T> {
     const userApi = this.asUser(user, options, true);
-    const resp = await callback(userApi as any);
-    userApi.dispose(); // Need to make sure extensions unregister their events properly.
-    return resp as T;
+    try {
+      return await callback(userApi);
+    } finally {
+      userApi.dispose();
+    }
   }
 
   async listApiKeys() {
@@ -757,7 +783,21 @@ export class ApiClient {
   }
 
   async getPm2Status() {
-    return this.request<{ list: Pm2Status[]; build: any; slowRequests: any }>(`/api/madoc/pm2/list`);
+    return this.request<Pm2StatusResponse>(`/api/madoc/pm2/list`);
+  }
+
+  async startIIIFBackfill() {
+    return this.request<IIIFBackfillTask & { id: string }>(`/api/madoc/system/iiif-backfill`, { method: 'POST' });
+  }
+
+  async getIIIFBackfillStatus() {
+    return this.request<{ task?: IIIFBackfillTask & { id: string } }>(`/api/madoc/system/iiif-backfill`);
+  }
+
+  getPm2LogsUrl(processId: number, lines = 100) {
+    const slug = this.getSiteSlug();
+    invariant(slug, 'Site slug not found');
+    return this.resolveUrl(`/s/${slug}/madoc/api/pm2/${processId}/logs?${stringify({ lines })}`);
   }
 
   async pm2Restart(service: 'auth' | 'queue' | 'madoc' | 'scheduler') {
@@ -795,6 +835,14 @@ export class ApiClient {
     );
   }
 
+  async getAnalytics(query: AnalyticsQuery = {}) {
+    return this.request<AnalyticsReport>(`/api/madoc/analytics?${stringify(query)}`);
+  }
+
+  async recordPageView(body: RecordPageViewRequest) {
+    return this.publicRequest<void>('/madoc/api/analytics/page-view', undefined, { method: 'POST', body });
+  }
+
   async getStatistics() {
     return this.request<{ collections: number; manifests: number; canvases: number; projects: number }>(
       `/api/madoc/iiif/statistics`
@@ -811,6 +859,47 @@ export class ApiClient {
 
   async getProject(id: number | string, query?: { published?: boolean }) {
     return this.request<ProjectFull>(`/api/madoc/projects/${id}${query ? `?${stringify(query)}` : ''}`);
+  }
+
+  async getProjectSearchIndexes(id: number | string) {
+    return this.request<ProjectSearchIndexConfiguration>(`/api/madoc/projects/${id}/search-indexes`);
+  }
+
+  async createProjectSearchIndex(id: number | string, request: ProjectSearchIndexRequest) {
+    return this.request<ProjectSearchIndexDefinition>(`/api/madoc/projects/${id}/search-indexes`, {
+      method: 'POST',
+      body: request,
+    });
+  }
+
+  async updateProjectSearchIndex(id: number | string, indexId: string, request: ProjectSearchIndexRequest) {
+    return this.request<ProjectSearchIndexDefinition>(`/api/madoc/projects/${id}/search-indexes/${indexId}`, {
+      method: 'PUT',
+      body: request,
+    });
+  }
+
+  async deleteProjectSearchIndex(id: number | string, indexId: string) {
+    return this.request(`/api/madoc/projects/${id}/search-indexes/${indexId}`, { method: 'DELETE' });
+  }
+
+  async reindexProjectSearchIndex(id: number | string, indexId: string) {
+    return this.request<SearchIndexTask>(`/api/madoc/projects/${id}/search-indexes/${indexId}/reindex`, {
+      method: 'POST',
+    });
+  }
+
+  async indexProjectSearchIndex(id: number | string, indexId: string) {
+    return this.request<{ indexed: number; collection: string; warnings: string[] }>(
+      `/api/madoc/projects/${id}/search-indexes/${indexId}/index`,
+      { method: 'POST' }
+    );
+  }
+
+  async getPublicProjectSearchIndexes(projectSlug: string) {
+    return this.publicRequest<PublicProjectSearchIndex[]>(
+      `/madoc/api/projects/${encodeURIComponent(projectSlug)}/search-indexes`
+    );
   }
 
   async getProjectMetadata(id: number) {
@@ -900,6 +989,13 @@ export class ApiClient {
     });
   }
 
+  async patchTabularProjectMetadata(id: number, metadata: TabularProjectMetadataUpdate) {
+    return this.request<void>(`/api/madoc/projects/${id}/template-config`, {
+      method: 'PATCH',
+      body: metadata,
+    });
+  }
+
   async updateProjectStatus(id: number, status: number) {
     return this.request<any>(`/api/madoc/projects/${id}/status`, {
       method: 'PUT',
@@ -943,22 +1039,22 @@ export class ApiClient {
     return response?.updates[0] || null;
   }
 
-  async createProjectUpdate(id: string | number, update: string) {
-    return this.request(`/api/madoc/projects/${id}/updates`, {
+  async createProjectUpdate(id: string | number, update: CreateProjectUpdate) {
+    return this.request<ProjectUpdate>(`/api/madoc/projects/${id}/updates`, {
       method: 'POST',
-      body: { update },
+      body: update,
     });
   }
 
-  async updateProjectUpdate(id: string | number, updateId: string | number, update: string) {
-    return this.request(`/api/madoc/projects/${id}/updates/${updateId}`, {
+  async updateProjectUpdate(id: string | number, updateId: string | number, update: CreateProjectUpdate) {
+    return this.request<ProjectUpdate>(`/api/madoc/projects/${id}/updates/${updateId}`, {
       method: 'PUT',
-      body: { update },
+      body: update,
     });
   }
 
   async deleteProjectUpdate(id: string | number, updateId: string | number) {
-    return this.request(`/api/madoc/projects/${id}/updates/${updateId}`, {
+    return this.request<{ success: true }>(`/api/madoc/projects/${id}/updates/${updateId}`, {
       method: 'DELETE',
     });
   }
@@ -1093,9 +1189,13 @@ export class ApiClient {
     }>(`/api/madoc/locales/analysis`);
   }
 
-  async getLocale(code: string, namespace?: string, withTemplate?: boolean) {
+  async getLocale(code: string, namespace?: string, withTemplate?: boolean, contentOnly?: boolean) {
+    const query = stringify({
+      show_empty: withTemplate || undefined,
+      content_only: contentOnly || undefined,
+    });
     return this.request<GetLocalisationResponse>(
-      `/api/madoc/locales/${code}${namespace ? `/${namespace}` : ''}${withTemplate ? `?show_empty=true` : ''}`
+      `/api/madoc/locales/${code}${namespace ? `/${namespace}` : ''}${query ? `?${query}` : ''}`
     );
   }
 
@@ -1304,6 +1404,52 @@ export class ApiClient {
     return this.request<{ manifests: number; canvases: number }>(`/api/madoc/iiif/collections/${id}/statistics`);
   }
 
+  async getAnnotationPages(resourceId: number, summary = false) {
+    return this.request<{ pages: AnnotationPageRecord[] }>(`/api/madoc/iiif/resources/${resourceId}/annotations${summary ? '?summary=true' : ''}`);
+  }
+
+  async addAnnotationPage(resourceId: number, body: AnnotationPageInput) {
+    return this.request<AnnotationPageRecord>(`/api/madoc/iiif/resources/${resourceId}/annotations`, {
+      method: 'POST',
+      body,
+    });
+  }
+
+  async updateAnnotationPage(resourceId: number, pageId: number, body: AnnotationPageInput) {
+    return this.request<AnnotationPageRecord>(`/api/madoc/iiif/resources/${resourceId}/annotations/${pageId}`, {
+      method: 'PUT',
+      body,
+    });
+  }
+
+  async deleteAnnotationPage(resourceId: number, pageId: number) {
+    return this.request(`/api/madoc/iiif/resources/${resourceId}/annotations/${pageId}`, { method: 'DELETE' });
+  }
+
+  async refreshAnnotationPage(resourceId: number, pageId: number) {
+    return this.request<AnnotationPageRecord>(`/api/madoc/iiif/resources/${resourceId}/annotations/${pageId}/refresh`, {
+      method: 'POST',
+    });
+  }
+
+  async completeAnnotationPage(resourceId: number, pageId: number, body: CompleteAnnotationPageRequest) {
+    return this.request(`/api/madoc/iiif/resources/${resourceId}/annotations/${pageId}/complete`, {
+      method: 'POST',
+      body,
+    });
+  }
+
+  async importIIIFProperties(resourceId: number, resource: JsonObject, includeCanvases = false) {
+    return this.request(`/api/madoc/iiif/resources/${resourceId}/iiif-properties`, {
+      method: 'POST',
+      body: { resource, includeCanvases },
+    });
+  }
+
+  async backfillIIIFProperties(resourceId: number) {
+    return this.request<BaseTask>(`/api/madoc/iiif/resources/${resourceId}/iiif-backfill`, { method: 'POST' });
+  }
+
   async createManifest(manifest: Partial<Manifest>, taskId?: string) {
     return this.request<{ id: number }, CreateManifest>(`/api/madoc/iiif/manifests`, {
       method: 'POST',
@@ -1479,7 +1625,9 @@ export class ApiClient {
   }
 
   async getCanvasPlaintext(id: number) {
-    return this.request<{ found: boolean; transcription: string }>(`/api/madoc/iiif/canvases/${id}/plaintext`);
+    return this.request<{ found: boolean; transcription?: string; source?: string }>(
+      `/api/madoc/iiif/canvases/${id}/plaintext`
+    );
   }
 
   async getCanvasDeletionSummary(id: number) {
@@ -1608,7 +1756,7 @@ export class ApiClient {
   /**
    * @deprecated use api.crowdsourcing.getCaptureModel() instead
    */
-  async getCaptureModel(id: string, query?: { author?: string; published?: boolean }) {
+  async getCaptureModel(id: string, query?: { author?: string; published?: boolean; debug?: boolean }) {
     return this.crowdsourcing.getCaptureModel(id, query);
   }
 
@@ -2543,6 +2691,26 @@ export class ApiClient {
     }
   }
 
+  async indexCollection(id: number) {
+    try {
+      await this.request<SearchIndexTask>(`/api/madoc/iiif/collections/${id}/index`, {
+        method: 'POST',
+      });
+    } catch {
+      // Search indexing is best effort for resource updates.
+    }
+  }
+
+  async indexProject(id: number) {
+    try {
+      await this.request<SearchIndexTask>(`/api/madoc/projects/${id}/index`, {
+        method: 'POST',
+      });
+    } catch {
+      // Search indexing is best effort for resource updates.
+    }
+  }
+
   async getIndexedCanvasById(madoc_id: string) {
     return this.request<SearchResponse>(`${getSearchQueryEndpoint()}?${stringify({ madoc_id })}`, {
       method: 'GET',
@@ -2640,8 +2808,8 @@ export class ApiClient {
     return this.publicRequest<ConfigInjectionSettings>(`/madoc/api/configuration/model`, query);
   }
 
-  async getSiteSearchFacetConfiguration() {
-    return this.publicRequest<{ facets: FacetConfig[] }>(`/madoc/api/configuration/search-facets`);
+  async getSiteSearchFacetConfiguration(query?: { project_id?: number; collection_id?: number }) {
+    return this.publicRequest<{ facets: FacetConfig[] }>(`/madoc/api/configuration/search-facets`, query);
   }
 
   async getCurrentSiteDetails() {
