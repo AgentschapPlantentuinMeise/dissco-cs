@@ -3,6 +3,7 @@ import { MadocAnnotationDocumentDto, MadocBaseFieldDto, MadocStructureNodeDto } 
 
 import {
   collectMissingRequiredLabels,
+  groupRangeFields,
   hasVisibleRequiredField,
   isDependentSatisfied,
   isFieldEmpty,
@@ -92,5 +93,27 @@ describe('structure', () => {
     const plain: MadocStructureNodeDto = { id: 'c', label: 'c', type: 'choice', items: [model('a'), model('b')] };
     expect(resolveSectionModels(plain)).toBeNull();
     expect(resolveSectionModels({ ...plain, profile: ['tabs'] })?.map(m => m.id)).toEqual(['a', 'b']);
+  });
+});
+
+describe('groupRangeFields', () => {
+  it('pairs adjacent <prefix>From / <prefix>To terms, with or without a separator', () => {
+    expect(groupRangeFields(['collectionDateFrom', 'collectionDateTo'])).toEqual([{ kind: 'range', from: 'collectionDateFrom', to: 'collectionDateTo' }]);
+    expect(groupRangeFields(['depth_from', 'depth_to'])).toEqual([{ kind: 'range', from: 'depth_from', to: 'depth_to' }]);
+    expect(groupRangeFields(['altitude-FROM', 'Altitude-to'])).toEqual([{ kind: 'range', from: 'altitude-FROM', to: 'Altitude-to' }]);
+  });
+
+  it('keeps fields apart when they are not adjacent, reversed or have another prefix', () => {
+    const entries = (fields: string[]) => fields.map(entry => ({ kind: 'entry', entry }));
+    expect(groupRangeFields(['dateFrom', 'locality', 'dateTo'])).toEqual(entries(['dateFrom', 'locality', 'dateTo']));
+    expect(groupRangeFields(['dateTo', 'dateFrom'])).toEqual(entries(['dateTo', 'dateFrom']));
+    expect(groupRangeFields(['dateFrom', 'depthTo'])).toEqual(entries(['dateFrom', 'depthTo']));
+  });
+
+  it('leaves a nested entity as its own row', () => {
+    expect(groupRangeFields(['dateFrom', ['dateTo', ['x']]])).toEqual([
+      { kind: 'entry', entry: 'dateFrom' },
+      { kind: 'entry', entry: ['dateTo', ['x']] },
+    ]);
   });
 });

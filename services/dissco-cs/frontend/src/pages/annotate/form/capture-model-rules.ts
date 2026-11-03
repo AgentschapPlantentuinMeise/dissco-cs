@@ -98,6 +98,36 @@ export function collectMissingRequiredLabels(fields: MadocModelFields, document:
   return labels;
 }
 
+export type FieldRow = { kind: 'entry'; entry: MadocModelFields[number] } | { kind: 'range'; from: string; to: string };
+
+// Madoc's model editor has no layout setting, and grouping fields in an entity would split them into
+// a separate export file. So a range is recognised by its terms instead: two adjacent fields named
+// '<prefix>From' and '<prefix>To' (any case, optionally '_' or '-' before from/to) share one row.
+const RANGE_TERM = /^(.+?)[_-]?(from|to)$/i;
+
+function rangePart(entry: MadocModelFields[number] | undefined): { prefix: string; end: string } | null {
+  if (typeof entry !== 'string') return null;
+  const match = RANGE_TERM.exec(entry);
+  return match ? { prefix: match[1].toLowerCase(), end: match[2].toLowerCase() } : null;
+}
+
+export function groupRangeFields(fields: MadocModelFields): FieldRow[] {
+  const rows: FieldRow[] = [];
+  for (let i = 0; i < fields.length; i++) {
+    const entry = fields[i];
+    const next = fields[i + 1];
+    const from = rangePart(entry);
+    const to = rangePart(next);
+    if (from?.end === 'from' && to?.end === 'to' && from.prefix === to.prefix) {
+      rows.push({ kind: 'range', from: entry as string, to: next as string });
+      i++;
+    } else {
+      rows.push({ kind: 'entry', entry });
+    }
+  }
+  return rows;
+}
+
 // Every capture model's top-level structure is technically a 'choice' (Madoc's model editor always
 // wraps it that way), even when there's only one "Default" model and no real branching — the admin
 // UI hides this single-item case from editors, so we skip it here too instead of showing the user
