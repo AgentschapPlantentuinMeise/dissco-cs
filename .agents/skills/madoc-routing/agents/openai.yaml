@@ -1,0 +1,4 @@
+interface:
+  display_name: "Madoc Routing"
+  short_description: "HTTP registration and request/response contracts"
+  default_prompt: "Use $madoc-routing to change a Madoc endpoint boundary or registration."

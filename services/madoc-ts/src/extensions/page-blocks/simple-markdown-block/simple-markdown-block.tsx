@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import Editor, { theme } from 'rich-markdown-editor';
-import styled from 'styled-components';
+import EditorModule, { theme } from 'rich-markdown-editor';
 import { captureModelShorthand } from '../../../frontend/shared/capture-models/helpers/capture-model-shorthand';
 import { useApi } from '../../../frontend/shared/hooks/use-api';
 import { Button } from '../../../frontend/shared/navigation/Button';
@@ -9,13 +8,16 @@ import { blockEditorFor } from '../block-editor-for';
 import { PageBlockEditor, ReactPageBlockDefinition } from '../extension';
 import { StaticMarkdownBlock } from './static-markdown-block';
 
-const MarkdownEditorWrapper = styled.div`
-  padding: 0.6em 0.6em 0.6em 2em;
-`;
+const Editor = (
+  typeof EditorModule === 'function'
+    ? EditorModule
+    : (EditorModule as unknown as { default: typeof EditorModule }).default
+) as typeof EditorModule;
 
 const MarkdownEditor: PageBlockEditor = props => {
   const initialValue = useMemo(() => props.block.static_data?.markdown || '', [props.block.static_data?.markdown]);
   const [value, setValue] = useState<string>(initialValue);
+  const [openInNewTab, setOpenInNewTab] = useState(!!props.block.static_data?.openInNewTab);
   const api = useApi();
   // const searchLink = async (term: string): Promise<SearchResult[]> => {
   //   return [
@@ -35,7 +37,7 @@ const MarkdownEditor: PageBlockEditor = props => {
 
   return (
     <>
-      <MarkdownEditorWrapper>
+      <div className="py-[0.6em] pr-[0.6em] pl-[2em]">
         <Editor
           // onSearchLink={term => searchLink(term)}
           defaultValue={initialValue}
@@ -59,10 +61,17 @@ const MarkdownEditor: PageBlockEditor = props => {
             } as any
           }
         />
-      </MarkdownEditorWrapper>
+      </div>
+      <label className="flex items-center gap-2 px-8 py-2">
+        <input type="checkbox" checked={openInNewTab} onChange={event => setOpenInNewTab(event.target.checked)} />
+        Open links in new tab
+      </label>
       <ModalFooter>
         <Button
-          disabled={value === (props.block.static_data?.markdown || '')}
+          disabled={
+            value === (props.block.static_data?.markdown || '') &&
+            openInNewTab === !!props.block.static_data?.openInNewTab
+          }
           $primary
           onClick={() =>
             props.onSave({
@@ -70,6 +79,7 @@ const MarkdownEditor: PageBlockEditor = props => {
               static_data: {
                 ...(props.block.static_data || {}),
                 markdown: value,
+                openInNewTab,
               },
             })
           }
@@ -81,17 +91,18 @@ const MarkdownEditor: PageBlockEditor = props => {
   );
 };
 
-const definition: ReactPageBlockDefinition<{ markdown: string }> = {
+const definition: ReactPageBlockDefinition<{ markdown: string; openInNewTab?: boolean }> = {
   label: 'Simple Markdown block',
   type: 'simple-markdown-block',
   renderType: 'react',
   model: captureModelShorthand({}),
   defaultData: {
     markdown: '',
+    openInNewTab: false,
   },
   render: data => {
     // @todo.
-    return <StaticMarkdownBlock markdown={data.markdown || ''} />;
+    return <StaticMarkdownBlock markdown={data.markdown || ''} openInNewTab={data.openInNewTab} />;
   },
   customEditor: MarkdownEditor,
 };

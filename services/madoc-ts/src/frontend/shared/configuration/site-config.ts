@@ -6,6 +6,14 @@ export type ProjectConfigTemplate = {
   [_key in keyof Partial<ProjectConfigurationNEW>]: string | (Partial<BaseField> & any);
 };
 
+const TYPESENSE_OPTIONS = [
+  { label: 'All resources', value: 'allResources' },
+  { label: 'Projects', value: 'projects' },
+  { label: 'Collections', value: 'collections' },
+  { label: 'Manifests', value: 'manifests' },
+  { label: 'Canvases', value: 'canvases' },
+];
+
 const TABULAR_OVERLAY_COLOR_FIELDS = {
   tabularHeaderOverlayColor: {
     label: 'Canvas overlay color: header row',
@@ -25,6 +33,17 @@ const TABULAR_OVERLAY_COLOR_FIELDS = {
     type: 'color-field',
     defaultValue: TABULAR_OVERLAY_DEFAULT_COLORS.cell,
   },
+} as const;
+
+const DEFAULT_POLYGON_TOOL_FIELD = {
+  label: 'Default polygon tool',
+  description: 'Choose the initial drawing tool when defining a polygon region.',
+  type: 'dropdown-field',
+  defaultValue: 'box',
+  options: [
+    { value: 'pen', text: 'Polygon (pen)' },
+    { value: 'box', text: 'Box' },
+  ],
 } as const;
 
 export function postProcessConfiguration(config: Partial<ProjectConfiguration>): ProjectConfiguration {
@@ -161,6 +180,7 @@ export const siteConfigurationModel: {
       { value: 'horizontal', text: 'Horizontal (to the right) ' },
     ],
   },
+  defaultPolygonTool: DEFAULT_POLYGON_TOOL_FIELD,
   skipManifestListingPage: {
     label: 'Manifest display options',
     type: 'checkbox-field',
@@ -329,6 +349,10 @@ export const siteConfigurationModel: {
         value: 'disableSaveForLater',
       },
       {
+        label: "Show 'Save for later' beside 'Submit'",
+        value: 'showSaveForLaterAlongsideSubmit',
+      },
+      {
         label: 'Disable preview popup (direct submit)',
         value: 'disablePreview',
       },
@@ -351,6 +375,10 @@ export const siteConfigurationModel: {
       {
         label: 'Enable split-view',
         value: 'enableSplitView',
+      },
+      {
+        label: 'Enable resizable editor panels',
+        value: 'enableEditorResizing',
       },
     ],
   },
@@ -389,6 +417,10 @@ export const siteConfigurationModel: {
       {
         label: 'Hide go to random canvas',
         value: 'hideRandomCanvas',
+      },
+      {
+        label: 'Hide open in Theseus button',
+        value: 'hideOpenInTheseus',
       },
     ],
   },
@@ -497,10 +529,20 @@ export const siteConfigurationModel: {
         value: 'searchMultipleFields',
       },
       {
-        label: 'Only show manifests',
+        label: 'Only show manifests (legacy)',
         value: 'onlyShowManifests',
       },
+      {
+        label: 'Use infinite scroll for search results',
+        value: 'infiniteScroll',
+      },
     ],
+  },
+  typesenseOptions: {
+    label: 'Typesense options',
+    description: 'Choose which resource tabs and resource types are available in Typesense search.',
+    type: 'checkbox-list-field',
+    options: TYPESENSE_OPTIONS,
   },
   activityStreams: {
     label: 'Activity streams',
@@ -622,6 +664,10 @@ export const ProjectConfigInterface: ProjectConfigTemplate = {
       {
         label: 'Hide go to random canvas',
         value: 'hideRandomCanvas',
+      },
+      {
+        label: 'Hide open in Theseus button',
+        value: 'hideOpenInTheseus',
       },
     ],
   },
@@ -783,14 +829,24 @@ export const ProjectConfigSearch: ProjectConfigTemplate = {
         value: 'searchMultipleFields',
       },
       {
-        label: 'Only show manifests',
+        label: 'Only show manifests (legacy)',
         value: 'onlyShowManifests',
       },
       {
         label: 'Show search facet count (number of matching manifests)',
         value: 'showSearchFacetCount',
       },
+      {
+        label: 'Use infinite scroll for search results',
+        value: 'infiniteScroll',
+      },
     ],
+  },
+  typesenseOptions: {
+    label: 'Typesense options',
+    description: 'Choose which resource tabs and resource types are available in Typesense search.',
+    type: 'checkbox-list-field',
+    options: TYPESENSE_OPTIONS,
   },
 };
 
@@ -838,6 +894,11 @@ const SUBMISSION_OPTIONS = [
   },
 ];
 
+const SHOW_SAVE_FOR_LATER_ALONGSIDE_SUBMIT_OPTION = {
+  label: "Show 'Save for later' beside 'Submit'",
+  value: 'showSaveForLaterAlongsideSubmit',
+};
+
 const sharedProjectContributionFields = {
   contributionMode: {
     label: 'Contribution mode',
@@ -877,6 +938,7 @@ const sharedProjectContributionFields = {
     type: 'checkbox-field',
     inlineLabel: 'Randomly select canvas',
   },
+  defaultPolygonTool: DEFAULT_POLYGON_TOOL_FIELD,
 };
 
 const sharedProjectContributionTailFields = {
@@ -924,6 +986,12 @@ const ENABLE_TOOLTIP_DESCRIPTIONS_MODEL_OPTION = {
   value: 'enableTooltipDescriptions',
 };
 
+const ENABLE_EDITOR_RESIZING_MODEL_OPTION = {
+  label: 'Enable resizable editor panels',
+  description: 'Allow contributors and reviewers to resize panels in split editor layouts.',
+  value: 'enableEditorResizing',
+};
+
 const genericAllowPersonalNotesModelOption = {
   label: 'Allow personal notes',
   description: 'allow users to take personal notes only visible to themselves on canvases in a project',
@@ -954,6 +1022,7 @@ const genericContributionModelPageOptions = [
     label: 'Enable split view',
     value: 'enableSplitView',
   },
+  ENABLE_EDITOR_RESIZING_MODEL_OPTION,
 ];
 
 const tabularContributionModelPageOptions = [
@@ -974,6 +1043,7 @@ const tabularContributionModelPageOptions = [
     ...ENABLE_TOOLTIP_DESCRIPTIONS_MODEL_OPTION,
     description: 'Show column descriptions as tooltips in the table header.',
   },
+  ENABLE_EDITOR_RESIZING_MODEL_OPTION,
   tabularAllowPersonalNotesModelOption,
   {
     label: 'Enable cell flagging',
@@ -1027,6 +1097,10 @@ export const ProjectConfigContributions: ProjectConfigTemplate = {
     options: genericContributionModelPageOptions,
   },
   ...sharedProjectContributionTailFields,
+  submissionOptions: {
+    ...sharedProjectContributionTailFields.submissionOptions,
+    options: [SHOW_SAVE_FOR_LATER_ALONGSIDE_SUBMIT_OPTION, ...SUBMISSION_OPTIONS],
+  },
   modelPageShowAnnotations: {
     label: 'Contribution page annotations',
     description: 'Decide when annotations are shown when a user is on the contributing page',

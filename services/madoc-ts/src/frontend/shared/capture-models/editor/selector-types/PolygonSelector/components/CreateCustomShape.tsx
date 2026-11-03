@@ -1,114 +1,33 @@
 import { HTMLPortal, useAtlas } from '@atlas-viewer/atlas';
-import React, { useCallback, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  type SVGTheme,
   useAtlasStore,
   useCurrentAnnotationRequest,
   useEvent,
   useRequestAnnotation,
   useSvgEditor,
 } from 'react-iiif-vault';
-import { CanvasViewerButton } from '../../../../../atoms/CanvasViewerGrid';
 import { useLocalStorage } from '../../../../../hooks/use-local-storage';
-import { DeleteForeverIcon } from '../../../../../icons/DeleteForeverIcon';
-import { DrawIcon } from '../../../../../icons/DrawIcon';
-import { HexagonIcon } from '../../../../../icons/HexagonIcon';
-import { LineBoxIcon } from '../../../../../icons/LineBoxIcon';
-import { LineIcon } from '../../../../../icons/LineIcon';
-import { PolygonIcon } from '../../../../../icons/PolgonIcon';
-import { CircleIcon } from '../../../../../icons/CircleIcon';
-import { TriangleIcon } from '../../../../../icons/TriangleIcon';
-import { ThemeIcon } from '../../../../../icons/ThemeIcon';
 import { InputShape } from 'polygon-editor';
 import { useStore } from 'zustand';
-import { PanIcon } from '../../../../../icons/PanIcon';
-import { CusorIcon } from '../../../../../icons/CursorIcon';
+
+import { PolygonTool, SVG_EDITOR_THEMES } from './PolygonControls';
 
 const PROXIMITY_MULTIPLIER = 1.35;
-const SVG_EDITOR_THEMES: Array<{ name: string; theme: Partial<SVGTheme> }> = [
-  {
-    name: 'Default',
-    theme: {},
-  },
-  {
-    name: 'High contrast',
-    theme: {
-      shapeStroke: '#fff',
-      lineStroke: '#fff',
-      activeLineStroke: '#000',
-      controlFill: '#000',
-      boundingBoxStroke: '#fff',
-      boundingBoxDottedStroke: '#000',
-    },
-  },
-  {
-    name: 'Lightsaber',
-    theme: {
-      shapeStroke: '#fff',
-      lineStroke: '#fff',
-      activeLineStroke: '#3844ff',
-      controlFill: '#fff',
-      boundingBoxStroke: '#3844ff',
-      boundingBoxDottedStroke: '#fff',
-    },
-  },
-  {
-    name: 'Bright',
-    theme: {
-      shapeStroke: '#25d527',
-      lineStroke: '#25d527',
-      activeLineStroke: '#a916ff',
-      controlFill: '#a916ff',
-      boundingBoxStroke: '#25d527',
-      boundingBoxDottedStroke: '#a916ff',
-    },
-  },
-  {
-    name: 'Pink',
-    theme: {
-      shapeStroke: '#fff',
-      lineStroke: '#fff',
-      activeLineStroke: '#ff00ff',
-      controlFill: '#ff00ff',
-      boundingBoxStroke: '#fff',
-      boundingBoxDottedStroke: '#ff00ff',
-    },
-  },
-  {
-    name: 'Fine (dark)',
-    theme: {
-      shapeStroke: '#000',
-      lineStroke: '#000',
-      activeLineStroke: '#000',
-      controlFill: '#fff',
-      boundingBoxStroke: '#000',
-      boundingBoxDottedStroke: '#000',
-    },
-  },
-  {
-    name: 'Fine (light)',
-    theme: {
-      shapeStroke: '#fff',
-      lineStroke: '#fff',
-      activeLineStroke: '#fff',
-      controlFill: '#000',
-      boundingBoxStroke: '#fff',
-      boundingBoxDottedStroke: '#fff',
-    },
-  },
-];
-
 export interface CreateCustomShapeProps {
   image: { width: number; height: number };
   shape?: InputShape;
   updateShape: (shape: InputShape) => void;
+  preferredTool: PolygonTool;
 }
 
 export function CreateCustomShape(props: CreateCustomShapeProps) {
   const atlas = useAtlas();
   const { image } = props;
-  const [storedThemeKey, setStoredThemeKey] = useLocalStorage<number>('poly-theme', 0);
+  const [controls, setControls] = useState<HTMLElement | null>(null);
+  const [storedThemeKey] = useLocalStorage<number>('poly-theme', 0);
+  const preferredToolRef = useRef(props.preferredTool);
+  preferredToolRef.current = props.preferredTool;
   const themeKey = Number.isFinite(Number(storedThemeKey))
     ? Math.abs(Math.trunc(Number(storedThemeKey))) % SVG_EDITOR_THEMES.length
     : 0;
@@ -120,7 +39,6 @@ export function CreateCustomShape(props: CreateCustomShapeProps) {
   const store = useAtlasStore();
   const mode = useStore(store, state => state.mode);
   const tool = useStore(store, state => state.tool);
-  const switchTool = useStore(store, state => state.switchTool);
   const polygon = useStore(store, state => state.polygon);
   const runtime = useStore(store, state => state.runtime);
   const currentRequest = useCurrentAnnotationRequest();
@@ -149,6 +67,17 @@ export function CreateCustomShape(props: CreateCustomShapeProps) {
     cancelRequestRef.current = cancelRequest;
   }, [cancelRequest]);
 
+  useEffect(() => {
+    const updateControls = () => {
+      const nextControls = document.getElementById('atlas-controls');
+      setControls(nextControls);
+    };
+    updateControls();
+    const observer = new MutationObserver(updateControls);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
   const {
     helper,
     defs,
@@ -159,7 +88,6 @@ export function CreateCustomShape(props: CreateCustomShapeProps) {
     transitionRotate,
     isHoveringPoint,
     isAddingPoint,
-    currentTool,
     currentShape,
   } = useSvgEditor({
     onChange: props.updateShape,
@@ -167,14 +95,6 @@ export function CreateCustomShape(props: CreateCustomShapeProps) {
     hideShapeLines: true,
     theme: selectedTheme.theme,
   });
-
-  const cycleTheme = useCallback(() => {
-    setStoredThemeKey(previousThemeKey => {
-      const previous = Number(previousThemeKey);
-      const index = Number.isFinite(previous) ? Math.abs(Math.trunc(previous)) : 0;
-      return (index + 1) % SVG_EDITOR_THEMES.length;
-    });
-  }, [setStoredThemeKey]);
 
   useEvent<any, any>(
     'atlas.annotation-request' as any,
@@ -195,6 +115,7 @@ export function CreateCustomShape(props: CreateCustomShapeProps) {
         open: data.open,
         points: data.points || [],
       };
+      initialShapeRef.current = nextShape;
       props.updateShape(nextShape);
       debugLog('event atlas.polygon-update', data);
     },
@@ -224,7 +145,7 @@ export function CreateCustomShape(props: CreateCustomShapeProps) {
   }, [props.shape]);
 
   useEffect(() => {
-    if (!requestId || requestedForIdRef.current === requestId) {
+    if (!controls || !requestId || requestedForIdRef.current === requestId) {
       return;
     }
     requestedForIdRef.current = requestId;
@@ -235,15 +156,16 @@ export function CreateCustomShape(props: CreateCustomShapeProps) {
       points: initialShape.points || [],
       open: initialShape.open ?? true,
     };
+    const defaultTool = preferredToolRef.current;
     debugLog('requestAnnotation init', {
       selectorId: selectorIdRef.current,
       requestId,
       points: request.points.length,
       open: request.open,
-      toolId: 'pen',
+      toolId: defaultTool,
     });
 
-    void requestAnnotationRef.current(request, { toolId: 'pen' }).then(response => {
+    void requestAnnotationRef.current(request, { toolId: defaultTool }).then(response => {
       debugLog('requestAnnotation resolved', {
         selectorId: selectorIdRef.current,
         requestId,
@@ -256,7 +178,7 @@ export function CreateCustomShape(props: CreateCustomShapeProps) {
       debugLog('requestAnnotation cleanup', { selectorId: selectorIdRef.current, requestId });
       cancelRequestRef.current();
     };
-  }, [debugLog, requestId]);
+  }, [controls, debugLog, requestId]);
 
   useEffect(() => {
     const setScaledProximity = () => {
@@ -441,62 +363,6 @@ export function CreateCustomShape(props: CreateCustomShapeProps) {
     transitionRotate,
   ]);
 
-  const controls = document.getElementById('atlas-controls');
-  const showShapes = (currentShape?.points.length || 0) === 0;
-
-  const controlsComponent = (
-    <>
-      <CanvasViewerButton onClick={switchTool.pointer} data-active={currentTool === 'pointer'}>
-        <CusorIcon />
-      </CanvasViewerButton>
-      <CanvasViewerButton onClick={switchTool.hand} data-active={currentTool === 'hand'}>
-        <PanIcon />
-      </CanvasViewerButton>
-      <CanvasViewerButton onClick={cycleTheme} title={`Theme: ${selectedTheme.name}`}>
-        <ThemeIcon />
-      </CanvasViewerButton>
-      {showShapes ? (
-        <>
-          <CanvasViewerButton onClick={switchTool.pen} data-active={currentTool === 'pen' && !state.selectedStamp}>
-            <PolygonIcon />
-          </CanvasViewerButton>
-          <CanvasViewerButton onClick={switchTool.draw} data-active={currentTool === 'pencil'}>
-            <DrawIcon />
-          </CanvasViewerButton>
-          <CanvasViewerButton onClick={switchTool.line} data-active={currentTool === 'line'}>
-            <LineIcon />
-          </CanvasViewerButton>
-          <CanvasViewerButton onClick={switchTool.lineBox} data-active={currentTool === 'lineBox'}>
-            <LineBoxIcon />
-          </CanvasViewerButton>
-          <CanvasViewerButton
-            onClick={switchTool.triangle}
-            data-active={currentTool === 'stamp' && state.selectedStamp?.id === 'triangle'}
-          >
-            <TriangleIcon />
-          </CanvasViewerButton>
-          <CanvasViewerButton
-            onClick={switchTool.hexagon}
-            data-active={currentTool === 'stamp' && state.selectedStamp?.id === 'hexagon'}
-          >
-            <HexagonIcon />
-          </CanvasViewerButton>
-          <CanvasViewerButton
-            onClick={switchTool.circle}
-            data-active={currentTool === 'stamp' && state.selectedStamp?.id === 'circle'}
-          >
-            <CircleIcon />
-          </CanvasViewerButton>
-        </>
-      ) : null}
-      {state.showBoundingBox ? (
-        <CanvasViewerButton onClick={switchTool.remove}>
-          <DeleteForeverIcon style={{ color: 'red' }} />
-        </CanvasViewerButton>
-      ) : null}
-    </>
-  );
-
   return (
     <world-object
       height={image.height}
@@ -514,7 +380,6 @@ export function CreateCustomShape(props: CreateCustomShapeProps) {
             {editor}
           </svg>
         </div>
-        {controls ? createPortal(controlsComponent, controls) : null}
       </HTMLPortal>
     </world-object>
   );

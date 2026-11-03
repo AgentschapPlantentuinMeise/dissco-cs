@@ -5,11 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/digirati-co-uk/madoc-platform/compare/v2.3.2...main)
+## [Unreleased](https://github.com/digirati-co-uk/madoc-platform/compare/v2.4.7...main)
+
+### Added
+
+- Added anonymous site analytics (NS-86)
+- Preserved additional IIIF manifest and canvas properties through import and export, and added storage and administration of embedded and remote annotation pages. ([MAD-1527](https://digirati.atlassian.net/browse/MAD-1527), [MAD-1528](https://digirati.atlassian.net/browse/MAD-1528))
+- Added imported annotations to the Madoc viewer on project and standalone manifest pages, with region highlighting and zoom controls.
+- Added annotation plaintext to transcriptions, search and capture-model prefilling, and displayed plaintext `seeAlso` resources as viewer transcriptions.
+- Added source-property restoration for existing manifests and a global-administrator-only backfill across all sites from System status, with progress and failure reporting.
+
+### Changed
+
+- Refreshed System status with migration and restart selectors, grouped service cards and access to each process instance's logs.
+- Combined slow-request statistics across server instances and added route search, sorting and reporting-instance details.
 
 ### Fixed
 
-- Improved canvas and manifest status bars with shared status mapping, clearer submitted/completed/in-progress colours, and support for changes-requested tasks. ([MAD-1548](https://digirati.atlassian.net/browse/MAD-1548))
+- Fixed the capture model editor freezing or crashing when dropdown options contain repeated values, including repeated blank lines.
+- NS-92: Fixed duplicate capture model field labels and descriptions in the simple review panel for models with nested entities, preserving read-only field region details and crop previews.
+- Accepted remote annotation pages that omit empty `items` arrays, including Wellcome manifests, and isolated malformed embedded pages so they do not fail the resource import.
+- Preserved local annotation edits and removals during backfill, retained Presentation 2 extension properties and transcription text, and enforced publication restrictions when displaying imported annotations and plaintext.
+- NS-93: fixed CSS and styling issues from continued Tailwind migration
 
 <!--
 
@@ -22,6 +39,138 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 -->
+
+## [v2.4.7](https://github.com/digirati-co-uk/madoc-platform/compare/v2.4.6...v2.4.7)
+
+### Fixed
+
+- Fixed `translations/en/madoc.json` being invalid JSON (since v2.4.1), which made the admin localisation screen silently discard saved translations in the default namespace.
+- Made development-mode saving of missing translation keys write the file atomically, so concurrent server workers can no longer corrupt it.
+- Fixed collection metadata not appearing in the site sidebar when metadata display configuration was not loaded.
+
+## [v2.4.6](https://github.com/digirati-co-uk/madoc-platform/compare/v2.4.5...v2.4.6)
+
+### Changed
+
+- Excluded locally generated diagnostic reports from source control.
+- Defaulted to two to four server workers with 768 MiB memory recycling, readiness checks, graceful request draining and smaller per-worker database pools; kept two queue workers by default.
+
+### Fixed
+
+- Fixed growing extension registrations and retained API clients, including cleanup after failed requests and automation.
+- Released CSV target caches after each export and expired cached project field ordering.
+- Prevented plugin route wrappers from accumulating across repeated server renders.
+- Bounded API debug history to the latest 200 requests.
+- Stopped task polling after a failed request instead of retaining an idle polling timer.
+- Stopped server API requests from retrying gateway 502 responses indefinitely.
+- Cancelled API work when clients disconnect and bounded non-streaming server API requests to 90 seconds.
+- Released server-rendered API clients, query caches and stylesheets; aborted disconnected or timed-out renders and their prefetch requests.
+- Kept login signing keys consistent across workers during cold startup, legacy key conversion and invalid-key repair.
+- Reported user lookup database failures instead of rendering authenticated users as logged out.
+- Reused the active transaction when loading stored revisions and bounded database connection waits to prevent pool starvation.
+- Closed migration database pools after startup migrations finish or fail.
+
+### Added
+
+- Added repeatable diagnostics for API and server-rendering resource lifetimes.
+
+## [v2.4.5](https://github.com/digirati-co-uk/madoc-platform/compare/v2.4.4...v2.4.5)
+
+### Added
+
+- Added French translations #899
+
+## [v2.4.4](https://github.com/digirati-co-uk/madoc-platform/compare/v2.4.3...v2.4.4)
+
+### Fixed
+
+- Fix for project updates schema (v2)
+
+## [v2.4.3](https://github.com/digirati-co-uk/madoc-platform/compare/v2.4.2...v2.4.3)
+
+### Fixed
+
+- Fix for project updates schema
+
+## [v2.4.2](https://github.com/digirati-co-uk/madoc-platform/compare/v2.4.1...v2.4.2)
+
+### Fixed
+
+- Fix for checkboxes on capture models not being saved correctly
+
+## [v2.4.1](https://github.com/digirati-co-uk/madoc-platform/compare/v2.4.0...v2.4.1)
+
+### Added
+
+- Added support for resizing the capture model sidebar on Manifest projects (MAD-1587)
+- Added an optional "Save for later" button beside Submit on contribution pages.
+- Added a configurable site accent colour across site and administration controls, navigation, and search. ([MAD-1571](https://digirati.atlassian.net/browse/MAD-1571))
+- Added settings to open links in new tabs for HTML and Markdown blocks, project updates, and footer links. ([MAD-1588](https://digirati.atlassian.net/browse/MAD-1588))
+- Added cell-range copy/paste controls to the tabular editor, including paste into a single selected cell and brief success or failure feedback.
+- Added tabular image-alignment controls for nudging the grid and adjusting its left and right edges.
+
+### Changed
+
+- Improved Manifest model canvas navigation at narrow widths and added canvas selection and previous/next controls to Manifest review.
+- Improved capture-model submission and review previews, including clearer field layouts and linked autocomplete values.
+- Made search facet labels easier to read and hid facet groups with no available options. ([MAD-1589](https://digirati.atlassian.net/browse/MAD-1589))
+
+### Fixed
+
+- Kept working drafts available after saving and applied the configured short and long contribution expiry times correctly. ([MAD-1586](https://digirati.atlassian.net/browse/MAD-1586))
+- Fixed tabular CSV exports to include the complete column set and preserve blank rows.
+- Fixed tabular cell annotations so published selectors follow the saved image alignment, including older tabular models.
+- Fixed tabular alignment and row tracking when nudging or changing canvas zoom.
+- Fixed capture-model revision updates that could lose nested properties or move fields out of order.
+
+<!--
+
+### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+-->
+
+## [v2.4.0](https://github.com/digirati-co-uk/madoc-platform/compare/v2.3.2...v2.4.0)
+
+### Added
+
+- Added JSON import/export for project configuration, safely merging imported settings while preserving protected project values. ([MAD-1531](https://digirati.atlassian.net/browse/MAD-1531))
+- Added configurable, keyboard-accessible resizing for contribution, preview, review, and tabular editor panels. ([MAD-1535](https://digirati.atlassian.net/browse/MAD-1535))
+- Added image rotation to contribution previews and review screens, with a clear rotated mode and reset option. ([MAD-1556](https://digirati.atlassian.net/browse/MAD-1556))
+- Added administrator-managed project search tabs, configurable facets, resource filters, result counts, grid/list views, thumbnails, and optional infinite scrolling.
+- Added import/export for global and site settings, and preserved the correct type when exported project templates are imported again.
+- Added "Open in Theseus" access for collections and improved its availability across project resources, with an option to hide the action.
+
+### Changed
+
+- Improved project updates with optional titles, formatted content, edit/preview modes, administrator editing and deletion, and immediate on-page refreshes. ([MAD-1549](https://digirati.atlassian.net/browse/MAD-1549))
+- Improved collection and manifest imports with automatic retries, clearer progress and failure totals, status filtering, pagination, and re-importing failed manifests. ([MAD-1555](https://digirati.atlassian.net/browse/MAD-1555))
+- Refined project search so autocomplete, results, and resource links stay within the current project, with improved project and metadata filtering. ([NS-48](https://digirati.atlassian.net/browse/NS-48))
+- Increased the permitted tabular heading length and improved column-description tooltips for mouse and keyboard users. ([MTDP-73](https://digirati.atlassian.net/browse/MTDP-73))
+- Changed the Personal Notes action to use a clearer pencil icon. ([MAD-1577](https://digirati.atlassian.net/browse/MAD-1577))
+- Updated the review dashboard to open the newer review listing by default.
+- Improved search indexing reliability so results stay aligned with project, collection, and resource changes.
+- Improved translation refreshing across site, account, and administration pages, and updated the English, Welsh, and Dutch catalogues.
+- Developer improvements covering platform maintenance, automated checks, deployment previews, migrations, generated configuration, and internal guidance.
+
+### Fixed
+
+- Improved canvas and manifest status bars with shared status mapping, clearer submitted/completed/in-progress colours, and support for changes-requested tasks. ([MAD-1548](https://digirati.atlassian.net/browse/MAD-1548))
+- Fixed contributor task statuses after a reviewer requests changes, ensuring work is shown as requiring further action rather than completed. ([MAD-1553](https://digirati.atlassian.net/browse/MAD-1553))
+- Fixed capture-model editing issues including fields losing focus after the first character, optional-region validation, missing field headings, and autocomplete placeholder handling. ([MAD-1570](https://digirati.atlassian.net/browse/MAD-1570))
+- Fixed HTML and Markdown block editing, including support for adding links and more reliable editor loading. ([MAD-1574](https://digirati.atlassian.net/browse/MAD-1574))
+- Fixed spacer and divider rendering across configurable pages. ([MAD-1576](https://digirati.atlassian.net/browse/MAD-1576))
+- Fixed themed headers showing a duplicate site title, including when language-specific themes are used. ([NS-83](https://digirati.atlassian.net/browse/NS-83))
+- Fixed site identification on account pages, preventing the wrong site session or configuration from being used. ([NS-84](https://digirati.atlassian.net/browse/NS-84))
+- Fixed activity-feed links and external-client access.
+- Fixed manifest model previews not showing the total page count.
+- Fixed external links on footer logos.
+- Fixed the IIIF Browser integration and refreshed its user-facing labels.
 
 ## [v2.3.3](https://github.com/digirati-co-uk/madoc-platform/compare/v2.3.2...v2.3.3)
 
@@ -36,6 +185,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added collection import warnings showing imported versus expected manifest counts, including warning states when manifest imports stop before completing.
 
 ### Changed
+
 - Improved project collection availability filtering and canvas/manifest status bars with shared status mapping, clearer submitted/completed/in-progress colours, and project-scoped "Show available" controls. ([MAD-1548](https://digirati.atlassian.net/browse/MAD-1548))
 
 ### Fixed

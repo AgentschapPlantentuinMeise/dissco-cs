@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useMutation } from 'react-query';
 import { useNavigate } from 'react-router-dom';
 import { EditShorthandCaptureModel } from '../../../shared/capture-models/EditorShorthandCaptureModel';
 import { useApi } from '../../../shared/hooks/use-api';
-import { useSite, useSystemConfig, useUpdateSystemConfig } from '../../../shared/hooks/use-site';
+import { useSetSite, useSite, useSystemConfig, useUpdateSystemConfig } from '../../../shared/hooks/use-site';
 import { AdminHeader } from '../../molecules/AdminHeader';
 import { WidePage } from '../../../shared/layout/WidePage';
+import { ConfigurationImportExport } from '../../components/ConfigurationImportExport';
+import type { SiteSystemConfig } from '../../../../extensions/site-manager/types';
 
 const systemConfigModel = {
   enableRegistrations: {
@@ -27,6 +29,15 @@ const systemConfigModel = {
     label: 'Disable search indexing',
     type: 'checkbox-field',
     inlineLabel: 'Disable automatic search indexing tasks after contributions',
+  },
+  footerLinksInNewTab: {
+    label: 'Footer links',
+    type: 'checkbox-field',
+    inlineLabel: 'Open footer links in new tab',
+  },
+  accentColor: {
+    label: 'Site accent color',
+    type: 'color-field',
   },
   // Login/Register messages
   loginHeader: {
@@ -63,23 +74,39 @@ export const SiteSystemConfiguration: React.FC = () => {
   const api = useApi();
   const savedConfig = useSystemConfig();
   const updateConfig = useUpdateSystemConfig();
+  const setSite = useSetSite();
   const navigate = useNavigate();
   const site = useSite();
+  const [importedConfig, setImportedConfig] = useState<Partial<SiteSystemConfig>>();
 
-  const config = {
+  const config: Partial<SiteSystemConfig> = {
     loginHeader: '',
     loginFooter: '',
     registerHeader: '',
     registerFooter: '',
     disableSearchIndexing: false,
-    ...(savedConfig as any),
+    ...savedConfig,
+    footerLinksInNewTab: !!site.config?.footerLinksInNewTab,
+    accentColor: site.config?.accentColor || '',
+    ...importedConfig,
   };
 
+  const editableConfig = Object.fromEntries(
+    Object.keys(systemConfigModel).map(key => [key, config[key as keyof SiteSystemConfig]])
+  ) as Partial<SiteSystemConfig>;
+
   const [updateSystemConfig] = useMutation(async (newConfig: any) => {
+    const siteConfig = { ...site.config, ...newConfig };
+    if (siteConfig.accentColor === '') {
+      delete siteConfig.accentColor;
+    }
+
     await api.siteManager.updateSite({
-      config: newConfig,
+      config: siteConfig,
     });
     const siteDetails = await api.getSiteDetails(site.id);
+
+    setSite(siteDetails);
 
     updateConfig({
       ...config,
@@ -101,7 +128,13 @@ export const SiteSystemConfiguration: React.FC = () => {
       />
       <WidePage>
         <div style={{ maxWidth: 600 }}>
-          <EditShorthandCaptureModel data={config} template={systemConfigModel} onSave={updateSystemConfig} />
+          <ConfigurationImportExport configuration={editableConfig} scope="site" onImport={setImportedConfig} />
+          <EditShorthandCaptureModel
+            key={importedConfig ? JSON.stringify(importedConfig) : undefined}
+            data={editableConfig}
+            template={systemConfigModel}
+            onSave={updateSystemConfig}
+          />
         </div>
       </WidePage>
     </>

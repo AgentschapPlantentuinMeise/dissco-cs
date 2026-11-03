@@ -1,5 +1,16 @@
+import { EnvConfig } from './env-config';
+import { SlowRequestInstance, SlowRequests } from './slow-requests';
+
+export interface Pm2StatusResponse {
+  list: Pm2Status[];
+  build: EnvConfig['build'];
+  slowRequests: SlowRequests;
+  slowRequestInstances: SlowRequestInstance[];
+  slowRequestsError?: string;
+}
+
 export type Pm2Status = {
-  id: string;
+  id: number;
   name: string;
   monit: {
     memory: number;
@@ -18,3 +29,8 @@ export type Pm2Status = {
   status: string;
   uptime: number;
 };
+
+export interface Pm2LogEvent {
+  stream: 'stdout' | 'stderr';
+  message: string;
+}

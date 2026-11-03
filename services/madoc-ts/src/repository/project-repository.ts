@@ -61,18 +61,19 @@ export class ProjectRepository extends BaseRepository {
 
   static mutations = {
     createProjectUpdate: (update: CreateProjectUpdate, userId: number, projectId: number) => sql<ProjectUpdatesRow>`
-      insert into project_updates (project_id, user_id, update, snapshot, created)
-      values (${projectId}, ${userId}, ${update.update}, ${sql.json(
-      (update.snapshot as Record<string, any>) || {}
-    )}, now())
+      insert into project_updates (project_id, user_id, title, update, open_in_new_tab, snapshot, created)
+      values (${projectId}, ${userId}, ${update.title || null}, ${update.update}, ${!!update.openInNewTab}, ${sql.json(
+        (update.snapshot as Record<string, any>) || {}
+      )}, now())
       returning *
     `,
 
     deleteProjectUpdate: (updateId: number, projectId: number) => sql`
       delete from project_updates where project_id = ${projectId} and id = ${updateId}
     `,
-    updateProjectUpdate: (update: string, updateId: number, projectId: number) => sql<ProjectUpdatesRow>`
-      update project_updates set update = ${update} where project_id = ${projectId} and id = ${updateId} returning *
+    updateProjectUpdate: (update: CreateProjectUpdate, updateId: number, projectId: number) => sql<ProjectUpdatesRow>`
+      update project_updates set title = ${update.title || null}, update = ${update.update}, open_in_new_tab = ${!!update.openInNewTab}
+      where project_id = ${projectId} and id = ${updateId} returning *
     `,
 
     createProjectFeedback: (feedback: string, userId: number, projectId: number) => sql<ProjectFeedbackRow>`
@@ -125,7 +126,9 @@ export class ProjectRepository extends BaseRepository {
         id: row.user_id,
         name: row.user_name || undefined,
       },
+      title: row.title || undefined,
       update: row.update,
+      openInNewTab: row.open_in_new_tab,
       snapshot: row.snapshot,
       created: row.created,
     };
@@ -282,7 +285,7 @@ export class ProjectRepository extends BaseRepository {
     return result.rowCount > 0;
   }
 
-  async updateProjectUpdate(update: string, updateId: number, projectId: number) {
+  async updateProjectUpdate(update: CreateProjectUpdate, updateId: number, projectId: number) {
     const result = await this.connection.one(
       ProjectRepository.mutations.updateProjectUpdate(update, updateId, projectId)
     );
