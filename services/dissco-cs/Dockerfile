@@ -1,13 +1,13 @@
 FROM node:22.22.3-alpine AS shared-build
 WORKDIR /build/shared
-RUN npm install -g pnpm@9.15.9
+RUN npm install -g pnpm@11.22.0
 COPY shared/ ./
 RUN pnpm install --frozen-lockfile
 RUN pnpm run build
 
 FROM node:22.22.3-alpine AS frontend-build
 WORKDIR /build
-RUN npm install -g pnpm@9.15.9
+RUN npm install -g pnpm@11.22.0
 COPY --from=shared-build /build/shared ./shared/
 COPY frontend/ ./frontend/
 COPY test-support/ ./test-support/
@@ -18,9 +18,9 @@ RUN pnpm run build
 
 FROM node:22.22.3-alpine AS backend-build
 WORKDIR /build
-RUN npm install -g pnpm@9.15.9
+RUN npm install -g pnpm@11.22.0
 COPY --from=shared-build /build/shared ./shared/
-COPY backend/package.json backend/pnpm-lock.yaml ./backend/
+COPY backend/package.json backend/pnpm-lock.yaml backend/pnpm-workspace.yaml ./backend/
 WORKDIR /build/backend
 RUN pnpm install --frozen-lockfile
 COPY backend/tsconfig.json ./
