@@ -22,10 +22,13 @@ export const adminFrontend: RouteMiddleware = async context => {
   const user = context.siteManager.getUserFromJwt(site.id, context.state.jwt);
   const siteLocales = await cachedApi(`locales`, 3000, api => api.getSiteLocales());
   const lng = context.cookies.get('i18next');
-  const [, i18nInstance] = await createBackend(lng, site.id);
+  const [, i18nInstance] = await createBackend(lng || siteLocales.defaultLanguage || 'en', site.id);
 
   context.staticPage = async token => {
+    const renderController = new AbortController();
+    context.res.once('close', () => renderController.abort());
     const result = await renderAdmin({
+      signal: renderController.signal,
       url: context.req.url || '',
       jwt: token,
       basename: `/s/${context.params.slug}/admin`,
@@ -66,6 +69,7 @@ export const adminFrontend: RouteMiddleware = async context => {
           <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
           <meta http-equiv="X-UA-Compatible" content="ie=edge">
           <!--ssr-head-->
+          <link rel="stylesheet" href="${viteProtocol}://${hostname}:3088/src/frontend/admin/index.css" />
           <script type="module">
             import RefreshRuntime from '${viteProtocol}://${hostname}:3088/@react-refresh'
             RefreshRuntime.injectIntoGlobalHook(window)

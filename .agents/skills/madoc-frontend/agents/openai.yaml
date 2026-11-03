@@ -1,0 +1,4 @@
+interface:
+  display_name: "Madoc Frontend"
+  short_description: "React route loading, resource context, and SSR"
+  default_prompt: "Use $madoc-frontend to trace Madoc route loading, resource context, or hydration."

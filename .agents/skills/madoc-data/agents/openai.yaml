@@ -1,0 +1,4 @@
+interface:
+  display_name: "Madoc Data"
+  short_description: "SQL, generated schemas, and search consistency"
+  default_prompt: "Use $madoc-data to change Madoc storage or a validated data contract."

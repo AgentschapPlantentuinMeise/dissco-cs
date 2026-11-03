@@ -1,3 +1,15 @@
+import {
+  listAnnotations,
+  addAnnotation,
+  updateAnnotation,
+  deleteAnnotation,
+  refreshAnnotation,
+  completeAnnotation,
+  importProperties,
+  backfillProperties,
+} from './routes/iiif/annotations/manage-annotations';
+import { getStoredAnnotationPage } from './routes/iiif/annotations/get-annotation-page';
+import { getAnalytics, recordPageView } from './routes/analytics';
 import { router as activityStreamRoutes } from './activity-streams/router';
 import { getAuthRoutes } from './auth';
 import { router as captureModelRoutes } from './capture-model-server/router';
@@ -47,7 +59,14 @@ import {
   uninstallPlugin,
   viewRemotePlugin,
 } from './routes/admin/plugins';
-import { pm2RestartAuth, pm2RestartMadoc, pm2RestartQueue, pm2RestartScheduler, pm2Status } from './routes/admin/pm2';
+import {
+  pm2Logs,
+  pm2RestartAuth,
+  pm2RestartMadoc,
+  pm2RestartQueue,
+  pm2RestartScheduler,
+  pm2Status,
+} from './routes/admin/pm2';
 import { queueStatus } from './routes/admin/queue-status';
 import { resumeQueue } from './routes/admin/resume-queue';
 import { getSiteDetails } from './routes/admin/site-details';
@@ -187,6 +206,15 @@ import { getProjectMetadata } from './routes/projects/get-project-metadata';
 import { getProjectModel } from './routes/projects/get-project-model';
 import { getProjectNote } from './routes/projects/get-project-note';
 import { getProjectRawData } from './routes/projects/get-project-raw-data';
+import {
+  createProjectSearchIndex,
+  deleteProjectSearchIndex,
+  indexProjectSearchIndex,
+  listProjectSearchIndexes,
+  listPublicProjectSearchIndexes,
+  reindexProjectSearchIndex,
+  updateProjectSearchIndex,
+} from './routes/projects/project-search-indexes';
 import { getProjectStructure } from './routes/projects/get-project-structure';
 import { getProjectTask } from './routes/projects/get-project-task';
 import { listProjectEmails } from './routes/projects/list-project-emails';
@@ -216,13 +244,16 @@ import { updateProjectMetadata } from './routes/projects/update-project-metadata
 import { updateProjectNote } from './routes/projects/update-project-note';
 import { updateProjectStatus } from './routes/projects/update-project-status';
 import { updateProjectTemplateConfig } from './routes/projects/update-project-template-config';
+import { patchTabularProjectMetadataRoute } from './routes/projects/patch-tabular-project-metadata';
 import { updateResourceClaim } from './routes/projects/update-resource-claim';
 import { siteRoot } from './routes/root';
 import { batchIndex } from './routes/search/batch-index';
 import { getFacetConfiguration, updateFacetConfiguration } from './routes/search/facet-configuration';
 import { fullReindex } from './routes/search/full-reindex';
 import { indexCanvas } from './routes/search/index-canvas';
+import { indexCollection } from './routes/search/index-collection';
 import { indexManifest } from './routes/search/index-manifest';
+import { indexProject } from './routes/search/index-project';
 import { typesenseGetContext, typesenseListContexts } from './routes/search/typesense-contexts';
 import {
   typesenseDeleteIIIF,
@@ -238,7 +269,14 @@ import {
   typesenseListIndexables,
   typesenseListModels,
 } from './routes/search/typesense-indexables';
-import { typesenseProxyMultiSearch, typesenseProxySearch, typesenseProxyStatus } from './routes/search/typesense-proxy';
+import {
+  typesenseProjectProxyMultiSearch,
+  typesenseProjectProxySearch,
+  typesenseProjectProxyStatus,
+  typesenseProxyMultiSearch,
+  typesenseProxySearch,
+  typesenseProxyStatus,
+} from './routes/search/typesense-proxy';
 import { typesenseQuery } from './routes/search/typesense-query';
 import { siteCanvas } from './routes/site/site-canvas';
 import { siteCanvasModels } from './routes/site/site-canvas-models';
@@ -272,6 +310,7 @@ import { siteProjectRecent } from './routes/site/site-project-recent';
 import { siteProjectUpdates } from './routes/site/site-project-updates';
 import { siteProjects } from './routes/site/site-projects';
 import { sitePublishedModels } from './routes/site/site-published-models';
+import { iiifBackfillStatus, startIIIFBackfill } from './routes/admin/iiif-backfill';
 import { siteSearch } from './routes/site/site-search';
 import { siteTaskMetadata } from './routes/site/site-task-metadata';
 import { termListProxy } from './routes/site/site-term-proxy';
@@ -325,6 +364,7 @@ export const router = new TypedRouter({
   'get-scopes': [TypedRouter.GET, '/api/madoc/site/:siteId/permissions', getSiteScopes],
   'update-scopes': [TypedRouter.POST, '/api/madoc/site/:siteId/permissions', saveSiteScopes],
   'pm2-list': [TypedRouter.GET, '/api/madoc/pm2/list', pm2Status],
+  'pm2-logs': [TypedRouter.GET, '/s/:slug/madoc/api/pm2/:processId/logs', pm2Logs],
   'pm2-restart-auth': [TypedRouter.POST, '/api/madoc/pm2/restart/auth', pm2RestartAuth],
   'pm2-restart-queue': [TypedRouter.POST, '/api/madoc/pm2/restart/queue', pm2RestartQueue],
   'pm2-restart-madoc': [TypedRouter.POST, '/api/madoc/pm2/restart/madoc', pm2RestartMadoc],
@@ -445,6 +485,36 @@ export const router = new TypedRouter({
     '/s/:slug/madoc/api/typesense/multi_search',
     typesenseProxyMultiSearch,
   ],
+  'site-project-search-indexes': [
+    TypedRouter.GET,
+    '/s/:slug/madoc/api/projects/:project/search-indexes',
+    listPublicProjectSearchIndexes,
+  ],
+  'site-project-typesense-status': [
+    TypedRouter.GET,
+    '/s/:slug/madoc/api/projects/:project/typesense/:indexId/status',
+    typesenseProjectProxyStatus,
+  ],
+  'site-project-typesense-search-get': [
+    TypedRouter.GET,
+    '/s/:slug/madoc/api/projects/:project/typesense/:indexId',
+    typesenseProjectProxySearch,
+  ],
+  'site-project-typesense-search-get-paths': [
+    TypedRouter.GET,
+    '/s/:slug/madoc/api/projects/:project/typesense/:indexId/collections/:collection/documents/search',
+    typesenseProjectProxySearch,
+  ],
+  'site-project-typesense-search-post': [
+    TypedRouter.POST,
+    '/s/:slug/madoc/api/projects/:project/typesense/:indexId',
+    typesenseProjectProxySearch,
+  ],
+  'site-project-typesense-multi-search-post': [
+    TypedRouter.POST,
+    '/s/:slug/madoc/api/projects/:project/typesense/:indexId/multi_search',
+    typesenseProjectProxyMultiSearch,
+  ],
   'search-index-iiif': [TypedRouter.POST, '/api/search/iiif', typesenseIngestIIIF],
   'search-reindex-iiif': [TypedRouter.PUT, '/api/search/iiif/:id', typesenseIngestIIIF],
   'search-list-iiif': [TypedRouter.GET, '/api/search/iiif', typesenseListIIIF],
@@ -502,6 +572,8 @@ export const router = new TypedRouter({
   ],
   'delete-collection': [TypedRouter.DELETE, '/api/madoc/iiif/collections/:id', deleteCollectionEndpoint],
   'publish-collection': [TypedRouter.POST, '/api/madoc/iiif/collections/:id/publish', publishCollection],
+  'search-index-collection': [TypedRouter.POST, '/api/madoc/iiif/collections/:id/index', indexCollection],
+  'search-index-project': [TypedRouter.POST, '/api/madoc/projects/:id/index', indexProject],
   'get-collection-metadata': [TypedRouter.GET, '/api/madoc/iiif/collections/:id/metadata', getCollectionMetadata],
   'get-collection-structure': [TypedRouter.GET, '/api/madoc/iiif/collections/:id/structure', getCollectionStructure],
   'get-collection-projects': [TypedRouter.GET, '/api/madoc/iiif/collections/:id/projects', getCollectionProjects],
@@ -608,6 +680,41 @@ export const router = new TypedRouter({
   ],
   'delete-canvas': [TypedRouter.DELETE, '/api/madoc/iiif/canvases/:id', deleteCanvasEndpoint],
 
+  'list-annotation-pages': [TypedRouter.GET, '/api/madoc/iiif/resources/:id/annotations', listAnnotations],
+  'add-annotation-page': [
+    TypedRouter.POST,
+    '/api/madoc/iiif/resources/:id/annotations',
+    addAnnotation,
+    { schemaName: 'AnnotationPageInput' },
+  ],
+  'update-annotation-page': [
+    TypedRouter.PUT,
+    '/api/madoc/iiif/resources/:id/annotations/:pageId',
+    updateAnnotation,
+    { schemaName: 'AnnotationPageInput' },
+  ],
+  'delete-annotation-page': [TypedRouter.DELETE, '/api/madoc/iiif/resources/:id/annotations/:pageId', deleteAnnotation],
+  'refresh-annotation-page': [
+    TypedRouter.POST,
+    '/api/madoc/iiif/resources/:id/annotations/:pageId/refresh',
+    refreshAnnotation,
+  ],
+  'complete-annotation-page': [
+    TypedRouter.POST,
+    '/api/madoc/iiif/resources/:id/annotations/:pageId/complete',
+    completeAnnotation,
+    { schemaName: 'CompleteAnnotationPageRequest' },
+  ],
+  'import-iiif-properties': [
+    TypedRouter.POST,
+    '/api/madoc/iiif/resources/:id/iiif-properties',
+    importProperties,
+    { schemaName: 'ImportIIIFPropertiesRequest' },
+  ],
+  'backfill-iiif-properties': [TypedRouter.POST, '/api/madoc/iiif/resources/:id/iiif-backfill', backfillProperties],
+  'backfill-all-iiif-properties': [TypedRouter.POST, '/api/madoc/system/iiif-backfill', startIIIFBackfill],
+  'backfill-all-iiif-properties-status': [TypedRouter.GET, '/api/madoc/system/iiif-backfill', iiifBackfillStatus],
+
   // Import API
   'import-manifest': [TypedRouter.POST, '/api/madoc/iiif/import/manifest', importManifest],
   'import-manifest-bulk': [TypedRouter.POST, '/api/madoc/iiif/import/manifest/bulk', importBulkManifests],
@@ -620,6 +727,8 @@ export const router = new TypedRouter({
   'update-linking': [TypedRouter.PUT, '/api/madoc/iiif/linking/:id', updateLinking],
 
   // Stats.
+  'get-analytics': [TypedRouter.GET, '/api/madoc/analytics', getAnalytics],
+  'record-page-view': [TypedRouter.POST, '/s/:slug/madoc/api/analytics/page-view', recordPageView, { schemaName: 'RecordPageViewRequest' }],
   'get-statistics': [TypedRouter.GET, '/api/madoc/iiif/statistics', statistics],
   'post-batch-index': [TypedRouter.POST, '/api/madoc/iiif/batch-index', batchIndex],
   'post-full-index': [TypedRouter.POST, '/api/madoc/iiif/reindex', fullReindex],
@@ -630,6 +739,34 @@ export const router = new TypedRouter({
   'create-project': [TypedRouter.POST, '/api/madoc/projects', createNewProject],
   'list-projects': [TypedRouter.GET, '/api/madoc/projects', listProjects],
   'get-project': [TypedRouter.GET, '/api/madoc/projects/:id', getProject],
+  'get-project-search-indexes': [TypedRouter.GET, '/api/madoc/projects/:id/search-indexes', listProjectSearchIndexes],
+  'create-project-search-index': [
+    TypedRouter.POST,
+    '/api/madoc/projects/:id/search-indexes',
+    createProjectSearchIndex,
+    { schemaName: 'ProjectSearchIndexRequest' },
+  ],
+  'update-project-search-index': [
+    TypedRouter.PUT,
+    '/api/madoc/projects/:id/search-indexes/:indexId',
+    updateProjectSearchIndex,
+    { schemaName: 'ProjectSearchIndexRequest' },
+  ],
+  'delete-project-search-index': [
+    TypedRouter.DELETE,
+    '/api/madoc/projects/:id/search-indexes/:indexId',
+    deleteProjectSearchIndex,
+  ],
+  'reindex-project-search-index': [
+    TypedRouter.POST,
+    '/api/madoc/projects/:id/search-indexes/:indexId/reindex',
+    reindexProjectSearchIndex,
+  ],
+  'index-project-search-index': [
+    TypedRouter.POST,
+    '/api/madoc/projects/:id/search-indexes/:indexId/index',
+    indexProjectSearchIndex,
+  ],
   'get-project-by-task': [TypedRouter.GET, '/api/madoc/project-by-task/:id', getProjectFromTask],
   'export-project': [TypedRouter.POST, '/api/madoc/projects/:id/export', createProjectExport],
   'get-project-structure': [TypedRouter.GET, '/api/madoc/projects/:id/structure', getProjectStructure],
@@ -639,6 +776,12 @@ export const router = new TypedRouter({
     TypedRouter.PUT,
     '/api/madoc/projects/:id/template-config',
     updateProjectTemplateConfig,
+  ],
+  'patch-tabular-project-metadata': [
+    TypedRouter.PATCH,
+    '/api/madoc/projects/:id/template-config',
+    patchTabularProjectMetadataRoute,
+    { schemaName: 'TabularProjectMetadataUpdate' },
   ],
   'update-project-annotation-style': [
     TypedRouter.PUT,
@@ -691,8 +834,18 @@ export const router = new TypedRouter({
   'project-task-svg': [TypedRouter.GET, '/api/madoc/projects/:id/tasks/:taskId/preview-svg', svgFromCrowdsourcingTask],
   // Project updates
   'list-project-updates': [TypedRouter.GET, '/api/madoc/projects/:id/updates', listProjectUpdates],
-  'create-project-update': [TypedRouter.POST, '/api/madoc/projects/:id/updates', createProjectUpdate],
-  'update-project-update': [TypedRouter.PUT, '/api/madoc/projects/:id/updates/:updateId', updateProjectUpdate],
+  'create-project-update': [
+    TypedRouter.POST,
+    '/api/madoc/projects/:id/updates',
+    createProjectUpdate,
+    { schemaName: 'ProjectUpdateRequest' },
+  ],
+  'update-project-update': [
+    TypedRouter.PUT,
+    '/api/madoc/projects/:id/updates/:updateId',
+    updateProjectUpdate,
+    { schemaName: 'ProjectUpdateRequest' },
+  ],
   'delete-project-update': [TypedRouter.DELETE, '/api/madoc/projects/:id/updates/:updateId', deleteProjectUpdate],
   // Project members
   'list-project-members': [TypedRouter.GET, '/api/madoc/projects/:id/members', listProjectMembers],
@@ -773,12 +926,7 @@ export const router = new TypedRouter({
   'post-update-password': [TypedRouter.POST, '/s/:slug/profile', updateProfilePage],
   'get-logout': [TypedRouter.GET, '/s/:slug/logout', [parseJwt, logout], { isPublic: true }],
   'reset-password': [TypedRouter.GET, '/s/:slug/reset-password', [parseJwt, resetPasswordPage], { isPublic: true }],
-  'activate-account': [
-    TypedRouter.GET,
-    '/s/:slug/activate-account',
-    [parseJwt, resetPasswordPage],
-    { isPublic: true },
-  ],
+  'activate-account': [TypedRouter.GET, '/s/:slug/activate-account', [parseJwt, resetPasswordPage], { isPublic: true }],
   'post-reset-password': [TypedRouter.POST, '/s/:slug/reset-password', resetPasswordPage],
 
   // dissco-cs fork addition: JSON auth API for the dissco-cs frontend's own pages.
@@ -807,7 +955,12 @@ export const router = new TypedRouter({
   'api-authentication': [TypedRouter.POST, '/s/:slug/auth/api-token', authenticateApi],
   'get-login-refresh': [TypedRouter.GET, '/s/:slug/login/refresh', loginRefresh],
   'account-login-entry': [TypedRouter.GET, '/account/login', accountEntryRedirect('login'), { isPublic: true }],
-  'account-register-entry': [TypedRouter.GET, '/account/register', accountEntryRedirect('register'), { isPublic: true }],
+  'account-register-entry': [
+    TypedRouter.GET,
+    '/account/register',
+    accountEntryRedirect('register'),
+    { isPublic: true },
+  ],
   'account-forgot-password-entry': [
     TypedRouter.GET,
     '/account/forgot-password',
@@ -972,6 +1125,16 @@ export const router = new TypedRouter({
     siteManifestBuildOptions,
     { isPublic: true },
   ],
+  'stored-annotation-page-options': [
+    TypedRouter.OPTIONS,
+    '/s/:slug/madoc/api/resources/:id/annotations/:pageId/:version',
+    siteManifestBuildOptions,
+  ],
+  'stored-annotation-page': [
+    TypedRouter.GET,
+    '/s/:slug/madoc/api/resources/:id/annotations/:pageId/:version',
+    getStoredAnnotationPage,
+  ],
   'manifest-build': [TypedRouter.GET, '/s/:slug/madoc/api/manifests/:id/export/:version', siteManifestBuild],
   'collection-build-options': [
     TypedRouter.OPTIONS,
@@ -1017,12 +1180,7 @@ export const router = new TypedRouter({
 
   // Frontend
   'admin-frontend': [TypedRouter.GET, '/s/:slug/admin{/*path}', adminFrontend],
-  'site-frontend-root': [
-    TypedRouter.GET,
-    '/s/:slug',
-    [parseJwt, siteFrontendAccess, siteFrontend],
-    { isPublic: true },
-  ],
+  'site-frontend-root': [TypedRouter.GET, '/s/:slug', [parseJwt, siteFrontendAccess, siteFrontend], { isPublic: true }],
   'site-frontend': [
     TypedRouter.GET,
     '/s/:slug{/*path}',

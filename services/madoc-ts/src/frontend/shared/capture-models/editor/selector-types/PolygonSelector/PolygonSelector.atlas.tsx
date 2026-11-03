@@ -1,9 +1,10 @@
 import { InputShape } from 'polygon-editor';
-import { useCanvas } from 'react-iiif-vault';
 import { useAnnotationStyles } from '../../../AnnotationStyleContext';
 import { BaseSelector, SelectorTypeProps } from '../../../types/selector-types';
+import { useImageServiceContext } from '../../content-types/Atlas/Atlas.helpers';
 import { useSelectorEvents } from '../../stores/selectors/selector-helper';
 import { CreateCustomShape } from './components/CreateCustomShape';
+import { PolygonTool } from './components/PolygonControls';
 
 export interface PolygonSelectorProps extends BaseSelector {
   id: string;
@@ -16,15 +17,13 @@ export interface PolygonSelectorProps extends BaseSelector {
   };
 }
 
-export function PolygonSelectorAtlas(props: SelectorTypeProps<PolygonSelectorProps>) {
-  const canvas = useCanvas();
+export function PolygonSelectorAtlas(props: SelectorTypeProps<PolygonSelectorProps> & { preferredTool?: PolygonTool }) {
+  const image = useImageServiceContext();
   const { readOnly, id, bucket } = props;
   const { onClick, isHighlighted } = useSelectorEvents(props.id);
   const styles = useAnnotationStyles();
   const style =
     isHighlighted && bucket === 'currentLevel' ? styles.highlighted : styles[bucket || 'hidden'] || styles.hidden;
-
-  const image = canvas;
 
   const updateShape = (shape: InputShape) => {
     if (props.updateSelector) {
@@ -34,10 +33,6 @@ export function PolygonSelectorAtlas(props: SelectorTypeProps<PolygonSelectorPro
       });
     }
   };
-
-  if (!image) {
-    return null;
-  }
 
   if (readOnly) {
     const Shape = 'shape' as any;
@@ -63,6 +58,7 @@ export function PolygonSelectorAtlas(props: SelectorTypeProps<PolygonSelectorPro
       image={image}
       shape={props.state?.shape || { id: props.id, open: true, points: [] }}
       updateShape={updateShape}
+      preferredTool={props.preferredTool || 'box'}
     />
   );
 }

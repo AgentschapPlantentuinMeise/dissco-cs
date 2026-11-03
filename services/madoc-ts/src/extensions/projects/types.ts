@@ -9,6 +9,7 @@ import { ApiClient } from '../../gateway/api';
 import { ProjectRow } from '../../types/projects';
 import { ProjectConfiguration } from '../../types/schemas/project-configuration';
 import { SlotMappingRequest } from '../../types/schemas/site-page';
+import { ProjectSearchIndexPreset } from '../../types/schemas/project-search-index';
 
 export type JsonProjectTemplate = {
   type: string; // Required unique type used to register and index.
@@ -51,6 +52,9 @@ export type JsonProjectTemplate = {
     activity?: {
       noActivity?: boolean;
     };
+    searchIndexes?: {
+      available: ProjectSearchIndexPreset[];
+    };
   };
   theme?: Partial<MadocTheme>;
   slots?: SlotMappingRequest;
@@ -62,6 +66,13 @@ export type CaptureModelShorthand<Keys extends string | number | symbol> = Recor
 >;
 
 export type ProjectTemplateConfig<T extends ProjectTemplate> = T extends ProjectTemplate<any, any, infer R> ? R : never;
+
+export interface ProjectTemplateAdminModelProps {
+  projectId: number;
+  projectSlug: string;
+  captureModel: CaptureModel;
+  templateConfig: unknown;
+}
 
 export type ModelDefinition<Options = any> =
   | { verboseDocument: true; model: CaptureModel['document'] }
@@ -165,6 +176,7 @@ export type ProjectTemplate<
     upgrade: () => void | Promise<void>;
   }>;
   components?: {
+    customAdminModelEditor?: React.ComponentType<ProjectTemplateAdminModelProps>;
     customEditor?: React.FC<any>;
     customReviewRenderer?: React.FC<any>;
     customAdminPreviewRenderer?: React.FC<any>;

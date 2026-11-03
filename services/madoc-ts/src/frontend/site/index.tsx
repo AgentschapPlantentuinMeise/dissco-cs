@@ -1,3 +1,4 @@
+import { PageViewTracker } from './features/PageViewTracker';
 import React, { useCallback, useMemo, useState } from 'react';
 import { CurrentUserWithScope, SystemConfig, Site } from '../../extensions/site-manager/types';
 import { ApiClient } from '../../gateway/api';
@@ -34,7 +35,7 @@ export type SiteAppProps = {
   systemConfig: SystemConfig;
 };
 
-const SiteApp: React.FC<SiteAppProps> = ({
+const SiteApp = ({
   api,
   site,
   user,
@@ -51,15 +52,30 @@ const SiteApp: React.FC<SiteAppProps> = ({
   themeOverrides,
   formResponse,
   systemConfig,
-}) => {
+}: SiteAppProps) => {
   const [updatedSite, setSite] = useState(site);
+  const baseTheme = theme && theme.theme ? theme.theme : defaultTheme;
+  const siteAccent = updatedSite.config?.accentColor;
+  const activeTheme = useMemo(
+    () =>
+      siteAccent
+        ? {
+            ...baseTheme,
+            custom: {
+              ...baseTheme.custom,
+              accent: { ...baseTheme.custom?.accent, primary: siteAccent },
+            },
+          }
+        : baseTheme,
+    [baseTheme, siteAccent]
+  );
   const [updatedFormResponse, setUpdatedFormResponse] = useState<any | undefined>(formResponse);
   const clearFormResponse = useCallback(() => {
     setUpdatedFormResponse(undefined);
   }, []);
 
   return (
-    <CustomThemeProvider theme={theme && theme.theme ? theme.theme : defaultTheme} themeOverrides={themeOverrides}>
+    <CustomThemeProvider theme={activeTheme} themeOverrides={themeOverrides}>
       <VaultProvider>
         <SiteProvider
           value={useMemo(
@@ -94,6 +110,7 @@ const SiteApp: React.FC<SiteAppProps> = ({
         >
           <ApiContext.Provider value={api}>
             <RenderConfigRoutes routes={routes} />
+            <PageViewTracker routes={routes} />
           </ApiContext.Provider>
         </SiteProvider>
       </VaultProvider>

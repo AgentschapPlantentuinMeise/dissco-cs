@@ -941,6 +941,9 @@ export class SiteUserRepository extends BaseRepository {
     try {
       return await this.connection.one(SiteUserRepository.query.getSiteUserById(id, siteId));
     } catch (e) {
+      if (!(e instanceof NotFoundError)) {
+        throw e;
+      }
       const user = await this.getActiveUserById(id);
       if (user.role === 'global_admin') {
         return {
@@ -1458,7 +1461,10 @@ export class SiteUserRepository extends BaseRepository {
         terms: termsStatus,
       };
     } catch (e) {
-      return undefined;
+      if (e instanceof NotFoundError) {
+        return undefined;
+      }
+      throw e;
     }
   }
 
@@ -1604,7 +1610,7 @@ export class SiteUserRepository extends BaseRepository {
 
     const { payload } = response;
 
-    const exp = payload.exp * 1000;
+    const exp = (payload.exp ?? Number.POSITIVE_INFINITY) * 1000;
     const time = new Date().getTime();
     const allowedTime = exp + refreshWindow * 1000;
     const canRefresh = allowedTime - time > 0;

@@ -3,6 +3,7 @@ import { CreateProjectUpdate } from '../../types/projects';
 import { RouteMiddleware } from '../../types/route-middleware';
 import { castBool } from '../../utility/cast-bool';
 import { NotFound } from '../../utility/errors/not-found';
+import { RequestError } from '../../utility/errors/request-error';
 import { optionalUserWithScope, userWithScope } from '../../utility/user-with-scope';
 
 export const listProjectUpdates: RouteMiddleware = async context => {
@@ -31,7 +32,7 @@ export const listProjectUpdates: RouteMiddleware = async context => {
   };
 };
 
-export const createProjectUpdate: RouteMiddleware<{ id: string | number }, { update: string }> = async context => {
+export const createProjectUpdate: RouteMiddleware<{ id: string | number }, CreateProjectUpdate> = async context => {
   const { siteId, id } = userWithScope(context, ['site.admin']);
 
   const project = await context.projects.resolveProject(context.params.id, siteId);
@@ -41,9 +42,13 @@ export const createProjectUpdate: RouteMiddleware<{ id: string | number }, { upd
 
   const update = context.requestBody as CreateProjectUpdate;
 
-  invariant(update.update, 'Update must have a value');
+  invariant(update.update.trim(), 'Update must have a value');
+  if (update.openInNewTab !== undefined && typeof update.openInNewTab !== 'boolean') {
+    throw new RequestError('Open in new tab must be a boolean');
+  }
 
   // @todo snapshot.
+  update.title = update.title?.trim() || null;
   update.snapshot = {};
 
   context.response.body = await context.projects.createProjectUpdate(update, id, project.id);
@@ -51,7 +56,7 @@ export const createProjectUpdate: RouteMiddleware<{ id: string | number }, { upd
 
 export const updateProjectUpdate: RouteMiddleware<
   { id: string | number; updateId: string | number },
-  { update: string }
+  CreateProjectUpdate
 > = async context => {
   const { siteId } = userWithScope(context, ['site.admin']);
 
@@ -62,13 +67,13 @@ export const updateProjectUpdate: RouteMiddleware<
 
   const body = context.requestBody;
 
-  invariant(body.update, 'Update must have a value');
+  invariant(body.update.trim(), 'Update must have a value');
+  if (body.openInNewTab !== undefined && typeof body.openInNewTab !== 'boolean') {
+    throw new RequestError('Open in new tab must be a boolean');
+  }
+  body.title = body.title?.trim() || null;
 
-  context.response.body = await context.projects.updateProjectUpdate(
-    body.update,
-    Number(context.params.updateId),
-    project.id
-  );
+  context.response.body = await context.projects.updateProjectUpdate(body, Number(context.params.updateId), project.id);
 };
 
 export const deleteProjectUpdate: RouteMiddleware = async context => {
@@ -82,4 +87,5 @@ export const deleteProjectUpdate: RouteMiddleware = async context => {
   await context.projects.deleteProjectUpdate(Number(context.params.updateId), project.id);
 
   context.response.status = 200;
+  context.response.body = { success: true };
 };

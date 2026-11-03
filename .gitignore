@@ -18,6 +18,7 @@ e2e/test-fixtures/postgres/default/default.sql
 services/madoc-next
 scripts
 notes
+/reports/
 .vscode/*
 # Shared project settings (Vitest extension for services/dissco-cs) -- personal settings belong in
 # your own VS Code User settings, not here.

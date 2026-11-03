@@ -1,3 +1,4 @@
+import { resolveTabularAlignment } from '@/frontend/shared/utility/tabular-alignment-snapshot';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCaptureModelEditorApi } from '@/frontend/shared/capture-models/new/hooks/use-capture-model-editor-api';
 import { Revisions } from '@/frontend/shared/capture-models/editor/stores/revisions';
@@ -166,14 +167,19 @@ function FlaggedCellCard({
 
 export function TabularProjectReviewRenderer(props: CustomReviewRendererProps) {
   const review = useReviewRendererContext();
-  const { enableZoomTracking, disableZoomTrackingOverlay = false } = useModelPageConfiguration();
+  const {
+    enableZoomTracking,
+    disableZoomTrackingOverlay = false,
+    enableEditorResizing = true,
+  } = useModelPageConfiguration();
   const table = useCaptureModelEditorApi({ tableProperty: 'rows' });
   const createNewFieldInstance = Revisions.useStoreActions(actions => actions.createNewFieldInstance);
   const removeInstance = Revisions.useStoreActions(actions => actions.removeInstance);
   const templateConfig = (review.project?.template_config || undefined) as TabularTemplateConfig | undefined;
+  const savedAlignment = Revisions.useStoreState(state => state.currentRevision?.revision.tabularAlignment);
   const netConfig = useMemo(
-    () => netConfigFromSharedStructure(templateConfig?.tabular?.structure),
-    [templateConfig?.tabular?.structure]
+    () => resolveTabularAlignment(savedAlignment, netConfigFromSharedStructure(templateConfig?.tabular?.structure)),
+    [savedAlignment, templateConfig?.tabular?.structure]
   );
   const tabularColumns = (templateConfig?.tabular?.model?.columns || []) as TabularModelColumn[];
   const taskSubject = (
@@ -436,6 +442,7 @@ export function TabularProjectReviewRenderer(props: CustomReviewRendererProps) {
             onResizeStart={startCanvasTableResize}
             onDividerHoverChange={setIsCanvasTableDividerHover}
             isDividerActive={isCanvasTableDividerActive}
+            resizable={enableEditorResizing}
             topPanel={
               <div className="h-full min-h-0 min-w-0 overflow-hidden">
                 {canvasId ? (
