@@ -5,6 +5,7 @@ import { PageHeader } from '../../components/layout/PageHeader';
 import { PageSection } from '../../components/layout/PageSection';
 import { PageLoadError } from '../../components/layout/PageLoadError';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { DiscardDialog } from '../../components/ui/DiscardDialog';
 import { ForumTopicForm } from '../../components/forum/ForumTopicForm';
 import { isUnread } from '../../components/forum/forum-topics';
 import { Button } from '../../components/ui/Button';
@@ -29,11 +30,11 @@ export function Forum() {
         variant="compact"
         title={t('nav_forum')}
         lead={t('forum_intro')}
-        actions={
-          <Button variant="on-dark" onClick={() => c.setShowNewForm(v => !v)}>
-            {c.showNewForm ? t('common_cancel') : t('forum_btn_new_message')}
+        actions={!c.showNewForm && (
+          <Button variant="on-dark" onClick={c.openNewForm}>
+            {t('forum_btn_new_message')}
           </Button>
-        }
+        )}
       />
       <PageSection>
         {/* The list at a reading width, search and filters in a column next to it (above it on a
@@ -52,7 +53,8 @@ export function Forum() {
             {c.showNewForm && (
               <ForumTopicForm
                 onSubmit={data => c.createTopic(data)}
-                onCancel={() => c.setShowNewForm(false)}
+                onCancel={c.closeNewForm}
+                onDirtyChange={c.setNewFormDirty}
                 projectOptions={c.projectOptions}
               />
             )}
@@ -136,6 +138,8 @@ export function Forum() {
             onCancel={() => c.setPendingCloseTopicId(null)}
           />
         )}
+
+        <DiscardDialog guard={c.newFormGuard} />
       </PageSection>
     </CsPage>
   );

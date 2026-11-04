@@ -7,6 +7,7 @@ import { forumKeys, forumQueries } from '../../api/queries/forum';
 import { forumApi } from '../../api/cs-client/forum';
 import { reportClientError } from '../../api/cs-client/client-errors';
 import { useCurrentUser } from '../../hooks/use-current-user';
+import { useDiscardGuard } from '../../hooks/use-discard-guard';
 import { localeText } from '../../utility/locale-text';
 import { pageCount, pageOfItem, pageSlice } from '../../utility/paging';
 import { MadocProjectDto, ForumTopicDto, ForumReplyDto, ForumTopicInput } from '@dissco-cs/shared-types';
@@ -44,6 +45,8 @@ export function useForumPage() {
     setTopics(prev => prev.map(m => (m.id === topicId ? update(m) : m)));
 
   const [showNewForm, setShowNewForm] = useState(false);
+  const [newFormDirty, setNewFormDirty] = useState(false);
+  const newFormGuard = useDiscardGuard(newFormDirty);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const { data: expandedReplies } = useQuery(forumQueries.replies(expandedId));
   const setReplies = (topicId: number, update: (prev: ForumReplyDto[]) => ForumReplyDto[]) =>
@@ -226,7 +229,10 @@ export function useForumPage() {
     expandedReplies: expandedReplies ?? [],
     toggleExpand,
     showNewForm,
-    setShowNewForm,
+    openNewForm: () => setShowNewForm(true),
+    closeNewForm: () => newFormGuard.guard(() => setShowNewForm(false)),
+    setNewFormDirty,
+    newFormGuard,
     searchQuery,
     setSearchQuery,
     activeFilter,

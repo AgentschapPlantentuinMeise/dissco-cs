@@ -20,7 +20,7 @@ const TITLE_KEY: Record<AnnotatePanelKind, string> = {
 
 // The open panel beside the form: a title, a close button and its own scrollbar, so the image and
 // the form stay in view while reading.
-export function AnnotateSidePanel({ kind, onClose, help, helpTarget, manifestId, projectSlug, projectLabel, onPostForum }: {
+export function AnnotateSidePanel({ kind, onClose, help, helpTarget, manifestId, projectSlug, projectLabel, onPostForum, onForumDirtyChange }: {
   kind: AnnotatePanelKind;
   onClose: () => void;
   help: FieldHelp;
@@ -29,6 +29,7 @@ export function AnnotateSidePanel({ kind, onClose, help, helpTarget, manifestId,
   projectSlug: string;
   projectLabel: string | undefined;
   onPostForum: (data: ForumTopicInput) => void;
+  onForumDirtyChange: (isDirty: boolean) => void;
 }) {
   const { t } = useTranslation('dissco-cs');
   const title = t(TITLE_KEY[kind]);
@@ -44,7 +45,7 @@ export function AnnotateSidePanel({ kind, onClose, help, helpTarget, manifestId,
         {kind === 'info' && <ManifestInfo manifestId={manifestId} />}
         {kind === 'manual' && <ManualPanel projectSlug={projectSlug} />}
         {kind === 'forum' && (
-          <ForumTopicForm initialTaskUrl={window.location.href} taskUrlReadOnly fixedProjectLabel={projectLabel} onSubmit={onPostForum} onCancel={onClose} />
+          <ForumTopicForm initialTaskUrl={window.location.href} taskUrlReadOnly fixedProjectLabel={projectLabel} onSubmit={onPostForum} onCancel={onClose} onDirtyChange={onForumDirtyChange} />
         )}
       </div>
     </aside>

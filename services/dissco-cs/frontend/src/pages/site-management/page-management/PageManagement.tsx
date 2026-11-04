@@ -12,6 +12,9 @@ import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { ActiveStatusToggle } from '../../../components/ui/ActiveStatusToggle';
 import { LuPencil } from 'react-icons/lu';
 import { CancelButton } from '../../../components/ui/CancelButton';
+import { DiscardDialog } from '../../../components/ui/DiscardDialog';
+import { useDiscardGuard } from '../../../hooks/use-discard-guard';
+import { hasDraftChanged } from '../../../utility/draft-changes';
 import { ListWithPanel } from '../../../components/layout/ListWithPanel';
 import { useSavedFlash } from '../../../hooks/use-saved-flash';
 import { IconButton } from '../../../components/ui/IconButton';
@@ -84,6 +87,15 @@ export function PageManagement() {
     setDraftShowContactForm(page?.showContactForm ?? false);
   }, [selectedKey, loading, contactEmailLoading]);
 
+  const selectedPage = pages.find(p => p.pageKey === selectedKey);
+  const discardGuard = useDiscardGuard(
+    selectedKey !== null &&
+      hasDraftChanged(
+        { content: draftContent, intro: draftIntro, email: draftContactEmail, showForm: draftShowContactForm },
+        { content: selectedPage?.content ?? {}, intro: selectedPage?.intro ?? {}, email: contactEmail?.email ?? '', showForm: selectedPage?.showContactForm ?? false }
+      )
+  );
+
   const isActive = (key: NavItemKey) => pages.find(p => p.pageKey === key)?.isActive ?? true;
 
   const queryClient = useQueryClient();
@@ -138,7 +150,7 @@ export function PageManagement() {
         <ListWithPanel
           panelKey={selectedKey}
           panelTitle={selectedKey && t(pageLabelKey(selectedKey))}
-          onClose={() => setSelectedKey(null)}
+          onClose={() => discardGuard.guard(() => setSelectedKey(null))}
           list={
           <ul className="list-none m-0 p-0 bg-white border-t border-gray-200 divide-y divide-gray-100">
             {pages.map(page => {
@@ -168,7 +180,7 @@ export function PageManagement() {
 
                     <span className="w-7 flex justify-center">
                       {CONTENT_PAGE_KEYS.includes(key) && (
-                        <IconButton icon={LuPencil} label={t('sm_pages_edit')} onClick={() => setSelectedKey(key)} />
+                        <IconButton icon={LuPencil} label={t('sm_pages_edit')} onClick={() => discardGuard.guard(() => setSelectedKey(key))} />
                       )}
                     </span>
                   </span>
@@ -265,7 +277,7 @@ export function PageManagement() {
                   disabled={!canSave}
                   title={!canSave ? t('common_fill_required_fields') : undefined}
                 />
-                <CancelButton onClick={() => setSelectedKey(null)} />
+                <CancelButton onClick={() => discardGuard.guard(() => setSelectedKey(null))} />
 
                 {!allLangsFilled && (
                   <span className="text-sm text-gray-500">{t('common_fill_required_fields')}</span>
@@ -278,6 +290,7 @@ export function PageManagement() {
           ) : null}
         />
 
+        <DiscardDialog guard={discardGuard} />
       </PageBody>
     </CsPage>
   );

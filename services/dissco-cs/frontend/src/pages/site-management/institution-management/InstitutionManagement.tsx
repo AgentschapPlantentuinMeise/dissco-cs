@@ -9,6 +9,7 @@ import { ManageLoadError } from '../ManageLoadError';
 import { failedToLoad } from '../../../api/query-state';
 import { ListWithPanel } from '../../../components/layout/ListWithPanel';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
+import { DiscardDialog } from '../../../components/ui/DiscardDialog';
 import { Button } from '../../../components/ui/Button';
 import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
 import { IconButton } from '../../../components/ui/IconButton';
@@ -18,20 +19,21 @@ import { institutionsApi } from '../../../api/cs-client/institutions';
 import { InstitutionDto, InstitutionInput, SitePageLang, SITE_PAGE_LANGS } from '@dissco-cs/shared-types';
 import { siteLangText } from '../../../utility/site-lang-text';
 import { useItemEditor } from '../../../hooks/use-item-editor';
-import { InstitutionForm } from './InstitutionForm';
+import { InstitutionDraft, InstitutionForm } from './InstitutionForm';
 import { rowHoverClass, savedRowClass } from '../../../components/ui/list-styles';
 import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { useSavedFlash } from '../../../hooks/use-saved-flash';
 
 const emptyMultilingualText = Object.fromEntries(SITE_PAGE_LANGS.map(lang => [lang, ''])) as Record<SitePageLang, string>;
 
-const emptyDraft: InstitutionInput = {
+const emptyDraft: InstitutionDraft = {
   name: { ...emptyMultilingualText },
   description: { ...emptyMultilingualText },
   email: '',
   phone: '',
   website: '',
   isActive: true,
+  logo: null,
 };
 
 function toMultilingualDraft(value: Partial<Record<SitePageLang, string>>): Record<SitePageLang, string> {
@@ -48,6 +50,10 @@ function toInstitutionInput(institution: InstitutionDto): InstitutionInput {
     website: institution.website ?? '',
     isActive: institution.isActive,
   };
+}
+
+function toInstitutionDraft(institution: InstitutionDto): InstitutionDraft {
+  return { ...toInstitutionInput(institution), logo: null };
 }
 
 export function InstitutionManagement() {
@@ -69,7 +75,9 @@ export function InstitutionManagement() {
     startCreate,
     startEdit,
     cancelForm,
-  } = useItemEditor({ emptyDraft, toDraft: toInstitutionInput });
+    closeForm,
+    discardGuard,
+  } = useItemEditor({ emptyDraft, toDraft: toInstitutionDraft });
 
   // Invalidate every institution query, so the public pages pick up the change too.
   const onWritten = () => queryClient.invalidateQueries({ queryKey: institutionKeys.all });
@@ -100,7 +108,7 @@ export function InstitutionManagement() {
   const save = (input: InstitutionInput, logo: File | null) =>
     upsert({ id: editingId, input, logo }, {
       onSuccess: id => {
-        cancelForm();
+        closeForm();
         flash(id);
       },
     });
@@ -211,6 +219,8 @@ export function InstitutionManagement() {
             onCancel={() => setPendingDeleteId(null)}
           />
         )}
+
+        <DiscardDialog guard={discardGuard} />
       </PageBody>
     </CsPage>
   );

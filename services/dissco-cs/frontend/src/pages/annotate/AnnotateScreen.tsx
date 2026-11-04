@@ -13,6 +13,8 @@ import { useRouteContext } from '../../hooks/use-route-context';
 import { CsPage } from '../../components/layout/CsPage';
 import { useLocaleString } from '../../components/ui/LocaleString';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { DiscardDialog } from '../../components/ui/DiscardDialog';
+import { useDiscardGuard } from '../../hooks/use-discard-guard';
 import { ForumTopicInput, MadocBoxSelectorState } from '@dissco-cs/shared-types';
 import { AnnotateLayout } from './AnnotateLayout';
 import { OpenSeadragonViewer } from '../../components/iiif/OpenSeadragonViewer';
@@ -45,6 +47,8 @@ export function AnnotateScreen() {
   const returnTo = (location.state as { returnTo?: string } | null)?.returnTo;
 
   const panel = useAnnotatePanel();
+  const [forumDirty, setForumDirty] = useState(false);
+  const forumGuard = useDiscardGuard(forumDirty);
   const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
 
   const [navBottom, setNavBottom] = useState(64);
@@ -246,24 +250,25 @@ export function AnnotateScreen() {
               onClearSelector={handleClearSelector}
               readOnly={isSubmittedTask}
               readOnlyBanner={isSubmittedTask ? t('annotate_already_submitted') : undefined}
-              onShowHelp={panel.showHelp}
+              onShowHelp={key => forumGuard.guard(() => panel.showHelp(key))}
             />
           }
           panel={
             panel.open && (
               <AnnotateSidePanel
                 kind={panel.open}
-                onClose={panel.close}
+                onClose={() => forumGuard.guard(panel.close)}
                 help={help}
                 helpTarget={panel.helpTarget}
                 manifestId={manifestId}
                 projectSlug={project.slug}
                 projectLabel={projectLabel}
                 onPostForum={data => postForumTopic(data)}
+                onForumDirtyChange={setForumDirty}
               />
             )
           }
-          helpBar={<AnnotateHelpBar open={panel.open} onToggle={panel.toggle} hidden={isSubmittedTask ? ['forum'] : []} />}
+          helpBar={<AnnotateHelpBar open={panel.open} onToggle={kind => forumGuard.guard(() => panel.toggle(kind))} hidden={isSubmittedTask ? ['forum'] : []} />}
         />
       </div>
 
@@ -280,6 +285,8 @@ export function AnnotateScreen() {
           onCancel={() => setReleaseConfirmOpen(false)}
         />
       )}
+
+      <DiscardDialog guard={forumGuard} />
     </CsPage>
   );
 }

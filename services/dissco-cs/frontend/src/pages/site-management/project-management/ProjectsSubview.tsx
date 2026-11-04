@@ -7,6 +7,8 @@ import { institutionKeys } from '../../../api/queries/institutions';
 import { projectsApi } from '../../../api/cs-client/projects';
 import { SaveButton } from '../../../components/ui/SaveButton';
 import { CancelButton } from '../../../components/ui/CancelButton';
+import { DiscardDialog } from '../../../components/ui/DiscardDialog';
+import { useDiscardGuard } from '../../../hooks/use-discard-guard';
 import { ListWithPanel } from '../../../components/layout/ListWithPanel';
 import { IconButton } from '../../../components/ui/IconButton';
 import { LuPencil } from 'react-icons/lu';
@@ -70,6 +72,10 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
   }, [editingProject?.slug, institutionLinks, linkedManual?.id]);
 
   const canSave = pickedInstitutionId !== '' && pickedManualId !== '';
+  const discardGuard = useDiscardGuard(
+    !!editingProject &&
+      (pickedInstitutionId !== (institutionLinks[editingProject.slug] ?? '') || pickedManualId !== (linkedManual?.id ?? ''))
+  );
 
   const queryClient = useQueryClient();
   const { savedId: savedSlug, flash } = useSavedFlash<string>();
@@ -104,7 +110,7 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
 
       <ListWithPanel
         panelKey={editingSlug}
-        onClose={() => setEditingSlug(null)}
+        onClose={() => discardGuard.guard(() => setEditingSlug(null))}
         panelTitle={editingProject && projectLabel(editingProject)}
         list={
       <div className="bg-white border-t border-gray-200">
@@ -177,7 +183,7 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
                   <td className="px-4 py-3 border-t border-gray-100 text-right whitespace-nowrap align-top">
                     <span className="inline-flex items-center gap-4">
                       {savedSlug === project.slug && <SavedNotice />}
-                      <IconButton icon={LuPencil} label={t('common_edit')} onClick={() => setEditingSlug(project.slug)} />
+                      <IconButton icon={LuPencil} label={t('common_edit')} onClick={() => discardGuard.guard(() => setEditingSlug(project.slug))} />
                     </span>
                   </td>
                 </tr>
@@ -242,11 +248,13 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
             )}
             <div className="flex items-center gap-3">
               <SaveButton onClick={save} disabled={!canSave} loading={saving} />
-              <CancelButton onClick={() => setEditingSlug(null)} />
+              <CancelButton onClick={() => discardGuard.guard(() => setEditingSlug(null))} />
             </div>
           </div>
         ) : null}
       />
+
+      <DiscardDialog guard={discardGuard} />
     </div>
   );
 }

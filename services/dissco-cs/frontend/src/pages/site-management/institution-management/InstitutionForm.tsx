@@ -19,8 +19,12 @@ import {
 } from '@dissco-cs/shared-types';
 import { inputClass } from '../../../components/ui/input-styles';
 
-// The side form of the institutions page: one institution, created or edited. The page gives it a
-// new key per item, so the picked logo starts empty for each one.
+export type InstitutionDraft = InstitutionInput & {
+  // A logo picked in this form, sent along on save.
+  logo: File | null;
+};
+
+// The side form of the institutions page: one institution, created or edited.
 export function InstitutionForm({
   draft,
   setDraft,
@@ -31,8 +35,8 @@ export function InstitutionForm({
   onSave,
   onCancel,
 }: {
-  draft: InstitutionInput;
-  setDraft: React.Dispatch<React.SetStateAction<InstitutionInput>>;
+  draft: InstitutionDraft;
+  setDraft: React.Dispatch<React.SetStateAction<InstitutionDraft>>;
   // The stored logo of the institution being edited; null for a new one or one without a logo.
   currentLogoUrl: string | null;
   selectedLang: SitePageLang;
@@ -42,8 +46,7 @@ export function InstitutionForm({
   onCancel: () => void;
 }) {
   const { t } = useTranslation('dissco-cs');
-  // A logo picked in this form session, sent along on save.
-  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const logoFile = draft.logo;
   const [invalidLogo, setInvalidLogo] = useState(false);
 
   const logoPreview = useMemo(() => (logoFile ? URL.createObjectURL(logoFile) : null), [logoFile]);
@@ -70,7 +73,7 @@ export function InstitutionForm({
     if (!file) return;
     const valid = imageFileSchema.safeParse(file).success;
     setInvalidLogo(!valid);
-    if (valid) setLogoFile(file);
+    if (valid) setDraft(prev => ({ ...prev, logo: file }));
   };
 
   return (

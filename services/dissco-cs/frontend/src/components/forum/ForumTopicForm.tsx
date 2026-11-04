@@ -1,8 +1,9 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
 import { inputClass } from '../ui/input-styles';
+import { hasDraftChanged } from '../../utility/draft-changes';
 import { ForumTopicInput, MAX_FORUM_BODY_LENGTH, MAX_FORUM_TASK_URL_LENGTH, MAX_FORUM_TITLE_LENGTH } from '@dissco-cs/shared-types';
 
 type ProjectOption = { slug: string; label: string };
@@ -10,6 +11,9 @@ type ProjectOption = { slug: string; label: string };
 type Props = {
   onSubmit: (data: ForumTopicInput) => void;
   onCancel?: () => void;
+  // Tells the parent whether anything is filled in: the actions that close this form are the
+  // parent's, also those outside the form, so the parent asks before throwing the input away.
+  onDirtyChange?: (isDirty: boolean) => void;
   initialTaskUrl?: string;
   // Set by AnnotatePage — the task link is already fixed by context there, same reasoning as
   // fixedProjectLabel below, so it's shown but not editable.
@@ -29,6 +33,7 @@ const labelClass = 'flex flex-col gap-[5px] text-[0.9rem] font-medium text-gray-
 export function ForumTopicForm({
   onSubmit,
   onCancel,
+  onDirtyChange,
   initialTaskUrl = '',
   taskUrlReadOnly,
   projectOptions,
@@ -36,20 +41,29 @@ export function ForumTopicForm({
 }: Props) {
   const { t } = useTranslation('dissco-cs');
 
-  const [fields, setFields] = useState<ForumTopicInput>({
+  // In state: the annotate page passes the current URL, which must not count as an edit after
+  // moving to another task with this form still open.
+  const [emptyFields] = useState<ForumTopicInput>({
     title: '',
     taskUrl: initialTaskUrl,
     body: '',
     projectSlug: '',
     projectLabel: '',
   });
+  const [fields, setFields] = useState(emptyFields);
+
+  const isDirty = hasDraftChanged(fields, emptyFields);
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+    return () => onDirtyChange?.(false);
+  }, [isDirty, onDirtyChange]);
 
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!fields.title.trim() || !fields.body.trim()) return;
     const selectedProject = projectOptions?.find(p => p.slug === fields.projectSlug);
     onSubmit({ ...fields, projectSlug: selectedProject?.slug ?? null, projectLabel: selectedProject?.label ?? null });
-    setFields({ title: '', taskUrl: initialTaskUrl, body: '', projectSlug: '', projectLabel: '' });
+    setFields(emptyFields);
   };
 
   return (

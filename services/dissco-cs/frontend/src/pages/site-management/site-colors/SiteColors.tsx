@@ -9,6 +9,8 @@ import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { SaveButton } from '../../../components/ui/SaveButton';
 import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { CancelButton } from '../../../components/ui/CancelButton';
+import { DiscardDialog } from '../../../components/ui/DiscardDialog';
+import { useDiscardGuard } from '../../../hooks/use-discard-guard';
 import { Button } from '../../../components/ui/Button';
 import { useSiteColors } from './use-site-colors';
 import { ColorRow } from './ColorRow';
@@ -17,6 +19,7 @@ import { PalettePreview } from './PalettePreview';
 export function SiteColors() {
   const { t } = useTranslation('dissco-cs');
   const { colors, isLoading, isError, isDirty, isValid, hasOwnPalette, warnings, setColor, discard, save, reset } = useSiteColors();
+  const discardGuard = useDiscardGuard(isDirty);
   const [confirmReset, setConfirmReset] = useState(false);
 
   // The form would show the default palette, and saving it would replace the site's own colors.
@@ -48,7 +51,7 @@ export function SiteColors() {
 
               <div className="flex flex-wrap items-center gap-3 mt-5">
                 <SaveButton onClick={() => save.mutate()} disabled={!isDirty || !isValid} loading={save.isPending} />
-                {isDirty && <CancelButton onClick={discard} />}
+                {isDirty && <CancelButton onClick={() => discardGuard.guard(discard)} />}
                 {save.isSuccess && !isDirty && <SavedNotice />}
                 {hasOwnPalette && (
                   <Button variant="text" size="sm" className="ml-auto" onClick={() => setConfirmReset(true)} loading={reset.isPending}>
@@ -76,6 +79,8 @@ export function SiteColors() {
           onCancel={() => setConfirmReset(false)}
         />
       )}
+
+      <DiscardDialog guard={discardGuard} />
     </CsPage>
   );
 }

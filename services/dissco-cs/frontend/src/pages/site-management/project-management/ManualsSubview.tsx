@@ -7,6 +7,7 @@ import { Button } from '../../../components/ui/Button';
 import { IconButton } from '../../../components/ui/IconButton';
 import { LuPencil } from 'react-icons/lu';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
+import { DiscardDialog } from '../../../components/ui/DiscardDialog';
 import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
 import { ListWithPanel } from '../../../components/layout/ListWithPanel';
 import { useItemEditor } from '../../../hooks/use-item-editor';
@@ -36,6 +37,8 @@ export function ManualsSubview({ projects, manuals }: {
     startCreate,
     startEdit,
     cancelForm,
+    closeForm,
+    discardGuard,
   } = useItemEditor<ManualSummaryDto, ManualDraft>({
     emptyDraft: EMPTY_MANUAL_DRAFT,
     toDraft: manual => ({ title: manual.title, content: manual.content, picked: {} }),
@@ -60,7 +63,7 @@ export function ManualsSubview({ projects, manuals }: {
     onSuccess: (_result, id) => {
       setPendingDeleteId(null);
       if (editingId === id) {
-        cancelForm();
+        closeForm();
       }
       return onWritten();
     },
@@ -90,7 +93,7 @@ export function ManualsSubview({ projects, manuals }: {
     },
     onSuccess: async manualId => {
       await onWritten();
-      cancelForm();
+      closeForm();
       flash(manualId);
     },
   });
@@ -190,6 +193,8 @@ export function ManualsSubview({ projects, manuals }: {
           onCancel={() => setPendingDeleteId(null)}
         />
       )}
+
+      <DiscardDialog guard={discardGuard} />
     </div>
   );
 }

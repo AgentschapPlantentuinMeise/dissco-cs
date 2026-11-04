@@ -9,6 +9,7 @@ import { ManageLoadError } from '../ManageLoadError';
 import { failedToLoad } from '../../../api/query-state';
 import { ListWithPanel } from '../../../components/layout/ListWithPanel';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
+import { DiscardDialog } from '../../../components/ui/DiscardDialog';
 import { Button } from '../../../components/ui/Button';
 import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
 import { IconButton } from '../../../components/ui/IconButton';
@@ -75,6 +76,8 @@ export function Announcements() {
     startCreate,
     startEdit,
     cancelForm,
+    closeForm,
+    discardGuard,
   } = useItemEditor({ emptyDraft, toDraft: toAnnouncementInput });
 
   // Invalidate every announcement query, so the public banners pick up the change too.
@@ -104,7 +107,7 @@ export function Announcements() {
   const save = (input: AnnouncementInput) =>
     upsert({ id: editingId, input }, {
       onSuccess: id => {
-        cancelForm();
+        closeForm();
         flash(id);
       },
     });
@@ -219,6 +222,8 @@ export function Announcements() {
             onCancel={() => setPendingDeleteId(null)}
           />
         )}
+
+        <DiscardDialog guard={discardGuard} />
       </PageBody>
     </CsPage>
   );
