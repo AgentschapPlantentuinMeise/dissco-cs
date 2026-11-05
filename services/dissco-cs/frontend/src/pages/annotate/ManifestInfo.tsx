@@ -1,24 +1,21 @@
-import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { MadocMetadataItemDto } from '@dissco-cs/shared-types';
-import { iiifQueries } from '../../api/queries/iiif';
 import { useLocaleString } from '../../components/ui/LocaleString';
 import { isWebLink, plainText } from './manifest-info';
+import { useManifestInfo } from './use-manifest-info';
 
 // The Info panel: what the institution tells about the object (the manifest's IIIF metadata), to
 // check a name or a date against while filling in the form.
 export function ManifestInfo({ manifestId }: { manifestId: number }) {
   const { t } = useTranslation('dissco-cs');
-  const { data, isPending } = useQuery({ ...iiifQueries.manifestMetadata(manifestId), retry: false });
-  const [summary] = useLocaleString(data?.summary);
+  const { isPending, items, summaryText, hasInfo } = useManifestInfo(manifestId);
 
   if (isPending) {
     return <p className="m-0 text-gray-500">{t('pdp_loading')}</p>;
   }
 
-  const items = data ? [...data.metadata, ...(data.requiredStatement ? [data.requiredStatement] : [])] : [];
-  const summaryText = plainText(summary);
-  if (items.length === 0 && !summaryText) {
+  // The button is hidden without info, but this panel can stay open while moving to another task.
+  if (!hasInfo) {
     return <p className="m-0 text-gray-500">{t('annotate_info_empty')}</p>;
   }
 

@@ -7,11 +7,14 @@ export function Fieldset({
   label,
   required,
   collapsible = true,
+  action,
   children,
 }: {
   label: string;
   required: boolean;
   collapsible?: boolean;
+  // A control in the header of a collapsible section.
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   if (!collapsible) {
@@ -33,6 +36,7 @@ export function Fieldset({
       <Disclosure
         as="fieldset"
         defaultOpen
+        action={action}
         title={
           <>
             {label}

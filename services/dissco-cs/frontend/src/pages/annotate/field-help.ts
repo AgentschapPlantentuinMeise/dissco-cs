@@ -101,14 +101,16 @@ function walk(fields: MadocModelFields, document: MadocAnnotationDocumentDto, pa
  * Collects the help of the models the form shows, in the order of the form.
  * @param models the models (see helpModelsFor)
  * @param document the annotation document the form edits
- * Returns: the models' instructions, and per group the fields that have a description; groups
- *   without any help are left out.
+ * Returns: per group the fields that have a description; groups without any help are left out.
+ *   With several sections a model's instructions are the intro of its own group, because they are
+ *   about that section; with one model they are the general instructions above the groups.
  */
 export function collectFieldHelp(models: ModelNode[], document: MadocAnnotationDocumentDto): FieldHelp {
-  const instructions = models.map(model => text(model.instructions)).filter((value): value is string => value !== null);
+  const hasSections = models.length > 1;
+  const instructions = hasSections ? [] : models.map(model => text(model.instructions)).filter((value): value is string => value !== null);
   const groups: FieldHelpGroup[] = [];
   for (const model of models) {
-    const own: FieldHelpGroup = { key: model.id, label: models.length > 1 ? model.label : null, intro: null, items: [] };
+    const own: FieldHelpGroup = { key: model.id, label: hasSections ? model.label : null, intro: hasSections ? text(model.instructions) : null, items: [] };
     const nested: FieldHelpGroup[] = [];
     walk(model.fields, document, [], own, nested);
     groups.push(own, ...nested);

@@ -4,7 +4,8 @@ import { FieldHelp } from './field-help';
 import { HelpTarget } from './use-annotate-panel';
 
 // The Uitleg panel: the model's instructions, then per group the fields that have a description.
-// Opened from a field's question mark, it scrolls to that field's help and lights it up briefly.
+// Opened from a question mark, it scrolls to the help of that field or section and lights it up
+// briefly.
 export function FieldHelpPanel({ help, target }: { help: FieldHelp; target: HelpTarget | null }) {
   const { t } = useTranslation('dissco-cs');
   const [litKey, setLitKey] = useState<string | null>(null);
@@ -18,6 +19,15 @@ export function FieldHelpPanel({ help, target }: { help: FieldHelp; target: Help
     return () => clearTimeout(timer);
   }, [target]);
 
+  const trackElement = (key: string) => (element: HTMLElement | null) => {
+    if (element) itemRefs.current.set(key, element);
+    else itemRefs.current.delete(key);
+  };
+  const highlightClass = (key: string) =>
+    `px-3 py-2 border-l-[3px] scroll-mt-2 transition-colors duration-700 ${
+      litKey === key ? 'border-l-cs-secondary bg-cs-secondary/15' : 'border-l-transparent'
+    }`;
+
   if (help.instructions.length === 0 && help.groups.length === 0) {
     return <p className="m-0 text-gray-500">{t('annotate_help_empty')}</p>;
   }
@@ -30,20 +40,11 @@ export function FieldHelpPanel({ help, target }: { help: FieldHelp; target: Help
         </p>
       ))}
       {help.groups.map(group => (
-        <section key={group.key} className="flex flex-col gap-1">
+        <section key={group.key} ref={trackElement(group.key)} className="flex flex-col gap-1 scroll-mt-2">
           {group.label && <h3 className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.06em] text-gray-500">{group.label}</h3>}
-          {group.intro && <p className="m-0 text-gray-700 whitespace-pre-line">{group.intro}</p>}
+          {group.intro && <p className={`m-0 text-gray-700 whitespace-pre-line ${highlightClass(group.key)}`}>{group.intro}</p>}
           {group.items.map(item => (
-            <div
-              key={item.key}
-              ref={element => {
-                if (element) itemRefs.current.set(item.key, element);
-                else itemRefs.current.delete(item.key);
-              }}
-              className={`px-3 py-2 border-l-[3px] scroll-mt-2 transition-colors duration-700 ${
-                litKey === item.key ? 'border-l-cs-secondary bg-cs-secondary/15' : 'border-l-transparent'
-              }`}
-            >
+            <div key={item.key} ref={trackElement(item.key)} className={highlightClass(item.key)}>
               <h4 className="m-0 text-[0.88rem] font-semibold text-gray-800">{item.label}</h4>
               <p className="m-0 mt-0.5 text-gray-700 whitespace-pre-line">{item.description}</p>
             </div>

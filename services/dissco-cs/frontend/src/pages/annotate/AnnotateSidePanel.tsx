@@ -1,8 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { LuX } from 'react-icons/lu';
 import { ForumTopicInput } from '@dissco-cs/shared-types';
-import { projectQueries } from '../../api/queries/projects';
+import { useProjectManual } from '../../hooks/use-project-manual';
 import { IconButton } from '../../components/ui/IconButton';
 import { ManualContent } from '../../components/manuals/ManualContent';
 import { ForumTopicForm } from '../../components/forum/ForumTopicForm';
@@ -54,7 +53,7 @@ export function AnnotateSidePanel({ kind, onClose, help, helpTarget, manifestId,
 
 function ManualPanel({ projectSlug }: { projectSlug: string }) {
   const { t } = useTranslation('dissco-cs');
-  const { data: manual, isPending } = useQuery({ ...projectQueries.manual(projectSlug), retry: false, staleTime: 5 * 60 * 1000 });
+  const { data: manual, isPending } = useProjectManual(projectSlug);
 
   if (isPending) {
     return <p className="m-0 text-gray-500">{t('pdp_loading')}</p>;

@@ -15,6 +15,7 @@ import { useLocaleString } from '../../components/ui/LocaleString';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { DiscardDialog } from '../../components/ui/DiscardDialog';
 import { useDiscardGuard } from '../../hooks/use-discard-guard';
+import { useProjectManual } from '../../hooks/use-project-manual';
 import { ForumTopicInput, MadocBoxSelectorState } from '@dissco-cs/shared-types';
 import { AnnotateLayout } from './AnnotateLayout';
 import { OpenSeadragonViewer } from '../../components/iiif/OpenSeadragonViewer';
@@ -27,6 +28,7 @@ import { useAnnotationDocument } from './use-annotation-document';
 import { useAnnotationSave } from './use-annotation-save';
 import { useTaskNavigation } from './use-task-navigation';
 import { useAnnotatePanel } from './use-annotate-panel';
+import { useManifestInfo } from './use-manifest-info';
 import { collectFieldHelp, helpModelsFor } from './field-help';
 import { AnnotateToolbar } from './AnnotateToolbar';
 import { AnnotateHelpBar } from './AnnotateHelpBar';
@@ -50,6 +52,8 @@ export function AnnotateScreen() {
   const [forumDirty, setForumDirty] = useState(false);
   const forumGuard = useDiscardGuard(forumDirty);
   const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
+  const { hasInfo } = useManifestInfo(manifestId);
+  const { data: manual } = useProjectManual(project?.slug);
 
   const [navBottom, setNavBottom] = useState(64);
   useEffect(() => {
@@ -268,7 +272,7 @@ export function AnnotateScreen() {
               />
             )
           }
-          helpBar={<AnnotateHelpBar open={panel.open} onToggle={kind => forumGuard.guard(() => panel.toggle(kind))} hidden={isSubmittedTask ? ['forum'] : []} />}
+          helpBar={<AnnotateHelpBar open={panel.open} onToggle={kind => forumGuard.guard(() => panel.toggle(kind))} hidden={{ forum: isSubmittedTask, info: !hasInfo, manual: !manual }} />}
         />
       </div>
 

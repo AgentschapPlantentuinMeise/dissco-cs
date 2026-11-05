@@ -9,7 +9,7 @@ import { institutionsApi } from '../../api/cs-client/institutions';
 
 // The column beside "About this project": the institution behind it, and the manual. The manual
 // button lives only here, next to the text about the project, so the header keeps one action.
-export function ProjectAboutAside({ institution, onOpenManual }: { institution?: InstitutionDto; onOpenManual: () => void }) {
+export function ProjectAboutAside({ institution, onOpenManual }: { institution?: InstitutionDto; onOpenManual?: () => void }) {
   const { t, i18n } = useTranslation('dissco-cs');
   const name = institution ? siteLangText(institution.name, i18n.language, institution.slug) : '';
   const logoUrl = institution ? institutionsApi.logoUrl(institution) : null;
@@ -28,9 +28,11 @@ export function ProjectAboutAside({ institution, onOpenManual }: { institution?:
           </HrefLink>
         </div>
       )}
-      <Button variant="secondary" size="sm" onClick={onOpenManual} className="self-start">
-        <LuBookOpen aria-hidden="true" /> {t('pdp_btn_guide')}
-      </Button>
+      {onOpenManual && (
+        <Button variant="secondary" size="sm" onClick={onOpenManual} className="self-start">
+          <LuBookOpen aria-hidden="true" /> {t('pdp_btn_guide')}
+        </Button>
+      )}
     </>
   );
 }

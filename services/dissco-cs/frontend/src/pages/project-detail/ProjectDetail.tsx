@@ -28,6 +28,7 @@ import { ManualModal } from '../../components/manuals/ManualModal';
 import { rowHoverClass } from '../../components/ui/list-styles';
 import { ProjectForumTopics } from './ProjectForumTopics';
 import { usePagedGrid } from '../../hooks/use-paged-grid';
+import { useProjectManual } from '../../hooks/use-project-manual';
 import { Pagination } from '../../components/ui/Pagination';
 
 function manualSeenKey(projectSlug: string): string {
@@ -71,6 +72,7 @@ export function ProjectDetail() {
   const manifestGrid = usePagedGrid(manifests, 3);
 
   const { data: institution } = useQuery(projectQueries.institution(project?.slug));
+  const { data: manual } = useProjectManual(project?.slug);
 
   const navigateToFirstCanvas = async (manifestId: number) => {
     navigate(`/explore/${project!.slug}/manifests/${manifestId}/annotate`);
@@ -151,7 +153,11 @@ export function ProjectDetail() {
       <PageSection title={t('pdp_about_title')}>
         <AboutColumns
           text={localeText(project.summary, i18n.language)}
-          aside={<ProjectAboutAside institution={institution} onOpenManual={() => setManualOpen(true)} />}
+          aside={
+            institution || manual ? (
+              <ProjectAboutAside institution={institution} onOpenManual={manual ? () => setManualOpen(true) : undefined} />
+            ) : undefined
+          }
         />
       </PageSection>
 

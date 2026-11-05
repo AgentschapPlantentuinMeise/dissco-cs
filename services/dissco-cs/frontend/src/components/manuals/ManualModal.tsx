@@ -1,9 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import { projectQueries } from '../../api/queries/projects';
 import { Modal } from '../ui/Modal';
 import { projectsApi } from '../../api/cs-client/projects';
+import { useProjectManual } from '../../hooks/use-project-manual';
 import { siteLangText } from '../../utility/site-lang-text';
 import { ManualContent } from './ManualContent';
 import { attachmentLang } from './manual-sections';
@@ -25,12 +24,7 @@ export function ManualModal({
   onShown,
 }: ManualModalProps) {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data: manual } = useQuery({
-    ...projectQueries.manual(projectSlug),
-    enabled: open && !!projectSlug,
-    retry: false,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: manual } = useProjectManual(projectSlug);
 
   const shownRef = useRef(false);
 

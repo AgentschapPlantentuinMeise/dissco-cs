@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LuArrowLeft } from 'react-icons/lu';
+import { LuArrowLeft, LuCircleHelp } from 'react-icons/lu';
 import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { MadocCaptureModelDto, MadocStructureNodeDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
 import { DocumentPath } from '../../../utility/annotation-document';
@@ -9,6 +9,7 @@ import { Fieldset } from './Fieldset';
 import { ModelFields } from './ModelFields';
 import { SelectorControls } from './SelectorControl';
 import { Button } from '../../../components/ui/Button';
+import { IconButton } from '../../../components/ui/IconButton';
 
 export interface CaptureModelFormProps {
   model: MadocCaptureModelDto;
@@ -149,7 +150,20 @@ export function CaptureModelForm({
         )}
         {sectionModels
           ? sectionModels.map(sectionModel => (
-              <Fieldset key={sectionModel.id} label={sectionModel.label} required={false}>
+              <Fieldset
+                key={sectionModel.id}
+                label={sectionModel.label}
+                required={false}
+                action={
+                  onShowHelp && sectionModels.length > 1 && sectionModel.instructions?.trim() ? (
+                    <IconButton
+                      icon={LuCircleHelp}
+                      label={t('annotate_field_help_label', { label: sectionModel.label })}
+                      onClick={() => onShowHelp(sectionModel.id)}
+                    />
+                  ) : undefined
+                }
+              >
                 <ModelFields
                   fields={sectionModel.fields}
                   document={document}

@@ -85,4 +85,16 @@ describe('collectFieldHelp', () => {
     const help = collectFieldHelp([model('s1', ['a'], { label: 'Section 1' }), model('s2', ['b'], { label: 'Section 2' })], document);
     expect(help.groups.map(group => group.label)).toEqual(['Section 1']);
   });
+
+  it('puts the instructions of a section under that section, not above all sections', () => {
+    const document = entity({ a: [field({ label: 'A' })], b: [field({ label: 'B' })] });
+    const help = collectFieldHelp(
+      [model('s1', ['a'], { label: 'Section 1' }), model('s2', ['b'], { label: 'Section 2', instructions: 'About the dates.' })],
+      document
+    );
+    expect(help).toEqual({
+      instructions: [],
+      groups: [{ key: 's2', label: 'Section 2', intro: 'About the dates.', items: [] }],
+    });
+  });
 });
