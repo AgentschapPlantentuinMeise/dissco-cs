@@ -5,6 +5,7 @@ import {
   commentRules,
   ConventionRule,
   findCommentViolations,
+  findMissingCounterparts,
   findUndocumented,
   findViolations,
   violationMessage,
@@ -137,5 +138,15 @@ describe('backend conventions', () => {
     ];
     const instead = 'a /** */ block: what it does, @param per input, Returns: -- CLAUDE.md §7';
     expect(missing, `Every Madoc call and shared helper has a contract\nInstead: ${instead}\nFound:\n  ${missing.join('\n  ')}`).toEqual([]);
+  });
+
+  it('A repository and its controller have the same name', () => {
+    const missing = findMissingCounterparts(
+      { dir: join(srcDir, 'repositories'), suffix: '.repository.ts' },
+      { dir: join(srcDir, 'controllers'), suffix: '.controller.ts' },
+      { 'app-log': 'filled by the request log and client-errors.controller.ts, it has no routes of its own' }
+    );
+    const instead = "name the controller after its subject, like forum.controller.ts and forum.repository.ts -- CLAUDE.md 'Schrijfroutes'";
+    expect(missing, `A repository and its controller have the same name\nInstead: ${instead}\nFound:\n  ${missing.join('\n  ')}`).toEqual([]);
   });
 });

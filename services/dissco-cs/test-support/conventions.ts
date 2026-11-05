@@ -15,6 +15,25 @@ export interface ConventionRule {
   onlyIn?: RegExp;
 }
 
+/**
+ * Finds files without a counterpart of the same name, e.g. a repository without its controller.
+ * @param from the folder and file ending to start from, e.g. '.repository.ts'
+ * @param to the folder and file ending that should hold the counterpart
+ * @param allowed name -> why this one has no counterpart
+ * Returns: the names without a counterpart.
+ */
+export function findMissingCounterparts(
+  from: { dir: string; suffix: string },
+  to: { dir: string; suffix: string },
+  allowed: Record<string, string> = {}
+): string[] {
+  const existing = readdirSync(to.dir);
+  return readdirSync(from.dir)
+    .filter(file => file.endsWith(from.suffix))
+    .map(file => file.slice(0, -from.suffix.length))
+    .filter(name => !(name in allowed) && !existing.includes(name + to.suffix));
+}
+
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
     const path = join(dir, entry.name);

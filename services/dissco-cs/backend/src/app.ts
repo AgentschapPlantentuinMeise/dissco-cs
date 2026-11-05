@@ -16,6 +16,7 @@ import { forumController } from './controllers/forum.controller.js';
 import { iiifController } from './controllers/iiif.controller.js';
 import { institutionsController } from './controllers/institutions.controller.js';
 import { manualsController } from './controllers/manuals.controller.js';
+import { userProfileController } from './controllers/user-profile.controller.js';
 import { projectsController } from './controllers/projects.controller.js';
 import { feedbackController } from './controllers/feedback.controller.js';
 import { reviewController } from './controllers/review.controller.js';
@@ -60,6 +61,7 @@ export function createDisscoCSApp(
   app.route('/api/dissco-cs/manuals', manualsController(database.manuals));
   app.route('/api/dissco-cs/review', reviewController());
   app.route('/api/dissco-cs/feedback', feedbackController(database.feedback));
+  app.route('/api/dissco-cs/user-profile', userProfileController(database.userProfile));
 
   // Frontend static serving — only active in Docker where frontend-dist is bundled in.
   if (existsSync('./frontend-dist/index.html')) {

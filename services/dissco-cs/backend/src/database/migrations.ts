@@ -18,6 +18,8 @@ import {
 // when appConfig.migrate is on.
 // created_by/updated_by: the Madoc user id of the admin who created or last changed the row. Only a
 // trace for questions about a change (who to ask); no DTO exposes them.
+// A new table follows CLAUDE.md "Tabellen": an admin item with its own id gets created_at/by and
+// updated_at/by; a setting on a fixed key gets only updated_at/by, because saving overwrites its row.
 export async function runMigrations(pool: Pool, schemaRef: string): Promise<void> {
   const client = await pool.connect();
 
@@ -290,6 +292,19 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         steps JSONB NOT NULL DEFAULT '[]'::jsonb,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_by INTEGER NOT NULL
+      )
+    `);
+
+    // Per Madoc user, not per site: a user can be active on several sites. last_seen_at is the base
+    // for removing inactive accounts; a visit does not touch updated_at, which follows the profile
+    // itself. preferred_language stays empty until users can set it.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS ${schemaRef}.user_profile (
+        user_id INTEGER PRIMARY KEY,
+        preferred_language VARCHAR(2),
+        last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
 

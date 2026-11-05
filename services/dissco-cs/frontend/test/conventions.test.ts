@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -5,6 +6,7 @@ import {
   commentRules,
   ConventionRule,
   findCommentViolations,
+  findMissingCounterparts,
   findOversizedFiles,
   findUndocumented,
   findViolations,
@@ -291,5 +293,17 @@ describe('frontend conventions', () => {
     ];
     const instead = 'a /** */ block: what it does, @param per input (or "Input: none."), Who:, Returns: -- CLAUDE.md §7';
     expect(missing, `Every call to the backend or Madoc has a contract\nInstead: ${instead}\nFound:\n  ${missing.join('\n  ')}`).toEqual([]);
+  });
+
+  // The Docker build of the frontend has no backend source, so there this one is skipped; it runs
+  // in the Claude hook and the pre-commit.
+  const controllersDir = join(__dirname, '..', '..', 'backend', 'src', 'controllers');
+  it.skipIf(!existsSync(controllersDir))('A controller and its cs-client file have the same name', () => {
+    const missing = findMissingCounterparts(
+      { dir: controllersDir, suffix: '.controller.ts' },
+      { dir: join(srcDir, 'api', 'cs-client'), suffix: '.ts' }
+    );
+    const instead = "the cs-client mirrors the controllers, like cs-client/forum.ts and forum.controller.ts -- CLAUDE.md 'Schrijfroutes'";
+    expect(missing, `A controller and its cs-client file have the same name\nInstead: ${instead}\nFound:\n  ${missing.join('\n  ')}`).toEqual([]);
   });
 });

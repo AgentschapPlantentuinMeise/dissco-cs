@@ -197,11 +197,12 @@ Keep in mind that the structure en code we provide is in a open source context
 - **Laden:** `isPending` (en `variables` voor "welke rij"), geen eigen `useState` voor saving/loading/error.
 - **Fout:** niets doen, de `MutationCache` toont de toast. Een extra stap bij een fout (bv. een schakelaar terugzetten) gaat in `onError` van de mutate-aanroep.
 - **Bewuste uitzonderingen** (blijven een gewone call, fouten via `reportClientError`):
-  - automatische writes zonder klik van de gebruiker: claimen en vrijgeven op de annotatiepagina, `visitForum` en de prune in projectbeheer
+  - automatische writes zonder klik van de gebruiker: claimen en vrijgeven op de annotatiepagina, `visitForum`, `recordVisit` bij het laden van de app en de prune in projectbeheer
   - bulkacties met een resultaat per item: bulk-accept in review en bulk create
 
 ## Schrijfroutes (services/dissco-cs backend)
 
+- **Naamgeving:** een controller, repository en cs-client-bestand heten naar hetzelfde onderwerp: `forum.controller.ts`, `forum.repository.ts`, `cs-client/forum.ts`, en dat is ook het pad van de route. Geen algemene namen zoals `me`. De conventietests controleren het.
 - **Body valideren:** `validateJson(schema)` (`infrastructure/validate-json.ts`) als middleware op de route, met het gedeelde zod-schema; in de handler `c.req.valid('json')`. Nooit `c.req.json()` + `safeParse` met de hand. Een body die we ongevalideerd aan Madoc doorgeven (Madoc valideert zelf): `forwardJsonBody` of `readJsonBody` (`madoc-client/client.ts`).
 - **Padparameters en site:** `validateParams({ id: intId, projectId: safeSegment, lang: siteLang })` (`infrastructure/validate-params.ts`) op de route, gelezen met `c.req.valid('param')`; nooit `c.req.param(...)` of een `isX`-controle met de hand; voor een vaste lijst (periode, nav-key, taal) is er een bouwsteen (`honourBoardPeriod`, `navItemKey`, `siteLang`). Een route die de site nodig heeft: `requireSiteId(c)` (`auth/auth.ts`), zoals `requireUser` en `requireReviewerOrAdmin`.
 - **Fouten zijn altijd `{ error: string }`-JSON**, net als Madoc: `c.json({ error: '...' }, status)`. Ook 404 (`c.notFound()`, via `app.notFound`) en onverwachte fouten (`errorResponse` in `app.onError`). De tekst is voor ontwikkelaars en logs; de gebruiker ziet een vertaalde sleutel.
@@ -215,3 +216,20 @@ Keep in mind that the structure en code we provide is in a open source context
 - **De mapper staat onderaan het repository-bestand** van zijn tabel (`// ---- DTO mapping ----`), er is geen aparte `mappers/`-map. Row = vorm van de databank, DTO = vorm van de API.
 - **Input en output spiegelen elkaar:** hetzelfde veld heet in het inputschema en in de DTO hetzelfde.
 - **Types met voorvoegsel `Madoc*`** beschrijven Madocs eigen antwoorden die we doorgeven en blijven Madocs vorm. Wat wij zelf opbouwen (ook met velden uit Madoc, bv. `ReviewTaskDto`) volgt onze regel.
+
+## Tabellen (services/dissco-cs)
+
+Elke nieuwe tabel in `backend/src/database/migrations.ts` valt onder een van deze soorten, en die bepaalt welke wie- en tijdvelden ze krijgt:
+
+- **Inhoud van gebruikers** (forum, feedback): `author_user_id` + `author_name` en `created_at`. De auteur hoort bij de inhoud en wordt getoond, daarom staat de naam er ook bij.
+- **Losse items van beheerders, met een eigen id** (announcements, institutions, manuals): `created_at`, `created_by`, `updated_at`, `updated_by`.
+- **Vaste instellingen van beheerders, zonder eigen id** (nav_items, site_theme, site_images, home_steps, manual_attachments, koppeltabellen): `updated_at`, `updated_by`. De sleutel ligt vast en een rij wordt overschreven, dus "aangemaakt door" zegt niets.
+- **Technische tabellen** (app_log, forum_read_state): geen wie-velden. Ze houden geen beheerdersactie bij.
+
+Voor `created_by` en `updated_by`:
+
+- Altijd `INTEGER NOT NULL`, met enkel het Madoc user id, zonder kopie van de naam.
+- Ze zijn een spoor in de databank (bij wie moet je zijn als er een vraag is over een wijziging) en komen niet in een DTO.
+- Een schrijffunctie in een repository krijgt `userId` als parameter; de controller geeft `identity.userId` door. Bij een insert vul je beide velden, bij een update of upsert enkel `updated_by`.
+- Een wijziging raakt `created_at` nooit. Moet het laatst gewijzigde bovenaan: sorteer op `updated_at`.
+- Er is bewust geen apart auditlog: een verwijderde rij laat geen spoor na.
