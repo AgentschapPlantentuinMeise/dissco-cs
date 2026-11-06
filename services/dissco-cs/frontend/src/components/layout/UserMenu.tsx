@@ -9,7 +9,7 @@ import { getSiteSlug } from '../../api/slug';
 import { withQuery } from '../../api/url';
 import { getCurrentUser } from '../../api/jwt';
 import { LANGUAGES } from '../../utility/site-lang-text';
-import { changeLanguage } from './change-language';
+import { changeLanguage } from '../../utility/change-language';
 import { SUPPORT_LINK_KEYS } from './nav-config';
 import { useNavLinks } from './use-nav-links';
 import { useSiteName } from '../../hooks/use-site-name';
@@ -82,7 +82,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
         {showAdmin && (
           <MenuItem><HrefLink href="/manage" className={menuItemClass}>{t('nav_site_admin')}</HrefLink></MenuItem>
         )}
-        <MenuItem><a href={`/s/${siteSlug}/account`} className={menuItemClass}>{t('nav_profile_settings')}</a></MenuItem>
+        <MenuItem><HrefLink href="/my-account" className={menuItemClass}>{t('nav_my_account')}</HrefLink></MenuItem>
         {supportLinks.length > 0 && <MenuSeparator className={menuSeparatorClass} />}
         {supportLinks.map(link => (
           <MenuItem key={link.key}><HrefLink href={link.href} className={menuItemClass}>{t(link.labelKey, { platformName })}</HrefLink></MenuItem>

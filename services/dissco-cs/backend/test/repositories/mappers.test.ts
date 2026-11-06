@@ -4,11 +4,12 @@ import { toAnnouncementDto } from '../../src/repositories/announcements.reposito
 import { toFeedbackMessageDto, toFeedbackThreadDto } from '../../src/repositories/feedback.repository.js';
 import { toForumReplyDto, toForumTopicDto } from '../../src/repositories/forum.repository.js';
 import { toInstitutionDto } from '../../src/repositories/institutions.repository.js';
-import { toManualDetailDto, toManualSummaryDto } from '../../src/repositories/manuals.repository.js';
-import { toNavItemDto } from '../../src/repositories/nav-items.repository.js';
-import { toSiteColors } from '../../src/repositories/site-theme.repository.js';
+import { toManualDetailDto, toManualDto, toManualSummaryDto } from '../../src/repositories/manuals.repository.js';
+import { toNavItemContactEmailDto, toNavItemDto } from '../../src/repositories/nav-items.repository.js';
+import { toSiteColors, toSiteThemeDto } from '../../src/repositories/site-theme.repository.js';
 import { toSiteImageDto } from '../../src/repositories/site-images.repository.js';
 import { toHomeStepDto } from '../../src/repositories/home-steps.repository.js';
+import { toUserProfileDto } from '../../src/repositories/user-profile.repository.js';
 
 // The DTO rule (see CLAUDE.md): camelCase, every field listed explicitly, never internal columns
 // such as site_id. Checking the exact key set catches both a forgotten rename and a `...row`
@@ -158,5 +159,33 @@ describe('DTO mappers', () => {
       { lang: 'nl', filename: 'a.pdf', mime_type: 'application/pdf', file_size: 123 } as Parameters<typeof toManualDetailDto>[1][number],
     ]);
     expect(detail.attachments).toEqual({ nl: { filename: 'a.pdf', mimeType: 'application/pdf', size: 123 } });
+  });
+
+  it('toManualDto', () => {
+    const dto = toManualDto({
+      id: 2, site_id: 3, title: { nl: 'H' }, content: { nl: 'C' }, created_at: created, created_by: 10, updated_at: later, updated_by: 10,
+    });
+    expect(dto).toEqual({ id: 2, title: { nl: 'H' }, content: { nl: 'C' }, updatedAt: '2026-02-03T04:05:06.000Z' });
+  });
+
+  it('toNavItemContactEmailDto', () => {
+    const row = { site_id: 3, contact_email: 'a@b.be' } as Parameters<typeof toNavItemContactEmailDto>[0];
+    expect(toNavItemContactEmailDto(row)).toEqual({ email: 'a@b.be' });
+    expect(toNavItemContactEmailDto(undefined)).toEqual({ email: null });
+  });
+
+  it('toSiteThemeDto', () => {
+    const row = {
+      site_id: 3, primary_color: null, secondary_color: null, accent_color: null,
+      dark_color: null, tertiary_color: null, updated_at: later, updated_by: 10,
+    } as Parameters<typeof toSiteThemeDto>[0];
+    expect(toSiteThemeDto(row, 'Site')).toEqual({ colors: null, name: 'Site' });
+    expect(toSiteThemeDto(null, null)).toEqual({ colors: null, name: null });
+  });
+
+  it('toUserProfileDto', () => {
+    const row = { user_id: 7, preferred_language: 'fr', last_seen_at: later, created_at: created, updated_at: later } as Parameters<typeof toUserProfileDto>[0];
+    expect(toUserProfileDto(row)).toEqual({ preferredLanguage: 'fr' });
+    expect(toUserProfileDto({ preferred_language: null })).toEqual({ preferredLanguage: null });
   });
 });

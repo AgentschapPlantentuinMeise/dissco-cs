@@ -12,6 +12,7 @@ import { defaultLang } from '../../../utility/site-lang-text';
 import { MadocProjectDto, slugify } from '@dissco-cs/shared-types';
 import { reportActionError } from '../../../api/error-toast';
 import { inputClass } from '../../../components/ui/input-styles';
+import { FormField } from '../../../components/ui/FormField';
 
 // Creates `count` real Madoc projects one after the other, through Madoc's own project creation
 // (projectsApi.create, the same route as Madoc's "New project" button), so each gets a proper
@@ -94,8 +95,7 @@ export function BulkCreateProjectsSubview({ projects }: { projects: MadocProject
       <p className="text-sm text-gray-600 mb-6">{t('sm_bulk_intro')}</p>
 
       <div className="grid grid-cols-2 gap-5 mb-5">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sm_bulk_count_label')}</label>
+        <FormField label={t('sm_bulk_count_label')}>
           <input
             type="number"
             min={1}
@@ -105,9 +105,8 @@ export function BulkCreateProjectsSubview({ projects }: { projects: MadocProject
             disabled={running}
             className={`${inputClass} w-full`}
           />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sm_bulk_source_label')}</label>
+        </FormField>
+        <FormField label={t('sm_bulk_source_label')}>
           <Select
             value={sourceSlug}
             onChange={e => setSourceSlug(e.target.value)}
@@ -121,11 +120,10 @@ export function BulkCreateProjectsSubview({ projects }: { projects: MadocProject
               </option>
             ))}
           </Select>
-        </div>
+        </FormField>
       </div>
 
-      <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sm_bulk_manifest_label')}</label>
+      <FormField label={t('sm_bulk_manifest_label')} className="mb-5">
         <select
           multiple
           value={manifestCollectionIds}
@@ -140,11 +138,10 @@ export function BulkCreateProjectsSubview({ projects }: { projects: MadocProject
             </option>
           ))}
         </select>
-        <p className="text-xs text-gray-500 mt-1.5">{t('sm_bulk_manifest_hint')}</p>
-      </div>
+        <span className="text-xs text-gray-500">{t('sm_bulk_manifest_hint')}</span>
+      </FormField>
 
-      <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sm_bulk_title_label')}</label>
+      <FormField label={t('sm_bulk_title_label')} className="mb-5">
         <input
           value={title}
           onChange={e => setTitle(e.target.value)}
@@ -152,11 +149,10 @@ export function BulkCreateProjectsSubview({ projects }: { projects: MadocProject
           placeholder={t('sm_bulk_title_placeholder')}
           className={`${inputClass} w-full`}
         />
-        <p className="text-xs text-gray-500 mt-1.5">{t('sm_bulk_title_hint')}</p>
-      </div>
+        <span className="text-xs text-gray-500">{t('sm_bulk_title_hint')}</span>
+      </FormField>
 
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sm_bulk_description_label')}</label>
+      <FormField label={t('sm_bulk_description_label')} className="mb-6">
         <textarea
           value={description}
           onChange={e => setDescription(e.target.value)}
@@ -164,7 +160,7 @@ export function BulkCreateProjectsSubview({ projects }: { projects: MadocProject
           placeholder={t('sm_bulk_description_placeholder')}
           className={`${inputClass} w-full min-h-[90px]`}
         />
-      </div>
+      </FormField>
 
       <div className="flex items-center gap-3">
         {!running ? (

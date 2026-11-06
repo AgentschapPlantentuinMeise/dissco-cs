@@ -11,6 +11,7 @@ import { contactApi } from '../../api/cs-client/contact';
 import { inputClass } from '../../components/ui/input-styles';
 import { MAX_CONTACT_MESSAGE_LENGTH, MAX_CONTACT_NAME_LENGTH, MAX_EMAIL_LENGTH } from '@dissco-cs/shared-types';
 import { SavedNotice } from '../../components/ui/SavedNotice';
+import { FormField } from '../../components/ui/FormField';
 
 export function Contact() {
   const { t, i18n } = useTranslation('dissco-cs');
@@ -63,8 +64,7 @@ export function Contact() {
               />
             </label>
 
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-gray-700">{t('contact_form_name')}</span>
+            <FormField label={t('contact_form_name')}>
               <input
                 type="text"
                 required
@@ -73,10 +73,9 @@ export function Contact() {
                 maxLength={MAX_CONTACT_NAME_LENGTH}
                 className={inputClass}
               />
-            </label>
+            </FormField>
 
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-gray-700">{t('contact_form_email')}</span>
+            <FormField label={t('contact_form_email')}>
               <input
                 type="email"
                 required
@@ -85,10 +84,9 @@ export function Contact() {
                 maxLength={MAX_EMAIL_LENGTH}
                 className={inputClass}
               />
-            </label>
+            </FormField>
 
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-gray-700">{t('contact_form_message')}</span>
+            <FormField label={t('contact_form_message')}>
               <textarea
                 required
                 value={message}
@@ -96,7 +94,7 @@ export function Contact() {
                 maxLength={MAX_CONTACT_MESSAGE_LENGTH}
                 className={`${inputClass} min-h-[160px]`}
               />
-            </label>
+            </FormField>
 
             <div className="flex flex-wrap items-center gap-3">
               <Button type="submit" loading={sending}>

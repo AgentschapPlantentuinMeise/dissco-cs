@@ -8,6 +8,7 @@ import { localeText } from '../../../utility/locale-text';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
 import { rowHoverClass } from '../../../components/ui/list-styles';
 import { inputClass } from '../../../components/ui/input-styles';
+import { FormField } from '../../../components/ui/FormField';
 
 function taskDebugStatusLabel(status: number): string {
   switch (status) {
@@ -44,8 +45,7 @@ export function TaskDebugSubview({ projects }: { projects: MadocProjectDto[] }) 
         counts towards the "transcribed" percentage shown on the project page (only "In review" or "Done" count).
       </p>
 
-      <div className="mb-5 max-w-sm">
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Project</label>
+      <FormField label="Project" className="mb-5 max-w-sm">
         <Select
           value={selectedSlug}
           onChange={e => setSelectedSlug(e.target.value)}
@@ -57,7 +57,7 @@ export function TaskDebugSubview({ projects }: { projects: MadocProjectDto[] }) 
             </option>
           ))}
         </Select>
-      </div>
+      </FormField>
 
       {queryStatus === 'pending' && <p className="text-sm text-gray-500">Loading…</p>}
 

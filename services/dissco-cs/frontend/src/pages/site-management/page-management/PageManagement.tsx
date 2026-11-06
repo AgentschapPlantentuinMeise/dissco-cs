@@ -35,6 +35,7 @@ import { useNavItems } from '../../../hooks/use-nav-items';
 import { MarkdownToolbar } from '../../../components/ui/MarkdownToolbar';
 import { rowHoverClass, savedRowClass } from '../../../components/ui/list-styles';
 import { inputClass } from '../../../components/ui/input-styles';
+import { FormField } from '../../../components/ui/FormField';
 
 const CONTENT_PAGE_KEYS: NavItemKey[] = ['about', 'help', 'contact', 'welcome'];
 
@@ -198,8 +199,7 @@ export function PageManagement() {
               />
 
               {selectedKey !== 'welcome' && (
-                <label className="flex flex-col gap-1 mb-4">
-                  <span className="text-sm font-medium text-gray-700">{t('sm_pages_intro_label')}</span>
+                <FormField label={t('sm_pages_intro_label')} className="mb-4">
                   <input
                     type="text"
                     value={draftIntro[selectedLang] ?? ''}
@@ -214,7 +214,7 @@ export function PageManagement() {
                       ? t('sm_pages_intro_hint_default', { text: t(defaultIntroKey) })
                       : t('sm_pages_intro_hint_empty')}
                   </span>
-                </label>
+                </FormField>
               )}
 
               <MarkdownToolbar
@@ -253,8 +253,7 @@ export function PageManagement() {
                   </div>
 
                   {draftShowContactForm && (
-                    <label className="flex flex-col gap-1 mt-4">
-                      <span className="text-sm font-medium text-gray-700">{t('sm_pages_contact_email_label')}</span>
+                    <FormField label={t('sm_pages_contact_email_label')} className="mt-4">
                       <input
                         type="email"
                         value={draftContactEmail}
@@ -265,7 +264,7 @@ export function PageManagement() {
                         placeholder={t('sm_pages_contact_email_placeholder')}
                         className={`${inputClass} max-w-sm`}
                       />
-                    </label>
+                    </FormField>
                   )}
                 </>
               )}

@@ -13,3 +13,14 @@ export function changeLanguage(i18n: I18n, code: string) {
   Cookies.set('i18next', code);
   i18n.changeLanguage(code);
 }
+
+/**
+ * Forgets the chosen language, so the site follows the browser again.
+ * @param i18n the instance from useTranslation()
+ * Returns: nothing.
+ */
+export function clearLanguageChoice(i18n: I18n) {
+  localStorage.removeItem('i18nextLng');
+  Cookies.remove('i18next');
+  i18n.changeLanguage();
+}

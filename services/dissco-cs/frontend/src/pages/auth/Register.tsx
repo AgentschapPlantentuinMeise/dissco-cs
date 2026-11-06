@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { useSearchParams } from 'react-router-dom';
@@ -16,7 +16,8 @@ import { PageLoadError } from '../../components/layout/PageLoadError';
 import { useCurrentUser } from '../../hooks/use-current-user';
 import { getSiteSlug } from '../../api/slug';
 import { inputClass } from '../../components/ui/input-styles';
-import { reportAuthError } from './auth-error';
+import { authErrorKey } from './auth-error';
+import { FormField } from '../../components/ui/FormField';
 
 export function Register() {
   const { t } = useTranslation('dissco-cs');
@@ -27,9 +28,6 @@ export function Register() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'sending' | 'error' | 'success'>('idle');
-  const [error, setError] = useState('');
-  const [emailSent, setEmailSent] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsPopup, setShowTermsPopup] = useState(false);
 
@@ -37,6 +35,14 @@ export function Register() {
   const termsQuery = useQuery(authQueries.terms());
   const invitation = invitationQuery.data;
   const terms = termsQuery.data?.latest;
+
+  const registration = useMutation({
+    mutationFn: (accepted: boolean) => {
+      const capToken = (formRef.current?.elements.namedItem('cap-token') as HTMLInputElement | null)?.value || '';
+      return register({ name, email, capToken, code, termsAccepted: accepted });
+    },
+    meta: { handlesOwnError: true },
+  });
 
   // A fault, not an expired invitation. Without the terms the form would let the user submit
   // without accepting them, and Madoc would refuse the registration.
@@ -72,21 +78,7 @@ export function Register() {
     );
   }
 
-  const doRegister = async (accepted: boolean) => {
-    const capToken = (formRef.current?.elements.namedItem('cap-token') as HTMLInputElement | null)?.value || '';
-
-    setStatus('sending');
-    try {
-      const result = await register({ name, email, capToken, code, termsAccepted: accepted });
-      setEmailSent(result.emailSent);
-      setStatus('success');
-    } catch (err) {
-      setStatus('error');
-      setError(t(reportAuthError(err, 'register_form_error')));
-    }
-  };
-
-  const submit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const submit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (terms && !termsAccepted) {
@@ -94,15 +86,15 @@ export function Register() {
       return;
     }
 
-    await doRegister(termsAccepted);
+    registration.mutate(termsAccepted);
   };
 
-  if (status === 'success') {
+  if (registration.isSuccess) {
     return (
       <CsPage>
         <PageBody width="narrow">
           <PageHeader variant="plain" title={t('register_title')} />
-          {emailSent ? (
+          {registration.data.emailSent ? (
             <p>{t('register_success_email_sent')}</p>
           ) : (
             <p>{t('register_success_no_email')}</p>
@@ -133,8 +125,7 @@ export function Register() {
         />
 
         <form ref={formRef} onSubmit={submit} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-gray-700">{t('register_form_name')}</span>
+          <FormField label={t('register_form_name')}>
             <input
               type="text"
               required
@@ -143,10 +134,9 @@ export function Register() {
               maxLength={MAX_USER_NAME_LENGTH}
               className={inputClass}
             />
-          </label>
+          </FormField>
 
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-gray-700">{t('register_form_email')}</span>
+          <FormField label={t('register_form_email')}>
             <input
               type="email"
               required
@@ -155,7 +145,7 @@ export function Register() {
               maxLength={MAX_EMAIL_LENGTH}
               className={inputClass}
             />
-          </label>
+          </FormField>
 
           {/* @ts-expect-error custom element from @cap.js/widget, loaded in index.html */}
           <cap-widget data-cap-api-endpoint={`/s/${getSiteSlug()}/madoc/api/captcha/`} />
@@ -176,13 +166,10 @@ export function Register() {
             </div>
           )}
 
-          {status === 'error' && <p className="text-red-700">{error}</p>}
+          {registration.isError && <p className="text-red-700">{t(authErrorKey(registration.error, 'register_form_error'))}</p>}
 
           <div>
-            <Button
-              type="submit"
-              disabled={status === 'sending'}
-            >
+            <Button type="submit" loading={registration.isPending}>
               {t('register_form_submit')}
             </Button>
           </div>
@@ -198,7 +185,7 @@ export function Register() {
           onAccept={() => {
             setTermsAccepted(true);
             setShowTermsPopup(false);
-            doRegister(true);
+            registration.mutate(true);
           }}
           onCancel={() => setShowTermsPopup(false)}
         />

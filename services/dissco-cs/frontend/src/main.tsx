@@ -5,7 +5,7 @@ import './global.css';
 import { App } from './App';
 import { queryClient } from './api/query-client';
 import { listenForUncaughtErrors } from './api/uncaught-errors';
-import { recordVisit } from './api/record-visit';
+import { recordVisit } from './utility/record-visit';
 import { Toast } from './components/layout/Toast';
 import { SiteThemeSync } from './components/layout/SiteThemeSync';
 import { applySiteColors, readCachedSiteColors } from './utility/site-colors';

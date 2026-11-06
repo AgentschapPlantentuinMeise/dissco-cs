@@ -73,6 +73,32 @@ export const setPassword = (data: { c1: string; c2: string; password: string }) 
 export const checkReset = (data: { c1: string; c2: string }) => publicRequest<{ valid: boolean }>('/auth/check-reset', data);
 
 /**
+ * The logged-in user's own name and email address.
+ * Input: none.
+ * Who: logged-in user.
+ * Returns: { name, email }.
+ */
+export const getAccount = () => publicRequest<{ name: string; email: string }>('/auth/account');
+
+/**
+ * Changes the logged-in user's name, on every site, and renews their session so its JWT carries it.
+ * @param data the new name, at most MAX_USER_NAME_LENGTH
+ * Who: logged-in user.
+ * Returns: { ok }. Throws with Madoc's message when the name is refused.
+ */
+export const changeName = (data: { name: string }) => publicPost<{ ok: true }>('/auth/change-name', data);
+
+/**
+ * Changes the logged-in user's password. Other sessions stay logged in.
+ * @param data the current password, and the new one with the rules of getPasswordRequirements
+ * Who: logged-in user.
+ * Returns: { ok }. Throws with Madoc's message when the current password is wrong or the new one
+ *   too weak.
+ */
+export const changePassword = (data: { currentPassword: string; newPassword: string }) =>
+  publicPost<{ ok: true }>('/auth/change-password', data);
+
+/**
  * Accepts the site's latest terms for the logged-in user (the terms step after login).
  * Input: none.
  * Who: logged-in user.

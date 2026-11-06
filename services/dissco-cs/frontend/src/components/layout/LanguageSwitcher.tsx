@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { LuChevronDown } from 'react-icons/lu';
 import { LANGUAGES } from '../../utility/site-lang-text';
-import { changeLanguage } from './change-language';
+import { changeLanguage } from '../../utility/change-language';
 import { menuItemClass, menuItemsClass } from './nav-styles';
 
 // The navbar's language menu for visitors who are not logged in; logged in, the languages sit in

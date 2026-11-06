@@ -7,7 +7,7 @@ import { LANGUAGES } from '../../utility/site-lang-text';
 import { NavSearch } from './NavSearch';
 import { NavLink, useNavLinks } from './use-nav-links';
 import { BAR_LINK_KEYS, SUPPORT_LINK_KEYS } from './nav-config';
-import { changeLanguage } from './change-language';
+import { changeLanguage } from '../../utility/change-language';
 import { useSiteName } from '../../hooks/use-site-name';
 
 // The menu below the navbar on a phone: search, the links (with the forum for a logged-in user),

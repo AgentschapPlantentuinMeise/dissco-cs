@@ -260,6 +260,21 @@ const rules: ConventionRule[] = [
     instead: "t('key') with the key in all four translation files -- a missing key falls back to English (fallbackLng), not to inline Dutch",
   },
   {
+    name: 'A form field with a label is <FormField>',
+    pattern: /<label className="(flex flex-col gap-1|block text-sm font-medium)/,
+    instead: '<FormField label className> from components/ui/FormField.tsx',
+  },
+  {
+    name: 'A password field is <PasswordInput>, so it can always be shown',
+    pattern: /type="password"/,
+    instead: '<PasswordInput> from components/auth/PasswordInput.tsx',
+  },
+  {
+    name: 'A write shows its progress with useMutation, not a status of its own',
+    pattern: /useState<'idle'|setStatus\('sending'\)/,
+    instead: "useMutation: isPending, isError and isSuccess -- CLAUDE.md 'Schrijven naar de server'",
+  },
+  {
     name: 'No silently swallowed errors',
     pattern: /\.catch\(\(\) => \{\s*\}\)|catch\s*(\(\w*\))?\s*\{\s*\}/,
     instead: "reportClientError(err, 'action'), or let the error through",

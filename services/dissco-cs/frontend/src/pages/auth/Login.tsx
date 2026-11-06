@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { useSearchParams } from 'react-router-dom';
 import { CsPage } from '../../components/layout/CsPage';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PageBody } from '../../components/layout/PageBody';
+import { PasswordInput } from '../../components/auth/PasswordInput';
 import { TermsModal } from '../../components/auth/TermsModal';
 import { HrefLink } from '../../utility/href-link';
 import { login, getTerms, acceptTerms } from '../../api/madoc-auth/auth';
 import { MadocSiteTermsDto } from '@dissco-cs/shared-types';
 import { clearJwt } from '../../api/jwt';
 import { inputClass } from '../../components/ui/input-styles';
-import { reportAuthError } from './auth-error';
+import { authErrorKey } from './auth-error';
+import { FormField } from '../../components/ui/FormField';
 
 export function Login() {
   const { t } = useTranslation('dissco-cs');
@@ -19,8 +22,6 @@ export function Login() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [status, setStatus] = useState<'idle' | 'sending' | 'error'>('idle');
-  const [error, setError] = useState('');
   const [pendingTerms, setPendingTerms] = useState<MadocSiteTermsDto | null>(null);
 
   const sessionExpired = searchParams.get('expired') === '1';
@@ -30,50 +31,42 @@ export function Login() {
     window.location.href = redirect && redirect.startsWith('/') ? redirect : '/';
   };
 
-  const submit = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setStatus('sending');
-    try {
-      const loginResult = await login({ email, password });
+  // Resolves to the terms the user still has to accept, or null when they can go on.
+  const loginMutation = useMutation({
+    mutationFn: async () => {
+      const { user } = await login({ email, password });
 
-      if (typeof loginResult.user.hasTerms !== 'boolean') {
+      if (typeof user.hasTerms !== 'boolean') {
         // Fail closed: if we can't determine terms status, don't let the user through -
         // silently skipping the check would defeat the point of the gate.
-        throw new Error(t('login_form_error'));
+        throw new Error('Unknown terms status');
       }
 
-      if (loginResult.user.hasTerms && !loginResult.user.hasAccepted) {
-        const { latest } = await getTerms();
-        if (latest) {
-          setPendingTerms(latest);
-          setStatus('idle');
-          return;
-        }
-      }
+      return user.hasTerms && !user.hasAccepted ? (await getTerms()).latest : null;
+    },
+    onSuccess: terms => {
+      if (terms) setPendingTerms(terms);
+      else redirectAfterLogin();
+    },
+    meta: { handlesOwnError: true },
+  });
 
-      redirectAfterLogin();
-    } catch (err) {
-      setStatus('error');
-      setError(t(reportAuthError(err, 'login_form_error')));
-    }
-  };
+  const termsMutation = useMutation({
+    mutationFn: () => acceptTerms(),
+    onSuccess: redirectAfterLogin,
+    onError: () => setPendingTerms(null),
+    meta: { handlesOwnError: true },
+  });
 
-  const acceptTermsAndContinue = async () => {
-    setStatus('sending');
-    try {
-      await acceptTerms();
-      redirectAfterLogin();
-    } catch (err) {
-      setStatus('error');
-      setError(t(reportAuthError(err, 'login_terms_accept_error')));
-      setPendingTerms(null);
-    }
+  const submit = (e: React.SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    termsMutation.reset();
+    loginMutation.mutate();
   };
 
   const cancelTerms = () => {
     clearJwt();
     setPendingTerms(null);
-    setStatus('idle');
   };
 
   return (
@@ -97,8 +90,7 @@ export function Login() {
         )}
 
         <form onSubmit={submit} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-gray-700">{t('login_form_email')}</span>
+          <FormField label={t('login_form_email')}>
             <input
               type="email"
               required
@@ -106,29 +98,25 @@ export function Login() {
               onChange={e => setEmail(e.target.value)}
               className={inputClass}
             />
-          </label>
+          </FormField>
 
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-gray-700">{t('login_form_password')}</span>
-            <input
-              type="password"
+          <FormField label={t('login_form_password')}>
+            <PasswordInput
               required
+              autoComplete="current-password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className={inputClass}
             />
-          </label>
+          </FormField>
 
-          {status === 'error' && <p className="text-red-700">{error}</p>}
+          {loginMutation.isError && <p className="text-red-700">{t(authErrorKey(loginMutation.error, 'login_form_error'))}</p>}
+          {termsMutation.isError && <p className="text-red-700">{t(authErrorKey(termsMutation.error, 'login_terms_accept_error'))}</p>}
 
           <div className="flex items-center justify-between mt-2">
             <HrefLink href="/forgot-password" className="text-sm text-gray-600 hover:text-cs-primary">
               {t('login_forgot_password_link')}
             </HrefLink>
-            <Button
-              type="submit"
-              disabled={status === 'sending' || !!pendingTerms}
-            >
+            <Button type="submit" disabled={!!pendingTerms} loading={loginMutation.isPending}>
               {t('login_form_submit')}
             </Button>
           </div>
@@ -149,9 +137,9 @@ export function Login() {
           terms={pendingTerms}
           acceptLabel={t('login_terms_accept_button')}
           cancelLabel={t('common_cancel')}
-          onAccept={acceptTermsAndContinue}
+          onAccept={() => termsMutation.mutate()}
           onCancel={cancelTerms}
-          disabled={status === 'sending'}
+          disabled={termsMutation.isPending}
         />
       )}
     </CsPage>

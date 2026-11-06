@@ -22,6 +22,7 @@ import { MarkdownToolbar } from '../../../components/ui/MarkdownToolbar';
 import { LanguageTabs } from '../../../components/ui/LanguageTabs';
 import { inputClass } from '../../../components/ui/input-styles';
 import { AttachmentFileError, attachmentFileError } from './manual-content';
+import { FormField } from '../../../components/ui/FormField';
 
 export type ManualDraft = {
   title: MultilingualText;
@@ -113,8 +114,7 @@ export function ManualForm({ manualId, storedLangs, draft, setDraft, selectedLan
     <div>
       <LanguageTabs selected={selectedLang} onSelect={onSelectLang} isMissing={lang => missingLangs.includes(lang)} />
 
-      <label className="flex flex-col gap-1 mb-4">
-        <span className="text-sm font-medium text-gray-700">{t('sm_manuals_field_title')} *</span>
+      <FormField label={`${t('sm_manuals_field_title')} *`} className="mb-4">
         <input
           type="text"
           value={draft.title[selectedLang] ?? ''}
@@ -122,7 +122,7 @@ export function ManualForm({ manualId, storedLangs, draft, setDraft, selectedLan
           maxLength={MAX_MANUAL_TITLE_LENGTH}
           className={inputClass}
         />
-      </label>
+      </FormField>
 
       <MarkdownToolbar textareaRef={textareaRef} value={draft.content[selectedLang] ?? ''} onChange={next => setText('content', next)} />
       <textarea

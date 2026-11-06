@@ -17,6 +17,7 @@ import {
   announcementInputSchema,
 } from '@dissco-cs/shared-types';
 import { inputClass } from '../../../components/ui/input-styles';
+import { FormField } from '../../../components/ui/FormField';
 
 export function toDateInputValue(iso: string | null): string {
   if (!iso) return '';
@@ -54,8 +55,7 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
         isMissing={lang => !(draft.title[lang] ?? '').trim()}
       />
 
-      <label className="flex flex-col gap-1 mb-4">
-        <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_title')} *</span>
+      <FormField label={`${t('sm_announcements_field_title')} *`} className="mb-4">
         <input
           type="text"
           value={draft.title[selectedLang] ?? ''}
@@ -63,10 +63,9 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
           maxLength={MAX_ANNOUNCEMENT_TITLE_LENGTH}
           className={inputClass}
         />
-      </label>
+      </FormField>
 
-      <label className="flex flex-col gap-1 mb-4">
-        <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_description')} *</span>
+      <FormField label={`${t('sm_announcements_field_description')} *`} className="mb-4">
         <MarkdownToolbar
           textareaRef={textareaRef}
           value={draft.description[selectedLang] ?? ''}
@@ -81,7 +80,7 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
           maxLength={MAX_ANNOUNCEMENT_DESCRIPTION_LENGTH}
           className={`${inputClass} rounded-t-none min-h-[90px]`}
         />
-      </label>
+      </FormField>
 
       <div className="flex flex-col gap-2 mb-4">
         <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_target')}</span>
@@ -120,24 +119,22 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
       </div>
 
       <div className="flex gap-4 mb-4">
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_start')}</span>
+        <FormField label={t('sm_announcements_field_start')}>
           <input
             type="date"
             value={toDateInputValue(draft.startDate)}
             onChange={e => setDraft(prev => ({ ...prev, startDate: e.target.value || null }))}
             className={inputClass}
           />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-gray-700">{t('sm_announcements_field_end')}</span>
+        </FormField>
+        <FormField label={t('sm_announcements_field_end')}>
           <input
             type="date"
             value={toDateInputValue(draft.endDate)}
             onChange={e => setDraft(prev => ({ ...prev, endDate: e.target.value || null }))}
             className={inputClass}
           />
-        </label>
+        </FormField>
       </div>
 
       <ActiveToggleField

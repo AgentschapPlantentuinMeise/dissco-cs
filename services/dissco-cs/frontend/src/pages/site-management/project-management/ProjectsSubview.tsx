@@ -21,6 +21,7 @@ import { rowHoverClass, savedRowClass } from '../../../components/ui/list-styles
 import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { useSavedFlash } from '../../../hooks/use-saved-flash';
 import { filterFieldClass, inputClass } from '../../../components/ui/input-styles';
+import { FormField } from '../../../components/ui/FormField';
 
 export function ProjectsSubview({ projects, manuals, institutions, institutionLinks }: {
   projects: MadocProjectDto[];
@@ -195,8 +196,7 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
         }
         panel={editingProject ? (
           <div className="flex flex-col gap-4">
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-gray-700">{t('sm_project_institution_label')}</span>
+            <FormField label={t('sm_project_institution_label')}>
               <Select
                 value={pickedInstitutionId}
                 onChange={e => setPickedInstitutionId(e.target.value ? Number(e.target.value) : '')}
@@ -213,12 +213,11 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
                   </option>
                 ))}
               </Select>
-            </label>
+            </FormField>
             {manuals.length === 0 ? (
               <p className="text-sm text-gray-500 m-0">{t('sm_manuals_none_available')}</p>
             ) : (
-              <label className="flex flex-col gap-1">
-                <span className="text-sm font-medium text-gray-700">{t('sm_project_manual_label')}</span>
+              <FormField label={t('sm_project_manual_label')}>
                 <Select
                   value={pickedManualId}
                   onChange={e => setPickedManualId(e.target.value ? Number(e.target.value) : '')}
@@ -244,7 +243,7 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
                   })}
                 </Select>
                 <span className="text-xs text-gray-500">{t('sm_project_manual_edit_hint')}</span>
-              </label>
+              </FormField>
             )}
             <div className="flex items-center gap-3">
               <SaveButton onClick={save} disabled={!canSave} loading={saving} />

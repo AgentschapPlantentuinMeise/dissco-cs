@@ -91,8 +91,9 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ## 6. React & Hooks Best Practices
 
 - Do keep hook signatures focused on a single domain
-- Do declare a component as `function X({ a, b }: XProps)`, not `const X: React.FC<XProps>` (`frontend/test/conventions.test.ts` checks it)
+- Do declare a component as a plain function, not `const X: React.FC<XProps>` (`frontend/test/conventions.test.ts` checks it). This rule is about function versus `React.FC`, not about where the props type stands: inline (`function X({ a }: { a: string })`) and a named `interface XProps` are both fine, so never rewrite one into the other
 - Do make every action button with a label a `<Button variant size loading>` (`components/ui/Button.tsx`, `buttonClass()` for a link that looks like one), never own button classes or a pill shape; icon buttons, tabs, menu items and toggles are not Buttons (style guide, section "Bedieningselementen")
+- Do put a form field with a label in `<FormField label className>` (`components/ui/FormField.tsx`), never an own label with a span (`frontend/test/conventions.test.ts` checks it)
 - Do open every page with `<PageHeader variant="split-banner" | "compact" | "plain">` (`components/layout/PageHeader.tsx`), never an own `<h1>`: split-banner for public pages with an image, compact for working pages (forum, dashboard, review, help), plain for login and site management
 - Do put the content below the header in `<PageSection title intro action tone>` blocks on public and working pages (`components/layout/PageSection.tsx`; tones alternate page / white / tint), and in one `<PageBody width>` on a plain page (`components/layout/PageBody.tsx`); never an own wrapper with padding (`frontend/test/conventions.test.ts` checks `cs-main-wrapper`)
 - Do use `React.memo()` for expensive components
@@ -104,7 +105,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Don't store derived values in state (calculate on render instead)
 - Do shape a page like `pages/review/`: logic (queries, state, mutations, handlers) in a `use-<page>.ts` hook, calculation rules as pure functions in a `.ts` file with a test, and the parts as small components next to the page
 - Don't let a `.tsx` file grow beyond 300 lines (`frontend/test/conventions.test.ts` checks it)
-- Do give every page its own folder, named after the component in kebab-case, with the page itself inside (`pages/forum/Forum.tsx`, `pages/site-management/announcements/Announcements.tsx`) — also a page that is a single file today
+- Do give every page a folder, with the page itself inside (`pages/forum/Forum.tsx`, `pages/site-management/announcements/Announcements.tsx`) — also a page that is a single file today. The folder is named after the page or its domain in kebab-case: pages of the same domain share one folder (`pages/auth/Login.tsx`, `pages/auth/Register.tsx`, `pages/institutions/InstitutionDetail.tsx`, `pages/search/SearchResults.tsx`)
 
 ## 7. Comments
 

@@ -9,6 +9,7 @@ import { UserInvitation } from '../extensions/site-manager/types';
 import { generateId } from '../frontend/shared/capture-models/helpers/generate-id';
 import { gatewayHost } from '../gateway/api.server';
 import { RouteMiddleware } from '../types/route-middleware';
+import { getJwtCookies } from '../utility/get-jwt-cookies';
 import { ConflictError } from '../utility/errors/conflict';
 import { NotAuthorized } from '../utility/errors/not-authorized';
 import { NotFound } from '../utility/errors/not-found';
@@ -20,6 +21,8 @@ const DEFAULT_INVITATION_SITE_ROLE = 'viewer';
 const DEFAULT_REGISTRATION_ROLE = 'researcher';
 const DEFAULT_TRANSCRIBER_ROLE = 'transcriber';
 const RESET_LINK_MAX_AGE_DAYS = 1;
+// Keep in step with MAX_USER_NAME_LENGTH in dissco-cs's shared/types/madoc-auth.ts.
+const MAX_NAME_LENGTH = 100;
 
 function validatePasswordStrength(password: string): { valid: boolean; reason?: string } {
   const isValid =
@@ -326,6 +329,69 @@ export const checkResetJson: RouteMiddleware<{ slug: string }> = async context =
   } catch (e) {
     context.response.body = { valid: false };
   }
+};
+
+// The account page acts for the logged-in user only: the id comes from their session, never from
+// the request.
+function sessionUserId(context: { state: { jwt?: { user?: { id?: number } } } }): number {
+  const userId = context.state.jwt?.user?.id;
+  if (!userId) {
+    throw new NotAuthorized('Not logged in');
+  }
+  return userId;
+}
+
+export const accountJson: RouteMiddleware<{ slug: string }> = async context => {
+  const user = await context.siteManager.getUserById(sessionUserId(context));
+  context.response.body = { name: user.name, email: user.email };
+};
+
+export const changeNameJson: RouteMiddleware<{ slug: string }, { name: string }> = async context => {
+  const userId = sessionUserId(context);
+  const name = (context.requestBody.name || '').trim();
+
+  if (!name || name.length > MAX_NAME_LENGTH) {
+    throw new RequestError('Invalid name');
+  }
+
+  await context.siteManager.updateUser(userId, { name });
+
+  // The JWT carries the name. set-jwt.ts only writes a cookie for a request without a session, so
+  // the new token is set here, as routes/user/refresh.ts does. Without it the navbar and every
+  // message written after this keep the old name until the next login.
+  const resp = await context.siteManager.getVerifiedLogin(userId);
+  if (resp) {
+    const { cookiesToAdd } = await getJwtCookies(context, { ...resp.user, sites: resp.sites }, context.state.jwt?.site?.id);
+    for (const cookie of cookiesToAdd) {
+      context.cookies.set(cookie.name, cookie.value, cookie.options);
+    }
+  }
+
+  context.response.body = { ok: true };
+};
+
+export const changePasswordJson: RouteMiddleware<
+  { slug: string },
+  { currentPassword: string; newPassword: string }
+> = async context => {
+  const userId = sessionUserId(context);
+  const { currentPassword, newPassword } = context.requestBody;
+  const user = await context.siteManager.getUserById(userId);
+
+  const verified = await context.siteManager.verifyLogin(user.email, currentPassword).catch(() => undefined);
+  if (!verified) {
+    // Same pause as routes/user/update-password.ts, to slow down guessing.
+    await new Promise(resolve => setTimeout(resolve, 500));
+    throw new RequestError('Incorrect password');
+  }
+
+  const strength = validatePasswordStrength(newPassword);
+  if (!strength.valid) {
+    throw new RequestError(strength.reason);
+  }
+
+  await context.siteManager.updateUserPassword(userId, newPassword);
+  context.response.body = { ok: true };
 };
 
 export const setPasswordJson: RouteMiddleware<

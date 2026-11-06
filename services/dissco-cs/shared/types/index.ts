@@ -20,3 +20,4 @@ export * from './site-theme.js';
 export * from './site-image.js';
 export * from './image-upload.js';
 export * from './home-step.js';
+export * from './user-profile.js';

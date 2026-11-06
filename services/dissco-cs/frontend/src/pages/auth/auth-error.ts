@@ -1,5 +1,4 @@
 import { ApiError } from '../../api/cs-client/request';
-import { reportClientError } from '../../api/cs-client/client-errors';
 
 // Madoc answers a refused login, registration or password change with an English text (the
 // RequestError, NotAuthorized and ConflictError messages in madoc-ts's routes/dissco-cs-auth.ts).
@@ -8,6 +7,7 @@ import { reportClientError } from '../../api/cs-client/client-errors';
 // in step with that file.
 const MADOC_MESSAGE_KEYS: Record<string, string> = {
   'Incorrect email or password': 'auth_error_wrong_login',
+  'Incorrect password': 'auth_error_wrong_password',
   'Email already registered': 'auth_error_email_registered',
   'Invalid registration details': 'auth_error_invalid_registration',
   'You must accept the terms and conditions to register': 'auth_error_terms_required',
@@ -37,10 +37,4 @@ export function authErrorKey(err: unknown, fallbackKey: string): string {
     return MADOC_MESSAGE_KEYS[err.serverMessage] ?? fallbackKey;
   }
   return fallbackKey;
-}
-
-// Reports the failure (shouldReport decides whether it reaches app_log) and returns the key to show.
-export function reportAuthError(err: unknown, fallbackKey: string): string {
-  reportClientError(err, 'action');
-  return authErrorKey(err, fallbackKey);
 }

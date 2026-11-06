@@ -1,3 +1,4 @@
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -138,6 +139,16 @@ describe('backend conventions', () => {
     ];
     const instead = 'a /** */ block: what it does, @param per input, Returns: -- CLAUDE.md §7';
     expect(missing, `Every Madoc call and shared helper has a contract\nInstead: ${instead}\nFound:\n  ${missing.join('\n  ')}`).toEqual([]);
+  });
+
+  it('Every DTO mapper is in mappers.test.ts', () => {
+    const repositoriesDir = join(srcDir, 'repositories');
+    const tested = readFileSync(join(__dirname, 'repositories', 'mappers.test.ts'), 'utf8');
+    const missing = readdirSync(repositoriesDir)
+      .flatMap(file => [...readFileSync(join(repositoriesDir, file), 'utf8').matchAll(/export function (to[A-Z]\w*)\(/g)].map(match => match[1]))
+      .filter(mapper => !tested.includes(mapper));
+    const instead = "add an it() with the exact keys to test/repositories/mappers.test.ts -- CLAUDE.md 'DTO's'";
+    expect(missing, `Every DTO mapper is in mappers.test.ts\nInstead: ${instead}\nFound:\n  ${missing.join('\n  ')}`).toEqual([]);
   });
 
   it('A repository and its controller have the same name', () => {

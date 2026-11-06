@@ -5,7 +5,7 @@ import { AuthGate } from './components/layout/AuthGate';
 import { RouteErrorBoundary } from './components/layout/ErrorBoundary';
 import { Homepage } from './pages/homepage/Homepage';
 import { Projects } from './pages/projects/Projects';
-import { ProjectDetail } from './pages/project-detail/ProjectDetail';
+import { ProjectDetail } from './pages/projects/ProjectDetail';
 import { AnnotatePage } from './pages/annotate/AnnotatePage';
 import { About } from './pages/about/About';
 import { Help } from './pages/help/Help';
@@ -15,6 +15,7 @@ import { HonourBoard } from './pages/honour-board/HonourBoard';
 import { SearchResults } from './pages/search/SearchResults';
 import { Contact } from './pages/contact/Contact';
 import { UserDashboard } from './pages/user-dashboard/UserDashboard';
+import { MyAccount } from './pages/my-account/MyAccount';
 import { Review } from './pages/review/Review';
 import { Forum } from './pages/forum/Forum';
 import { SiteManagement } from './pages/site-management/SiteManagement';
@@ -55,6 +56,7 @@ export function App() {
           <Route path="/forum" element={<PageGate pageKey="forum"><AuthGate><Forum /></AuthGate></PageGate>} />
           <Route path="/contact" element={<PageGate pageKey="contact"><Contact /></PageGate>} />
           <Route path="/my-dashboard" element={<AuthGate><UserDashboard /></AuthGate>} />
+          <Route path="/my-account" element={<AuthGate><MyAccount /></AuthGate>} />
           <Route path="/review" element={<AuthGate requireReviewer><Review /></AuthGate>} />
           <Route path="/manage" element={<AuthGate requireAdmin><SiteManagement /></AuthGate>} />
           <Route path="/manage/projects" element={<AuthGate requireAdmin><ProjectManagement /></AuthGate>} />

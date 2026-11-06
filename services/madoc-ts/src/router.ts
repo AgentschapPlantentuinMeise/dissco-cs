@@ -329,6 +329,9 @@ import {
   loginJson,
   registerJson,
   setPasswordJson,
+  accountJson,
+  changeNameJson,
+  changePasswordJson,
 } from './routes/dissco-cs-auth';
 import { userDetails } from './routes/user/details';
 import { accountEntryRedirect } from './routes/user/account-entry-redirect';
@@ -944,6 +947,9 @@ export const router = new TypedRouter({
     forgotPasswordJson,
   ],
   'dissco-cs-auth-set-password': [TypedRouter.POST, '/s/:slug/madoc/api/auth/set-password', setPasswordJson],
+  'dissco-cs-auth-account': [TypedRouter.GET, '/s/:slug/madoc/api/auth/account', accountJson],
+  'dissco-cs-auth-change-name': [TypedRouter.POST, '/s/:slug/madoc/api/auth/change-name', changeNameJson],
+  'dissco-cs-auth-change-password': [TypedRouter.POST, '/s/:slug/madoc/api/auth/change-password', changePasswordJson],
   'dissco-cs-auth-check-reset': [
     TypedRouter.GET,
     '/s/:slug/madoc/api/auth/check-reset',

@@ -18,6 +18,7 @@ import {
   institutionInputSchema,
 } from '@dissco-cs/shared-types';
 import { inputClass } from '../../../components/ui/input-styles';
+import { FormField } from '../../../components/ui/FormField';
 
 export type InstitutionDraft = InstitutionInput & {
   // A logo picked in this form, sent along on save.
@@ -85,8 +86,7 @@ export function InstitutionForm({
         isMissing={lang => issueAt('name', lang) || issueAt('description', lang)}
       />
 
-      <label className="flex flex-col gap-1 mb-4">
-        <span className="text-sm font-medium text-gray-700">{t('sm_institutions_field_name')} *</span>
+      <FormField label={`${t('sm_institutions_field_name')} *`} className="mb-4">
         <input
           type="text"
           value={draft.name[selectedLang]}
@@ -94,10 +94,9 @@ export function InstitutionForm({
           maxLength={MAX_INSTITUTION_NAME_LENGTH}
           className={inputClass}
         />
-      </label>
+      </FormField>
 
-      <label className="flex flex-col gap-1 mb-4">
-        <span className="text-sm font-medium text-gray-700">{t('sm_institutions_field_description')}*</span>
+      <FormField label={`${t('sm_institutions_field_description')}*`} className="mb-4">
         <textarea
           value={draft.description[selectedLang]}
           onChange={e =>
@@ -106,11 +105,10 @@ export function InstitutionForm({
           maxLength={MAX_INSTITUTION_DESCRIPTION_LENGTH}
           className={`${inputClass} min-h-[90px]`}
         />
-      </label>
+      </FormField>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-gray-700">{t('sm_institutions_field_email')}*</span>
+        <FormField label={`${t('sm_institutions_field_email')}*`}>
           <input
             type="email"
             value={draft.email}
@@ -119,10 +117,9 @@ export function InstitutionForm({
             className={`border rounded-lg p-2 ${emailValid ? 'border-gray-300' : 'border-red-500'}`}
           />
           {!emailValid && <span className="text-xs text-red-600">{t('sm_institutions_invalid_email')}</span>}
-        </label>
+        </FormField>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-gray-700">{t('sm_institutions_field_phone')}*</span>
+        <FormField label={`${t('sm_institutions_field_phone')}*`}>
           <input
             type="text"
             value={draft.phone}
@@ -131,11 +128,10 @@ export function InstitutionForm({
             className={`border rounded-lg p-2 ${phoneValid ? 'border-gray-300' : 'border-red-500'}`}
           />
           {!phoneValid && <span className="text-xs text-red-600">{t('sm_institutions_invalid_phone')}</span>}
-        </label>
+        </FormField>
       </div>
 
-      <label className="flex flex-col gap-1 mb-4">
-        <span className="text-sm font-medium text-gray-700">{t('sm_institutions_field_website')}*</span>
+      <FormField label={`${t('sm_institutions_field_website')}*`} className="mb-4">
         <input
           type="text"
           value={draft.website}
@@ -143,7 +139,7 @@ export function InstitutionForm({
           maxLength={MAX_INSTITUTION_WEBSITE_LENGTH}
           className={inputClass}
         />
-      </label>
+      </FormField>
 
       <div className="grid grid-cols-2 gap-4 mb-6 items-start">
         <div className="flex flex-col gap-1">
