@@ -11,7 +11,7 @@ export function ConfirmDialog({ title, message, confirmLabel, cancelLabel, tone 
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  const toneColor = tone === 'affirm' ? 'text-cs-secondary' : 'text-red-600';
+  const toneColor = tone === 'affirm' ? 'text-cs-secondary' : 'text-danger-600';
 
   return (
     <Modal

@@ -109,8 +109,8 @@ export function Login() {
             />
           </FormField>
 
-          {loginMutation.isError && <p className="text-red-700">{t(authErrorKey(loginMutation.error, 'login_form_error'))}</p>}
-          {termsMutation.isError && <p className="text-red-700">{t(authErrorKey(termsMutation.error, 'login_terms_accept_error'))}</p>}
+          {loginMutation.isError && <p className="text-danger-700">{t(authErrorKey(loginMutation.error, 'login_form_error'))}</p>}
+          {termsMutation.isError && <p className="text-danger-700">{t(authErrorKey(termsMutation.error, 'login_terms_accept_error'))}</p>}
 
           <div className="flex items-center justify-between mt-2">
             <HrefLink href="/forgot-password" className="text-sm text-gray-600 hover:text-cs-primary">

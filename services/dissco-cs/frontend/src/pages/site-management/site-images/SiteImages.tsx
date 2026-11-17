@@ -127,7 +127,7 @@ function SiteImageRow({ imageKey, image, hint }: { imageKey: SiteImageKey; image
           {image && <DeleteIconButton onClick={() => setConfirmingDelete(true)} />}
         </span>
         {hint && <span className="text-sm text-gray-500">{hint}</span>}
-        {invalidFile && <span className="text-sm text-red-600">{t('common_invalid_image_file')}</span>}
+        {invalidFile && <span className="text-sm text-danger-600">{t('common_invalid_image_file')}</span>}
 
         {image && !isLogo && (
           <span className="flex flex-wrap items-center gap-2">

@@ -195,13 +195,13 @@ export function BulkCreateProjectsSubview({ projects }: { projects: MadocProject
       )}
 
       {finished && (
-        <p className="text-sm text-green-700 mt-3">
+        <p className="text-sm text-success-700 mt-3">
           {t('sm_bulk_done', { created: progress.done - progress.failed, failed: progress.failed })}
         </p>
       )}
 
       {errors.length > 0 && (
-        <ul className="text-xs text-red-700 mt-2 list-disc pl-5 space-y-0.5 max-h-40 overflow-y-auto">
+        <ul className="text-xs text-danger-700 mt-2 list-disc pl-5 space-y-0.5 max-h-40 overflow-y-auto">
           {errors.slice(0, 20).map(err => (
             <li key={err.index}>
               {t('sm_bulk_error_prefix', { index: err.index })} {err.message}

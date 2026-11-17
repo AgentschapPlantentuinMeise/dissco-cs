@@ -95,7 +95,7 @@ export function Review() {
                   </Button>
                 </div>
                 {c.failedResults.length > 0 && (
-                  <ul className="mt-2 mb-0 pl-4 text-sm text-red-700 space-y-1">
+                  <ul className="mt-2 mb-0 pl-4 text-sm text-danger-700 space-y-1">
                     {c.failedResults.map(r => (
                       <li key={r.id}>
                         {r.label}: {r.error}

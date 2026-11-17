@@ -10,7 +10,7 @@ import { PageLoadError } from '../../components/layout/PageLoadError';
 import { InstitutionCard } from '../../components/institutions/InstitutionCard';
 import { HeaderMosaic, PageHeader } from '../../components/layout/PageHeader';
 import { PageHeaderPhoto } from '../../components/layout/PageHeaderPhoto';
-import { HonourBoardBand } from '../../components/stats/HonourBoardBand';
+import { HonourBoardTimeline } from '../../components/stats/HonourBoardTimeline';
 import { useSiteHonourBoard } from '../../hooks/use-site-honour-board';
 import { formatNumber } from '../../utility/format-number';
 import { PageSection } from '../../components/layout/PageSection';
@@ -82,7 +82,7 @@ export function Institutions() {
         action={isActive('contact') ? { href: '/contact', label: t('institutions_join_action') } : undefined}
       />
 
-      <HonourBoardBand board={honourBoard} />
+      <HonourBoardTimeline board={honourBoard} />
     </CsPage>
   );
 }

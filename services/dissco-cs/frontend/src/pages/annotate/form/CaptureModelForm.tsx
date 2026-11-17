@@ -101,7 +101,7 @@ export function CaptureModelForm({
     return (
       <div className="flex flex-col h-full">
         {readOnly && readOnlyBanner && (
-          <div className="px-5 py-3 bg-amber-50 border-b border-amber-200 text-amber-800 text-[0.88rem] font-medium flex-shrink-0">
+          <div className="px-5 py-3 bg-attention-50 border-b border-attention-200 text-attention-800 text-[0.88rem] font-medium flex-shrink-0">
             {readOnlyBanner}
           </div>
         )}
@@ -131,7 +131,7 @@ export function CaptureModelForm({
   return (
     <div className="flex flex-col h-full">
       {readOnly && readOnlyBanner && (
-        <div className="px-5 py-3 bg-amber-50 border-b border-amber-200 text-amber-800 text-[0.88rem] font-medium flex-shrink-0">
+        <div className="px-5 py-3 bg-attention-50 border-b border-attention-200 text-attention-800 text-[0.88rem] font-medium flex-shrink-0">
           {readOnlyBanner}
         </div>
       )}
@@ -145,7 +145,7 @@ export function CaptureModelForm({
       <div className={`flex-1 min-h-0 px-5 py-5 pb-2 overflow-y-auto ${readOnly ? 'pointer-events-none opacity-60 select-none' : ''}`}>
         {activeModel && hasVisibleRequiredField(activeModel.fields, document) && (
           <p className="text-[0.78rem] text-gray-500 mb-3">
-            <span className="text-red-500">*</span> {t('annotate_required_legend')}
+            <span className="text-danger-500">*</span> {t('annotate_required_legend')}
           </p>
         )}
         {sectionModels
@@ -188,7 +188,7 @@ export function CaptureModelForm({
       {!readOnly && (
         <div className="px-5 py-3 border-t border-gray-300 bg-gray-50">
           {missingRequired.length > 0 && (
-            <p className="text-[0.8rem] text-red-600 mb-2">
+            <p className="text-[0.8rem] text-danger-600 mb-2">
               {t('annotate_missing_required', { labels: missingRequired.join(', ') })}
             </p>
           )}

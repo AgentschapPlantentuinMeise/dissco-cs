@@ -165,7 +165,7 @@ export function ProjectDetail() {
         <PageSection tone="white" title={t('pdp_manifests_title')}>
           {progressError && <SectionLoadError />}
           {allTasksTaken && (
-            <p className="m-0 px-5 py-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-[0.95rem]">
+            <p className="m-0 px-5 py-4 bg-attention-50 border border-attention-200 rounded-lg text-attention-800 text-[0.95rem]">
               {t('pdp_all_tasks_taken')}
             </p>
           )}

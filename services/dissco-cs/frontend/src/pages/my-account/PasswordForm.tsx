@@ -41,7 +41,7 @@ export function PasswordForm({ saving, saved, error, onSave }: {
         onPasswordChange={setNewPassword}
         onConfirmPasswordChange={setConfirmPassword}
       />
-      {!!error && <p className="text-red-700 m-0">{t(authErrorKey(error, 'my_account_password_error'))}</p>}
+      {!!error && <p className="text-danger-700 m-0">{t(authErrorKey(error, 'my_account_password_error'))}</p>}
       <div className="flex items-center gap-3">
         <Button type="submit" size="sm" disabled={!canSubmit} loading={saving}>
           {t('my_account_password_submit')}

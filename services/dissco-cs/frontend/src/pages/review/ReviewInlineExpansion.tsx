@@ -5,6 +5,7 @@ import { SubmissionFieldsForm } from '../../components/capture-models/Submission
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Button } from '../../components/ui/Button';
 import { IconButton } from '../../components/ui/IconButton';
+import { SectionLoadError } from '../../components/layout/SectionLoadError';
 import { useReviewRevisionDocument } from './use-review-revision-document';
 import { localeText } from '../../utility/locale-text';
 import { LuTrash2 } from 'react-icons/lu';
@@ -101,7 +102,7 @@ export function ReviewInlineExpansion({
   if (revisionQuery.status === 'error' || modelQuery.status === 'error' || !modelQuery.data || !revisionQuery.data || !currentDocument) {
     return (
       <ExpansionChrome title={title} subtitle={subtitle} onClose={onClose}>
-        <p className="text-sm text-red-600">{t('review_detail_error')}</p>
+        <SectionLoadError />
       </ExpansionChrome>
     );
   }

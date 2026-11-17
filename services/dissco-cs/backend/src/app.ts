@@ -5,6 +5,7 @@ import { Hono } from 'hono';
 
 import { DisscoCSDatabase } from './database/database.js';
 import { HonourBoardRepository } from './madoc-db/honour-board.repository.js';
+import { HonourBoardQuarterLoader } from './madoc-db/honour-board.loader.js';
 import { StatsRepository } from './madoc-db/stats.repository.js';
 import { requestLog } from './infrastructure/request-log.js';
 import { errorResponse } from './infrastructure/error-response.js';
@@ -17,6 +18,8 @@ import { iiifController } from './controllers/iiif.controller.js';
 import { institutionsController } from './controllers/institutions.controller.js';
 import { manualsController } from './controllers/manuals.controller.js';
 import { userProfileController } from './controllers/user-profile.controller.js';
+import { siteSettingsController } from './controllers/site-settings.controller.js';
+import { honourBoardQuartersController } from './controllers/honour-board-quarters.controller.js';
 import { projectsController } from './controllers/projects.controller.js';
 import { feedbackController } from './controllers/feedback.controller.js';
 import { reviewController } from './controllers/review.controller.js';
@@ -44,6 +47,7 @@ export function createDisscoCSApp(
   app.notFound(c => c.json({ error: 'Not Found' }, 404));
 
   // Each controller gets exactly the repositories it uses.
+  const quarterLoader = new HonourBoardQuarterLoader(database.siteSettings, database.honourBoardQuarters, honourBoardRepository);
   app.route('/api/dissco-cs/client-errors', clientErrorsController(database.appLog));
   app.route('/api/dissco-cs/forum', forumController(database.forum));
   app.route('/api/dissco-cs/nav-items', navItemsController(database.navItems));
@@ -53,7 +57,7 @@ export function createDisscoCSApp(
   app.route('/api/dissco-cs/home-steps', homeStepsController(database.homeSteps));
   app.route('/api/dissco-cs/announcements', announcementsController(database.announcements));
   app.route('/api/dissco-cs/institutions', institutionsController(database.institutions));
-  app.route('/api/dissco-cs/stats', statsController(database.institutions, statsRepository, honourBoardRepository));
+  app.route('/api/dissco-cs/stats', statsController(database.institutions, statsRepository, quarterLoader));
   app.route('/api/dissco-cs/projects', projectsController(database.institutions, database.manuals));
   app.route('/api/dissco-cs/tasks', tasksController());
   app.route('/api/dissco-cs/iiif', iiifController());
@@ -62,6 +66,8 @@ export function createDisscoCSApp(
   app.route('/api/dissco-cs/review', reviewController());
   app.route('/api/dissco-cs/feedback', feedbackController(database.feedback));
   app.route('/api/dissco-cs/user-profile', userProfileController(database.userProfile));
+  app.route('/api/dissco-cs/site-settings', siteSettingsController(database.siteSettings));
+  app.route('/api/dissco-cs/honour-board-quarters', honourBoardQuartersController(database.honourBoardQuarters, quarterLoader));
 
   // Frontend static serving — only active in Docker where frontend-dist is bundled in.
   if (existsSync('./frontend-dist/index.html')) {

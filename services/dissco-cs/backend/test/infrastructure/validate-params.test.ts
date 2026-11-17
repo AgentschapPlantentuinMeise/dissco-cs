@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 
 import {
-  honourBoardPeriod,
+  honourBoardQuarter,
   intId,
   navItemContentKey,
   navItemKey,
@@ -40,7 +40,7 @@ describe('validateParams', () => {
 
 describe('fixed-list building blocks', () => {
   it.each([
-    ['honourBoardPeriod', honourBoardPeriod, ['today', 'week', 'month', 'legend'], 'year'],
+    ['honourBoardQuarter', honourBoardQuarter, ['2026-Q1', '2026-Q4'], '2026-Q5'],
     ['navItemKey', navItemKey, ['institutions', 'forum', 'about', 'help', 'contact', 'welcome'], 'admin'],
     ['navItemContentKey', navItemContentKey, ['about', 'help', 'contact', 'welcome'], 'forum'],
   ] as const)('%s accepts its list and nothing else', (_name, schema, valid, invalid) => {

@@ -7,7 +7,7 @@ import { HomeStepsSection } from './HomeStepsSection';
 import { HomeInstitutionsSection } from './HomeInstitutionsSection';
 import { HeaderImage, PageHeader } from '../../components/layout/PageHeader';
 import { PageHeaderPhoto } from '../../components/layout/PageHeaderPhoto';
-import { HonourBoardBand } from '../../components/stats/HonourBoardBand';
+import { HonourBoardTimeline } from '../../components/stats/HonourBoardTimeline';
 import { useSiteHonourBoard } from '../../hooks/use-site-honour-board';
 import { disscoCSConfig } from '../../dissco-cs-config';
 import { useSiteStats } from '../../hooks/use-site-stats';
@@ -56,7 +56,7 @@ export function Homepage() {
         <HomeInstitutionsSection />
       </main>
 
-      <HonourBoardBand board={honourBoard} />
+      <HonourBoardTimeline board={honourBoard} />
     </CsPage>
   );
 }

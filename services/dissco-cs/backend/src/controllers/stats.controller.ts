@@ -1,10 +1,13 @@
 import { Context, Hono } from 'hono';
 
+import { HonourBoardQuarterDto, HonourBoardQuarterKey } from '@dissco-cs/shared-types';
+
 import { InstitutionsRepository } from '../repositories/institutions.repository.js';
 import { requestMadocUserIdentity, requireSiteId } from '../auth/auth.js';
-import { HonourBoardRepository } from '../madoc-db/honour-board.repository.js';
+import { HonourBoardQuarterLoader } from '../madoc-db/honour-board.loader.js';
+import { quarterToDto } from '../madoc-db/honour-board.logic.js';
 import { StatsRepository } from '../madoc-db/stats.repository.js';
-import { honourBoardPeriod, safeSegment, validateParams } from '../infrastructure/validate-params.js';
+import { honourBoardQuarter, safeSegment, validateParams } from '../infrastructure/validate-params.js';
 
 // Every number has two routes. The normal route answers with the cached value right away and then
 // recalculates it in the background, so the next request sees fresh numbers; only the very first
@@ -15,7 +18,7 @@ import { honourBoardPeriod, safeSegment, validateParams } from '../infrastructur
 export function statsController(
   institutionsRepository: InstitutionsRepository,
   statsRepository: StatsRepository,
-  honourBoardRepository: HonourBoardRepository
+  quarterLoader: HonourBoardQuarterLoader
 ): Hono {
   const app = new Hono();
 
@@ -31,12 +34,6 @@ export function statsController(
     }
 
     return { siteId, institutionId: institution.id };
-  }
-
-  async function institutionTaskIds(siteId: number, institutionId: number): Promise<string[]> {
-    const projectSlugs = await institutionsRepository.listProjectSlugsForInstitution(siteId, institutionId);
-    const projects = await statsRepository.resolveProjects(siteId, projectSlugs);
-    return projects.map(p => p.task_id);
   }
 
   function userUrnOf(c: Context): string | null {
@@ -64,30 +61,32 @@ export function statsController(
     return c.json(await statsRepository.getSiteCurrent(siteId));
   });
 
-  app.get('/honour-board/:period', validateParams({ period: honourBoardPeriod }), async c => {
-    const { period } = c.req.valid('param');
+  async function honourBoardQuarterDto(
+    c: Context,
+    siteId: number,
+    quarter: HonourBoardQuarterKey,
+    cachedOnly: boolean
+  ): Promise<HonourBoardQuarterDto> {
+    const { settings, record, counts } = await quarterLoader.load(siteId, quarter, cachedOnly);
+    return quarterToDto(counts, settings, record, userUrnOf(c));
+  }
 
+  app.get('/honour-board/:quarter', validateParams({ quarter: honourBoardQuarter }), async c => {
     const siteId = await requireSiteId(c);
     if (siteId instanceof Response) {
       return siteId;
     }
 
-    const result = await honourBoardRepository.getSitePeriod(siteId, period, userUrnOf(c));
-    return c.json(result);
+    return c.json(await honourBoardQuarterDto(c, siteId, c.req.valid('param').quarter, false));
   });
 
-  app.get('/honour-board/:period/current', validateParams({ period: honourBoardPeriod }), async c => {
-    const { period } = c.req.valid('param');
-
+  app.get('/honour-board/:quarter/current', validateParams({ quarter: honourBoardQuarter }), async c => {
     const siteId = await requireSiteId(c);
     if (siteId instanceof Response) {
       return siteId;
     }
 
-    const userUrn = userUrnOf(c);
-    const result =
-      honourBoardRepository.peekSitePeriod(siteId, period, userUrn) ?? (await honourBoardRepository.getSitePeriod(siteId, period, userUrn));
-    return c.json(result);
+    return c.json(await honourBoardQuarterDto(c, siteId, c.req.valid('param').quarter, true));
   });
 
   // ---- institution ----
@@ -118,42 +117,6 @@ export function statsController(
     const overview = await statsRepository.getInstitution(scope.siteId, scope.institutionId, projectSlugs);
     return c.json(overview);
   });
-
-  app.get('/institutions/:slug/honour-board/:period', validateParams({ slug: safeSegment, period: honourBoardPeriod }), async c => {
-    const { slug, period } = c.req.valid('param');
-
-    const scope = await resolveInstitution(c, slug);
-    if (scope instanceof Response) {
-      return scope;
-    }
-
-    const taskIds = await institutionTaskIds(scope.siteId, scope.institutionId);
-    const result = await honourBoardRepository.getInstitutionPeriod(scope.siteId, scope.institutionId, taskIds, period, userUrnOf(c));
-    return c.json(result);
-  });
-
-  app.get(
-    '/institutions/:slug/honour-board/:period/current',
-    validateParams({ slug: safeSegment, period: honourBoardPeriod }),
-    async c => {
-      const { slug, period } = c.req.valid('param');
-
-      const scope = await resolveInstitution(c, slug);
-      if (scope instanceof Response) {
-        return scope;
-      }
-
-      const userUrn = userUrnOf(c);
-      const cached = honourBoardRepository.peekInstitutionPeriod(scope.siteId, scope.institutionId, period, userUrn);
-      if (cached) {
-        return c.json(cached);
-      }
-
-      const taskIds = await institutionTaskIds(scope.siteId, scope.institutionId);
-      const result = await honourBoardRepository.getInstitutionPeriod(scope.siteId, scope.institutionId, taskIds, period, userUrn);
-      return c.json(result);
-    }
-  );
 
   return app;
 }

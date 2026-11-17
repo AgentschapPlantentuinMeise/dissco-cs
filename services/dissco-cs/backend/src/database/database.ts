@@ -14,6 +14,8 @@ import { SiteThemeRepository } from '../repositories/site-theme.repository.js';
 import { SiteImagesRepository } from '../repositories/site-images.repository.js';
 import { HomeStepsRepository } from '../repositories/home-steps.repository.js';
 import { UserProfileRepository } from '../repositories/user-profile.repository.js';
+import { SiteSettingsRepository } from '../repositories/site-settings.repository.js';
+import { HonourBoardQuartersRepository } from '../repositories/honour-board-quarters.repository.js';
 
 // Our own Postgres database: one connection pool, shared by every repository created here.
 export class DisscoCSDatabase {
@@ -28,6 +30,8 @@ export class DisscoCSDatabase {
   readonly siteImages: SiteImagesRepository;
   readonly homeSteps: HomeStepsRepository;
   readonly userProfile: UserProfileRepository;
+  readonly siteSettings: SiteSettingsRepository;
+  readonly honourBoardQuarters: HonourBoardQuartersRepository;
   readonly files: FileStore;
 
   private readonly pool: Pool;
@@ -64,6 +68,8 @@ export class DisscoCSDatabase {
     this.siteImages = new SiteImagesRepository(this.pool, this.schemaRef, this.files);
     this.homeSteps = new HomeStepsRepository(this.pool, this.schemaRef);
     this.userProfile = new UserProfileRepository(this.pool, this.schemaRef);
+    this.siteSettings = new SiteSettingsRepository(this.pool, this.schemaRef);
+    this.honourBoardQuarters = new HonourBoardQuartersRepository(this.pool, this.schemaRef);
   }
 
   async close(): Promise<void> {

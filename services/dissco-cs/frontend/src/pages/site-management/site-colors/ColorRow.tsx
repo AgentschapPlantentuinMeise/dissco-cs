@@ -26,7 +26,7 @@ export function ColorRow({ colorKey, value, contrast, onChange }: {
         <p className="m-0 font-semibold text-gray-900">{name}</p>
         <p className="m-0 text-sm text-gray-600">{t(`sm_colors_role_${colorKey}`)}</p>
         {contrast !== undefined && (
-          <p className="m-0 mt-1 flex items-center gap-1.5 text-sm text-amber-700">
+          <p className="m-0 mt-1 flex items-center gap-1.5 text-sm text-attention-700">
             <LuTriangleAlert aria-hidden="true" className="flex-shrink-0" />
             {t('sm_colors_contrast_warning', { ratio: contrast.toFixed(1), min: MIN_CONTRAST })}
           </p>
@@ -39,7 +39,7 @@ export function ColorRow({ colorKey, value, contrast, onChange }: {
         aria-label={t('sm_colors_hex_label', { name })}
         aria-invalid={!valid}
         spellCheck={false}
-        className={`w-28 rounded border px-3 py-2 font-mono text-sm ${valid ? 'border-gray-300' : 'border-red-500'}`}
+        className={`w-28 rounded border px-3 py-2 font-mono text-sm ${valid ? 'border-gray-300' : 'border-danger-500'}`}
       />
     </li>
   );

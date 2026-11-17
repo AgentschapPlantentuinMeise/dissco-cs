@@ -23,7 +23,7 @@ export function LanguageTabs({ selected, onSelect, isMissing }: {
           <>
             {t(`lang_${code}`)}
             {isMissing?.(code) && (
-              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-red-500" title={t('common_lang_missing')} />
+              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-danger-500" title={t('common_lang_missing')} />
             )}
           </>
         ),

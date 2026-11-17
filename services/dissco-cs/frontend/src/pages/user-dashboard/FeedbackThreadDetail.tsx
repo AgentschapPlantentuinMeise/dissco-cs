@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { feedbackKeys, feedbackQueries } from '../../api/queries/feedback';
 import { feedbackApi } from '../../api/cs-client/feedback';
 import { Button } from '../../components/ui/Button';
+import { SectionLoadError } from '../../components/layout/SectionLoadError';
 import { inputClass } from '../../components/ui/input-styles';
 import { MAX_FEEDBACK_BODY_LENGTH } from '@dissco-cs/shared-types';
 
@@ -35,7 +36,7 @@ export function FeedbackThreadDetail({ threadId }: { threadId: number }) {
     return <p className="text-sm text-gray-500 mt-3">{t('review_detail_loading')}</p>;
   }
   if (status === 'error' || !data) {
-    return <p className="text-sm text-red-600 mt-3">{t('review_detail_error')}</p>;
+    return <SectionLoadError />;
   }
 
   return (

@@ -1,6 +1,6 @@
 import { csFetch } from './request';
 import { urlPath, withSite } from '../url';
-import { HonourBoardPeriodDto, HonourBoardPeriodKey, InstitutionStatsDto, SiteStatsDto } from '@dissco-cs/shared-types';
+import { HonourBoardQuarterDto, HonourBoardQuarterKey, InstitutionStatsDto, SiteStatsDto } from '@dissco-cs/shared-types';
 
 const scopePath = (institutionSlug?: string) => (institutionSlug ? urlPath`/stats/institutions/${institutionSlug}` : '/stats');
 
@@ -40,24 +40,23 @@ export const statsApi = {
   getCurrent: getStatsCurrent,
 
   /**
-   * The honour board of one period: the top volunteers and, when logged in, the caller's own place.
-   * Answers from the cache and refreshes it in the background.
-   * @param period 'today', 'week', 'month' or 'legend' (all time) -- HONOUR_BOARD_PERIODS
-   * @param institutionSlug optional: only count work on this active institution's projects
+   * The site's honour board for one quarter: everyone with at least the threshold of tasks (the
+   * pool) and, when logged in, the caller's own number of tasks. A task counts in the quarter it
+   * was claimed in, once submitted or accepted. Answers from the cache and refreshes it in the
+   * background.
+   * @param quarter the quarter, e.g. '2026-Q4' (quarterOf, quartersUpTo)
    * Who: anyone (`you` is only filled in for a logged-in caller).
-   * Returns: { top, you }; 400 unknown period; 404 unknown or inactive institution.
+   * Returns: HonourBoardQuarterDto; a quarter that has not started yet has an empty pool; 400 not a quarter.
    */
-  getHonourBoard: (period: HonourBoardPeriodKey, institutionSlug?: string) =>
-    csFetch<HonourBoardPeriodDto>(withSite(scopePath(institutionSlug) + urlPath`/honour-board/${period}`)),
+  getHonourBoard: (quarter: HonourBoardQuarterKey) => csFetch<HonourBoardQuarterDto>(withSite(urlPath`/stats/honour-board/${quarter}`)),
 
   /**
    * Same as getHonourBoard, but only reads the cache and never starts a refresh -- for periodic
    * polling. Falls back to getHonourBoard when nothing was cached yet.
-   * @param period as in getHonourBoard
-   * @param institutionSlug optional, as in getHonourBoard
+   * @param quarter as in getHonourBoard
    * Who: anyone.
    * Returns: as getHonourBoard.
    */
-  getHonourBoardCurrent: (period: HonourBoardPeriodKey, institutionSlug?: string) =>
-    csFetch<HonourBoardPeriodDto>(withSite(scopePath(institutionSlug) + urlPath`/honour-board/${period}/current`)),
+  getHonourBoardCurrent: (quarter: HonourBoardQuarterKey) =>
+    csFetch<HonourBoardQuarterDto>(withSite(urlPath`/stats/honour-board/${quarter}/current`)),
 };

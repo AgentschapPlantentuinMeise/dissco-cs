@@ -53,7 +53,7 @@ export function SetPassword() {
       <CsPage>
         <PageBody width="narrow">
           <PageHeader variant="plain" title={t('set_password_title')} />
-          <p className="text-red-700">{t('set_password_invalid_link')}</p>
+          <p className="text-danger-700">{t('set_password_invalid_link')}</p>
         </PageBody>
       </CsPage>
     );
@@ -72,7 +72,7 @@ export function SetPassword() {
             onConfirmPasswordChange={setConfirmPassword}
           />
 
-          {save.isError && <p className="text-red-700">{t(authErrorKey(save.error, 'set_password_form_error'))}</p>}
+          {save.isError && <p className="text-danger-700">{t(authErrorKey(save.error, 'set_password_form_error'))}</p>}
 
           <div>
             <Button type="submit" disabled={!canSubmit} loading={save.isPending}>

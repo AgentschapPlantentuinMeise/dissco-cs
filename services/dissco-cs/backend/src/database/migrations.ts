@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import {
+  HONOUR_BOARD_DEFAULT_THRESHOLD,
   MAX_EMAIL_LENGTH,
   MAX_FEEDBACK_BODY_LENGTH,
   MAX_FEEDBACK_SUBJECT_LENGTH,
@@ -305,6 +306,36 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    // One row per site that set something of its own, a plain column per setting. A new site setting
+    // becomes a column here (ADD COLUMN IF NOT EXISTS), not a table of its own.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS ${schemaRef}.site_settings (
+        site_id INTEGER PRIMARY KEY,
+        honour_board_mode TEXT NOT NULL DEFAULT 'prize',
+        honour_board_threshold INTEGER NOT NULL DEFAULT ${HONOUR_BOARD_DEFAULT_THRESHOLD},
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_by INTEGER NOT NULL
+      )
+    `);
+
+    // A row only for a quarter that has a thank-you or a winner. quarter is e.g. '2026-Q4'. pool and
+    // pool_threshold are frozen when the winner is chosen (HonourBoardPoolEntryDto[] as JSON).
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS ${schemaRef}.honour_board_quarters (
+        site_id INTEGER NOT NULL,
+        quarter VARCHAR(7) NOT NULL,
+        prize_title JSONB,
+        prize_note JSONB,
+        winner_user_urn TEXT,
+        pool JSONB,
+        pool_threshold INTEGER,
+        winner_chosen_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_by INTEGER NOT NULL,
+        PRIMARY KEY (site_id, quarter)
       )
     `);
 

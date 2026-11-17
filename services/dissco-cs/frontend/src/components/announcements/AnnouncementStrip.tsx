@@ -6,7 +6,7 @@ import { AnnouncementText } from './AnnouncementText';
 import { IconButton } from '../ui/IconButton';
 
 const pagerButtonClass =
-  'inline-grid place-items-center w-[26px] h-[26px] rounded border border-amber-300 bg-transparent text-amber-800 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed';
+  'inline-grid place-items-center w-[26px] h-[26px] rounded border border-attention-300 bg-transparent text-attention-800 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed';
 
 // New announcements of the current page, as a strip right below the navbar. Clicking it away marks
 // them as seen; they stay available under the megaphone in the navbar.
@@ -22,14 +22,14 @@ export function AnnouncementStrip() {
   const current = Math.min(index, pageNew.length - 1);
 
   return (
-    <div role="status" className="bg-amber-50 border-b border-amber-200 text-amber-900">
+    <div role="status" className="bg-attention-50 border-b border-attention-200 text-attention-900">
       <div className="cs-container cs-container--wide py-2.5 flex items-center gap-3 text-[0.9rem]">
-        <LuMegaphone aria-hidden="true" className="flex-shrink-0 text-amber-700" />
+        <LuMegaphone aria-hidden="true" className="flex-shrink-0 text-attention-700" />
         <div className="flex-1 min-w-0">
           <AnnouncementText announcement={pageNew[current]} inline />
         </div>
         {pageNew.length > 1 && (
-          <div className="flex items-center gap-2 text-[0.8rem] text-amber-800 flex-shrink-0">
+          <div className="flex items-center gap-2 text-[0.8rem] text-attention-800 flex-shrink-0">
             <button type="button" className={pagerButtonClass} onClick={() => setIndex(current - 1)} disabled={current === 0} aria-label={t('announcement_previous')}>
               <LuChevronLeft aria-hidden="true" />
             </button>

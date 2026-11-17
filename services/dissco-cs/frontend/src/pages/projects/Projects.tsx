@@ -7,7 +7,7 @@ import { CsPage } from '../../components/layout/CsPage';
 import { PageLoadError } from '../../components/layout/PageLoadError';
 import { ProjectCard } from '../../components/projects/ProjectCard';
 import { HeaderMosaic, PageHeader } from '../../components/layout/PageHeader';
-import { HonourBoardBand } from '../../components/stats/HonourBoardBand';
+import { HonourBoardTimeline } from '../../components/stats/HonourBoardTimeline';
 import { useSiteHonourBoard } from '../../hooks/use-site-honour-board';
 import { useSiteStats } from '../../hooks/use-site-stats';
 import { usePagedGrid } from '../../hooks/use-paged-grid';
@@ -83,7 +83,7 @@ export function Projects() {
         <Pagination currentPage={currentPage} totalPages={totalPages} onChange={setCurrentPage} label={t('projects_pagination_label')} />
       </PageSection>
 
-      <HonourBoardBand board={honourBoard} />
+      <HonourBoardTimeline board={honourBoard} />
     </CsPage>
   );
 }

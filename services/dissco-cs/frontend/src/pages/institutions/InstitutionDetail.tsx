@@ -6,14 +6,12 @@ import { institutionsApi } from '../../api/cs-client/institutions';
 import { projectQueries } from '../../api/queries/projects';
 import { CsPage } from '../../components/layout/CsPage';
 import { HeaderLogo, PageHeader } from '../../components/layout/PageHeader';
-import { LuMail, LuPhone, LuGlobe, LuMedal } from 'react-icons/lu';
-import { HonourBoardBand } from '../../components/stats/HonourBoardBand';
+import { LuMail, LuPhone, LuGlobe } from 'react-icons/lu';
 import { PageSection } from '../../components/layout/PageSection';
 import { PageLoadError } from '../../components/layout/PageLoadError';
 import { SectionLoadError } from '../../components/layout/SectionLoadError';
 import { AboutColumns } from '../../components/layout/AboutColumns';
 import { useInstitutionStats } from './use-institution-stats';
-import { useInstitutionHonourBoard } from './use-institution-honour-board';
 import { ProjectCard } from '../../components/projects/ProjectCard';
 import { useBackHref } from '../../hooks/use-return-link';
 import { siteLangText } from '../../utility/site-lang-text';
@@ -45,9 +43,7 @@ export function InstitutionDetail() {
   const { gridRef, pageItems, currentPage, totalPages, setCurrentPage } = usePagedGrid(linkedProjects, ROWS_PER_PAGE);
 
   const { data: overview } = useInstitutionStats(slug);
-  const honourBoard = useInstitutionHonourBoard(slug);
   const tasksCompletedPct = overview && overview.tasksTotal > 0 ? Math.round((overview.tasksCompleted / overview.tasksTotal) * 100) : 0;
-  const legendLeader = honourBoard.legend.data?.top[0];
 
   const backToInstitutions = useBackHref('/institutions');
 
@@ -97,14 +93,7 @@ export function InstitutionDetail() {
           { value: overview ? formatNumber(overview.volunteers) : '—', label: t('institution_stats_volunteers') },
         ]}
         aside={logoUrl ? <HeaderLogo src={logoUrl} alt={name} /> : undefined}
-      >
-        {legendLeader && (
-          <div className="flex items-center gap-2 text-sm text-white/85">
-            <LuMedal className="w-[18px] h-[18px]" aria-hidden="true" />
-            <span>{t('honour_board_legend_headline', { name: legendLeader.name, value: formatNumber(legendLeader.count) })}</span>
-          </div>
-        )}
-      </PageHeader>
+      />
 
       {/* The description gets its own section, not the header: a long one made the teal panel tower
           over the page. The contact details sit beside it. */}
@@ -155,8 +144,6 @@ export function InstitutionDetail() {
           </>
         )}
       </PageSection>
-
-      <HonourBoardBand board={honourBoard} />
     </CsPage>
   );
 }

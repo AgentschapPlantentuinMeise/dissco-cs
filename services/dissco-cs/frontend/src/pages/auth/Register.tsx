@@ -61,7 +61,7 @@ export function Register() {
       <CsPage>
         <PageBody width="narrow">
           <PageHeader variant="plain" title={t('register_title')} />
-          <p className="text-red-700">{t('register_invitation_expired')}</p>
+          <p className="text-danger-700">{t('register_invitation_expired')}</p>
         </PageBody>
       </CsPage>
     );
@@ -166,7 +166,7 @@ export function Register() {
             </div>
           )}
 
-          {registration.isError && <p className="text-red-700">{t(authErrorKey(registration.error, 'register_form_error'))}</p>}
+          {registration.isError && <p className="text-danger-700">{t(authErrorKey(registration.error, 'register_form_error'))}</p>}
 
           <div>
             <Button type="submit" loading={registration.isPending}>

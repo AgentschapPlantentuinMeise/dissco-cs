@@ -23,7 +23,7 @@ export function Fieldset({
         <legend className="w-full px-1">
           <div className="px-2 py-2 text-[0.85rem] font-semibold text-gray-700">
             {label}
-            {required && <span className="text-red-500"> *</span>}
+            {required && <span className="text-danger-500"> *</span>}
           </div>
         </legend>
         <div className="px-3 pb-3">{children}</div>
@@ -40,7 +40,7 @@ export function Fieldset({
         title={
           <>
             {label}
-            {required && <span className="text-red-500"> *</span>}
+            {required && <span className="text-danger-500"> *</span>}
           </>
         }
       >

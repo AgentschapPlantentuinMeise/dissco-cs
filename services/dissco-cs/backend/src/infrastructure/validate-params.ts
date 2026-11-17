@@ -1,7 +1,8 @@
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import {
-  HONOUR_BOARD_PERIODS,
+  HonourBoardQuarterKey,
+  isHonourBoardQuarterKey,
   MAX_PROJECT_SLUG_LENGTH,
   NAV_ITEM_CONTENT_KEYS,
   NAV_ITEM_KEYS,
@@ -19,7 +20,10 @@ export const projectSlug = z.string().max(MAX_PROJECT_SLUG_LENGTH).refine(isSafe
 export const intId = z.coerce.number().int();
 // One of the site's content languages (nl/en/fr/de).
 export const siteLang = z.enum(SITE_PAGE_LANGS);
-export const honourBoardPeriod = z.enum(HONOUR_BOARD_PERIODS);
+export const honourBoardQuarter = z.custom<HonourBoardQuarterKey>(
+  value => typeof value === 'string' && isHonourBoardQuarterKey(value),
+  'not a quarter such as 2026-Q4'
+);
 export const navItemKey = z.enum(NAV_ITEM_KEYS);
 export const navItemContentKey = z.enum(NAV_ITEM_CONTENT_KEYS);
 export const siteImageKey = z.enum(SITE_IMAGE_KEYS);

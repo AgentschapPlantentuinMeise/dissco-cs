@@ -11,7 +11,6 @@ import { About } from './pages/about/About';
 import { Help } from './pages/help/Help';
 import { Institutions } from './pages/institutions/Institutions';
 import { InstitutionDetail } from './pages/institutions/InstitutionDetail';
-import { HonourBoard } from './pages/honour-board/HonourBoard';
 import { SearchResults } from './pages/search/SearchResults';
 import { Contact } from './pages/contact/Contact';
 import { UserDashboard } from './pages/user-dashboard/UserDashboard';
@@ -26,6 +25,7 @@ import { InstitutionManagement } from './pages/site-management/institution-manag
 import { SiteColors } from './pages/site-management/site-colors/SiteColors';
 import { SiteImages } from './pages/site-management/site-images/SiteImages';
 import { HomeSteps } from './pages/site-management/home-steps/HomeSteps';
+import { HonourBoardManagement } from './pages/site-management/honour-board/HonourBoardManagement';
 import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
 import { ForgotPassword } from './pages/auth/ForgotPassword';
@@ -52,7 +52,6 @@ export function App() {
           <Route path="/help" element={<PageGate pageKey="help"><Help /></PageGate>} />
           <Route path="/institutions" element={<PageGate pageKey="institutions"><Institutions /></PageGate>} />
           <Route path="/institutions/:slug" element={<PageGate pageKey="institutions"><InstitutionDetail /></PageGate>} />
-          <Route path="/honour-board" element={<HonourBoard />} />
           <Route path="/forum" element={<PageGate pageKey="forum"><AuthGate><Forum /></AuthGate></PageGate>} />
           <Route path="/contact" element={<PageGate pageKey="contact"><Contact /></PageGate>} />
           <Route path="/my-dashboard" element={<AuthGate><UserDashboard /></AuthGate>} />
@@ -66,6 +65,7 @@ export function App() {
           <Route path="/manage/colors" element={<AuthGate requireAdmin><SiteColors /></AuthGate>} />
           <Route path="/manage/images" element={<AuthGate requireAdmin><SiteImages /></AuthGate>} />
           <Route path="/manage/home-steps" element={<AuthGate requireAdmin><HomeSteps /></AuthGate>} />
+          <Route path="/manage/honour-board" element={<AuthGate requireAdmin><HonourBoardManagement /></AuthGate>} />
           <Route path="/find" element={<SearchResults />} />
           <Route path="/explore" element={<Projects />} />
           <Route path="/explore/:slug"element={<ProjectDetail />} />

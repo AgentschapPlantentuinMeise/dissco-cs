@@ -10,6 +10,8 @@ import { toSiteColors, toSiteThemeDto } from '../../src/repositories/site-theme.
 import { toSiteImageDto } from '../../src/repositories/site-images.repository.js';
 import { toHomeStepDto } from '../../src/repositories/home-steps.repository.js';
 import { toUserProfileDto } from '../../src/repositories/user-profile.repository.js';
+import { toHonourBoardSettingsDto } from '../../src/repositories/site-settings.repository.js';
+import { toHonourBoardQuarterRecord } from '../../src/repositories/honour-board-quarters.repository.js';
 
 // The DTO rule (see CLAUDE.md): camelCase, every field listed explicitly, never internal columns
 // such as site_id. Checking the exact key set catches both a forgotten rename and a `...row`
@@ -25,7 +27,7 @@ describe('DTO mappers', () => {
       created_by: 10, updated_at: later, updated_by: 10,
     });
     expect(dto).toEqual({
-      id: '7', title: { nl: 'T' }, description: { nl: 'D' }, targetType: 'project', targetProjectSlug: 'p',
+      id: 7, title: { nl: 'T' }, description: { nl: 'D' }, targetType: 'project', targetProjectSlug: 'p',
       isActive: true, startDate: '2026-01-02T03:04:05.000Z', endDate: null,
     });
   });
@@ -187,5 +189,31 @@ describe('DTO mappers', () => {
     const row = { user_id: 7, preferred_language: 'fr', last_seen_at: later, created_at: created, updated_at: later } as Parameters<typeof toUserProfileDto>[0];
     expect(toUserProfileDto(row)).toEqual({ preferredLanguage: 'fr' });
     expect(toUserProfileDto({ preferred_language: null })).toEqual({ preferredLanguage: null });
+  });
+
+  it('toHonourBoardSettingsDto, with the defaults for a site without a row', () => {
+    const row = { site_id: 3, honour_board_mode: 'recognition', honour_board_threshold: 20, updated_at: later, updated_by: 10 } as const;
+    expect(toHonourBoardSettingsDto(row)).toEqual({ mode: 'recognition', threshold: 20 });
+    expect(toHonourBoardSettingsDto(null)).toEqual({ mode: 'prize', threshold: 25 });
+  });
+
+  it('toHonourBoardQuarterRecord', () => {
+    const pool = [{ userUrn: 'urn:madoc:user:5', name: 'Anna', count: 30 }];
+    const record = toHonourBoardQuarterRecord({
+      site_id: 3, quarter: '2026-Q3', prize_title: { nl: 'Rondleiding' }, prize_note: null, winner_user_urn: 'urn:madoc:user:5',
+      pool, pool_threshold: 25, winner_chosen_at: created, updated_at: later, updated_by: 10,
+    });
+    expect(record).toEqual({
+      prize: { title: { nl: 'Rondleiding' }, note: {} }, winnerUrn: 'urn:madoc:user:5', frozenPool: pool, frozenThreshold: 25, winnerChosenAt: created,
+    });
+    expect(toHonourBoardQuarterRecord(null)).toBeNull();
+  });
+
+  it('toHonourBoardQuarterRecord has no prize without a title', () => {
+    const record = toHonourBoardQuarterRecord({
+      site_id: 3, quarter: '2026-Q3', prize_title: null, prize_note: null, winner_user_urn: null, pool: null,
+      pool_threshold: null, winner_chosen_at: null, updated_at: later, updated_by: 10,
+    });
+    expect(record?.prize).toBeNull();
   });
 });

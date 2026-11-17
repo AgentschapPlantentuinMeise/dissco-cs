@@ -114,9 +114,9 @@ export function InstitutionForm({
             value={draft.email}
             onChange={e => setDraft(prev => ({ ...prev, email: e.target.value }))}
             maxLength={MAX_EMAIL_LENGTH}
-            className={`border rounded-lg p-2 ${emailValid ? 'border-gray-300' : 'border-red-500'}`}
+            className={`border rounded-lg p-2 ${emailValid ? 'border-gray-300' : 'border-danger-500'}`}
           />
-          {!emailValid && <span className="text-xs text-red-600">{t('sm_institutions_invalid_email')}</span>}
+          {!emailValid && <span className="text-xs text-danger-600">{t('sm_institutions_invalid_email')}</span>}
         </FormField>
 
         <FormField label={`${t('sm_institutions_field_phone')}*`}>
@@ -125,9 +125,9 @@ export function InstitutionForm({
             value={draft.phone}
             onChange={e => setDraft(prev => ({ ...prev, phone: e.target.value }))}
             maxLength={MAX_INSTITUTION_PHONE_LENGTH}
-            className={`border rounded-lg p-2 ${phoneValid ? 'border-gray-300' : 'border-red-500'}`}
+            className={`border rounded-lg p-2 ${phoneValid ? 'border-gray-300' : 'border-danger-500'}`}
           />
-          {!phoneValid && <span className="text-xs text-red-600">{t('sm_institutions_invalid_phone')}</span>}
+          {!phoneValid && <span className="text-xs text-danger-600">{t('sm_institutions_invalid_phone')}</span>}
         </FormField>
       </div>
 
@@ -162,7 +162,7 @@ export function InstitutionForm({
             </label>
             {logoFile && <span className="text-sm text-gray-600 truncate">{logoFile.name}</span>}
           </div>
-          {invalidLogo && <span className="text-xs text-red-600">{t('common_invalid_image_file')}</span>}
+          {invalidLogo && <span className="text-xs text-danger-600">{t('common_invalid_image_file')}</span>}
         </div>
 
         <ActiveToggleField

@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -10,6 +10,7 @@ import {
   findOversizedFiles,
   findUndocumented,
   findViolations,
+  sourceFiles,
   violationMessage,
 } from '../../test-support/conventions';
 
@@ -183,7 +184,6 @@ const rules: ConventionRule[] = [
       'components/layout/PageHeader.tsx': 'the component itself',
       'components/layout/PageError.tsx': 'a full-page error screen with its own layout',
       'components/ui/CsMarkdown.tsx': 'headings inside text written in page management',
-      'pages/honour-board/HonourBoard.tsx': 'the page is being hidden; its code is kept unchanged',
     },
   },
   {
@@ -191,16 +191,11 @@ const rules: ConventionRule[] = [
     // cs-main-wrapper has no CSS: it only wrapped the content of the old layout.
     pattern: /cs-main-wrapper/,
     instead: '<PageSection title tone> per part of a public or working page, <PageBody width> on a plain page (login, review, site management) -- CLAUDE.md §6',
-    allowedIn: { 'pages/honour-board/HonourBoard.tsx': 'the page is hidden; its code is kept unchanged' },
   },
   {
-    name: 'The Honour Board is a band at the bottom of the page, not a sidebar',
-    pattern: /HonourBoardSpotlight|HonourBoardPeriodCard/,
-    instead: '<HonourBoardBand board={useSiteHonourBoard()} /> (components/stats/HonourBoardBand.tsx), below the page content',
-    allowedIn: {
-      'components/stats/HonourBoardPeriodCard.tsx': 'the card itself, kept for the hidden /honour-board page',
-      'pages/honour-board/HonourBoard.tsx': 'the page is hidden; its code is kept unchanged',
-    },
+    name: 'The honour board is the quarter timeline at the bottom of the page',
+    pattern: /HonourBoardSpotlight|HonourBoardPeriodCard|HonourBoardBand/,
+    instead: '<HonourBoardTimeline board={useSiteHonourBoard()} /> (components/stats/HonourBoardTimeline.tsx), below the page content',
   },
   {
     name: 'Help on the annotate page opens beside the form, not in a modal',
@@ -279,7 +274,68 @@ const rules: ConventionRule[] = [
     pattern: /\.catch\(\(\) => \{\s*\}\)|catch\s*(\(\w*\))?\s*\{\s*\}/,
     instead: "reportClientError(err, 'action'), or let the error through",
   },
+  {
+    name: 'A cs-client method is named list*, get*, create, update, delete, set* or after its action',
+    // madoc-auth is left out on purpose: its names follow Madoc's own routes (change-name -> changeName).
+    pattern: /^ {2}(remove|fetch|load|save|choose|pick|add|edit|modify|change|retrieve|store)\w*: (async )?\(/,
+    instead: "list* for a list, get* for one thing, create/update/delete, set* for one property, or a verb for an action (visit, prune)",
+    onlyIn: /^api\/cs-client\//,
+  },
+  {
+    name: 'A part of a page that fails to load shows <SectionLoadError>',
+    pattern: /\bt\('error_load_failed'\)/,
+    instead: "<SectionLoadError /> (components/layout/SectionLoadError.tsx); as a toast for an action, reportActionError(err, 'error_load_failed') stays fine",
+  },
+  {
+    name: 'Every /manage page checks for a site admin itself',
+    pattern: /path="\/manage[^"]*"\s+element=\{(?!<AuthGate requireAdmin>)/,
+    instead: 'element={<AuthGate requireAdmin><Page /></AuthGate>}: the hub alone does not protect a page opened by its URL',
+    onlyIn: /^App\.tsx$/,
+  },
+  {
+    name: 'A load error is not an own red line',
+    // Catches <p className="... text-danger-600">{t('x_error')}</p> and keys ending in _failed; a validation
+    // message names what is wrong (set_password_error_mismatch, sm_institutions_invalid_email) and stays fine.
+    pattern: /text-danger-\d+[^"]*">\{t\('\w*_(error|failed)'\)/,
+    instead: '<SectionLoadError /> (components/layout/SectionLoadError.tsx) for a part of a page that fails to load',
+  },
+  {
+    name: 'A signal colour is named after its meaning',
+    pattern: /[a-z]-(red|green|amber|orange|yellow|lime|emerald|rose|pink)-\d{2,3}\b/,
+    instead: 'danger (errors, required), success (saved), attention (announcements, warnings) or award (the winner), e.g. text-danger-700 -- defined once in tailwind.config.js',
+  },
+  {
+    name: 'No tertiary (plum) colour in new UI',
+    pattern: /cs-tertiary|variant="tertiary"/,
+    instead: 'teal or green: cs-primary, cs-secondary (Button variant primary or secondary)',
+    allowedIn: {
+      'components/ui/Button.tsx': 'defines the variant',
+      'pages/site-management/site-colors/PalettePreview.tsx': 'shows every colour of the palette',
+      'components/capture-models/SubmissionFieldsForm.tsx': 'existing, from before the choice for teal and green',
+      'pages/user-dashboard/FeedbackThreadRow.tsx': 'existing, from before the choice for teal and green',
+      'pages/review/FeedbackModal.tsx': 'existing, from before the choice for teal and green',
+    },
+  },
 ];
+
+// A key is in use when it occurs as a quoted string, when it is a plural form (key_one, key_other) of
+// a key in use, or when the code builds it from a fixed start, e.g. t(`sm_honour_board_mode_${mode}`).
+// Quoted, so 'honour_board_you_won' does not count as a use of 'honour_board_you'.
+function isTranslationKeyUsed(key: string, source: string): boolean {
+  const quoted = (text: string) => ["'", '"', '`'].some(quote => source.includes(`${quote}${text}${quote}`));
+  if (quoted(key)) return true;
+  const singular = key.replace(/_(zero|one|two|few|many|other)$/, '');
+  if (singular !== key && quoted(singular)) return true;
+  const parts = key.split('_');
+  return parts.some((_part, index) => index > 0 && source.includes(`${parts.slice(0, index).join('_')}_\${`));
+}
+
+// The path part of the gateway's location for SPA pages: /s/<site>/(about|help|...).
+function gatewayPageRoute(conf: string): RegExp {
+  const line = conf.split(/\r?\n/).find(text => text.startsWith('location ~ ^/s/[^/]+/('));
+  if (!line) throw new Error('no location for the SPA pages in dissco-cs-api.conf');
+  return new RegExp(line.slice('location ~ '.length, line.lastIndexOf(' {')));
+}
 
 describe('frontend conventions', () => {
   const srcDir = join(__dirname, '..', 'src');
@@ -320,5 +376,30 @@ describe('frontend conventions', () => {
     );
     const instead = "the cs-client mirrors the controllers, like cs-client/forum.ts and forum.controller.ts -- CLAUDE.md 'Schrijfroutes'";
     expect(missing, `A controller and its cs-client file have the same name\nInstead: ${instead}\nFound:\n  ${missing.join('\n  ')}`).toEqual([]);
+  });
+
+  it('No unused translation key', () => {
+    const source = sourceFiles(srcDir)
+      .map(path => readFileSync(path, 'utf8'))
+      .join('\n');
+    const keys = Object.keys(JSON.parse(readFileSync(join(srcDir, 'translations', 'nl', 'dissco-cs.json'), 'utf8')));
+    const unused = keys.filter(key => !isTranslationKeyUsed(key, source));
+    const instead = 'remove the key from all four translation files (nl, en, fr, de)';
+    expect(unused, `No unused translation key\nInstead: ${instead}\nFound:\n  ${unused.join('\n  ')}`).toEqual([]);
+  });
+
+  // nginx only passes the page routes it lists on to the SPA; any other path under /s/<site>/ goes
+  // to Madoc, so a missing route shows a Madoc page. The gateway is outside the Docker build of
+  // the frontend, so there this one is skipped; it runs in the Claude hook and the pre-commit.
+  const gatewayConf = join(__dirname, '..', '..', '..', 'gateway', 'conf.d', 'services', 'dissco-cs-api.conf');
+  it.skipIf(!existsSync(gatewayConf))('Every page route is passed on by the gateway', () => {
+    const allowed = gatewayPageRoute(readFileSync(gatewayConf, 'utf8'));
+    const routes = [...readFileSync(join(srcDir, 'App.tsx'), 'utf8').matchAll(/<Route path="([^"]+)"/g)]
+      .map(match => match[1])
+      // '/' and the not-found route have a location of their own in the gateway.
+      .filter(path => path !== '/' && path !== '*');
+    const missing = routes.filter(path => !allowed.test(`/s/site${path.replace(/:\w+/g, 'x')}`));
+    const instead = 'add the route to the location for /s/<site>/(...) in services/gateway/conf.d/services/dissco-cs-api.conf';
+    expect(missing, `Every page route is passed on by the gateway\nInstead: ${instead}\nFound:\n  ${missing.join('\n  ')}`).toEqual([]);
   });
 });

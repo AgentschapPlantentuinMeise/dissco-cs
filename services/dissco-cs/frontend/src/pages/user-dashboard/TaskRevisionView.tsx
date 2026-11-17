@@ -4,6 +4,7 @@ import { captureModelQueries } from '../../api/queries/capture-models';
 import { useTranslation } from 'react-i18next';
 import { cloneModelDocument } from '../../utility/annotation-document';
 import { SubmissionFieldsForm } from '../../components/capture-models/SubmissionFieldsForm';
+import { SectionLoadError } from '../../components/layout/SectionLoadError';
 
 interface TaskRevisionViewProps {
   taskId: string;
@@ -30,7 +31,7 @@ export function TaskRevisionView({ taskId }: TaskRevisionViewProps) {
   const model = modelQuery.data;
   const hasError = taskQuery.status === 'error' || !revisionId || revisionQuery.status === 'error' || modelQuery.status === 'error';
   if (hasError || !model) {
-    return <p className="text-sm text-red-600 px-1 py-3">{t('review_detail_error')}</p>;
+    return <SectionLoadError />;
   }
 
   return (

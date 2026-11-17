@@ -7,7 +7,7 @@ import { LuCheck } from 'react-icons/lu';
 export function SavedNotice({ children }: { children?: React.ReactNode }) {
   const { t } = useTranslation('dissco-cs');
   return (
-    <span role="status" className="inline-flex items-center gap-1.5 text-sm font-medium text-green-700">
+    <span role="status" className="inline-flex items-center gap-1.5 text-sm font-medium text-success-700">
       <LuCheck aria-hidden="true" className="flex-shrink-0" />
       {children ?? t('common_saved')}
     </span>

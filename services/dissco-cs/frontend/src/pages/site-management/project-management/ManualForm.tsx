@@ -172,14 +172,14 @@ export function ManualForm({ manualId, storedLangs, draft, setDraft, selectedLan
           }}
         />
       </div>
-      {attachmentError?.lang === selectedLang && <p className="text-xs text-red-600 mt-1.5 mb-0">{t(attachmentError.key)}</p>}
+      {attachmentError?.lang === selectedLang && <p className="text-xs text-danger-600 mt-1.5 mb-0">{t(attachmentError.key)}</p>}
 
       {missingLangs.length > 0 && (
-        <p className="text-xs text-red-600 mt-3 mb-0">
+        <p className="text-xs text-danger-600 mt-3 mb-0">
           {t('sm_manuals_missing_langs', { langs: missingLangs.map(lang => t(`lang_${lang}`)).join(', ') })}
         </p>
       )}
-      {!contentCheck.hasContent && <p className="text-xs text-red-600 mt-1 mb-0">{t('sm_manuals_needs_content')}</p>}
+      {!contentCheck.hasContent && <p className="text-xs text-danger-600 mt-1 mb-0">{t('sm_manuals_needs_content')}</p>}
 
       <div className="flex items-center gap-3 mt-4">
         <SaveButton onClick={onSave} disabled={!canSave} loading={saving} />

@@ -17,7 +17,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
   'on-dark': 'bg-cs-secondary text-white border-transparent hover:brightness-90',
   'on-dark-line': 'bg-transparent text-white border-white/75 hover:bg-white/[0.12]',
   text: 'bg-transparent text-cs-primary border-0 underline underline-offset-[3px]',
-  danger: 'bg-red-600 text-white border-transparent hover:bg-red-700',
+  danger: 'bg-danger-600 text-white border-transparent hover:bg-danger-700',
   tertiary: 'bg-cs-tertiary text-white border-transparent hover:brightness-90',
 };
 

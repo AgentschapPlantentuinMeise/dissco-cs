@@ -53,7 +53,7 @@ const rules: ConventionRule[] = [
     name: 'Path params are validated on the route, not by hand',
     pattern: /c\.req\.param\(/,
     instead:
-      "validateParams({ id: intId, slug: safeSegment, period: honourBoardPeriod, ... }) + c.req.valid('param') -- CLAUDE.md 'Schrijfroutes'",
+      "validateParams({ id: intId, slug: safeSegment, quarter: honourBoardQuarter, ... }) + c.req.valid('param') -- CLAUDE.md 'Schrijfroutes'",
   },
   {
     name: 'A controller does not import from another controller',
@@ -159,5 +159,21 @@ describe('backend conventions', () => {
     );
     const instead = "name the controller after its subject, like forum.controller.ts and forum.repository.ts -- CLAUDE.md 'Schrijfroutes'";
     expect(missing, `A repository and its controller have the same name\nInstead: ${instead}\nFound:\n  ${missing.join('\n  ')}`).toEqual([]);
+  });
+
+  // pg returns a BIGSERIAL or BIGINT column as text ("5"), whatever the row type says, so an id
+  // compared with === in the frontend never matches. The columns are read from the migrations, so a
+  // new table is covered without changing this test.
+  it('A BIGINT column goes through fromBigint in a mapper', () => {
+    const migrations = readFileSync(join(srcDir, 'database', 'migrations.ts'), 'utf8');
+    const columns = [...new Set([...migrations.matchAll(/^\s+(\w+) BIG(?:SERIAL|INT)\b/gm)].map(match => match[1]))];
+    const rule: ConventionRule = {
+      name: 'A BIGINT column goes through fromBigint in a mapper',
+      pattern: new RegExp(`^(?!.*fromBigint\\().*:\\s*\\w+\\.(${columns.join('|')})\\b`),
+      instead: "id: fromBigint(row.id) (database/bigint.ts), and number in the DTO -- CLAUDE.md 'DTO's'",
+      onlyIn: /^repositories\//,
+    };
+    const violations = findViolations(srcDir, rule);
+    expect(violations, violationMessage(rule, violations)).toEqual([]);
   });
 });

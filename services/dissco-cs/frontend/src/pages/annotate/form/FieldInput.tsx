@@ -24,7 +24,7 @@ export function FieldInput({ field, path, onChange, selectorControls, onShowHelp
   const labelText = (
     <>
       {field.label}
-      {isRequired(field.required) && <span className="text-red-500"> *</span>}
+      {isRequired(field.required) && <span className="text-danger-500"> *</span>}
     </>
   );
   const helpButton = onShowHelp && field.description?.trim() && (

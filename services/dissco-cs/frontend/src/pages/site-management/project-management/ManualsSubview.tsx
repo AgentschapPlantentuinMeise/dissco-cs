@@ -146,17 +146,17 @@ export function ManualsSubview({ projects, manuals }: {
                     : savedId === manual.id
                       ? savedRowClass
                       : manual.linkedProjectSlugs.length === 0
-                        ? 'bg-orange-50'
+                        ? 'bg-attention-50'
                         : ''
                 }`}
               >
                 <td className="px-4 py-3 border-t border-gray-100">
                   <b>{siteLangText(manual.title, i18n.language, `#${manual.id}`)}</b>
                   {manual.linkedProjectSlugs.length === 0 && (
-                    <div className="text-xs font-semibold text-amber-700 mt-0.5">{t('sm_manuals_orphan_note')}</div>
+                    <div className="text-xs font-semibold text-attention-700 mt-0.5">{t('sm_manuals_orphan_note')}</div>
                   )}
                   {!manualHasContent(manual) && (
-                    <div className="text-xs font-semibold text-red-700 mt-0.5">{t('sm_manuals_empty_note')}</div>
+                    <div className="text-xs font-semibold text-danger-700 mt-0.5">{t('sm_manuals_empty_note')}</div>
                   )}
                 </td>
                 <td className="px-4 py-3 border-t border-gray-100 text-sm text-gray-500">

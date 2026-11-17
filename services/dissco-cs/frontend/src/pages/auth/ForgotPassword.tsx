@@ -50,7 +50,7 @@ export function ForgotPassword() {
               />
             </FormField>
 
-            {tooMany && <p className="text-red-700">{t('auth_error_too_many_attempts')}</p>}
+            {tooMany && <p className="text-danger-700">{t('auth_error_too_many_attempts')}</p>}
 
             <div className="flex items-center justify-between mt-2">
               <HrefLink href="/login" className="text-sm text-gray-600 hover:text-cs-primary">

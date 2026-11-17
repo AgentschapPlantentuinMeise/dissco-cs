@@ -38,7 +38,7 @@ export function ProjectCard({ projectSummaryData }: ProjectCardProps) {
           <LocaleString defaultText={t('card_default_summary')}>{projectSummaryData.summary}</LocaleString>
         </p>
         {progress?.allTasksTaken && (
-          <span className="self-start text-[0.7rem] font-bold text-amber-800 bg-amber-50 rounded-full px-2.5 py-0.5">
+          <span className="self-start text-[0.7rem] font-bold text-attention-800 bg-attention-50 rounded-full px-2.5 py-0.5">
             {t('card_all_tasks_taken')}
           </span>
         )}

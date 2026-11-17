@@ -1,5 +1,6 @@
 ﻿import { useTranslation } from 'react-i18next';
 import {
+  LuAward,
   LuBuilding2,
   LuFileText,
   LuFolder,
@@ -27,6 +28,7 @@ export function SiteManagement() {
         { href: '/manage/announcements', icon: LuMegaphone, titleKey: 'sm_tile_announcements_title', descKey: 'sm_tile_announcements_desc' },
         { href: '/manage/pages', icon: LuFileText, titleKey: 'sm_tile_pages_title', descKey: 'sm_tile_pages_desc' },
         { href: '/manage/home-steps', icon: LuListOrdered, titleKey: 'sm_home_steps_title', descKey: 'sm_tile_home_steps_desc' },
+        { href: '/manage/honour-board', icon: LuAward, titleKey: 'sm_honour_board_title', descKey: 'sm_tile_honour_board_desc' },
       ],
     },
     {

@@ -15,7 +15,7 @@ export function isAnnouncementTargetType(value: unknown): value is AnnouncementT
 }
 
 export type AnnouncementDto = {
-  id: string;
+  id: number;
   title: MultilingualText;
   description: MultilingualText;
   targetType: AnnouncementTargetType;

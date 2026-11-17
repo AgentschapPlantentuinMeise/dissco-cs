@@ -1,21 +1,10 @@
 import { MadocDbPools } from './pools.js';
 import { SwrCache } from './swr-cache.js';
-import { rankingToPeriod, sinceForPeriod } from './honour-board.logic.js';
-import { HonourBoardEntryDto, HonourBoardPeriodDto, HonourBoardPeriodKey } from '@dissco-cs/shared-types';
+import { QuarterCount } from './honour-board.logic.js';
+import { HonourBoardQuarterKey, isQuarterOver, quarterRange } from '@dissco-cs/shared-types';
 
-type RankedHonourBoardEntry = HonourBoardEntryDto;
-
-// A ranking is either scoped to an entire site (context contains the site urn) or to one
-// institution's projects (root_task in that institution's set of project task ids) -- same
-// underlying tasks-api table, different WHERE clause and cache key.
-type LeaderboardScope =
-  | { kind: 'site'; siteId: number }
-  | { kind: 'institution'; siteId: number; institutionId: number; taskIds: string[] };
-
-function cacheKey(scope: LeaderboardScope, period: HonourBoardPeriodKey): string {
-  const scopeKey = scope.kind === 'site' ? `site:${scope.siteId}` : `institution:${scope.siteId}:${scope.institutionId}`;
-  return `${scopeKey}:${period}`;
-}
+// A closed quarter only changes when a reviewer rejects one of its tasks, so an hour is fresh enough.
+const CLOSED_QUARTER_TTL_MS = 60 * 60 * 1000;
 
 // Reads tasks-api's own `tasks` table directly (read-only, reusing its DB user) rather than the
 // Madoc gateway API -- there's no per-assignee aggregation endpoint, and this table is already
@@ -23,99 +12,68 @@ function cacheKey(scope: LeaderboardScope, period: HonourBoardPeriodKey): string
 // containment check). Site scoping matches how madoc-ts itself tags tasks, e.g. getSiteId() in
 // queue/scheduler.ts: `context` is a jsonb array of URNs including `urn:madoc:site:<id>`.
 export class HonourBoardRepository {
-  // Cached per scope+period (not per requesting user) -- the ranking is the same for everyone
-  // looking at that site or institution, only "you" differs, and that's derived in-memory from
-  // the cached ranking below rather than queried separately.
-  private readonly rankings = new SwrCache<string, RankedHonourBoardEntry[]>('honour-board');
+  // Cached per site and quarter (not per requesting user) -- the counts are the same for everyone
+  // looking at that site, only "you" differs, and that's derived in-memory from the cached counts.
+  private readonly runningCounts = new SwrCache<string, QuarterCount[]>('honour-board');
+  private readonly closedCounts = new SwrCache<string, QuarterCount[]>('honour-board-closed', CLOSED_QUARTER_TTL_MS);
 
   constructor(private readonly pools: MadocDbPools) {}
 
-  private async fetchPeriodRanking(scope: LeaderboardScope, since: Date | null): Promise<RankedHonourBoardEntry[]> {
-    if (scope.kind === 'institution' && scope.taskIds.length === 0) {
-      return [];
-    }
-
-    const params: unknown[] = [scope.kind === 'site' ? JSON.stringify([`urn:madoc:site:${scope.siteId}`]) : scope.taskIds];
-    const scopeClause = scope.kind === 'site' ? `context @> $1::jsonb` : `root_task = ANY($1::uuid[])`;
-
-    // A status-3 (reviewed) row only counts within a bounded period (today/week/month) if it was
-    // also *created* (claimed/started) within that same period -- otherwise a reviewer approving
-    // an old submission bumps modified_at into the period and misattributes it to the original
-    // assignee, who may have done the actual work long before. Status-2 (submitted, not yet
-    // reviewed) rows are still bounded on modified_at, since submitting is what sets that
-    // timestamp. Legend (since = null) has no period to leak across, so it keeps the original
-    // unconditional check.
-    let statusClause = 'status IN (2, 3)';
-    if (since) {
-      params.push(since.toISOString());
-      const sinceParam = `$${params.length}`;
-      statusClause = `((status = 2 AND modified_at >= ${sinceParam}) OR (status = 3 AND created_at >= ${sinceParam}))`;
-    }
-
+  private async fetchCounts(siteId: number, start: Date, end: Date): Promise<QuarterCount[]> {
+    // A task counts in the quarter it was claimed in (created_at), once it is submitted (2) or
+    // accepted (3); a rejected task (-1) drops out by itself. Not modified_at: a review overwrites
+    // it, which would move an accepted task into the quarter of its review. created_at never
+    // changes, but Madoc reuses an open claim when the same user opens the object again
+    // (getTaskFromClaim in create-resource-claim.ts), so this relies on saved drafts being released
+    // after 48 hours; until then an old draft counts in the quarter it was started in.
     const { rows } = await this.pools.tasksApi.query<{
       assignee_id: string;
       assignee_name: string | null;
-      completed_count: string;
-      rank: string;
+      task_count: string;
     }>(
       `
-        WITH counts AS (
-          SELECT assignee_id, assignee_name, COUNT(*) AS completed_count
-          FROM ${this.pools.tasksApiSchema}.tasks
-          WHERE type = 'crowdsourcing-task'
-            AND ${statusClause}
-            AND assignee_is_service IS NOT TRUE
-            AND assignee_id IS NOT NULL
-            AND ${scopeClause}
-          GROUP BY assignee_id, assignee_name
-        )
-        SELECT *, DENSE_RANK() OVER (ORDER BY completed_count DESC) AS rank
-        FROM counts
-        ORDER BY rank ASC
+        SELECT assignee_id, assignee_name, COUNT(*) AS task_count
+        FROM ${this.pools.tasksApiSchema}.tasks
+        WHERE type = 'crowdsourcing-task'
+          AND status IN (2, 3)
+          AND created_at >= $2
+          AND created_at < $3
+          AND assignee_is_service IS NOT TRUE
+          AND assignee_id IS NOT NULL
+          AND context @> $1::jsonb
+        GROUP BY assignee_id, assignee_name
       `,
-      params
+      [JSON.stringify([`urn:madoc:site:${siteId}`]), start.toISOString(), end.toISOString()]
     );
 
     return rows.map(row => ({
       userUrn: row.assignee_id,
       name: row.assignee_name ?? row.assignee_id,
-      count: Number(row.completed_count),
-      rank: Number(row.rank),
+      count: Number(row.task_count),
     }));
   }
 
-  // Returns null only if this period has never been cached yet for this scope.
-  private peekPeriod(scope: LeaderboardScope, period: HonourBoardPeriodKey, userUrn: string | null): HonourBoardPeriodDto | null {
-    const ranking = this.rankings.peek(cacheKey(scope, period));
-    return ranking ? rankingToPeriod(ranking, userUrn) : null;
+  private cacheFor(quarter: HonourBoardQuarterKey): SwrCache<string, QuarterCount[]> {
+    return isQuarterOver(quarter, new Date()) ? this.closedCounts : this.runningCounts;
   }
 
-  private async getPeriod(scope: LeaderboardScope, period: HonourBoardPeriodKey, userUrn: string | null): Promise<HonourBoardPeriodDto> {
-    const ranking = await this.rankings.get(cacheKey(scope, period), () =>
-      this.fetchPeriodRanking(scope, sinceForPeriod(period, new Date()))
-    );
-    return rankingToPeriod(ranking, userUrn);
+  /**
+   * The cached number of tasks per volunteer, without recalculating (for the frontend's polling).
+   * Returns: null only when this quarter has never been cached yet for this site.
+   */
+  peekCounts(siteId: number, quarter: HonourBoardQuarterKey): QuarterCount[] | null {
+    return this.cacheFor(quarter).peek(`${siteId}:${quarter}`);
   }
 
-  peekSitePeriod(siteId: number, period: HonourBoardPeriodKey, userUrn: string | null): HonourBoardPeriodDto | null {
-    return this.peekPeriod({ kind: 'site', siteId }, period, userUrn);
-  }
-
-  async getSitePeriod(siteId: number, period: HonourBoardPeriodKey, userUrn: string | null): Promise<HonourBoardPeriodDto> {
-    return this.getPeriod({ kind: 'site', siteId }, period, userUrn);
-  }
-
-  peekInstitutionPeriod(siteId: number, institutionId: number, period: HonourBoardPeriodKey, userUrn: string | null): HonourBoardPeriodDto | null {
-    return this.peekPeriod({ kind: 'institution', siteId, institutionId, taskIds: [] }, period, userUrn);
-  }
-
-  async getInstitutionPeriod(
-    siteId: number,
-    institutionId: number,
-    taskIds: string[],
-    period: HonourBoardPeriodKey,
-    userUrn: string | null
-  ): Promise<HonourBoardPeriodDto> {
-    return this.getPeriod({ kind: 'institution', siteId, institutionId, taskIds }, period, userUrn);
+  /**
+   * The number of tasks per volunteer in a quarter: from the cache, recalculated in the background.
+   * Returns: an empty list for a quarter that has not started.
+   */
+  async getCounts(siteId: number, quarter: HonourBoardQuarterKey): Promise<QuarterCount[]> {
+    const { start, end } = quarterRange(quarter);
+    if (start > new Date()) {
+      return [];
+    }
+    return this.cacheFor(quarter).get(`${siteId}:${quarter}`, () => this.fetchCounts(siteId, start, end));
   }
 }

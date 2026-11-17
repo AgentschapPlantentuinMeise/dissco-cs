@@ -168,7 +168,7 @@ export function Announcements() {
                   }`}
                 >
                   <div className="min-w-0">
-                    <p className="font-semibold m-0 truncate">{siteLangText(announcement.title, i18n.language, announcement.id)}</p>
+                    <p className="font-semibold m-0 truncate">{siteLangText(announcement.title, i18n.language, String(announcement.id))}</p>
                     <p className="text-sm text-gray-500 m-0">
                       {targetLabel(t, announcement)}
                       {(announcement.startDate || announcement.endDate) && (
@@ -187,7 +187,7 @@ export function Announcements() {
                     <ActiveStatusToggle
                       active={announcement.isActive}
                       onChange={() => toggleActive(announcement)}
-                      label={siteLangText(announcement.title, i18n.language, announcement.id)}
+                      label={siteLangText(announcement.title, i18n.language, String(announcement.id))}
                     />
                     <IconButton icon={LuPencil} label={t('common_edit')} onClick={() => startEdit(announcement)} />
                     <DeleteIconButton onClick={() => setPendingDeleteId(announcement.id)} />

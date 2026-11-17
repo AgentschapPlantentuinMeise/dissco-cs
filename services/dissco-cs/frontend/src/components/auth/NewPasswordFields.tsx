@@ -20,7 +20,7 @@ export function NewPasswordFields({ password, confirmPassword, onPasswordChange,
         {password && (
           <ul className="flex flex-col gap-0.5 mt-1">
             {getPasswordRequirements(password).map(req => (
-              <li key={req.key} className={`text-sm flex items-center gap-1.5 ${req.met ? 'text-green-700' : 'text-gray-500'}`}>
+              <li key={req.key} className={`text-sm flex items-center gap-1.5 ${req.met ? 'text-success-700' : 'text-gray-500'}`}>
                 {req.met ? <LuCheck aria-hidden="true" /> : <LuCircle aria-hidden="true" />} {t(req.key)}
               </li>
             ))}
@@ -31,7 +31,7 @@ export function NewPasswordFields({ password, confirmPassword, onPasswordChange,
       <FormField label={t('set_password_form_confirm')}>
         <PasswordInput required autoComplete="new-password" value={confirmPassword} onChange={e => onConfirmPasswordChange(e.target.value)} />
         {confirmPassword && confirmPassword !== password && (
-          <span className="text-sm text-red-700">{t('set_password_error_mismatch')}</span>
+          <span className="text-sm text-danger-700">{t('set_password_error_mismatch')}</span>
         )}
       </FormField>
     </>

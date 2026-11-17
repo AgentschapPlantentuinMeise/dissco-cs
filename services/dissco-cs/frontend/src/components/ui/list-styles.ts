@@ -3,4 +3,4 @@
 export const rowHoverClass = 'transition-colors duration-150 hover:bg-cs-primary/[0.06]';
 
 // The row that was just saved (useSavedFlash). The left border only shows on rows that have one.
-export const savedRowClass = 'bg-green-50 border-l-green-600';
+export const savedRowClass = 'bg-success-50 border-l-success-600';

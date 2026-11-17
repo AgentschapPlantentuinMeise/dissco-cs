@@ -34,7 +34,12 @@ export function findMissingCounterparts(
     .filter(name => !(name in allowed) && !existing.includes(name + to.suffix));
 }
 
-function sourceFiles(dir: string): string[] {
+/**
+ * Every .ts and .tsx file below dir, at any depth.
+ * @param dir the folder to search, e.g. a package's src/
+ * Returns: the absolute paths.
+ */
+export function sourceFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) return sourceFiles(path);

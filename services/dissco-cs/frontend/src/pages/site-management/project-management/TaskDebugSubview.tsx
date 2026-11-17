@@ -79,7 +79,7 @@ export function TaskDebugSubview({ projects }: { projects: MadocProjectDto[] }) 
               </thead>
               <tbody>
                 {data.manifests.map(manifest => (
-                  <tr key={manifest.manifestId} className={`${rowHoverClass} ${manifest.countsAsTranscribed ? 'bg-green-50' : ''}`}>
+                  <tr key={manifest.manifestId} className={`${rowHoverClass} ${manifest.countsAsTranscribed ? 'bg-success-50' : ''}`}>
                     <td className="px-4 py-3 border-t border-gray-100">
                       {localeText(manifest.label, i18n.language) || `#${manifest.manifestId}`}
                       <span className="text-xs text-gray-400 ml-1">#{manifest.manifestId}</span>
@@ -102,7 +102,7 @@ export function TaskDebugSubview({ projects }: { projects: MadocProjectDto[] }) 
                     </td>
                     <td className="px-4 py-3 border-t border-gray-100 text-sm">
                       {manifest.countsAsTranscribed ? (
-                        <span className="text-green-700 font-semibold">Yes</span>
+                        <span className="text-success-700 font-semibold">Yes</span>
                       ) : (
                         <span className="text-gray-400">No</span>
                       )}

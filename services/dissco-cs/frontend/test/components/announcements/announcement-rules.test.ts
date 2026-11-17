@@ -8,7 +8,7 @@ import {
   unseenAnnouncements,
 } from '../../../src/components/announcements/announcement-rules';
 
-function announcement(id: string, title = 'T'): AnnouncementDto {
+function announcement(id: number, title = 'T'): AnnouncementDto {
   return {
     id, title: { nl: title }, description: { nl: 'D' }, targetType: 'homepage', targetProjectSlug: null,
     isActive: true, startDate: null, endDate: null,
@@ -39,21 +39,21 @@ describe('announcementTargetsFor', () => {
 
 describe('unseenAnnouncements', () => {
   it('leaves out what was seen', () => {
-    const a = announcement('1');
-    const b = announcement('2');
+    const a = announcement(1);
+    const b = announcement(2);
     expect(unseenAnnouncements([a, b], [announcementSignature(a)])).toEqual([b]);
   });
 
   it('an edited announcement counts as new again', () => {
-    const seen = [announcementSignature(announcement('1', 'Old title'))];
-    expect(unseenAnnouncements([announcement('1', 'New title')], seen)).toHaveLength(1);
+    const seen = [announcementSignature(announcement(1, 'Old title'))];
+    expect(unseenAnnouncements([announcement(1, 'New title')], seen)).toHaveLength(1);
   });
 });
 
 describe('mergeAnnouncements', () => {
   it('keeps each announcement once, in the order of the lists', () => {
-    const a = announcement('1');
-    const b = announcement('2');
-    expect(mergeAnnouncements([b], [a, b]).map(x => x.id)).toEqual(['2', '1']);
+    const a = announcement(1);
+    const b = announcement(2);
+    expect(mergeAnnouncements([b], [a, b]).map(x => x.id)).toEqual([2, 1]);
   });
 });

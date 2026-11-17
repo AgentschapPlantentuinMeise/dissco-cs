@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+import { fromBigint } from '../database/bigint.js';
 import { AnnouncementDto, AnnouncementTargetType, SitePageLang } from '@dissco-cs/shared-types';
 
 export type AnnouncementRow = {
@@ -146,7 +147,7 @@ export class AnnouncementsRepository {
 
 export function toAnnouncementDto(row: AnnouncementRow): AnnouncementDto {
   return {
-    id: row.id,
+    id: fromBigint(row.id),
     title: row.title,
     description: row.description,
     targetType: row.target_type,
