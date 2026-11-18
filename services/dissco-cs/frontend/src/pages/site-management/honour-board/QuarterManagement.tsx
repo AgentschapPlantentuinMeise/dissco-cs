@@ -7,12 +7,12 @@ import { Disclosure } from '../../../components/ui/Disclosure';
 import { SectionLoadError } from '../../../components/layout/SectionLoadError';
 import { eyebrowClass } from '../../../components/ui/text-styles';
 import { failedToLoad } from '../../../api/query-state';
-import { formatNumber } from '../../../utility/format-number';
 import { quarterLabel } from '../../../components/stats/honour-board-timeline';
 import { PrizeForm } from './PrizeForm';
 import { useQuarterManagement } from './use-honour-board-management';
 import { LoadingText } from '../../../components/layout/LoadingText';
 import { EmptyText } from '../../../components/layout/EmptyText';
+import { formatDay } from '../../../utility/format-date';
 
 // One quarter in management, closed by default: its thank-you (mode 'prize') and its pool, from
 // which the jury chooses the winner once the quarter is over.
@@ -59,7 +59,7 @@ export function QuarterManagement({ quarter, mode }: { quarter: HonourBoardQuart
             <h3 className={eyebrowClass}>{t('sm_honour_board_pool', { threshold: data.threshold })}</h3>
             {withPrize && data.winnerChosenAt && (
               <p className="m-0 text-sm text-gray-600">
-                {t('sm_honour_board_pool_frozen', { date: new Date(data.winnerChosenAt).toLocaleDateString(i18n.language) })}
+                {t('sm_honour_board_pool_frozen', { date: formatDay(data.winnerChosenAt, i18n.language) })}
               </p>
             )}
             {data.pool.length === 0 ? (
@@ -70,7 +70,7 @@ export function QuarterManagement({ quarter, mode }: { quarter: HonourBoardQuart
                   <li key={entry.userUrn} className="flex items-center justify-between gap-3 py-2">
                     <span className="min-w-0">
                       <span className="font-semibold text-gray-900">{entry.name}</span>{' '}
-                      <span className="text-sm text-gray-600">{t('sm_honour_board_pool_tasks', { count: formatNumber(entry.count, i18n.language) })}</span>
+                      <span className="text-sm text-gray-600">{t('sm_honour_board_pool_tasks', { count: entry.count })}</span>
                     </span>
                     {withPrize && entry.userUrn === data.winner?.userUrn ? (
                       <span className="text-sm font-semibold text-cs-secondary">{t('sm_honour_board_winner')}</span>

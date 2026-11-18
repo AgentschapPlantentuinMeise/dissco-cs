@@ -32,7 +32,7 @@ export function ColorRow({ colorKey, value, contrast, onChange }: {
         {contrast !== undefined && (
           <p className="m-0 mt-1 flex items-center gap-1.5 text-sm text-attention-700">
             <LuTriangleAlert aria-hidden="true" className="flex-shrink-0" />
-            {t('sm_colors_contrast_warning', { ratio: contrast.toFixed(1), min: MIN_CONTRAST })}
+            {t('sm_colors_contrast_warning', { ratio: contrast, min: MIN_CONTRAST })}
           </p>
         )}
       </div>

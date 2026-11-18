@@ -20,6 +20,7 @@ import { rowHoverClass, savedRowClass } from '../../../components/ui/list-styles
 import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { useSavedFlash } from '../../../hooks/use-saved-flash';
 import { EmptyText } from '../../../components/layout/EmptyText';
+import { formatDay } from '../../../utility/format-date';
 
 export function ManualsSubview({ projects, manuals }: {
   projects: MadocProjectDto[];
@@ -166,7 +167,7 @@ export function ManualsSubview({ projects, manuals }: {
                     : t('sm_manuals_orphan_linked_empty')}
                 </td>
                 <td className="px-4 py-3 border-t border-gray-100 text-sm text-gray-500">
-                  {new Date(manual.updatedAt).toLocaleDateString(i18n.language)}
+                  {formatDay(manual.updatedAt, i18n.language)}
                 </td>
                 <td className="px-4 py-3 border-t border-gray-100 text-right whitespace-nowrap">
                   <div className="flex items-center justify-end gap-4">

@@ -20,7 +20,7 @@ import { EmptyText } from '../../components/layout/EmptyText';
 export function UserDashboard() {
   const { t, i18n } = useTranslation('dissco-cs');
   const platformName = useSiteName();
-  const { user, summary, percentage, tasksLoad, list, year, helpedInstitutions, unansweredCount, feedback, release } =
+  const { user, summary, share, tasksLoad, list, year, helpedInstitutions, unansweredCount, feedback, release } =
     useUserDashboard();
 
   // The route sits behind <AuthGate>, which already sends a visitor without a session to login.
@@ -37,7 +37,7 @@ export function UserDashboard() {
       <PageHeader
         variant="compact"
         title={t('dashboard_welcome', { name: user.name })}
-        lead={percentage !== null ? t('my_tasks_percentage', { pct: percentage, platformName }) : t('dashboard_subtitle', { platformName })}
+        lead={share !== null ? t('my_tasks_percentage', { pct: share, platformName }) : t('dashboard_subtitle', { platformName })}
         stats={[
           { value: summary.contributedTasks.length, label: t('my_tasks_total') },
           { value: summary.doneTasks.length, label: t('my_tasks_completed') },

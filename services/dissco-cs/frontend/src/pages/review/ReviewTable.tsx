@@ -7,6 +7,7 @@ import { SortKey, SortDir } from './use-review-page';
 import { reviewStatusKey, STATUS_BADGE_CLASSES, badgeClass, thClass, tdClass } from './review-table-styles';
 import { rowHoverClass } from '../../components/ui/list-styles';
 import { IconButton } from '../../components/ui/IconButton';
+import { formatDate } from '../../utility/format-date';
 
 interface ReviewTableProps {
   visibleRows: ReviewTaskDto[];
@@ -83,7 +84,7 @@ export function ReviewTable({
         {visibleRows.map((row: ReviewTaskDto) => {
           const projectLabel = localeText(row.project.label, i18n.language) || row.project.slug || '—';
           const subjectLabel = localeText(row.subject.label, i18n.language) || row.id;
-          const modified = row.modifiedAt ? new Date(row.modifiedAt).toLocaleString(i18n.language) : '—';
+          const modified = row.modifiedAt ? formatDate(row.modifiedAt, i18n.language) : '—';
           const canPreview = !!row.subjectRaw;
           const isOpen = openRowId === row.id;
 

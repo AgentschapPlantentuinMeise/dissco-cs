@@ -6,7 +6,6 @@ import { HONOUR_BOARD_DEFAULT_THRESHOLD } from '@dissco-cs/shared-types';
 import { useCurrentUser } from '../../hooks/use-current-user';
 import { HonourBoardQuarter } from '../../hooks/use-site-honour-board';
 import { HrefLink } from '../../utility/href-link';
-import { formatNumber } from '../../utility/format-number';
 import { currentLocation, withQuery } from '../../api/url';
 import { YourProgress } from './YourProgress';
 import { QuarterSummary } from './QuarterSummary';
@@ -21,7 +20,6 @@ const EYEBROW = 'text-[0.68rem] font-semibold uppercase tracking-[0.05em] text-g
 export function QuarterPanel({ quarter }: { quarter: HonourBoardQuarter }) {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useCurrentUser();
-  const format = (n: number) => formatNumber(n, i18n.language);
   const you = quarter.data?.you;
   const threshold = quarter.data?.threshold ?? HONOUR_BOARD_DEFAULT_THRESHOLD;
 
@@ -66,8 +64,8 @@ export function QuarterPanel({ quarter }: { quarter: HonourBoardQuarter }) {
           {you.count === 0
             ? t('honour_board_you_past_none')
             : toGo === 0
-              ? t('honour_board_you_past_in', { count: format(you.count) })
-              : t('honour_board_you_past_below', { count: format(you.count), toGo: format(toGo) })}
+              ? t('honour_board_you_past_in', { count: you.count })
+              : t('honour_board_you_past_below', { count: you.count, toGo })}
         </p>
       </>
     );

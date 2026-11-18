@@ -9,6 +9,7 @@ import { inputClass } from '../../components/ui/input-styles';
 import { MAX_FEEDBACK_BODY_LENGTH } from '@dissco-cs/shared-types';
 import { loadState } from '../../api/query-state';
 import { LoadingText } from '../../components/layout/LoadingText';
+import { formatDate } from '../../utility/format-date';
 
 // An opened feedback thread: its messages and a reply box.
 export function FeedbackThreadDetail({ threadId }: { threadId: number }) {
@@ -49,7 +50,7 @@ export function FeedbackThreadDetail({ threadId }: { threadId: number }) {
           <li key={message.id} className="text-sm">
             <div className="flex items-baseline gap-2">
               <strong className="text-gray-800">{message.authorName}</strong>
-              <span className="text-xs text-gray-400">{new Date(message.createdAt).toLocaleString(i18n.language)}</span>
+              <span className="text-xs text-gray-400">{formatDate(message.createdAt, i18n.language)}</span>
             </div>
             <p className="text-gray-700 m-0 mt-0.5 whitespace-pre-wrap">{message.body}</p>
           </li>

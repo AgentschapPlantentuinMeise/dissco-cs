@@ -7,7 +7,7 @@ import {
   firstContribution,
   monthlyCounts,
   nextMilestone,
-  sharePercentage,
+  shareOfTotal,
   sortTasks,
   summarizeTasks,
   taskProjectOptions,
@@ -76,10 +76,10 @@ describe('summarizeTasks', () => {
   });
 });
 
-describe('sharePercentage', () => {
-  it('gives two decimals, or null without site total', () => {
-    expect(sharePercentage(1, 3)).toBe('33.33');
-    expect(sharePercentage(5, 0)).toBeNull();
+describe('shareOfTotal', () => {
+  it('gives the share as a fraction, or null without site total', () => {
+    expect(shareOfTotal(1, 3)).toBeCloseTo(1 / 3);
+    expect(shareOfTotal(5, 0)).toBeNull();
   });
 });
 

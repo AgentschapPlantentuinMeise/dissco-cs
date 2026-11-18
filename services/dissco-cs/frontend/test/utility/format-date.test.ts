@@ -1,6 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatTimeAgo } from '../../src/utility/format-date';
+import { formatDate, formatDay, formatDayMonth, formatTimeAgo } from '../../src/utility/format-date';
+
+describe('formatDate', () => {
+  it('shows date and time without seconds, also for milliseconds from Madoc', () => {
+    const moment = new Date(2026, 10, 18, 14, 3, 27);
+    expect(formatDate(moment.toISOString(), 'en-GB')).toBe('18/11/2026, 14:03');
+    expect(formatDate(moment.getTime(), 'en-GB')).toBe('18/11/2026, 14:03');
+  });
+});
+
+describe('formatDay and formatDayMonth', () => {
+  it('shows only the date, or day and month', () => {
+    const moment = new Date(2026, 10, 18, 14, 3);
+    expect(formatDay(moment, 'en-GB')).toBe('18/11/2026');
+    expect(formatDayMonth(moment, 'nl', 'long')).toBe('18 november');
+  });
+});
 
 const now = new Date('2026-10-20T12:00:00Z');
 

@@ -347,6 +347,21 @@ const rules: ConventionRule[] = [
     },
   },
   {
+    name: 'Dates and numbers are formatted in utility/format-date.ts or format-number.ts',
+    pattern: /\.(toLocaleString|toLocaleDateString|toLocaleTimeString|toFixed)\(/,
+    instead:
+      'formatDate, formatDay, formatDayMonth, formatMonth, formatMonthYear, formatTimeAgo or formatNumber (with Intl options for decimals, percent or units)',
+    allowedIn: {
+      'utility/format-date.ts': 'the date helpers themselves',
+      'utility/format-number.ts': 'the number helper itself',
+    },
+  },
+  {
+    name: 'A number in a translated sentence goes in as a number',
+    pattern: /\bt\('\w+', \{[^}]*\b(format|formatNumber)\(/,
+    instead: "pass the number itself; the translation formats it with {{count, number}} -- a formatted string would be read as a number again",
+  },
+  {
     name: 'An empty list or section shows <EmptyText>',
     // Empty-state keys end in _empty (projects_empty, forum_filter_empty); a key that merely contains
     // it (sm_manuals_empty_note, a label) is not caught.
@@ -440,6 +455,24 @@ describe('frontend conventions', () => {
     const unused = keys.filter(key => !isTranslationKeyUsed(key, source));
     const instead = 'remove the key from all four translation files (nl, en, fr, de)';
     expect(unused, `No unused translation key\nInstead: ${instead}\nFound:\n  ${unused.join('\n  ')}`).toEqual([]);
+  });
+
+  // A number in a sentence is formatted by i18next in the site's language ("1.234" in Dutch), and
+  // a sentence with a count has real plural forms (key_one, key_other) instead of "taak/taken".
+  it('A number in a translation is formatted, and a count has real plural forms', () => {
+    const NUMERIC = /\{\{(count|total|current|done|success|failed|created|left|next|threshold|days|toGo|from|to|page|index|max|min|pct|ratio)\}\}/;
+    // While the PDF loads, the lightbox passes '…' as total, which the number format would show as NaN.
+    const rawNumberAllowed = ['manual_pdf_page_counter'];
+    const PLURAL_HACK = /\w\/\w|\w\((s|n|en|se|e)\)/;
+    const found = ['nl', 'en', 'fr', 'de'].flatMap(lang => {
+      const texts: Record<string, string> = JSON.parse(readFileSync(join(srcDir, 'translations', lang, 'dissco-cs.json'), 'utf8'));
+      return Object.entries(texts).flatMap(([key, text]) => [
+        ...(NUMERIC.test(text) && !rawNumberAllowed.includes(key) ? [`${lang} ${key}: {{x}} without ", number"`] : []),
+        ...(text.includes('{{count') && PLURAL_HACK.test(text) ? [`${lang} ${key}: plural written out`] : []),
+      ]);
+    });
+    const instead = '{{count, number}} in all four languages, and key_one / key_other for a sentence that depends on the count';
+    expect(found, `A number in a translation is formatted, and a count has real plural forms\nInstead: ${instead}\nFound:\n  ${found.join('\n  ')}`).toEqual([]);
   });
 
   // nginx only passes the page routes it lists on to the SPA; any other path under /s/<site>/ goes

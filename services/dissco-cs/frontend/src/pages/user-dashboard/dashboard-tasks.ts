@@ -60,9 +60,10 @@ export function summarizeTasks(tasks: MadocCrowdsourcingTaskDto[]): TaskSummary 
   };
 }
 
-// The user's share of all completed tasks on the site, as "12.34", or null when there are none yet.
-export function sharePercentage(userDoneCount: number, siteTotal: number): string | null {
-  return siteTotal > 0 ? ((userDoneCount / siteTotal) * 100).toFixed(2) : null;
+// The user's share of all completed tasks on the site, as a fraction (0.1234 for 12.34%), or null
+// when there are none yet. The translation shows it as a percentage in the site's language.
+export function shareOfTotal(userDoneCount: number, siteTotal: number): number | null {
+  return siteTotal > 0 ? userDoneCount / siteTotal : null;
 }
 
 // ---- the "My tasks" list: filter, sort, project options ----

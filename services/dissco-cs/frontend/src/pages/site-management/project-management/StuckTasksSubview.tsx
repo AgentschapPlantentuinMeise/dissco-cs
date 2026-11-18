@@ -17,6 +17,7 @@ import { loadState } from '../../../api/query-state';
 import { LoadingText } from '../../../components/layout/LoadingText';
 import { SectionLoadError } from '../../../components/layout/SectionLoadError';
 import { EmptyText } from '../../../components/layout/EmptyText';
+import { formatDate } from '../../../utility/format-date';
 
 function statusLabelKey(status: number): string {
   return status === 0 ? 'sm_stuck_tasks_status_not_started' : 'sm_stuck_tasks_status_in_progress';
@@ -91,7 +92,7 @@ export function StuckTasksSubview() {
               {tasks.map(task => {
                 const manifestLabel = localeText(task.metadata?.subject?.label, i18n.language) || task.subject || task.id;
                 const projectLabel = localeText(task.metadata?.project?.label, i18n.language) || task.metadata?.project?.slug || '—';
-                const modified = task.modified_at ? new Date(task.modified_at).toLocaleString(i18n.language) : '—';
+                const modified = task.modified_at ? formatDate(task.modified_at, i18n.language) : '—';
                 return (
                   <tr key={task.id} className={rowHoverClass}>
                     <td className="px-4 py-3 border-t border-gray-100">
@@ -139,7 +140,7 @@ export function StuckTasksSubview() {
                 {manifestCounters.map(counter => {
                   const manifestLabel = counter.name || counter.subject || counter.id;
                   const projectLabel = localeText(counter.metadata?.project?.label, i18n.language) || counter.metadata?.project?.slug || '—';
-                  const modified = counter.modified_at ? new Date(counter.modified_at).toLocaleString(i18n.language) : '—';
+                  const modified = counter.modified_at ? formatDate(counter.modified_at, i18n.language) : '—';
                   return (
                     <tr key={counter.id} className={rowHoverClass}>
                       <td className="px-4 py-3 border-t border-gray-100">
@@ -170,7 +171,7 @@ export function StuckTasksSubview() {
         <ConfirmDialog
           title={t('sm_stuck_tasks_release_confirm_title')}
           message={t('sm_stuck_tasks_release_confirm', {
-            date: confirmTask.modified_at ? new Date(confirmTask.modified_at).toLocaleString(i18n.language) : '—',
+            date: confirmTask.modified_at ? formatDate(confirmTask.modified_at, i18n.language) : '—',
           })}
           confirmLabel={t('sm_stuck_tasks_release')}
           cancelLabel={t('common_cancel')}

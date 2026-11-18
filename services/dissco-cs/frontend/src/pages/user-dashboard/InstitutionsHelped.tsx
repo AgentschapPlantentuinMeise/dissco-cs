@@ -5,7 +5,7 @@ import { PageSection } from '../../components/layout/PageSection';
 import { InstitutionCard } from '../../components/institutions/InstitutionCard';
 import { CardStat } from '../../components/ui/CardStat';
 import { formatNumber } from '../../utility/format-number';
-import { sharePercentage } from './dashboard-tasks';
+import { shareOfTotal } from './dashboard-tasks';
 import { EmptyText } from '../../components/layout/EmptyText';
 
 // "Institutions you helped": the institution cards, with the user's own tasks for each and the
@@ -29,11 +29,11 @@ export function InstitutionsHelped({ helped, children }: {
               key={institution.id}
               institution={institution}
               footer={stats => {
-                const share = sharePercentage(count, stats.tasksCompleted);
+                const share = shareOfTotal(count, stats.tasksCompleted);
                 return (
                   <>
                     <CardStat value={formatNumber(count, i18n.language)} label={t('dashboard_tasks_unit')} />
-                    {share !== null && <span>{t('dashboard_institutions_share', { pct: formatNumber(Number(share), i18n.language) })}</span>}
+                    {share !== null && <span>{t('dashboard_institutions_share', { pct: share })}</span>}
                   </>
                 );
               }}

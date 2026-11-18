@@ -16,7 +16,7 @@ import {
   filterTasks,
   firstContribution,
   monthlyCounts,
-  sharePercentage,
+  shareOfTotal,
   sortTasks,
   summarizeTasks,
   TASK_SORTS,
@@ -97,7 +97,7 @@ export function useUserDashboard() {
   return {
     user,
     summary,
-    percentage: sharePercentage(summary.userDoneCount, siteStats?.tasksCompleted ?? 0),
+    share: shareOfTotal(summary.userDoneCount, siteStats?.tasksCompleted ?? 0),
     tasksLoad: loadState(tasksQuery),
     list: {
       tab,

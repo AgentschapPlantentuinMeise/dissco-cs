@@ -18,7 +18,7 @@ export function YourProgress({ count, threshold, daysLeft }: { count: number; th
         </IconCircle>
         <p className="m-0 text-[0.92rem]">
           <b className="text-gray-900">{t('honour_board_progress_in')}</b>{' '}
-          {t('honour_board_progress_in_detail', { count: format(count), threshold: format(threshold) })}
+          {t('honour_board_progress_in_detail', { count, threshold })}
         </p>
       </div>
     );
@@ -28,7 +28,7 @@ export function YourProgress({ count, threshold, daysLeft }: { count: number; th
     <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-3.5 items-center">
       <span className="text-[1.6rem] font-bold text-cs-secondary tabular-nums leading-none">{format(count)}</span>
       <div className="text-[0.92rem]">
-        <b className="text-gray-900">{t('honour_board_progress_to_go', { toGo: format(toGo), days: daysLeft })}</b>
+        <b className="text-gray-900">{t('honour_board_progress_to_go', { toGo, days: daysLeft })}</b>
         <div
           role="progressbar"
           aria-label={t('honour_board_progress_label')}
@@ -41,7 +41,7 @@ export function YourProgress({ count, threshold, daysLeft }: { count: number; th
         </div>
         <div className="flex justify-between mt-0.5 text-[0.7rem] text-gray-500 tabular-nums">
           <span>0</span>
-          <span>{t('honour_board_progress_threshold', { threshold: format(threshold) })}</span>
+          <span>{t('honour_board_progress_threshold', { threshold })}</span>
         </div>
       </div>
     </div>

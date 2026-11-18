@@ -3,6 +3,7 @@ import { LuAward, LuGift } from 'react-icons/lu';
 import { siteLangText } from '../../utility/site-lang-text';
 import { HonourBoardQuarter } from '../../hooks/use-site-honour-board';
 import { barHeight, barsInOrder, barTop, progressToThreshold, quarterLabel, showYouLabel } from './honour-board-timeline';
+import { formatDayMonth } from '../../utility/format-date';
 
 // The tallest bar in px; the area above it keeps room for the "you" label.
 const BAR_AREA = 64;
@@ -30,7 +31,7 @@ export function QuarterStrip({ board, selected, onSelect }: {
   onSelect: (index: number) => void;
 }) {
   const { t, i18n } = useTranslation('dissco-cs');
-  const dayMonth = (date: Date) => date.toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' });
+  const dayMonth = (date: Date) => formatDayMonth(date, i18n.language, 'short');
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-y-3">

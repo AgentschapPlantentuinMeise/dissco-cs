@@ -11,6 +11,7 @@ import { localeText } from '../../utility/locale-text';
 import { LuTrash2 } from 'react-icons/lu';
 import { loadState } from '../../api/query-state';
 import { LoadingText } from '../../components/layout/LoadingText';
+import { formatDate } from '../../utility/format-date';
 
 interface ReviewInlineExpansionProps {
   row: ReviewTaskDto;
@@ -73,7 +74,7 @@ export function ReviewInlineExpansion({
   const [confirmingRelease, setConfirmingRelease] = useState(false);
   const title = localeText(row.subject.label, i18n.language) || row.id;
   const subtitle = row.submitter
-    ? `${t('review_detail_submitted_by', { name: row.submitter })}${row.modifiedAt ? ` — ${new Date(row.modifiedAt).toLocaleString(i18n.language)}` : ''}`
+    ? `${t('review_detail_submitted_by', { name: row.submitter })}${row.modifiedAt ? ` — ${formatDate(row.modifiedAt, i18n.language)}` : ''}`
     : '';
 
   const { revisionQuery, modelQuery, currentDocument, handleChange } = useReviewRevisionDocument(row, editedDocument, onDocumentChange);

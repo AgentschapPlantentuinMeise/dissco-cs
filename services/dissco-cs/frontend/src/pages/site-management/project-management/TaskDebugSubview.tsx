@@ -12,6 +12,7 @@ import { FormField } from '../../../components/ui/FormField';
 import { loadState } from '../../../api/query-state';
 import { LoadingText } from '../../../components/layout/LoadingText';
 import { SectionLoadError } from '../../../components/layout/SectionLoadError';
+import { formatDay } from '../../../utility/format-date';
 
 function taskDebugStatusLabel(status: number): string {
   switch (status) {
@@ -100,7 +101,7 @@ export function TaskDebugSubview({ projects }: { projects: MadocProjectDto[] }) 
                               {taskDebugStatusLabel(task.status)}
                               {task.assignee ? ` — ${task.assignee}` : ''}
                               {' · '}
-                              {new Date(task.modifiedAt).toLocaleDateString(i18n.language)}
+                              {formatDay(task.modifiedAt, i18n.language)}
                             </li>
                           ))}
                         </ul>

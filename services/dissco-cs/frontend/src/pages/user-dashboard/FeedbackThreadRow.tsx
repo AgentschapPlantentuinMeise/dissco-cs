@@ -9,6 +9,7 @@ import { LuTrash2 } from 'react-icons/lu';
 import { FeedbackThreadDto } from '@dissco-cs/shared-types';
 import { FeedbackThreadDetail } from './FeedbackThreadDetail';
 import { rowHoverClass } from '../../components/ui/list-styles';
+import { formatDate } from '../../utility/format-date';
 
 // One feedback thread in the dashboard's feedback tab; click to open it, trash icon to delete it.
 export function FeedbackThreadRow({
@@ -51,7 +52,7 @@ export function FeedbackThreadRow({
               )}
               {thread.subject}
             </span>
-            <span className="text-xs text-gray-400 flex-shrink-0">{new Date(thread.lastActivity).toLocaleString(language)}</span>
+            <span className="text-xs text-gray-400 flex-shrink-0">{formatDate(thread.lastActivity, language)}</span>
           </div>
           <div className="text-xs text-gray-500 mt-0.5">{directionLabel}</div>
         </button>

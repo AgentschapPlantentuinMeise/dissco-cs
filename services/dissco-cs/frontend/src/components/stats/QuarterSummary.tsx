@@ -7,6 +7,7 @@ import { eyebrowClass } from '../ui/text-styles';
 import { NumberedSteps } from '../ui/NumberedSteps';
 import { quarterLabel } from './honour-board-timeline';
 import { IconCircle } from './IconCircle';
+import { formatDayMonth } from '../../utility/format-date';
 
 const THRESHOLD_STEP = { title: 'honour_board_step_threshold_title', text: 'honour_board_step_threshold_text' } as const;
 // With a thank-you a jury chooses from the pool; as recognition only, being in the pool is the point.
@@ -27,7 +28,7 @@ const STEPS = {
 // how it ended and, with a thank-you, its winner. The dates follow from the quarter itself.
 export function QuarterSummary({ quarter }: { quarter: HonourBoardQuarter }) {
   const { t, i18n } = useTranslation('dissco-cs');
-  const dayMonth = (date: Date) => date.toLocaleDateString(i18n.language, { day: 'numeric', month: 'long' });
+  const dayMonth = (date: Date) => formatDayMonth(date, i18n.language, 'long');
   const threshold = quarter.data?.threshold ?? HONOUR_BOARD_DEFAULT_THRESHOLD;
 
   if (quarter.kind === 'current') {

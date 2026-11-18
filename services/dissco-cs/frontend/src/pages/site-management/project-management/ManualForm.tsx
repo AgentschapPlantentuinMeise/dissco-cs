@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { manualQueries } from '../../../api/queries/manuals';
 import {
   MANUAL_ATTACHMENT_MIME_TYPES,
+  MAX_MANUAL_ATTACHMENT_LENGTH,
   MAX_MANUAL_CONTENT_LENGTH,
   MAX_MANUAL_TITLE_LENGTH,
   MultilingualText,
@@ -25,6 +26,7 @@ import { AttachmentFileError, attachmentFileError } from './manual-content';
 import { FieldErrorText, FormField } from '../../../components/ui/FormField';
 import { SaveHint } from '../../../components/ui/SaveHint';
 import { useLeftFields } from '../../../hooks/use-left-fields';
+import { formatNumber } from '../../../utility/format-number';
 
 export type ManualDraft = {
   title: MultilingualText;
@@ -51,7 +53,7 @@ export function ManualForm({ manualId, storedLangs, draft, setDraft, selectedLan
   onSave: () => void;
   onCancel: () => void;
 }) {
-  const { t } = useTranslation('dissco-cs');
+  const { t, i18n } = useTranslation('dissco-cs');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Only for the name and size of a stored attachment.
@@ -149,8 +151,16 @@ export function ManualForm({ manualId, storedLangs, draft, setDraft, selectedLan
       <div className="flex items-center justify-between gap-3 mt-4 px-3.5 py-2.5 bg-gray-50 rounded text-sm">
         {attachment || hasStored ? (
           <>
-            <span className="truncate">
-              {attachment ? `${pickedFile ? pickedFile.name : stored?.filename} · ${(attachment.size / 1_000_000).toFixed(1)} MB` : ''}
+            {/* Only a long name is cut off; the size after it stays readable. */}
+            <span className="flex min-w-0 gap-1.5">
+              {attachment && (
+                <>
+                  <span className="truncate">{pickedFile ? pickedFile.name : stored?.filename}</span>
+                  <span className="flex-shrink-0 text-gray-500">
+                    · {formatNumber(attachment.size / 1_000_000, i18n.language, { style: 'unit', unit: 'megabyte', maximumFractionDigits: 1 })}
+                  </span>
+                </>
+              )}
             </span>
             <span className="flex items-center gap-2 flex-shrink-0">
               <Button variant="secondary" size="sm" onClick={insertAttachmentMarker}>
@@ -184,7 +194,7 @@ export function ManualForm({ manualId, storedLangs, draft, setDraft, selectedLan
       </div>
       {attachmentError?.lang === selectedLang && (
         <div className="mt-1.5">
-          <FieldErrorText>{t(attachmentError.key)}</FieldErrorText>
+          <FieldErrorText>{t(attachmentError.key, { max: MAX_MANUAL_ATTACHMENT_LENGTH / 1_000_000 })}</FieldErrorText>
         </div>
       )}
 
