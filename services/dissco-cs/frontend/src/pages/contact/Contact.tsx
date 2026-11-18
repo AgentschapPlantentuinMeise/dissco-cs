@@ -1,5 +1,4 @@
-﻿import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { useMutation } from '@tanstack/react-query';
 import { CsPage } from '../../components/layout/CsPage';
@@ -9,7 +8,14 @@ import { PageSection } from '../../components/layout/PageSection';
 import { useNavItems } from '../../hooks/use-nav-items';
 import { contactApi } from '../../api/cs-client/contact';
 import { inputClass } from '../../components/ui/input-styles';
-import { MAX_CONTACT_MESSAGE_LENGTH, MAX_CONTACT_NAME_LENGTH, MAX_EMAIL_LENGTH } from '@dissco-cs/shared-types';
+import {
+  ContactSubmissionInput,
+  contactSubmissionSchema,
+  MAX_CONTACT_MESSAGE_LENGTH,
+  MAX_CONTACT_NAME_LENGTH,
+  MAX_EMAIL_LENGTH,
+} from '@dissco-cs/shared-types';
+import { useValidatedForm } from '../../hooks/use-validated-form';
 import { SavedNotice } from '../../components/ui/SavedNotice';
 import { FormField } from '../../components/ui/FormField';
 
@@ -19,25 +25,14 @@ export function Contact() {
 
   const showForm = navItems.find(p => p.pageKey === 'contact')?.showContactForm ?? true;
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [website, setWebsite] = useState('');
+  const form = useValidatedForm(contactSubmissionSchema, { name: '', email: '', message: '', website: '' });
   const { mutate: send, isPending: sending, isSuccess: sent } = useMutation({
-    mutationFn: () => contactApi.send({ name, email, message, website }),
-    onSuccess: () => {
-      setName('');
-      setEmail('');
-      setMessage('');
-      setWebsite('');
-    },
+    mutationFn: (values: ContactSubmissionInput) => contactApi.send(values),
+    onSuccess: () => form.reset(),
     meta: { errorMessage: 'error_send_failed' },
   });
 
-  const submit = (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    send();
-  };
+  const submit = form.handleSubmit(values => send(values));
 
   return (
     <CsPage>
@@ -46,7 +41,7 @@ export function Contact() {
 
       {showForm && (
         <PageSection>
-          <form onSubmit={submit} className="flex flex-col gap-4 max-w-2xl">
+          <form noValidate onSubmit={submit} className="flex flex-col gap-4 max-w-2xl">
             {/* Honeypot: hidden from real visitors, often auto-filled by spam bots. */}
             <label
               htmlFor="contact-website"
@@ -54,46 +49,19 @@ export function Contact() {
               aria-hidden="true"
             >
               Website
-              <input
-                id="contact-website"
-                type="text"
-                tabIndex={-1}
-                autoComplete="off"
-                value={website}
-                onChange={e => setWebsite(e.target.value)}
-              />
+              <input {...form.register('website')} id="contact-website" type="text" tabIndex={-1} autoComplete="off" />
             </label>
 
-            <FormField label={t('contact_form_name')}>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={e => setName(e.target.value)}
-                maxLength={MAX_CONTACT_NAME_LENGTH}
-                className={inputClass}
-              />
+            <FormField label={t('contact_form_name')} error={form.errorFor('name')}>
+              <input {...form.field('name')} type="text" autoComplete="name" maxLength={MAX_CONTACT_NAME_LENGTH} className={inputClass} />
             </FormField>
 
-            <FormField label={t('contact_form_email')}>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                maxLength={MAX_EMAIL_LENGTH}
-                className={inputClass}
-              />
+            <FormField label={t('contact_form_email')} error={form.errorFor('email')}>
+              <input {...form.field('email')} type="email" autoComplete="email" maxLength={MAX_EMAIL_LENGTH} className={inputClass} />
             </FormField>
 
-            <FormField label={t('contact_form_message')}>
-              <textarea
-                required
-                value={message}
-                onChange={e => setMessage(e.target.value)}
-                maxLength={MAX_CONTACT_MESSAGE_LENGTH}
-                className={`${inputClass} min-h-[160px]`}
-              />
+            <FormField label={t('contact_form_message')} error={form.errorFor('message')}>
+              <textarea {...form.field('message')} maxLength={MAX_CONTACT_MESSAGE_LENGTH} className={`${inputClass} min-h-[160px]`} />
             </FormField>
 
             <div className="flex flex-wrap items-center gap-3">

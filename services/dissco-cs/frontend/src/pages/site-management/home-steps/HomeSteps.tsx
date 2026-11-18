@@ -27,6 +27,9 @@ import { defaultLang } from '../../../utility/site-lang-text';
 import { inputClass } from '../../../components/ui/input-styles';
 import { panelClass } from '../../../components/ui/panel-styles';
 import { EmptyText } from '../../../components/layout/EmptyText';
+import { SaveHint } from '../../../components/ui/SaveHint';
+import { useLeftFields } from '../../../hooks/use-left-fields';
+import { FormField } from '../../../components/ui/FormField';
 
 const EMPTY_STEP: HomeStepDto = { title: {}, body: {} };
 
@@ -65,6 +68,11 @@ export function HomeSteps() {
 
   const isMissing = (lang: SitePageLang) => steps.some(step => !step.title[lang]?.trim() || !step.body[lang]?.trim());
   const canSave = draft !== null && setHomeStepsSchema.safeParse({ steps }).success;
+  // Per position in the list: moving or deleting a step can carry the mark to a neighbour, which
+  // clears as soon as that step is filled in.
+  const { left, leave } = useLeftFields<string>();
+  const requiredError = (field: string, value: string | undefined) =>
+    left[field] && !value?.trim() ? t('form_error_required') : undefined;
 
   // Saving replaces the whole list, so steps added to an empty form would wipe the stored ones.
   if (failedToLoad(stepsQuery)) {
@@ -87,34 +95,46 @@ export function HomeSteps() {
         {steps.length === 0 && <EmptyText>{t('sm_home_steps_empty')}</EmptyText>}
 
         <ol className="list-none m-0 p-0 mt-4 flex flex-col gap-4">
-          {steps.map((step, index) => (
+          {steps.map((step, index) => {
+            const titleError = requiredError(`title-${index}`, step.title[selectedLang]);
+            const bodyError = requiredError(`body-${index}`, step.body[selectedLang]);
+            return (
             <li key={index} className="grid grid-cols-[2rem_minmax(0,1fr)_auto] gap-3 items-start">
               <span className="text-2xl font-bold text-cs-primary leading-none pt-2 tabular-nums">{index + 1}</span>
               <div className="flex flex-col gap-2 min-w-0">
-                <input
-                  type="text"
-                  value={step.title[selectedLang] ?? ''}
-                  onChange={e => setText(index, 'title', e.target.value)}
-                  maxLength={MAX_HOME_STEP_TITLE_LENGTH}
-                  aria-label={t('sm_home_steps_step_title')}
-                  placeholder={t('sm_home_steps_step_title')}
-                  className={`${inputClass} font-semibold`}
-                />
-                <textarea
-                  value={step.body[selectedLang] ?? ''}
-                  onChange={e => setText(index, 'body', e.target.value)}
-                  maxLength={MAX_HOME_STEP_BODY_LENGTH}
-                  aria-label={t('sm_home_steps_step_body')}
-                  placeholder={t('sm_home_steps_step_body')}
-                  className={`${inputClass} min-h-[70px]`}
-                />
+                <FormField error={titleError}>
+                  <input
+                    type="text"
+                    value={step.title[selectedLang] ?? ''}
+                    onChange={e => setText(index, 'title', e.target.value)}
+                    onBlur={leave(`title-${index}`)}
+                    aria-invalid={!!titleError}
+                    maxLength={MAX_HOME_STEP_TITLE_LENGTH}
+                    aria-label={t('sm_home_steps_step_title')}
+                    placeholder={t('sm_home_steps_step_title')}
+                    className={`${inputClass} font-semibold`}
+                  />
+                </FormField>
+                <FormField error={bodyError}>
+                  <textarea
+                    value={step.body[selectedLang] ?? ''}
+                    onChange={e => setText(index, 'body', e.target.value)}
+                    onBlur={leave(`body-${index}`)}
+                    aria-invalid={!!bodyError}
+                    maxLength={MAX_HOME_STEP_BODY_LENGTH}
+                    aria-label={t('sm_home_steps_step_body')}
+                    placeholder={t('sm_home_steps_step_body')}
+                    className={`${inputClass} min-h-[70px]`}
+                  />
+                </FormField>
               </div>
               <span className="flex items-center gap-1 pt-1.5">
                 <MoveButtons index={index} count={steps.length} onMove={direction => move(index, direction)} />
                 <DeleteIconButton onClick={() => change(steps.filter((_, i) => i !== index))} />
               </span>
             </li>
-          ))}
+            );
+          })}
         </ol>
 
         <div className="flex flex-wrap items-center gap-3 mt-5">
@@ -127,8 +147,8 @@ export function HomeSteps() {
             onClick={() => save()}
             loading={saving}
             disabled={!canSave}
-            title={draft !== null && !canSave ? t('common_fill_required_fields') : undefined}
           />
+          {draft !== null && !canSave && <SaveHint>{t('common_fill_required_fields')}</SaveHint>}
           {isSaved && <SavedNotice />}
         </div>
       </div>

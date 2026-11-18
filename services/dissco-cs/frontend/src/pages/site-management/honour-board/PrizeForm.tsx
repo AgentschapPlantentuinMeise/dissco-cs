@@ -15,6 +15,8 @@ import { SaveButton } from '../../../components/ui/SaveButton';
 import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { inputClass } from '../../../components/ui/input-styles';
 import { defaultLang } from '../../../utility/site-lang-text';
+import { SaveHint } from '../../../components/ui/SaveHint';
+import { useLeftFields } from '../../../hooks/use-left-fields';
 
 const EMPTY_PRIZE: HonourBoardPrizeDto = { title: {}, note: {} };
 
@@ -35,6 +37,8 @@ export function PrizeForm({ saved, onSave, saving, isSaved, onDelete, deleting }
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const prize = draft ?? saved ?? EMPTY_PRIZE;
   const canSave = draft !== null && honourBoardPrizeSchema.safeParse(prize).success;
+  const { left, leave } = useLeftFields<'title'>();
+  const titleError = left.title && !prize.title[selectedLang]?.trim() ? t('form_error_required') : undefined;
 
   // An empty note is left out: the schema accepts a missing language, not an empty one.
   const setText = (field: keyof HonourBoardPrizeDto, value: string) => {
@@ -45,11 +49,13 @@ export function PrizeForm({ saved, onSave, saving, isSaved, onDelete, deleting }
   return (
     <div className="flex flex-col gap-3">
       <LanguageTabs selected={selectedLang} onSelect={setSelectedLang} isMissing={lang => !prize.title[lang]?.trim()} />
-      <FormField label={t('sm_honour_board_prize_title')}>
+      <FormField label={t('sm_honour_board_prize_title')} error={titleError}>
         <input
           type="text"
           value={prize.title[selectedLang] ?? ''}
           onChange={e => setText('title', e.target.value)}
+          onBlur={leave('title')}
+          aria-invalid={!!titleError}
           maxLength={MAX_HONOUR_BOARD_PRIZE_TITLE_LENGTH}
           className={inputClass}
         />
@@ -67,8 +73,8 @@ export function PrizeForm({ saved, onSave, saving, isSaved, onDelete, deleting }
           onClick={() => onSave(prize, () => setDraft(null))}
           loading={saving}
           disabled={!canSave}
-          title={draft !== null && !canSave ? t('common_fill_required_fields') : undefined}
         />
+        {draft !== null && !canSave && <SaveHint>{t('common_fill_required_fields')}</SaveHint>}
         {saved && draft === null && (
           <Button variant="secondary" size="sm" loading={deleting} onClick={() => setConfirmingDelete(true)}>
             {t('sm_honour_board_prize_delete')}

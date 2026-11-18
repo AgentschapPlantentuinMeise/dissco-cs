@@ -35,7 +35,9 @@ import { useNavItems } from '../../../hooks/use-nav-items';
 import { MarkdownToolbar } from '../../../components/ui/MarkdownToolbar';
 import { rowHoverClass, savedRowClass } from '../../../components/ui/list-styles';
 import { inputClass } from '../../../components/ui/input-styles';
-import { FormField } from '../../../components/ui/FormField';
+import { FieldErrorText, FormField } from '../../../components/ui/FormField';
+import { SaveHint } from '../../../components/ui/SaveHint';
+import { useLeftFields } from '../../../hooks/use-left-fields';
 
 const CONTENT_PAGE_KEYS: NavItemKey[] = ['about', 'help', 'contact', 'welcome'];
 
@@ -116,6 +118,10 @@ export function PageManagement() {
   const emailValid =
     !isContact || !draftShowContactForm || setContactEmailSchema.safeParse({ email: draftContactEmail.trim() }).success;
   const canSave = allLangsFilled && emailValid;
+  // Per page: the panel stays mounted while switching pages.
+  const { left, leave } = useLeftFields<'email' | 'content'>(selectedKey);
+  const contentError = left.content && !(draftContent[selectedLang] ?? '').trim() ? t('form_error_required') : undefined;
+  const emailError = left.email && !emailValid ? t('form_error_email') : undefined;
 
   const { mutate: saveAllContent, isPending: savingContent } = useMutation({
     mutationFn: (key: NavItemKey) =>
@@ -230,10 +236,13 @@ export function PageManagement() {
                 onChange={e => {
                   setDraftContent(prev => ({ ...prev, [selectedLang]: e.target.value }));
                 }}
+                onBlur={leave('content')}
+                aria-invalid={!!contentError}
                 maxLength={MAX_NAV_ITEM_CONTENT_LENGTH}
                 placeholder={t('sm_pages_content_placeholder')}
                 className={`${inputClass} w-full min-h-[260px] rounded-t-none font-mono`}
               />
+              {contentError && <FieldErrorText>{contentError}</FieldErrorText>}
 
               {selectedKey === 'welcome' && (
                 <p className="text-sm text-gray-500 mt-2">
@@ -253,13 +262,13 @@ export function PageManagement() {
                   </div>
 
                   {draftShowContactForm && (
-                    <FormField label={t('sm_pages_contact_email_label')} className="mt-4">
+                    <FormField label={t('sm_pages_contact_email_label')} className="mt-4" error={emailError}>
                       <input
                         type="email"
                         value={draftContactEmail}
-                        onChange={e => {
-                          setDraftContactEmail(e.target.value);
-                        }}
+                        onChange={e => setDraftContactEmail(e.target.value)}
+                        onBlur={leave('email')}
+                        aria-invalid={!!emailError}
                         maxLength={MAX_EMAIL_LENGTH}
                         placeholder={t('sm_pages_contact_email_placeholder')}
                         className={`${inputClass} max-w-sm`}
@@ -274,16 +283,10 @@ export function PageManagement() {
                   onClick={saveContent}
                   loading={savingContent}
                   disabled={!canSave}
-                  title={!canSave ? t('common_fill_required_fields') : undefined}
                 />
                 <CancelButton onClick={() => discardGuard.guard(() => setSelectedKey(null))} />
 
-                {!allLangsFilled && (
-                  <span className="text-sm text-gray-500">{t('common_fill_required_fields')}</span>
-                )}
-                {allLangsFilled && !emailValid && (
-                  <span className="text-sm text-gray-500">{t('sm_pages_contact_email_invalid')}</span>
-                )}
+                {!canSave && <SaveHint>{t('common_fill_required_fields')}</SaveHint>}
               </div>
             </div>
           ) : null}

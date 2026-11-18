@@ -16,6 +16,7 @@ import { ManageLoadError } from '../ManageLoadError';
 import { failedToLoad } from '../../../api/query-state';
 import { rowHoverClass } from '../../../components/ui/list-styles';
 import { inputClass } from '../../../components/ui/input-styles';
+import { FieldErrorText } from '../../../components/ui/FormField';
 
 const LABEL_KEY: Record<SiteImageKey, string> = {
   logo: 'sm_site_images_logo',
@@ -127,7 +128,7 @@ function SiteImageRow({ imageKey, image, hint }: { imageKey: SiteImageKey; image
           {image && <DeleteIconButton onClick={() => setConfirmingDelete(true)} />}
         </span>
         {hint && <span className="text-sm text-gray-500">{hint}</span>}
-        {invalidFile && <span className="text-sm text-danger-600">{t('common_invalid_image_file')}</span>}
+        {invalidFile && <FieldErrorText>{t('common_invalid_image_file')}</FieldErrorText>}
 
         {image && !isLogo && (
           <span className="flex flex-wrap items-center gap-2">

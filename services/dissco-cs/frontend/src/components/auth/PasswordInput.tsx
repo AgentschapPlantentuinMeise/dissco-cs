@@ -5,7 +5,7 @@ import { IconButton } from '../ui/IconButton';
 import { inputClass } from '../ui/input-styles';
 
 // A password field with a button to show what was typed.
-export function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+export function PasswordInput(props: React.ComponentProps<'input'>) {
   const { t } = useTranslation('dissco-cs');
   const [visible, setVisible] = useState(false);
 

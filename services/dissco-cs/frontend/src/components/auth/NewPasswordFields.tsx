@@ -1,22 +1,27 @@
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { LuCheck, LuCircle } from 'react-icons/lu';
 import { FormField } from '../ui/FormField';
 import { PasswordInput } from './PasswordInput';
 import { getPasswordRequirements } from './password-requirements';
 
-// The two fields for a new password, with its rules ticked off while typing.
-export function NewPasswordFields({ password, confirmPassword, onPasswordChange, onConfirmPasswordChange }: {
+type InputProps = React.ComponentProps<'input'>;
+
+// The two fields for a new password, with its rules ticked off while typing. The form owns the
+// values: it passes each field's props (useValidatedForm's field()) and messages (errorFor()).
+export function NewPasswordFields({ password, passwordProps, passwordError, confirmProps, confirmError }: {
   password: string;
-  confirmPassword: string;
-  onPasswordChange: (value: string) => void;
-  onConfirmPasswordChange: (value: string) => void;
+  passwordProps: InputProps;
+  passwordError?: string;
+  confirmProps: InputProps;
+  confirmError?: string;
 }) {
   const { t } = useTranslation('dissco-cs');
 
   return (
     <>
-      <FormField label={t('set_password_form_password')}>
-        <PasswordInput required autoComplete="new-password" value={password} onChange={e => onPasswordChange(e.target.value)} />
+      <FormField label={t('set_password_form_password')} error={passwordError}>
+        <PasswordInput {...passwordProps} autoComplete="new-password" />
         {password && (
           <ul className="flex flex-col gap-0.5 mt-1">
             {getPasswordRequirements(password).map(req => (
@@ -28,11 +33,8 @@ export function NewPasswordFields({ password, confirmPassword, onPasswordChange,
         )}
       </FormField>
 
-      <FormField label={t('set_password_form_confirm')}>
-        <PasswordInput required autoComplete="new-password" value={confirmPassword} onChange={e => onConfirmPasswordChange(e.target.value)} />
-        {confirmPassword && confirmPassword !== password && (
-          <span className="text-sm text-danger-700">{t('set_password_error_mismatch')}</span>
-        )}
+      <FormField label={t('set_password_form_confirm')} error={confirmError}>
+        <PasswordInput {...confirmProps} autoComplete="new-password" />
       </FormField>
     </>
   );

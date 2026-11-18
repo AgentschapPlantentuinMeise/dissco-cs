@@ -313,7 +313,27 @@ const rules: ConventionRule[] = [
   {
     name: 'One loading text',
     pattern: /\bt\('(?!common_loading')\w*loading\w*'\)/,
-    instead: "<LoadingText /> for a part of a page, or t('common_loading') where it must stay compact (a card, a side panel)",
+    instead: "<LoadingText /> for a part of a page (compact in a side panel or form), or t('common_loading') inline in a card or label",
+  },
+  {
+    name: "A form shows our messages, not the browser's",
+    // The browser's bubble is in the browser's language and Firefox hides it behind its password list.
+    pattern: /<form\b(?![^>]*\bnoValidate\b)/,
+    instead: 'noValidate on the <form>, with useValidatedForm (hooks/use-validated-form.ts) and <FormField error>',
+  },
+  {
+    name: 'No browser check on a field',
+    pattern: /^\s+required\s*$|<(input|textarea|select|Select|PasswordInput)\b[^>]*\srequired[\s/>]/,
+    instead: 'the zod schema given to useValidatedForm decides what is required',
+  },
+  {
+    name: 'A red message goes through FormField, FieldErrorText or FormError',
+    pattern: /text-danger-\d+[^"]*">\s*\{t\(/,
+    instead:
+      '<FormField error> under a field, <FieldErrorText> where a field cannot sit in a FormField, <FormError> for a refusal under a form',
+    allowedIn: {
+      'pages/site-management/project-management/ManualsSubview.tsx': 'the "incomplete" label in the manuals table is a status of a row, not a form error',
+    },
   },
   {
     name: 'An empty list or section shows <EmptyText>',

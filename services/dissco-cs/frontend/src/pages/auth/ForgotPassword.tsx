@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
@@ -10,22 +9,28 @@ import { forgotPassword } from '../../api/madoc-auth/auth';
 import { inputClass } from '../../components/ui/input-styles';
 import { isTooManyAttempts } from './auth-error';
 import { FormField } from '../../components/ui/FormField';
+import { FormError } from '../../components/ui/FormError';
+import { useValidatedForm } from '../../hooks/use-validated-form';
+import { z } from 'zod';
+import { emailSchema } from '@dissco-cs/shared-types';
+
+const forgotPasswordSchema = z.object({ email: emailSchema });
 
 export function ForgotPassword() {
   const { t } = useTranslation('dissco-cs');
 
-  const [email, setEmail] = useState('');
-  const request = useMutation({ mutationFn: () => forgotPassword({ email }), meta: { handlesOwnError: true } });
+  const form = useValidatedForm(forgotPasswordSchema, { email: '' });
+  const request = useMutation({
+    mutationFn: (values: { email: string }) => forgotPassword(values),
+    meta: { handlesOwnError: true },
+  });
 
   // Any other failure shows the same message as success, so it never leaks whether the email
   // exists. The rate limit counts per IP, not per email, so saying so leaks nothing.
   const tooMany = request.isError && isTooManyAttempts(request.error);
   const sent = request.isSuccess || (request.isError && !tooMany);
 
-  const submit = (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    request.mutate();
-  };
+  const submit = form.handleSubmit(values => request.mutate(values));
 
   return (
     <CsPage>
@@ -39,18 +44,12 @@ export function ForgotPassword() {
         {sent ? (
           <p>{t('forgot_password_success')}</p>
         ) : (
-          <form onSubmit={submit} className="flex flex-col gap-4">
-            <FormField label={t('forgot_password_form_email')}>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className={inputClass}
-              />
+          <form noValidate onSubmit={submit} className="flex flex-col gap-4">
+            <FormField label={t('forgot_password_form_email')} error={form.errorFor('email')}>
+              <input {...form.field('email')} type="email" autoComplete="email" className={inputClass} />
             </FormField>
 
-            {tooMany && <p className="text-danger-700">{t('auth_error_too_many_attempts')}</p>}
+            {tooMany && <FormError>{t('auth_error_too_many_attempts')}</FormError>}
 
             <div className="flex items-center justify-between mt-2">
               <HrefLink href="/login" className="text-sm text-gray-600 hover:text-cs-primary">

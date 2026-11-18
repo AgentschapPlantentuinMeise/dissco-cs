@@ -22,7 +22,9 @@ import { MarkdownToolbar } from '../../../components/ui/MarkdownToolbar';
 import { LanguageTabs } from '../../../components/ui/LanguageTabs';
 import { inputClass } from '../../../components/ui/input-styles';
 import { AttachmentFileError, attachmentFileError } from './manual-content';
-import { FormField } from '../../../components/ui/FormField';
+import { FieldErrorText, FormField } from '../../../components/ui/FormField';
+import { SaveHint } from '../../../components/ui/SaveHint';
+import { useLeftFields } from '../../../hooks/use-left-fields';
 
 export type ManualDraft = {
   title: MultilingualText;
@@ -63,6 +65,9 @@ export function ManualForm({ manualId, storedLangs, draft, setDraft, selectedLan
     manualInputSchema.safeParse({ title: draft.title, content: draft.content }).success &&
     contentCheck.hasContent &&
     missingLangs.length === 0;
+  const { left, leave } = useLeftFields<'title' | 'content'>();
+  const titleError = left.title && !(draft.title[selectedLang] ?? '').trim() ? t('form_error_required') : undefined;
+  const contentError = left.content && contentCheck.missingLangs.includes(selectedLang) ? t('sm_manuals_needs_content') : undefined;
 
   const setText = (field: 'title' | 'content', value: string) =>
     setDraft(prev => ({ ...prev, [field]: { ...prev[field], [selectedLang]: value } }));
@@ -114,11 +119,13 @@ export function ManualForm({ manualId, storedLangs, draft, setDraft, selectedLan
     <div>
       <LanguageTabs selected={selectedLang} onSelect={onSelectLang} isMissing={lang => missingLangs.includes(lang)} />
 
-      <FormField label={`${t('sm_manuals_field_title')} *`} className="mb-4">
+      <FormField label={`${t('sm_manuals_field_title')} *`} className="mb-4" error={titleError}>
         <input
           type="text"
           value={draft.title[selectedLang] ?? ''}
           onChange={e => setText('title', e.target.value)}
+          onBlur={leave('title')}
+          aria-invalid={!!titleError}
           maxLength={MAX_MANUAL_TITLE_LENGTH}
           className={inputClass}
         />
@@ -129,10 +136,13 @@ export function ManualForm({ manualId, storedLangs, draft, setDraft, selectedLan
         ref={textareaRef}
         value={draft.content[selectedLang] ?? ''}
         onChange={e => setText('content', e.target.value)}
+        onBlur={leave('content')}
+        aria-invalid={!!contentError}
         maxLength={MAX_MANUAL_CONTENT_LENGTH}
         placeholder={t('sm_manuals_content_placeholder')}
         className={`${inputClass} w-full min-h-[220px] rounded-t-none font-mono`}
       />
+      {contentError && <FieldErrorText>{contentError}</FieldErrorText>}
       <p className="text-xs text-gray-500 mt-1.5">{t('sm_manuals_heading_hint')}</p>
       <p className="text-xs text-gray-500 mt-0.5">{t('sm_manuals_attachment_marker_hint')}</p>
 
@@ -172,18 +182,20 @@ export function ManualForm({ manualId, storedLangs, draft, setDraft, selectedLan
           }}
         />
       </div>
-      {attachmentError?.lang === selectedLang && <p className="text-xs text-danger-600 mt-1.5 mb-0">{t(attachmentError.key)}</p>}
-
-      {missingLangs.length > 0 && (
-        <p className="text-xs text-danger-600 mt-3 mb-0">
-          {t('sm_manuals_missing_langs', { langs: missingLangs.map(lang => t(`lang_${lang}`)).join(', ') })}
-        </p>
+      {attachmentError?.lang === selectedLang && (
+        <div className="mt-1.5">
+          <FieldErrorText>{t(attachmentError.key)}</FieldErrorText>
+        </div>
       )}
-      {!contentCheck.hasContent && <p className="text-xs text-danger-600 mt-1 mb-0">{t('sm_manuals_needs_content')}</p>}
 
       <div className="flex items-center gap-3 mt-4">
         <SaveButton onClick={onSave} disabled={!canSave} loading={saving} />
         <CancelButton onClick={onCancel} />
+        {missingLangs.length > 0 ? (
+          <SaveHint>{t('sm_manuals_missing_langs', { langs: missingLangs.map(lang => t(`lang_${lang}`)).join(', ') })}</SaveHint>
+        ) : (
+          !contentCheck.hasContent && <SaveHint>{t('sm_manuals_needs_content')}</SaveHint>
+        )}
       </div>
     </div>
   );

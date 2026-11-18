@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
@@ -18,6 +18,12 @@ import { getSiteSlug } from '../../api/slug';
 import { inputClass } from '../../components/ui/input-styles';
 import { authErrorKey } from './auth-error';
 import { FormField } from '../../components/ui/FormField';
+import { FormError } from '../../components/ui/FormError';
+import { useValidatedForm } from '../../hooks/use-validated-form';
+import { z } from 'zod';
+import { emailSchema } from '@dissco-cs/shared-types';
+
+const registerSchema = z.object({ name: z.string().trim().min(1).max(MAX_USER_NAME_LENGTH), email: emailSchema });
 
 export function Register() {
   const { t } = useTranslation('dissco-cs');
@@ -26,8 +32,7 @@ export function Register() {
   const code = searchParams.get('code') || undefined;
   const formRef = useRef<HTMLFormElement>(null);
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const form = useValidatedForm(registerSchema, { name: '', email: '' });
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsPopup, setShowTermsPopup] = useState(false);
 
@@ -37,8 +42,10 @@ export function Register() {
   const terms = termsQuery.data?.latest;
 
   const registration = useMutation({
+    // Reads the values itself: accepting the terms in their popup also sends the form.
     mutationFn: (accepted: boolean) => {
       const capToken = (formRef.current?.elements.namedItem('cap-token') as HTMLInputElement | null)?.value || '';
+      const { name, email } = registerSchema.parse(form.getValues());
       return register({ name, email, capToken, code, termsAccepted: accepted });
     },
     meta: { handlesOwnError: true },
@@ -61,7 +68,7 @@ export function Register() {
       <CsPage>
         <PageBody width="narrow">
           <PageHeader variant="plain" title={t('register_title')} />
-          <p className="text-danger-700">{t('register_invitation_expired')}</p>
+          <FormError>{t('register_invitation_expired')}</FormError>
         </PageBody>
       </CsPage>
     );
@@ -78,16 +85,14 @@ export function Register() {
     );
   }
 
-  const submit = (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
+  const submit = form.handleSubmit(() => {
     if (terms && !termsAccepted) {
       setShowTermsPopup(true);
       return;
     }
 
     registration.mutate(termsAccepted);
-  };
+  });
 
   if (registration.isSuccess) {
     return (
@@ -124,27 +129,13 @@ export function Register() {
           }
         />
 
-        <form ref={formRef} onSubmit={submit} className="flex flex-col gap-4">
-          <FormField label={t('register_form_name')}>
-            <input
-              type="text"
-              required
-              value={name}
-              onChange={e => setName(e.target.value)}
-              maxLength={MAX_USER_NAME_LENGTH}
-              className={inputClass}
-            />
+        <form ref={formRef} noValidate onSubmit={submit} className="flex flex-col gap-4">
+          <FormField label={t('register_form_name')} error={form.errorFor('name')}>
+            <input {...form.field('name')} type="text" autoComplete="name" maxLength={MAX_USER_NAME_LENGTH} className={inputClass} />
           </FormField>
 
-          <FormField label={t('register_form_email')}>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              maxLength={MAX_EMAIL_LENGTH}
-              className={inputClass}
-            />
+          <FormField label={t('register_form_email')} error={form.errorFor('email')}>
+            <input {...form.field('email')} type="email" autoComplete="email" maxLength={MAX_EMAIL_LENGTH} className={inputClass} />
           </FormField>
 
           {/* @ts-expect-error custom element from @cap.js/widget, loaded in index.html */}
@@ -166,7 +157,7 @@ export function Register() {
             </div>
           )}
 
-          {registration.isError && <p className="text-danger-700">{t(authErrorKey(registration.error, 'register_form_error'))}</p>}
+          {registration.isError && <FormError>{t(authErrorKey(registration.error, 'register_form_error'))}</FormError>}
 
           <div>
             <Button type="submit" loading={registration.isPending}>

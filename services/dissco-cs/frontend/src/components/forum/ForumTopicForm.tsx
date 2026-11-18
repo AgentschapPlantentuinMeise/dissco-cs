@@ -1,10 +1,18 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
 import { inputClass } from '../ui/input-styles';
 import { hasDraftChanged } from '../../utility/draft-changes';
-import { ForumTopicInput, MAX_FORUM_BODY_LENGTH, MAX_FORUM_TASK_URL_LENGTH, MAX_FORUM_TITLE_LENGTH } from '@dissco-cs/shared-types';
+import {
+  ForumTopicInput,
+  forumTopicInputSchema,
+  MAX_FORUM_BODY_LENGTH,
+  MAX_FORUM_TASK_URL_LENGTH,
+  MAX_FORUM_TITLE_LENGTH,
+} from '@dissco-cs/shared-types';
+import { FormField } from '../ui/FormField';
+import { useValidatedForm } from '../../hooks/use-validated-form';
 
 type ProjectOption = { slug: string; label: string };
 
@@ -50,49 +58,42 @@ export function ForumTopicForm({
     projectSlug: '',
     projectLabel: '',
   });
-  const [fields, setFields] = useState(emptyFields);
+  const form = useValidatedForm(forumTopicInputSchema, emptyFields);
 
-  const isDirty = hasDraftChanged(fields, emptyFields);
+  const isDirty = hasDraftChanged(form.watch(), emptyFields);
   useEffect(() => {
     onDirtyChange?.(isDirty);
     return () => onDirtyChange?.(false);
   }, [isDirty, onDirtyChange]);
 
-  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!fields.title.trim() || !fields.body.trim()) return;
-    const selectedProject = projectOptions?.find(p => p.slug === fields.projectSlug);
-    onSubmit({ ...fields, projectSlug: selectedProject?.slug ?? null, projectLabel: selectedProject?.label ?? null });
-    setFields(emptyFields);
-  };
+  const handleSubmit = form.handleSubmit(values => {
+    const selectedProject = projectOptions?.find(p => p.slug === values.projectSlug);
+    onSubmit({ ...values, projectSlug: selectedProject?.slug ?? null, projectLabel: selectedProject?.label ?? null });
+    form.reset(emptyFields);
+  });
 
   return (
-    <form className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-8 flex flex-col gap-[14px]" onSubmit={handleSubmit}>
+    <form noValidate className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-8 flex flex-col gap-[14px]" onSubmit={handleSubmit}>
       <h2 className="m-0 mb-2 text-[1.1rem] text-cs-primary">{t('forum_form_title') || 'Nieuw bericht'}</h2>
-      <label className={labelClass}>
-        {t('forum_form_label_title') || 'Titel'} *
+      <FormField label={`${t('forum_form_label_title') || 'Titel'} *`} error={form.errorFor('title')}>
         <input
+          {...form.field('title')}
           className={inputClass}
           type="text"
-          value={fields.title}
-          onChange={e => setFields(p => ({ ...p, title: e.target.value }))}
           maxLength={MAX_FORUM_TITLE_LENGTH}
           placeholder={t('forum_form_placeholder_title') || 'Korte omschrijving van je vraag'}
-          required
         />
-      </label>
-      <label className={labelClass}>
-        {t('forum_form_label_link') || 'Link naar taak'}
+      </FormField>
+      <FormField label={t('forum_form_label_link') || 'Link naar taak'} error={form.errorFor('taskUrl')}>
         <input
+          {...form.field('taskUrl')}
           className={`${inputClass}${taskUrlReadOnly ? ' bg-gray-100 text-gray-600 cursor-default' : ''}`}
           type="url"
-          value={fields.taskUrl ?? ''}
-          onChange={e => setFields(p => ({ ...p, taskUrl: e.target.value }))}
           maxLength={MAX_FORUM_TASK_URL_LENGTH}
           placeholder={'https://...'}
           readOnly={taskUrlReadOnly}
         />
-      </label>
+      </FormField>
       {fixedProjectLabel ? (
         <div className={labelClass}>
           {t('forum_form_label_project') || 'Project'}
@@ -105,11 +106,7 @@ export function ForumTopicForm({
         projectOptions.length > 0 && (
           <label className={labelClass}>
             {t('forum_form_label_project') || 'Project'}
-            <Select
-              className={inputClass}
-              value={fields.projectSlug ?? ''}
-              onChange={e => setFields(p => ({ ...p, projectSlug: e.target.value }))}
-            >
+            <Select {...form.register('projectSlug')} value={form.watch('projectSlug') ?? ''} className={inputClass}>
               <option value="">{t('forum_form_project_none')}</option>
               {projectOptions.map(p => (
                 <option key={p.slug} value={p.slug}>{p.label}</option>
@@ -118,18 +115,15 @@ export function ForumTopicForm({
           </label>
         )
       )}
-      <label className={labelClass}>
-        {t('forum_form_label_body') || 'Bericht'} *
+      <FormField label={`${t('forum_form_label_body') || 'Bericht'} *`} error={form.errorFor('body')}>
         <textarea
+          {...form.field('body')}
           className={inputClass}
-          value={fields.body}
-          onChange={e => setFields(p => ({ ...p, body: e.target.value }))}
           maxLength={MAX_FORUM_BODY_LENGTH}
           placeholder={t('forum_form_placeholder_body') || 'Beschrijf je vraag...'}
           rows={4}
-          required
         />
-      </label>
+      </FormField>
       <div className="flex gap-2">
         <Button type="submit" size="sm">
           {t('forum_form_submit') || 'Verstuur'}

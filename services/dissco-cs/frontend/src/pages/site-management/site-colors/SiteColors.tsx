@@ -16,6 +16,7 @@ import { useSiteColors } from './use-site-colors';
 import { ColorRow } from './ColorRow';
 import { PalettePreview } from './PalettePreview';
 import { LoadingText } from '../../../components/layout/LoadingText';
+import { SaveHint } from '../../../components/ui/SaveHint';
 
 export function SiteColors() {
   const { t } = useTranslation('dissco-cs');
@@ -53,6 +54,7 @@ export function SiteColors() {
               <div className="flex flex-wrap items-center gap-3 mt-5">
                 <SaveButton onClick={() => save.mutate()} disabled={!isDirty || !isValid} loading={save.isPending} />
                 {isDirty && <CancelButton onClick={() => discardGuard.guard(discard)} />}
+                {isDirty && !isValid && <SaveHint>{t('sm_colors_invalid_hint')}</SaveHint>}
                 {save.isSuccess && !isDirty && <SavedNotice />}
                 {hasOwnPalette && (
                   <Button variant="text" size="sm" className="ml-auto" onClick={() => setConfirmReset(true)} loading={reset.isPending}>

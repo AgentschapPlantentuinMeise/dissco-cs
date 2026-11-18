@@ -6,6 +6,7 @@ import { SaveButton } from '../../../components/ui/SaveButton';
 import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { inputClass } from '../../../components/ui/input-styles';
 import { panelClass } from '../../../components/ui/panel-styles';
+import { SaveHint } from '../../../components/ui/SaveHint';
 
 // How the site uses the quarter pool, and the one threshold for every quarter.
 export function HonourBoardSettingsForm({ saved, onSave, saving, isSaved }: {
@@ -57,8 +58,8 @@ export function HonourBoardSettingsForm({ saved, onSave, saving, isSaved }: {
           onClick={() => onSave(settings, () => setDraft(null))}
           loading={saving}
           disabled={!canSave}
-          title={draft !== null && !canSave ? t('sm_honour_board_threshold_invalid', { max: MAX_HONOUR_BOARD_THRESHOLD }) : undefined}
         />
+        {draft !== null && !canSave && <SaveHint>{t('sm_honour_board_threshold_invalid', { max: MAX_HONOUR_BOARD_THRESHOLD })}</SaveHint>}
         {isSaved && draft === null && <SavedNotice />}
       </div>
     </div>

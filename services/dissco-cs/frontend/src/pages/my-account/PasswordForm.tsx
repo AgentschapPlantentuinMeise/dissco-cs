@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { z } from 'zod';
 import { NewPasswordFields } from '../../components/auth/NewPasswordFields';
 import { PasswordInput } from '../../components/auth/PasswordInput';
-import { isNewPasswordValid } from '../../components/auth/password-requirements';
+import { isNewPasswordValid, withNewPasswordRules } from '../../components/auth/password-requirements';
 import { Button } from '../../components/ui/Button';
 import { FormField } from '../../components/ui/FormField';
+import { FormError } from '../../components/ui/FormError';
 import { SavedNotice } from '../../components/ui/SavedNotice';
+import { useValidatedForm } from '../../hooks/use-validated-form';
 import { authErrorKey } from '../auth/auth-error';
+
+const changePasswordSchema = withNewPasswordRules(
+  z.object({ currentPassword: z.string().min(1), password: z.string(), confirmPassword: z.string() })
+);
 
 export function PasswordForm({ saving, saved, error, onSave }: {
   saving: boolean;
@@ -15,33 +21,27 @@ export function PasswordForm({ saving, saved, error, onSave }: {
   onSave: (input: { currentPassword: string; newPassword: string }, onDone: () => void) => void;
 }) {
   const { t } = useTranslation('dissco-cs');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const canSubmit = !!currentPassword && isNewPasswordValid(newPassword, confirmPassword);
+  const form = useValidatedForm(changePasswordSchema, { currentPassword: '', password: '', confirmPassword: '' });
+  const [currentPassword, password, confirmPassword] = form.watch(['currentPassword', 'password', 'confirmPassword']);
+  const canSubmit = !!currentPassword && isNewPasswordValid(password, confirmPassword);
 
-  const submit = (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!canSubmit) return;
-    onSave({ currentPassword, newPassword }, () => {
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    });
-  };
+  const submit = form.handleSubmit(values =>
+    onSave({ currentPassword: values.currentPassword, newPassword: values.password }, () => form.reset())
+  );
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4 max-w-md">
-      <FormField label={t('my_account_password_current')}>
-        <PasswordInput required autoComplete="current-password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
+    <form noValidate onSubmit={submit} className="flex flex-col gap-4 max-w-md">
+      <FormField label={t('my_account_password_current')} error={form.errorFor('currentPassword')}>
+        <PasswordInput {...form.field('currentPassword')} autoComplete="current-password" />
       </FormField>
       <NewPasswordFields
-        password={newPassword}
-        confirmPassword={confirmPassword}
-        onPasswordChange={setNewPassword}
-        onConfirmPasswordChange={setConfirmPassword}
+        password={password}
+        passwordProps={form.field('password', { deps: 'confirmPassword' })}
+        passwordError={form.errorFor('password')}
+        confirmProps={form.field('confirmPassword')}
+        confirmError={form.errorFor('confirmPassword')}
       />
-      {!!error && <p className="text-danger-700 m-0">{t(authErrorKey(error, 'my_account_password_error'))}</p>}
+      {!!error && <FormError>{t(authErrorKey(error, 'my_account_password_error'))}</FormError>}
       <div className="flex items-center gap-3">
         <Button type="submit" size="sm" disabled={!canSubmit} loading={saving}>
           {t('my_account_password_submit')}

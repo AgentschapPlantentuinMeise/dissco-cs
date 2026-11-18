@@ -41,7 +41,7 @@ export function NavSearch({ variant = 'bar' }: { variant?: 'bar' | 'panel' }) {
   }
 
   return (
-    <form onSubmit={submit} role="search" className={`relative flex items-center ${isBar ? '' : 'w-full'}`}>
+    <form noValidate onSubmit={submit} role="search" className={`relative flex items-center ${isBar ? '' : 'w-full'}`}>
       <LuSearch aria-hidden="true" className="absolute left-2.5 text-gray-400 pointer-events-none" />
       <input
         ref={inputRef}

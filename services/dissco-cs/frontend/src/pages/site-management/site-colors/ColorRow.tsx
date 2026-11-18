@@ -2,6 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { LuTriangleAlert } from 'react-icons/lu';
 import { SiteColorKey } from '@dissco-cs/shared-types';
 import { isHexColor, MIN_CONTRAST } from './palette';
+import { useLeftFields } from '../../../hooks/use-left-fields';
+import { FieldErrorText } from '../../../components/ui/FormField';
 
 export function ColorRow({ colorKey, value, contrast, onChange }: {
   colorKey: SiteColorKey;
@@ -12,6 +14,8 @@ export function ColorRow({ colorKey, value, contrast, onChange }: {
   const { t } = useTranslation('dissco-cs');
   const name = t(`sm_colors_name_${colorKey}`);
   const valid = isHexColor(value);
+  const { left, leave } = useLeftFields<'hex'>();
+  const showInvalid = !!left.hex && !valid;
 
   return (
     <li className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
@@ -32,15 +36,19 @@ export function ColorRow({ colorKey, value, contrast, onChange }: {
           </p>
         )}
       </div>
-      <input
-        type="text"
-        value={value}
-        onChange={e => onChange(e.target.value.trim())}
-        aria-label={t('sm_colors_hex_label', { name })}
-        aria-invalid={!valid}
-        spellCheck={false}
-        className={`w-28 rounded border px-3 py-2 font-mono text-sm ${valid ? 'border-gray-300' : 'border-danger-500'}`}
-      />
+      <div className="flex flex-col gap-1">
+        <input
+          type="text"
+          value={value}
+          onChange={e => onChange(e.target.value.trim())}
+          onBlur={leave('hex')}
+          aria-label={t('sm_colors_hex_label', { name })}
+          aria-invalid={showInvalid}
+          spellCheck={false}
+          className={`w-28 rounded border px-3 py-2 font-mono text-sm ${showInvalid ? 'border-danger-500' : 'border-gray-300'}`}
+        />
+        {showInvalid && <FieldErrorText>{t('form_error_invalid')}</FieldErrorText>}
+      </div>
     </li>
   );
 }

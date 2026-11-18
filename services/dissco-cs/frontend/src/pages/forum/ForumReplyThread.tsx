@@ -1,5 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { ForumReplyDto, MAX_FORUM_BODY_LENGTH } from '@dissco-cs/shared-types';
+import { useEffect } from 'react';
+import { ForumReplyDto, forumReplyInputSchema, MAX_FORUM_BODY_LENGTH } from '@dissco-cs/shared-types';
+import { FormField } from '../../components/ui/FormField';
+import { useValidatedForm } from '../../hooks/use-validated-form';
 import { DeleteIconButton } from '../../components/ui/DeleteIconButton';
 import { formatDate } from '../../utility/format-date';
 import { inputClass } from '../../components/ui/input-styles';
@@ -40,25 +43,36 @@ export function ForumReplyThread({ replies, closed, canDeleteReply, onDeleteRepl
       {closed ? (
         <p className="text-xs text-gray-400 italic mt-1">{t('forum_closed_notice')}</p>
       ) : (
-        <form
-          className="flex flex-col gap-[14px] mt-1"
-          onSubmit={e => {
-            e.preventDefault();
-            onSubmitReply();
-          }}
-        >
-          <textarea
-            className={inputClass}
-            value={replyDraft}
-            onChange={e => onReplyDraftChange(e.target.value)}
-            maxLength={MAX_FORUM_BODY_LENGTH}
-            placeholder={t('forum_form_placeholder_reply')}
-            rows={2}
-            required
-          />
-          <Button type="submit" size="sm" className="self-start">{t('forum_form_submit_reply')}</Button>
-        </form>
+        <ReplyForm draft={replyDraft} onDraftChange={onReplyDraftChange} onSubmit={onSubmitReply} />
       )}
     </div>
+  );
+}
+
+// The draft lives in the forum page, per topic, so it survives closing and opening the topic; the
+// form passes every change on and starts empty again once the page clears the draft after sending.
+function ReplyForm({ draft, onDraftChange, onSubmit }: { draft: string; onDraftChange: (body: string) => void; onSubmit: () => void }) {
+  const { t } = useTranslation('dissco-cs');
+  const form = useValidatedForm(forumReplyInputSchema, { body: draft });
+  const { reset, getValues } = form;
+  // Only after sending: emptying the field by hand also makes the draft '', and must keep its error.
+  useEffect(() => {
+    if (draft === '' && getValues('body') !== '') reset({ body: '' });
+  }, [draft, reset, getValues]);
+
+  return (
+    <form noValidate className="flex flex-col gap-[14px] mt-1" onSubmit={form.handleSubmit(() => onSubmit())}>
+      <FormField error={form.errorFor('body')}>
+        <textarea
+          {...form.field('body', { onChange: e => onDraftChange(e.target.value) })}
+          className={inputClass}
+          maxLength={MAX_FORUM_BODY_LENGTH}
+          placeholder={t('forum_form_placeholder_reply')}
+          aria-label={t('forum_form_placeholder_reply')}
+          rows={2}
+        />
+      </FormField>
+      <Button type="submit" size="sm" className="self-start">{t('forum_form_submit_reply')}</Button>
+    </form>
   );
 }

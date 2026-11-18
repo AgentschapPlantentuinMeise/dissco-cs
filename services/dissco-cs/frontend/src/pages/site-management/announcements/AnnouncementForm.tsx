@@ -17,7 +17,9 @@ import {
   announcementInputSchema,
 } from '@dissco-cs/shared-types';
 import { inputClass } from '../../../components/ui/input-styles';
-import { FormField } from '../../../components/ui/FormField';
+import { FieldErrorText, FormField } from '../../../components/ui/FormField';
+import { SaveHint } from '../../../components/ui/SaveHint';
+import { useLeftFields } from '../../../hooks/use-left-fields';
 
 export function toDateInputValue(iso: string | null): string {
   if (!iso) return '';
@@ -41,6 +43,12 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
 
   const validation = announcementInputSchema.safeParse(draft);
   const canSave = validation.success;
+  const { left, leave } = useLeftFields<'title' | 'description' | 'project'>();
+  const required = (field: 'title' | 'description' | 'project', empty: boolean) =>
+    left[field] && empty ? t('form_error_required') : undefined;
+  const titleError = required('title', !(draft.title[selectedLang] ?? '').trim());
+  const descriptionError = required('description', !(draft.description[selectedLang] ?? '').trim());
+  const projectError = required('project', draft.targetType === 'project' && !draft.targetProjectSlug);
 
   const save = () => {
     if (validation.success) onSave(validation.data);
@@ -55,17 +63,19 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
         isMissing={lang => !(draft.title[lang] ?? '').trim()}
       />
 
-      <FormField label={`${t('sm_announcements_field_title')} *`} className="mb-4">
+      <FormField label={`${t('sm_announcements_field_title')} *`} className="mb-4" error={titleError}>
         <input
           type="text"
           value={draft.title[selectedLang] ?? ''}
           onChange={e => setDraft(prev => ({ ...prev, title: { ...prev.title, [selectedLang]: e.target.value } }))}
+          onBlur={leave('title')}
+          aria-invalid={!!titleError}
           maxLength={MAX_ANNOUNCEMENT_TITLE_LENGTH}
           className={inputClass}
         />
       </FormField>
 
-      <FormField label={`${t('sm_announcements_field_description')} *`} className="mb-4">
+      <FormField label={`${t('sm_announcements_field_description')} *`} className="mb-4" error={descriptionError}>
         <MarkdownToolbar
           textareaRef={textareaRef}
           value={draft.description[selectedLang] ?? ''}
@@ -77,6 +87,8 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
           onChange={e =>
             setDraft(prev => ({ ...prev, description: { ...prev.description, [selectedLang]: e.target.value } }))
           }
+          onBlur={leave('description')}
+          aria-invalid={!!descriptionError}
           maxLength={MAX_ANNOUNCEMENT_DESCRIPTION_LENGTH}
           className={`${inputClass} rounded-t-none min-h-[90px]`}
         />
@@ -105,6 +117,8 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
           <Select
             value={draft.targetProjectSlug ?? ''}
             onChange={e => setDraft(prev => ({ ...prev, targetProjectSlug: e.target.value || null }))}
+            onBlur={leave('project')}
+            aria-invalid={!!projectError}
             className={inputClass}
             wrapperClassName="ml-6"
           >
@@ -115,6 +129,11 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
               </option>
             ))}
           </Select>
+        )}
+        {projectError && (
+          <span className="ml-6">
+            <FieldErrorText>{projectError}</FieldErrorText>
+          </span>
         )}
       </div>
 
@@ -147,10 +166,9 @@ export function AnnouncementForm({ draft, setDraft, selectedLang, onSelectLang, 
           onClick={save}
           loading={saving}
           disabled={!canSave}
-          title={!canSave ? t('common_fill_required_fields') : undefined}
         />
         <CancelButton onClick={onCancel} />
-        {!canSave && <span className="text-sm text-gray-500">{t('common_fill_required_fields')}</span>}
+        {!canSave && <SaveHint>{t('common_fill_required_fields')}</SaveHint>}
       </div>
     </div>
   );
