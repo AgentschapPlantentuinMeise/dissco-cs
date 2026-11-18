@@ -15,6 +15,27 @@ import { ReviewTable } from './ReviewTable';
 import { useReviewPage } from './use-review-page';
 import { LoadingText } from '../../components/layout/LoadingText';
 import { EmptyText } from '../../components/layout/EmptyText';
+import { SavedNotice } from '../../components/ui/SavedNotice';
+import { useTranslation } from 'react-i18next';
+
+// The feedback button in the bar, or the confirmation once feedback was sent for what the bar shows.
+function FeedbackBarAction({ sent, onClick, disabled, title }: {
+  sent: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+  title?: string;
+}) {
+  const { t } = useTranslation('dissco-cs');
+  if (sent) {
+    return <SavedNotice>{t('feedback_sent')}</SavedNotice>;
+  }
+  return (
+    <Button variant="secondary" size="sm" onClick={onClick} disabled={disabled} title={title}>
+      <LuMail aria-hidden="true" />
+      {t('feedback_button')}
+    </Button>
+  );
+}
 
 // The table never changes width or position: a clicked row opens underneath itself, with the
 // fields in a responsive grid (see ReviewInlineExpansion).
@@ -53,16 +74,12 @@ export function Review() {
               <div className="flex items-center gap-2 p-1.5 bg-[#f3f8f8] rounded border-2 border-cs-accent/35">
                 <span className="px-3 text-sm text-gray-600 whitespace-nowrap">{t('review_bulk_selected_count', { count: c.selectedIds.size })}</span>
                 <span className="w-px self-stretch bg-gray-200" />
-                <Button
-                  variant="secondary"
-                  size="sm"
+                <FeedbackBarAction
+                  sent={c.feedbackSent}
                   onClick={c.openFeedbackForSelection}
                   disabled={!c.canSendBulkFeedback}
                   title={c.canSendBulkFeedback ? undefined : t('feedback_multi_submitter_hint')}
-                >
-                  <LuMail aria-hidden="true" />
-                  {t('feedback_button')}
-                </Button>
+                />
                 <Button size="sm" onClick={() => c.setConfirmingAccept(true)} disabled={c.bulkRunning}>
                   {t('review_bulk_accept_button')}
                 </Button>
@@ -80,10 +97,7 @@ export function Review() {
                     {t('review_bulk_results_summary', { success: c.successCount, failed: c.failedResults.length })}
                   </p>
                   {c.canSendLastBatchFeedback && (
-                    <Button variant="secondary" size="sm" onClick={c.openFeedbackForLastBatch}>
-                      <LuMail aria-hidden="true" />
-                      {t('feedback_button')}
-                    </Button>
+                    <FeedbackBarAction sent={c.feedbackSent} onClick={c.openFeedbackForLastBatch} />
                   )}
                   <Button
                     variant="text"
@@ -113,10 +127,7 @@ export function Review() {
                   {t('feedback_last_batch_summary', { count: c.lastBatchTasks.length })}
                 </span>
                 {c.canSendLastBatchFeedback && (
-                  <Button variant="secondary" size="sm" onClick={c.openFeedbackForLastBatch}>
-                    <LuMail aria-hidden="true" />
-                    {t('feedback_button')}
-                  </Button>
+                  <FeedbackBarAction sent={c.feedbackSent} onClick={c.openFeedbackForLastBatch} />
                 )}
                 <Button variant="text" size="sm" className="px-3" onClick={c.dismissLastBatch}>
                   {t('common_close')}

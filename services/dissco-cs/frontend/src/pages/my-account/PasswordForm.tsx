@@ -46,7 +46,7 @@ export function PasswordForm({ saving, saved, error, onSave }: {
         <Button type="submit" size="sm" disabled={!canSubmit} loading={saving}>
           {t('my_account_password_submit')}
         </Button>
-        {saved && <SavedNotice>{t('my_account_password_saved')}</SavedNotice>}
+        {saved && !form.formState.isDirty && <SavedNotice>{t('my_account_password_saved')}</SavedNotice>}
       </div>
     </form>
   );

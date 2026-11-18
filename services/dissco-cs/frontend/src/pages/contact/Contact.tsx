@@ -68,7 +68,7 @@ export function Contact() {
               <Button type="submit" loading={sending}>
                 {t('contact_form_submit')}
               </Button>
-              {sent && <SavedNotice>{t('contact_form_success')}</SavedNotice>}
+              {sent && !form.formState.isDirty && <SavedNotice>{t('contact_form_success')}</SavedNotice>}
             </div>
           </form>
         </PageSection>

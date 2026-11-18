@@ -146,6 +146,13 @@ export function useReviewPage() {
   const lastBatchSubmitter = lastBatchTasks ? singleSubmitter(lastBatchTasks) : null;
   const canSendLastBatchFeedback = !!lastBatchTasks && lastBatchSubmitter !== null;
 
+  // What the last feedback was sent for: the selection or the last accepted batch, compared by
+  // reference. A new selection or batch is a new object and can get feedback again; the one just
+  // sent for shows a confirmation instead of the button, so it is not sent twice by accident.
+  const [feedbackSentFor, setFeedbackSentFor] = useState<object | null>(null);
+  const feedbackFor = selectedIds.size > 0 ? selectedIds : lastBatchTasks;
+  const feedbackSent = feedbackFor !== null && feedbackSentFor === feedbackFor;
+
   const toggleSelectAllVisible = () => {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -311,12 +318,16 @@ export function useReviewPage() {
 
   const sendFeedback = (subject: string, body: string) => {
     if (!feedbackTarget) return;
-    createFeedbackThread({
-      recipientUserId: feedbackTarget.submitterId,
-      recipientName: feedbackTarget.submitterName,
-      subject,
-      body,
-    });
+    const sentFor = feedbackFor;
+    createFeedbackThread(
+      {
+        recipientUserId: feedbackTarget.submitterId,
+        recipientName: feedbackTarget.submitterName,
+        subject,
+        body,
+      },
+      { onSuccess: () => setFeedbackSentFor(sentFor) }
+    );
   };
 
   // Arrow up/down moves through the rows -- only when the focus is not in a form field, so moving
@@ -388,6 +399,7 @@ export function useReviewPage() {
     dismissLastBatch,
     feedbackTarget,
     sendingFeedback,
+    feedbackSent,
     openFeedbackForSelection,
     openFeedbackForLastBatch,
     closeFeedbackTarget,

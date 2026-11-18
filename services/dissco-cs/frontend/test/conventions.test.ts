@@ -295,7 +295,7 @@ const rules: ConventionRule[] = [
   {
     name: 'A load error is not an own red line',
     // Catches <p className="... text-danger-600">{t('x_error')}</p> and keys ending in _failed; a validation
-    // message names what is wrong (set_password_error_mismatch, sm_institutions_invalid_email) and stays fine.
+    // message names what is wrong (set_password_error_mismatch, sm_institutions_invalid_phone) and stays fine.
     pattern: /text-danger-\d+[^"]*">\{t\('\w*_(error|failed)'\)/,
     instead: '<SectionLoadError /> (components/layout/SectionLoadError.tsx) for a part of a page that fails to load',
   },
@@ -333,6 +333,17 @@ const rules: ConventionRule[] = [
       '<FormField error> under a field, <FieldErrorText> where a field cannot sit in a FormField, <FormError> for a refusal under a form',
     allowedIn: {
       'pages/site-management/project-management/ManualsSubview.tsx': 'the "incomplete" label in the manuals table is a status of a row, not a form error',
+    },
+  },
+  {
+    name: 'A green confirmation goes through SavedNotice',
+    pattern: /className="[^"]*\btext-success-\d+/,
+    instead:
+      '<SavedNotice> next to the button of a form that stays open, the row flash (useSavedFlash) when the form closes, nothing when the result itself shows',
+    allowedIn: {
+      'components/ui/SavedNotice.tsx': 'the building block itself',
+      'pages/site-management/project-management/TaskDebugSubview.tsx': 'a "Yes" status in a debug table, not a confirmation after an action',
+      'pages/site-management/project-management/BulkCreateProjectsSubview.tsx': 'a temporary testing tool, not polished on purpose',
     },
   },
   {

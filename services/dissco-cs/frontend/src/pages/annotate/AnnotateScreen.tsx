@@ -115,7 +115,9 @@ export function AnnotateScreen() {
     setAdvancing(false);
   }, [project?.id, manifestId, prepared]);
 
-  const handleSaveAndAdvance = async (status: 'draft' | 'submitted') => {
+  // message: an own confirmation instead of "saved"/"submitted". It is a full sentence, so it
+  // stays longer before the next task replaces it.
+  const handleSaveAndAdvance = async (status: 'draft' | 'submitted', message?: string) => {
     setAdvancing(true);
     try {
       await autosave.save(status);
@@ -124,8 +126,8 @@ export function AnnotateScreen() {
       setAdvancing(false);
       return;
     }
-    setConfirmation(status === 'draft' ? t('annotate_saved_draft') : t('annotate_submitted'));
-    await new Promise(resolve => setTimeout(resolve, 1200));
+    setConfirmation(message ?? (status === 'draft' ? t('annotate_saved_draft') : t('annotate_submitted')));
+    await new Promise(resolve => setTimeout(resolve, message ? 4000 : 1200));
     if (returnTo) {
       await nav.handleLeave(returnTo);
     } else {
@@ -144,15 +146,15 @@ export function AnnotateScreen() {
     setConfirmation(t('annotate_saved_draft_24h'));
   };
 
-  // Posts the forum topic, then saves the task as draft and moves on, exactly like a normal draft
-  // save (handleSaveAndAdvance).
+  // Posts the forum topic, then saves the task as draft and moves on like a normal draft save
+  // (handleSaveAndAdvance), saying where the question and the task went.
   const { mutate: postForumTopic } = useMutation({
     mutationFn: (data: ForumTopicInput) =>
       forumApi.createTopic({ ...data, projectSlug: project?.slug ?? null, projectLabel: projectLabel ?? null }),
     onSuccess: () => {
       panel.close();
       queryClient.invalidateQueries({ queryKey: forumKeys.all });
-      void handleSaveAndAdvance('draft');
+      void handleSaveAndAdvance('draft', t('annotate_forum_posted'));
     },
     meta: { errorMessage: 'error_send_failed' },
   });
