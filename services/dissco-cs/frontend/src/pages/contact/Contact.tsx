@@ -21,7 +21,7 @@ import { FormField } from '../../components/ui/FormField';
 
 export function Contact() {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { navItems, getIntro } = useNavItems();
+  const { navItems, getIntro, getContent } = useNavItems();
 
   const showForm = navItems.find(p => p.pageKey === 'contact')?.showContactForm ?? true;
 
@@ -37,7 +37,7 @@ export function Contact() {
   return (
     <CsPage>
       <PageHeader variant="compact" title={t('nav_contact')} lead={getIntro('contact', i18n.language) || t('contact_intro_default')} />
-      <ManagedTextSection pageKey="contact" />
+      {getContent('contact', i18n.language)?.trim() && <ManagedTextSection pageKey="contact" />}
 
       {showForm && (
         <PageSection>

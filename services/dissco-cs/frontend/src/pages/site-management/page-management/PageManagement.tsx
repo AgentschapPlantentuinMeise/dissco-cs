@@ -112,15 +112,16 @@ export function PageManagement() {
 
   const toggleActive = (key: NavItemKey) => setActive({ key, active: !isActive(key) });
 
-  const allLangsFilled = LANGUAGES.every(lang => (draftContent[lang.code] ?? '').trim().length > 0);
   const isContact = selectedKey === 'contact';
+  const contentRequired = !isContact || !draftShowContactForm;
+  const allLangsFilled = !contentRequired || LANGUAGES.every(lang => (draftContent[lang.code] ?? '').trim().length > 0);
   const defaultIntroKey = selectedKey ? DEFAULT_INTRO_KEY[selectedKey] : undefined;
   const emailValid =
     !isContact || !draftShowContactForm || setContactEmailSchema.safeParse({ email: draftContactEmail.trim() }).success;
   const canSave = allLangsFilled && emailValid;
   // Per page: the panel stays mounted while switching pages.
   const { left, leave } = useLeftFields<'email' | 'content'>(selectedKey);
-  const contentError = left.content && !(draftContent[selectedLang] ?? '').trim() ? t('form_error_required') : undefined;
+  const contentError = contentRequired && left.content && !(draftContent[selectedLang] ?? '').trim() ? t('form_error_required') : undefined;
   const emailError = left.email && !emailValid ? t('form_error_email') : undefined;
 
   const { mutate: saveAllContent, isPending: savingContent } = useMutation({
@@ -201,7 +202,7 @@ export function PageManagement() {
               <LanguageTabs
                 selected={selectedLang}
                 onSelect={setSelectedLang}
-                isMissing={lang => !(draftContent[lang] ?? '').trim()}
+                isMissing={lang => contentRequired && !(draftContent[lang] ?? '').trim()}
               />
 
               {selectedKey !== 'welcome' && (
