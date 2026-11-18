@@ -13,6 +13,9 @@ import { Button } from '../../../components/ui/Button';
 import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
 import { reportClientError } from '../../../api/cs-client/client-errors';
 import { rowHoverClass } from '../../../components/ui/list-styles';
+import { loadState } from '../../../api/query-state';
+import { LoadingText } from '../../../components/layout/LoadingText';
+import { SectionLoadError } from '../../../components/layout/SectionLoadError';
 
 function statusLabelKey(status: number): string {
   return status === 0 ? 'sm_stuck_tasks_status_not_started' : 'sm_stuck_tasks_status_in_progress';
@@ -21,7 +24,9 @@ function statusLabelKey(status: number): string {
 export function StuckTasksSubview() {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
-  const { data, status: queryStatus } = useQuery(taskQueries.stuck());
+  const stuckQuery = useQuery(taskQueries.stuck());
+  const { data } = stuckQuery;
+  const load = loadState(stuckQuery);
   const [confirmTask, setConfirmTask] = useState<MadocCrowdsourcingTaskDto | null>(null);
 
   const tasks = (data?.tasks ?? []).slice().sort((a, b) => (a.modified_at ?? 0) - (b.modified_at ?? 0));
@@ -61,9 +66,10 @@ export function StuckTasksSubview() {
     <div>
       <p className="text-sm text-gray-600 mb-6">{t('sm_stuck_tasks_intro')}</p>
 
-      {queryStatus === 'pending' && <p className="text-sm text-gray-500">{t('sm_stuck_tasks_loading')}</p>}
+      {load === 'loading' && <LoadingText />}
+      {load === 'failed' && <SectionLoadError />}
 
-      {queryStatus === 'success' && tasks.length === 0 && manifestCounters.length === 0 && (
+      {load === 'ready' && tasks.length === 0 && manifestCounters.length === 0 && (
         <p className="text-sm text-gray-500">{t('sm_stuck_tasks_empty')}</p>
       )}
 

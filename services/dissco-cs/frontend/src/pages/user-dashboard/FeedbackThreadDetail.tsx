@@ -7,6 +7,8 @@ import { Button } from '../../components/ui/Button';
 import { SectionLoadError } from '../../components/layout/SectionLoadError';
 import { inputClass } from '../../components/ui/input-styles';
 import { MAX_FEEDBACK_BODY_LENGTH } from '@dissco-cs/shared-types';
+import { loadState } from '../../api/query-state';
+import { LoadingText } from '../../components/layout/LoadingText';
 
 // An opened feedback thread: its messages and a reply box.
 export function FeedbackThreadDetail({ threadId }: { threadId: number }) {
@@ -14,7 +16,8 @@ export function FeedbackThreadDetail({ threadId }: { threadId: number }) {
   const [replyBody, setReplyBody] = useState('');
 
   const queryClient = useQueryClient();
-  const { data, status, dataUpdatedAt } = useQuery(feedbackQueries.thread(threadId));
+  const threadQuery = useQuery(feedbackQueries.thread(threadId));
+  const { data, dataUpdatedAt } = threadQuery;
   // Opening a thread marks it read on the server -- refresh only the thread list (and with it the
   // navbar badge), never this thread itself, or each refetch would retrigger this effect.
   useEffect(() => {
@@ -32,11 +35,11 @@ export function FeedbackThreadDetail({ threadId }: { threadId: number }) {
     meta: { errorMessage: 'error_send_failed' },
   });
 
-  if (status === 'pending') {
-    return <p className="text-sm text-gray-500 mt-3">{t('review_detail_loading')}</p>;
-  }
-  if (status === 'error' || !data) {
+  if (loadState(threadQuery) === 'failed') {
     return <SectionLoadError />;
+  }
+  if (!data) {
+    return <LoadingText />;
   }
 
   return (

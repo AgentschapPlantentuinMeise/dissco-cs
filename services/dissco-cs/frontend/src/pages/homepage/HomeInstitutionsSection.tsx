@@ -8,6 +8,7 @@ import { SectionLoadError } from '../../components/layout/SectionLoadError';
 import { InstitutionCard } from '../../components/institutions/InstitutionCard';
 import { useGridColumnCount } from '../../hooks/use-grid-column-count';
 import { useNavItems } from '../../hooks/use-nav-items';
+import { failedToLoad } from '../../api/query-state';
 
 // The institutions on Home: one full row of logo tiles, like the projects above, picked at random
 // on every visit so each institution gets its turn. Left out when the Institutions page is switched
@@ -15,12 +16,14 @@ import { useNavItems } from '../../hooks/use-nav-items';
 export function HomeInstitutionsSection() {
   const { t } = useTranslation('dissco-cs');
   const { isActive } = useNavItems();
-  const { data: institutions, isError } = useQuery(institutionQueries.active());
+  const institutionsQuery = useQuery(institutionQueries.active());
+  const institutions = institutionsQuery.data;
+  const failed = failedToLoad(institutionsQuery);
   const [gridRef, columns] = useGridColumnCount<HTMLDivElement>();
   // Shuffled once per load of the data, not on every render: a resize must not swap the tiles.
   const shuffled = useMemo(() => shuffle(institutions ?? []), [institutions]);
 
-  if (!isActive('institutions') || (!isError && (!institutions || institutions.length === 0))) {
+  if (!isActive('institutions') || (!failed && (!institutions || institutions.length === 0))) {
     return null;
   }
 
@@ -29,7 +32,7 @@ export function HomeInstitutionsSection() {
       title={t('home_institutions_title')}
       action={{ href: '/institutions', label: t('institutions_all') }}
     >
-      {isError ? (
+      {failed ? (
         <SectionLoadError />
       ) : (
         <div ref={gridRef} className="cs-card-grid cs-card-grid--dense">

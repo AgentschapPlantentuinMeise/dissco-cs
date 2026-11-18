@@ -6,7 +6,7 @@ import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
 import { ManageLoadError } from '../ManageLoadError';
-import { failedToLoad } from '../../../api/query-state';
+import { failedToLoad, loadState } from '../../../api/query-state';
 import { ListWithPanel } from '../../../components/layout/ListWithPanel';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { DiscardDialog } from '../../../components/ui/DiscardDialog';
@@ -23,6 +23,7 @@ import { MadocProjectDto, AnnouncementDto, AnnouncementInput } from '@dissco-cs/
 import { rowHoverClass, savedRowClass } from '../../../components/ui/list-styles';
 import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { useSavedFlash } from '../../../hooks/use-saved-flash';
+import { LoadingText } from '../../../components/layout/LoadingText';
 
 function targetLabel(t: (key: string) => string, announcement: AnnouncementDto): string {
   if (announcement.targetType === 'homepage') return t('sm_announcements_target_homepage');
@@ -57,7 +58,8 @@ export function Announcements() {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
   const announcementsQuery = useQuery(announcementQueries.admin());
-  const { data, isLoading } = announcementsQuery;
+  const { data } = announcementsQuery;
+  const listLoading = loadState(announcementsQuery) === 'loading';
   // 'published' also includes Madoc's status 2 (complete) -- only active projects can be targeted.
   const projectsQuery = useQuery(projectQueries.listAll({ published: true }));
   const publishedProjects = projectsQuery.data;
@@ -135,13 +137,13 @@ export function Announcements() {
           actions={<Button size="sm" onClick={startCreate}>{t('sm_announcements_new')}</Button>}
         />
 
-        {isLoading && <p className="text-center py-5">{t('loading_announcements')}</p>}
+        {listLoading && <LoadingText />}
 
-        {!isLoading && announcements.length === 0 && !isFormOpen && (
+        {!listLoading && announcements.length === 0 && !isFormOpen && (
           <p className="text-gray-600">{t('sm_announcements_empty')}</p>
         )}
 
-        {!isLoading && (announcements.length > 0 || isFormOpen) && (
+        {!listLoading && (announcements.length > 0 || isFormOpen) && (
           <ListWithPanel
             panelKey={editingId}
             onClose={cancelForm}

@@ -3,14 +3,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SITE_COLOR_KEYS, SiteColorKey, SiteColors } from '@dissco-cs/shared-types';
 import { siteThemeKeys, siteThemeQueries } from '../../../api/queries/site-theme';
 import { siteThemeApi } from '../../../api/cs-client/site-theme';
-import { failedToLoad } from '../../../api/query-state';
+import { failedToLoad, loadState } from '../../../api/query-state';
 import { contrastWarnings, DEFAULT_SITE_COLORS, isHexColor } from './palette';
 
 // The colors form: the stored palette (or the defaults) plus the admin's unsaved edits.
 export function useSiteColors() {
   const queryClient = useQueryClient();
   const themeQuery = useQuery(siteThemeQueries.get());
-  const { data, isPending: isLoading } = themeQuery;
+  const { data } = themeQuery;
   const stored = data?.colors ?? null;
   const [edits, setEdits] = useState<SiteColors | null>(null);
 
@@ -38,8 +38,8 @@ export function useSiteColors() {
 
   return {
     colors,
-    isLoading,
-    isError: failedToLoad(themeQuery),
+    loading: loadState(themeQuery) === 'loading',
+    failed: failedToLoad(themeQuery),
     isDirty: edits !== null,
     isValid,
     hasOwnPalette: !!stored,

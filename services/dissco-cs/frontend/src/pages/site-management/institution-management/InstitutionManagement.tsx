@@ -6,7 +6,7 @@ import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
 import { ManageLoadError } from '../ManageLoadError';
-import { failedToLoad } from '../../../api/query-state';
+import { failedToLoad, loadState } from '../../../api/query-state';
 import { ListWithPanel } from '../../../components/layout/ListWithPanel';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { DiscardDialog } from '../../../components/ui/DiscardDialog';
@@ -23,6 +23,7 @@ import { InstitutionDraft, InstitutionForm } from './InstitutionForm';
 import { rowHoverClass, savedRowClass } from '../../../components/ui/list-styles';
 import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { useSavedFlash } from '../../../hooks/use-saved-flash';
+import { LoadingText } from '../../../components/layout/LoadingText';
 
 const emptyMultilingualText = Object.fromEntries(SITE_PAGE_LANGS.map(lang => [lang, ''])) as Record<SitePageLang, string>;
 
@@ -60,7 +61,8 @@ export function InstitutionManagement() {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
   const institutionsQuery = useQuery(institutionQueries.admin());
-  const { data, isLoading } = institutionsQuery;
+  const { data } = institutionsQuery;
+  const listLoading = loadState(institutionsQuery) === 'loading';
   const institutions = data ?? [];
 
   const {
@@ -138,13 +140,13 @@ export function InstitutionManagement() {
           actions={<Button size="sm" onClick={startCreate}>{t('sm_institutions_new')}</Button>}
         />
 
-        {isLoading && <p className="text-center py-5">{t('loading_institutions')}</p>}
+        {listLoading && <LoadingText />}
 
-        {!isLoading && institutions.length === 0 && !isFormOpen && (
+        {!listLoading && institutions.length === 0 && !isFormOpen && (
           <p className="text-gray-600">{t('sm_institutions_empty')}</p>
         )}
 
-        {!isLoading && (institutions.length > 0 || isFormOpen) && (
+        {!listLoading && (institutions.length > 0 || isFormOpen) && (
           <ListWithPanel
             panelKey={editingId}
             onClose={cancelForm}

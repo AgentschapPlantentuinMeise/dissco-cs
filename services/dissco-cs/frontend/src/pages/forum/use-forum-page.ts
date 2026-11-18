@@ -12,6 +12,7 @@ import { localeText } from '../../utility/locale-text';
 import { pageCount, pageOfItem, pageSlice } from '../../utility/paging';
 import { MadocProjectDto, ForumTopicDto, ForumReplyDto, ForumTopicInput } from '@dissco-cs/shared-types';
 import { FORUM_FILTERS, ForumFilter, countByFilter, filterTopics, sortByLastActivity, withReplyAdded, withReplyRemoved } from '../../components/forum/forum-topics';
+import { loadState } from '../../api/query-state';
 
 // A list to read, not a card grid: a fixed number of topics per page.
 const TOPICS_PER_PAGE = 15;
@@ -48,7 +49,8 @@ export function useForumPage() {
   const [newFormDirty, setNewFormDirty] = useState(false);
   const newFormGuard = useDiscardGuard(newFormDirty);
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const { data: expandedReplies } = useQuery(forumQueries.replies(expandedId));
+  const repliesQuery = useQuery(forumQueries.replies(expandedId));
+  const expandedReplies = repliesQuery.data;
   const setReplies = (topicId: number, update: (prev: ForumReplyDto[]) => ForumReplyDto[]) =>
     queryClient.setQueryData(forumQueries.replies(topicId).queryKey, old => update(old ?? []));
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
@@ -216,8 +218,7 @@ export function useForumPage() {
 
   return {
     user,
-    topicsLoading: topicsQuery.isPending,
-    topicsError: topicsQuery.isError,
+    topicsLoad: loadState(topicsQuery),
     projectOptions,
     displayTopics,
     pageTopics,
@@ -226,7 +227,7 @@ export function useForumPage() {
     setCurrentPage,
     filterCounts,
     expandedId,
-    expandedReplies: expandedReplies ?? [],
+    repliesQuery,
     toggleExpand,
     showNewForm,
     openNewForm: () => setShowNewForm(true),

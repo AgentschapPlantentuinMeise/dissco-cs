@@ -10,6 +10,7 @@ import { LanguageForm } from './LanguageForm';
 import { NameForm } from './NameForm';
 import { PasswordForm } from './PasswordForm';
 import { useMyAccount } from './use-my-account';
+import { LoadingText } from '../../components/layout/LoadingText';
 
 // The user's own account: name, preferred language, password and email address.
 export function MyAccount() {
@@ -27,7 +28,7 @@ export function MyAccount() {
       <PageHeader variant="compact" title={t('my_account_title')} lead={t('my_account_lead')} />
       {!account || !profile ? (
         <PageSection>
-          <p className="py-16 text-center text-gray-500 m-0">{t('pdp_loading')}</p>
+          <LoadingText />
         </PageSection>
       ) : (
         <>

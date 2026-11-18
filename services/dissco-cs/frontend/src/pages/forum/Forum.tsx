@@ -14,13 +14,14 @@ import { ForumTopicCard } from './ForumTopicCard';
 import { ForumReplyThread } from './ForumReplyThread';
 import { ForumToolbar } from './ForumToolbar';
 import { Pagination } from '../../components/ui/Pagination';
+import { LoadingText } from '../../components/layout/LoadingText';
 
 export function Forum() {
   const { t } = useTranslation('dissco-cs');
   const c = useForumPage();
   const isAdmin = !!c.user?.scope.includes('site.admin');
 
-  if (c.topicsError) {
+  if (c.topicsLoad === 'failed') {
     return <PageLoadError />;
   }
 
@@ -59,8 +60,8 @@ export function Forum() {
               />
             )}
 
-            {c.topicsLoading ? (
-              <p className="text-gray-500 text-[0.95rem] text-center py-10 m-0">{t('forum_loading')}</p>
+            {c.topicsLoad === 'loading' ? (
+              <LoadingText />
             ) : c.displayTopics.length === 0 && !c.showNewForm ? (
               <p className="text-gray-500 text-[0.95rem] text-center py-10 m-0">
                 {c.activeFilter || c.searchQuery.trim() || c.projectFilterLabel ? t('forum_empty_search_or_filter') : t('forum_empty_start')}
@@ -79,7 +80,7 @@ export function Forum() {
                     onDelete={() => c.setPendingDeleteTopicId(topic.id)}
                     thread={
                       <ForumReplyThread
-                        replies={c.expandedReplies}
+                        replies={c.repliesQuery}
                         closed={!!topic.closedAt}
                         canDeleteReply={reply => isAdmin || c.user?.id === reply.authorUserId}
                         onDeleteReply={reply => c.setPendingDeleteReply({ topicId: topic.id, replyId: reply.id })}

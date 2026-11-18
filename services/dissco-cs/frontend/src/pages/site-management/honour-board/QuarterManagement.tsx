@@ -11,6 +11,7 @@ import { formatNumber } from '../../../utility/format-number';
 import { quarterLabel } from '../../../components/stats/honour-board-timeline';
 import { PrizeForm } from './PrizeForm';
 import { useQuarterManagement } from './use-honour-board-management';
+import { LoadingText } from '../../../components/layout/LoadingText';
 
 // One quarter in management, closed by default: its thank-you (mode 'prize') and its pool, from
 // which the jury chooses the winner once the quarter is over.
@@ -36,7 +37,7 @@ export function QuarterManagement({ quarter, mode }: { quarter: HonourBoardQuart
       {failedToLoad(quarterQuery) ? (
         <SectionLoadError />
       ) : !data ? (
-        <p className="m-0 text-sm text-gray-500">{t('card_loading')}</p>
+        <LoadingText />
       ) : (
         <div className="flex flex-col gap-6">
           {withPrize && (

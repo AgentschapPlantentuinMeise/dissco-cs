@@ -38,7 +38,7 @@ export function QuarterPanel({ quarter }: { quarter: HonourBoardQuarter }) {
       </>
     );
   } else if (!you) {
-    yours = <p className="m-0 text-sm text-gray-500">{t('card_loading')}</p>;
+    yours = <p className="m-0 text-sm text-gray-500">{t('common_loading')}</p>;
   } else if (quarter.kind === 'current') {
     yours = <YourProgress count={you.count} threshold={threshold} daysLeft={quarter.daysLeft} />;
   } else if (quarter.data?.winner?.userUrn === you.userUrn) {

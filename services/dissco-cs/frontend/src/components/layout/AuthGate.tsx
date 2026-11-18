@@ -6,7 +6,7 @@ import { currentLocation, withQuery } from '../../api/url';
 import { useCurrentUser } from '../../hooks/use-current-user';
 import { NoAccessRedirect } from './NoAccessRedirect';
 import { PageLoadError } from './PageLoadError';
-import { failedToLoad } from '../../api/query-state';
+import { failedToLoad, loadState } from '../../api/query-state';
 
 export function AuthGate({
   requireAdmin,
@@ -39,7 +39,7 @@ export function AuthGate({
     // A failed check is not "no access". Checked before loading: the error page's own Navbar runs
     // the same check again, and the retry must not swap the error page for an empty screen.
     if (failedToLoad(reviewerQuery)) return <PageLoadError />;
-    if (reviewerQuery.isLoading) return null;
+    if (loadState(reviewerQuery) === 'loading') return null;
     if (!reviewerQuery.data) return <NoAccessRedirect />;
   }
 

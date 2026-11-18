@@ -7,6 +7,7 @@ import { ManageLoadError } from '../ManageLoadError';
 import { HonourBoardSettingsForm } from './HonourBoardSettingsForm';
 import { QuarterManagement } from './QuarterManagement';
 import { useHonourBoardManagement } from './use-honour-board-management';
+import { LoadingText } from '../../../components/layout/LoadingText';
 
 // The quarter pool: how the site uses it and its threshold, and per recent quarter the thank-you
 // and the winner.
@@ -31,7 +32,7 @@ export function HonourBoardManagement() {
         />
 
         {!settings ? (
-          <p className="text-sm text-gray-500">{t('card_loading')}</p>
+          <LoadingText />
         ) : (
           <div className="flex flex-col gap-8">
             <HonourBoardSettingsForm

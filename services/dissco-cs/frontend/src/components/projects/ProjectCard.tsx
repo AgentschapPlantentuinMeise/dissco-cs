@@ -7,6 +7,7 @@ import { formatNumber } from '../../utility/format-number';
 import { LocaleString } from '../ui/LocaleString';
 import { CardStat } from '../ui/CardStat';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
+import { loadState } from '../../api/query-state';
 
 interface ProjectCardProps {
   projectSummaryData: MadocProjectDto;
@@ -16,7 +17,9 @@ interface ProjectCardProps {
 // is, and how many volunteers took part. The rest (institution, tasks) stays on the project page.
 export function ProjectCard({ projectSummaryData }: ProjectCardProps) {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data: progress, isLoading } = useProjectProgress(projectSummaryData.id);
+  const progressQuery = useProjectProgress(projectSummaryData.id);
+  const progress = progressQuery.data;
+  const load = loadState(progressQuery);
 
   const percentage = progress?.transcribedPercentage || 0;
   const imageUrl = projectImageUrl(projectSummaryData);
@@ -45,11 +48,12 @@ export function ProjectCard({ projectSummaryData }: ProjectCardProps) {
 
         <div className="mt-auto pt-2 flex flex-col gap-2">
           <div className="flex justify-between text-[0.84rem]">
-            {isLoading ? (
-              <span className="text-gray-500">{t('card_loading')}</span>
+            {load === 'loading' ? (
+              <span className="text-gray-500">{t('common_loading')}</span>
             ) : (
               <>
-                <span className="font-bold text-cs-primary">{percentage}%</span>
+                {/* A failed load shows a dash: 0% would read as "nothing done yet". */}
+                <span className="font-bold text-cs-primary">{load === 'failed' ? '—' : `${percentage}%`}</span>
                 <span className="text-gray-500">{t('pdp_completed')}</span>
               </>
             )}

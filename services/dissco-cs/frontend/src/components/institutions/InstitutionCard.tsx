@@ -9,6 +9,7 @@ import { siteLangText } from '../../utility/site-lang-text';
 import { formatNumber } from '../../utility/format-number';
 import { useReturnState } from '../../hooks/use-return-link';
 import { CardStat } from '../ui/CardStat';
+import { failedToLoad } from '../../api/query-state';
 
 interface InstitutionCardProps {
   institution: InstitutionDto;
@@ -24,7 +25,8 @@ interface InstitutionCardProps {
 // (cached) stats.
 export function InstitutionCard({ institution, footer }: InstitutionCardProps) {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data: stats } = useQuery({ ...statsQueries.institution(institution.slug), refetchOnWindowFocus: false });
+  const statsQuery = useQuery({ ...statsQueries.institution(institution.slug), refetchOnWindowFocus: false });
+  const stats = statsQuery.data;
   const name = siteLangText(institution.name, i18n.language, institution.slug);
   const returnState = useReturnState();
   const logoUrl = institutionsApi.logoUrl(institution);
@@ -56,8 +58,10 @@ export function InstitutionCard({ institution, footer }: InstitutionCardProps) {
               />
               <CardStat value={formatNumber(stats.volunteers, i18n.language)} label={t('card_volunteers', { count: stats.volunteers })} />
             </>
+          ) : failedToLoad(statsQuery) ? (
+            <span>—</span>
           ) : (
-            <span>{t('card_loading')}</span>
+            <span>{t('common_loading')}</span>
           )}
         </div>
       </div>

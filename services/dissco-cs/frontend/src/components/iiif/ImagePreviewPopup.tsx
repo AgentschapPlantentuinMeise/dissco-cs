@@ -6,6 +6,7 @@ import { parseUrn } from '../../utility/parse-urn';
 import { getImageServiceId } from '../../utility/get-image-service-id';
 import { OpenSeadragonViewer } from './OpenSeadragonViewer';
 import { LuX } from 'react-icons/lu';
+import { failedToLoad } from '../../api/query-state';
 
 export interface ImagePreviewPopupProps {
   /** Raw subject urn of the task -- canvas of manifest, bv. urn:madoc:canvas:123 of urn:madoc:manifest:456. */
@@ -22,24 +23,26 @@ export function ImagePreviewPopup({ subject, label, onClose }: ImagePreviewPopup
   // When the subject is a whole manifest (a project that hands out whole manifests), first fetch its
   // structure so there is an image to show: the first one, with previous/next through
   // OpenSeadragonViewer's own navigation (as on the annotate page).
-  const { data: structure } = useQuery({
+  const structureQuery = useQuery({
     ...iiifQueries.manifestStructure(parsed?.id),
     enabled: isManifest,
     retry: false,
   });
+  const structure = structureQuery.data;
   const canvases = structure?.items ?? [];
   const [canvasIndex, setCanvasIndex] = useState(0);
 
   const canvasId = isManifest ? canvases[canvasIndex]?.id : parsed?.type === 'canvas' ? parsed.id : undefined;
 
-  const { data: canvas, isError: canvasError } = useQuery({
+  const canvasQuery = useQuery({
     ...iiifQueries.canvas(canvasId),
     retry: false,
   });
+  const canvas = canvasQuery.data;
 
   const imageServiceId = canvas ? getImageServiceId(canvas) : undefined;
   const structureEmpty = isManifest && !!structure && canvases.length === 0;
-  const unavailable = !parsed || structureEmpty || canvasError || (!!canvas && !imageServiceId);
+  const unavailable = !parsed || structureEmpty || failedToLoad(structureQuery) || failedToLoad(canvasQuery) || (!!canvas && !imageServiceId);
 
   const [position, setPosition] = useState(() => ({
     x: Math.max(20, window.innerWidth / 2 - 320),

@@ -26,6 +26,7 @@ import {
   taskProjectOptions,
   tasksPerInstitution,
 } from './dashboard-tasks';
+import { loadState } from '../../api/query-state';
 
 // The personal dashboard's data and state. The task list's tab, search, project, sort and page
 // live in the URL, like the overviews' page: opening a task and coming back keeps the list as it was.
@@ -46,7 +47,8 @@ export function useUserDashboard() {
     meta: { errorMessage: 'error_release_failed' },
   });
 
-  const { data: tasksData, status: tasksStatus } = useQuery(taskQueries.mine(user?.id));
+  const tasksQuery = useQuery(taskQueries.mine(user?.id));
+  const tasksData = tasksQuery.data;
 
   // taskQueries.mine (all_tasks: true) is forwarded as the user, so it only ever returns the calling
   // user's own tasks for a non-admin contributor (see docs/MANIFEST-CLAIMS.md) — so the site-wide
@@ -61,7 +63,8 @@ export function useUserDashboard() {
   const { data: institutionLinks } = useQuery(projectQueries.institutionLinks());
   const { data: institutions } = useQuery(institutionQueries.active());
 
-  const { data: feedbackThreads = [], status: feedbackStatus } = useQuery({ ...feedbackQueries.threads(), enabled: !!user });
+  const feedbackQuery = useQuery({ ...feedbackQueries.threads(), enabled: !!user });
+  const feedbackThreads = feedbackQuery.data ?? [];
 
   const tab: TaskTab = searchParams.get('tab') === 'done' ? 'done' : 'saved';
   const query = searchParams.get('q') ?? '';
@@ -95,8 +98,7 @@ export function useUserDashboard() {
     user,
     summary,
     percentage: sharePercentage(summary.userDoneCount, siteStats?.tasksCompleted ?? 0),
-    tasksLoading: tasksStatus === 'pending',
-    tasksError: tasksStatus === 'error',
+    tasksLoad: loadState(tasksQuery),
     list: {
       tab,
       setTab: (next: TaskTab) => setParam('tab', next === 'done' ? 'done' : ''),
@@ -127,8 +129,7 @@ export function useUserDashboard() {
     unansweredCount,
     feedback: {
       threads: feedbackThreads,
-      loading: feedbackStatus === 'pending',
-      error: feedbackStatus === 'error',
+      load: loadState(feedbackQuery),
       unread: feedbackThreads.reduce((sum, thread) => sum + thread.unreadCount, 0),
       openThreadId,
       toggleThread: (id: number) => setOpenThreadId(current => (current === id ? null : id)),

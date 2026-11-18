@@ -8,12 +8,13 @@ import { ProjectCard } from '../../components/projects/ProjectCard';
 import { InstitutionCard } from '../../components/institutions/InstitutionCard';
 import { useSearch } from './use-search';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
+import { LoadingText } from '../../components/layout/LoadingText';
 
 export function SearchResults() {
   const { t } = useTranslation('dissco-cs');
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
-  const { isActive, projects, institutions, isLoading, isError } = useSearch(query);
+  const { isActive, projects, institutions, load } = useSearch(query);
 
   const totalResults = projects.length + institutions.length;
 
@@ -22,21 +23,27 @@ export function SearchResults() {
       <PageHeader
         variant="compact"
         title={t('search_results_title', { query })}
-        lead={isActive && !isLoading && !isError ? t('search_results_count', { count: totalResults }) : undefined}
+        lead={isActive && load === 'ready' ? t('search_results_count', { count: totalResults }) : undefined}
       />
-      {isActive && isError && (
+      {isActive && load === 'failed' && (
         <PageSection>
           <SectionLoadError />
         </PageSection>
       )}
 
-      {isActive && !isError && (isLoading || totalResults === 0) && (
+      {isActive && load === 'loading' && (
         <PageSection>
-          <p className="text-gray-600 m-0">{isLoading ? t('loading_projects') : t('search_no_results', { query })}</p>
+          <LoadingText />
         </PageSection>
       )}
 
-      {!isLoading && projects.length > 0 && (
+      {isActive && load === 'ready' && totalResults === 0 && (
+        <PageSection>
+          <p className="text-gray-600 m-0">{t('search_no_results', { query })}</p>
+        </PageSection>
+      )}
+
+      {load === 'ready' && projects.length > 0 && (
         <PageSection title={<>{t('search_projects_heading')} <span className="text-sm font-bold text-white bg-cs-secondary rounded-full px-2.5 py-0.5 align-middle">{projects.length}</span></>}>
           <div className="cs-card-grid">
             {projects.map((project: MadocProjectDto) => (
@@ -46,7 +53,7 @@ export function SearchResults() {
         </PageSection>
       )}
 
-      {!isLoading && institutions.length > 0 && (
+      {load === 'ready' && institutions.length > 0 && (
         <PageSection tone="white" title={<>{t('search_institutions_heading')} <span className="text-sm font-bold text-white bg-cs-secondary rounded-full px-2.5 py-0.5 align-middle">{institutions.length}</span></>}>
           <div className="cs-card-grid">
             {institutions.map(institution => (

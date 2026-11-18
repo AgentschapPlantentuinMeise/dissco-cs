@@ -45,7 +45,7 @@ export function QuarterStrip({ board, selected, onSelect }: {
         const top = barTop(pool.map(entry => entry.count), threshold);
         const youLabel = showYouLabel(bars, you?.userUrn, winner?.userUrn);
         const meta = quarter.pending
-          ? t('card_loading')
+          ? t('common_loading')
           : quarter.kind === 'past'
             ? t('honour_board_pool_count', { count: pool.length })
             : t('honour_board_quarter_running', { days: quarter.daysLeft, count: pool.length });

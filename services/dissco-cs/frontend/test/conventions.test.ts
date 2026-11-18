@@ -300,6 +300,22 @@ const rules: ConventionRule[] = [
     instead: '<SectionLoadError /> (components/layout/SectionLoadError.tsx) for a part of a page that fails to load',
   },
   {
+    name: 'Loading and load errors go through loadState or failedToLoad',
+    // isError and status flip back to pending while TanStack retries a failed query, so the page
+    // jumps between "loading" and the error; failedToLoad stays true until a load succeeds.
+    pattern: /\.isError\b|[{,]\s*isError\b|\bstatus === '(error|pending|success)'|\bisLoading\b/,
+    instead:
+      'loadState(...queries) or failedToLoad(query) from api/query-state.ts, with <LoadingText />, <SectionLoadError /> or <QueryState>; a whole page that fails shows <PageLoadError />',
+    allowedIn: {
+      'pages/auth/': "a failed login, registration or password request: a mutation's error, not a load",
+    },
+  },
+  {
+    name: 'One loading text',
+    pattern: /\bt\('(?!common_loading')\w*loading\w*'\)/,
+    instead: "<LoadingText /> for a part of a page, or t('common_loading') where it must stay compact (a card, a side panel)",
+  },
+  {
     name: 'A signal colour is named after its meaning',
     pattern: /[a-z]-(red|green|amber|orange|yellow|lime|emerald|rose|pink)-\d{2,3}\b/,
     instead: 'danger (errors, required), success (saved), attention (announcements, warnings) or award (the winner), e.g. text-danger-700 -- defined once in tailwind.config.js',

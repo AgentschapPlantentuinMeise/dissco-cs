@@ -59,7 +59,7 @@ const DEFAULT_INTRO_KEY: Partial<Record<NavItemKey, string>> = {
 
 export function PageManagement() {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { navItems: pages, loading, isError: pagesError, refresh } = useNavItems();
+  const { navItems: pages, loading, failed: pagesError, refresh } = useNavItems();
   const contactEmailQuery = useQuery(navItemQueries.contactEmail());
   const { data: contactEmail, isPending: contactEmailLoading } = contactEmailQuery;
   const [selectedKey, setSelectedKey] = useState<NavItemKey | null>(null);

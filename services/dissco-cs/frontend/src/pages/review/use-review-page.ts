@@ -10,6 +10,7 @@ import { reportClientError } from '../../api/cs-client/client-errors';
 import { captureModelsApi } from '../../api/cs-client/capture-models';
 import { localeText } from '../../utility/locale-text';
 import { useCurrentUser } from '../../hooks/use-current-user';
+import { loadState } from '../../api/query-state';
 
 export type SortKey = 'project' | 'subject' | 'status' | 'submitter' | 'reviewer' | 'modifiedAt';
 export type SortDir = 'asc' | 'desc';
@@ -43,7 +44,9 @@ export function useReviewPage() {
   const { t, i18n } = useTranslation('dissco-cs');
   const user = useCurrentUser();
   const queryClient = useQueryClient();
-  const { data, status: queryStatus } = useQuery({ ...reviewQueries.tasks(), staleTime: 0 });
+  const tasksQuery = useQuery({ ...reviewQueries.tasks(), staleTime: 0 });
+  const { data } = tasksQuery;
+  const load = loadState(tasksQuery);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('modifiedAt');
@@ -319,7 +322,7 @@ export function useReviewPage() {
   // Arrow up/down moves through the rows -- only when the focus is not in a form field, so moving
   // the text cursor while correcting keeps working.
   useEffect(() => {
-    if (queryStatus !== 'success' || visibleRows.length === 0) return;
+    if (load !== 'ready' || visibleRows.length === 0) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
@@ -343,12 +346,12 @@ export function useReviewPage() {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [queryStatus, visibleRows]);
+  }, [load, visibleRows]);
 
   return {
     t,
     i18n,
-    queryStatus,
+    load,
     rows,
     visibleRows,
     searchQuery,

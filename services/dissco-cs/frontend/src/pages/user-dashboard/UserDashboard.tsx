@@ -12,13 +12,14 @@ import { InstitutionsHelped } from './InstitutionsHelped';
 import { ForumCallout } from './ForumCallout';
 import { useUserDashboard } from './use-user-dashboard';
 import { useSiteName } from '../../hooks/use-site-name';
+import { LoadingText } from '../../components/layout/LoadingText';
 
 // The personal dashboard (style guide, prototype "Dashboard"): my tasks, feedback from reviewers,
 // the user's year, and the institutions they helped with a call to the forum's open questions.
 export function UserDashboard() {
   const { t, i18n } = useTranslation('dissco-cs');
   const platformName = useSiteName();
-  const { user, summary, percentage, tasksLoading, tasksError, list, year, helpedInstitutions, unansweredCount, feedback, release } =
+  const { user, summary, percentage, tasksLoad, list, year, helpedInstitutions, unansweredCount, feedback, release } =
     useUserDashboard();
 
   // The route sits behind <AuthGate>, which already sends a visitor without a session to login.
@@ -26,7 +27,7 @@ export function UserDashboard() {
 
   // The header, the task list, the year and the institutions are all counted from the tasks:
   // without them every section would show zero.
-  if (tasksError) {
+  if (tasksLoad === 'failed') {
     return <PageLoadError />;
   }
 
@@ -43,7 +44,7 @@ export function UserDashboard() {
         ]}
       />
 
-      <MyTasksSection list={list} summary={summary} userName={user.name} loading={tasksLoading} onRelease={release.ask} />
+      <MyTasksSection list={list} summary={summary} userName={user.name} loading={tasksLoad === 'loading'} onRelease={release.ask} />
 
       <PageSection
         tone="white"
@@ -57,9 +58,9 @@ export function UserDashboard() {
         }
         intro={t('dashboard_feedback_intro')}
       >
-        {feedback.loading ? (
-          <p className="text-center py-10 text-gray-500 m-0">{t('my_tasks_loading')}</p>
-        ) : feedback.error ? (
+        {feedback.load === 'loading' ? (
+          <LoadingText />
+        ) : feedback.load === 'failed' ? (
           <SectionLoadError />
         ) : feedback.threads.length === 0 ? (
           <p className="text-gray-500 m-0">{t('dashboard_feedback_empty')}</p>

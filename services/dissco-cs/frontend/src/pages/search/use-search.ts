@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { projectQueries } from '../../api/queries/projects';
 import { institutionQueries } from '../../api/queries/institutions';
 import { InstitutionDto, MadocProjectDto } from '@dissco-cs/shared-types';
+import { loadState } from '../../api/query-state';
 
 const MIN_QUERY_LENGTH = 2;
 
@@ -52,7 +53,6 @@ export function useSearch(query: string) {
     isActive,
     projects,
     institutions,
-    isLoading: projectsQuery.isLoading || institutionsQuery.isLoading,
-    isError: projectsQuery.isError || institutionsQuery.isError,
+    load: loadState(projectsQuery, institutionsQuery),
   };
 }

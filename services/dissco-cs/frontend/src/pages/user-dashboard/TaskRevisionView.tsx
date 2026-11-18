@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { taskQueries } from '../../api/queries/tasks';
 import { captureModelQueries } from '../../api/queries/capture-models';
-import { useTranslation } from 'react-i18next';
 import { cloneModelDocument } from '../../utility/annotation-document';
 import { SubmissionFieldsForm } from '../../components/capture-models/SubmissionFieldsForm';
 import { SectionLoadError } from '../../components/layout/SectionLoadError';
+import { loadState } from '../../api/query-state';
+import { LoadingText } from '../../components/layout/LoadingText';
 
 interface TaskRevisionViewProps {
   taskId: string;
@@ -15,7 +16,6 @@ interface TaskRevisionViewProps {
 // prepare-claim would answer "Maximum number of contributors reached" for exactly these tasks.
 // Instead the same route as the review page: task -> revision -> capture model.
 export function TaskRevisionView({ taskId }: TaskRevisionViewProps) {
-  const { t } = useTranslation('dissco-cs');
 
   const taskQuery = useQuery(taskQueries.detail(taskId));
   const revisionId = taskQuery.data?.state?.revisionId;
@@ -23,14 +23,14 @@ export function TaskRevisionView({ taskId }: TaskRevisionViewProps) {
   const revisionQuery = useQuery(captureModelQueries.revision(revisionId));
   const modelQuery = useQuery(captureModelQueries.model(revisionQuery.data?.captureModelId));
 
-  const isLoading = taskQuery.status === 'pending' || (!!revisionId && (revisionQuery.status === 'pending' || modelQuery.status === 'pending'));
-  if (isLoading) {
-    return <p className="text-sm text-gray-500 px-1 py-3">{t('review_detail_loading')}</p>;
+  // Without a revision id the revision and model queries never run, so they are left out.
+  const load = loadState(taskQuery, ...(revisionId ? [revisionQuery, modelQuery] : []));
+  if (load === 'loading') {
+    return <LoadingText />;
   }
 
   const model = modelQuery.data;
-  const hasError = taskQuery.status === 'error' || !revisionId || revisionQuery.status === 'error' || modelQuery.status === 'error';
-  if (hasError || !model) {
+  if (load === 'failed' || !revisionId || !model) {
     return <SectionLoadError />;
   }
 

@@ -9,6 +9,9 @@ import { MadocProjectDto } from '@dissco-cs/shared-types';
 import { rowHoverClass } from '../../../components/ui/list-styles';
 import { inputClass } from '../../../components/ui/input-styles';
 import { FormField } from '../../../components/ui/FormField';
+import { loadState } from '../../../api/query-state';
+import { LoadingText } from '../../../components/layout/LoadingText';
+import { SectionLoadError } from '../../../components/layout/SectionLoadError';
 
 function taskDebugStatusLabel(status: number): string {
   switch (status) {
@@ -33,10 +36,12 @@ export function TaskDebugSubview({ projects }: { projects: MadocProjectDto[] }) 
 
   const selectedProject = projects.find(p => p.slug === selectedSlug) ?? null;
 
-  const { data, status: queryStatus } = useQuery({
+  const debugQuery = useQuery({
     ...projectQueries.taskDebug(selectedProject?.id),
     staleTime: 0,
   });
+  const { data } = debugQuery;
+  const load = loadState(debugQuery);
 
   return (
     <div>
@@ -59,7 +64,8 @@ export function TaskDebugSubview({ projects }: { projects: MadocProjectDto[] }) 
         </Select>
       </FormField>
 
-      {queryStatus === 'pending' && <p className="text-sm text-gray-500">Loading…</p>}
+      {load === 'loading' && <LoadingText />}
+      {load === 'failed' && <SectionLoadError />}
 
       {data && (
         <>

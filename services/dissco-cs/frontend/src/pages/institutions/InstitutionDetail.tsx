@@ -19,6 +19,8 @@ import { formatNumber as formatCount } from '../../utility/format-number';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
 import { usePagedGrid } from '../../hooks/use-paged-grid';
 import { Pagination } from '../../components/ui/Pagination';
+import { failedToLoad, loadState } from '../../api/query-state';
+import { LoadingText } from '../../components/layout/LoadingText';
 
 // Same as the Projects page.
 const ROWS_PER_PAGE = 2;
@@ -26,19 +28,21 @@ const ROWS_PER_PAGE = 2;
 export function InstitutionDetail() {
   const { t, i18n } = useTranslation('dissco-cs');
   const { slug } = useParams<{ slug: string }>();
-  const { data: institution, isLoading, error } = useQuery(institutionQueries.detail(slug));
+  const institutionQuery = useQuery(institutionQueries.detail(slug));
+  const institution = institutionQuery.data;
 
-  const { data: projectSlugs = [], isPending: projectSlugsPending, isError: projectSlugsError } = useQuery(
-    institutionQueries.projectSlugs(slug)
-  );
+  const projectSlugsQuery = useQuery(institutionQueries.projectSlugs(slug));
+  const projectSlugs = projectSlugsQuery.data ?? [];
 
   // All pages, published-only -- same reasoning as Homepage/Projects.tsx: a site-admin viewer
   // otherwise gets every status unfiltered from page 1 only, which can miss this institution's
   // linked projects entirely if enough other/older projects exist.
-  const { data: allProjects, isPending: allProjectsPending, isError: allProjectsError } = useQuery({
+  const allProjectsQuery = useQuery({
     ...projectQueries.listAll({ published: true }),
     staleTime: 5 * 60 * 1000,
   });
+  const allProjects = allProjectsQuery.data;
+  const projectsLoad = loadState(projectSlugsQuery, allProjectsQuery);
   const linkedProjects = (allProjects ?? []).filter((p: MadocProjectDto) => projectSlugs.includes(p.slug));
   const { gridRef, pageItems, currentPage, totalPages, setCurrentPage } = usePagedGrid(linkedProjects, ROWS_PER_PAGE);
 
@@ -54,21 +58,21 @@ export function InstitutionDetail() {
   const name = institution ? siteLangText(institution.name, i18n.language, '') : '';
   const description = institution ? siteLangText(institution.description, i18n.language, '') : '';
 
-  if (error) {
+  if (failedToLoad(institutionQuery)) {
     return (
       <PageLoadError
-        error={error}
+        error={institutionQuery.error}
         notFoundText={t('institution_not_found')}
         back={{ href: backToInstitutions, label: t('institutions_all') }}
       />
     );
   }
 
-  if (isLoading || !institution) {
+  if (!institution) {
     return (
       <CsPage>
         <div className="cs-container cs-container--wide py-10">
-          <p className="text-center text-gray-600">{isLoading ? t('loading_projects') : t('institution_not_found')}</p>
+          <LoadingText />
         </div>
       </CsPage>
     );
@@ -127,10 +131,10 @@ export function InstitutionDetail() {
       )}
 
       <PageSection tone="white" title={t('institution_projects_title')}>
-        {projectSlugsError || allProjectsError ? (
+        {projectsLoad === 'failed' ? (
           <SectionLoadError />
-        ) : projectSlugsPending || allProjectsPending ? (
-          <p className="text-gray-600 m-0">{t('loading_projects')}</p>
+        ) : projectsLoad === 'loading' ? (
+          <LoadingText />
         ) : linkedProjects.length === 0 ? (
           <p className="text-gray-600 m-0">{t('institution_projects_empty')}</p>
         ) : (

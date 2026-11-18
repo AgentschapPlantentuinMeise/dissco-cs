@@ -18,12 +18,15 @@ import { Pagination } from '../../components/ui/Pagination';
 import { usePagedGrid } from '../../hooks/use-paged-grid';
 import { useNavItems } from '../../hooks/use-nav-items';
 import { siteLangText } from '../../utility/site-lang-text';
+import { loadState } from '../../api/query-state';
 
 const ROWS_PER_PAGE = 2;
 
 export function Institutions() {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data, isPending, isError } = useQuery(institutionQueries.active());
+  const institutionsQuery = useQuery(institutionQueries.active());
+  const { data } = institutionsQuery;
+  const load = loadState(institutionsQuery);
   const honourBoard = useSiteHonourBoard();
   const { isActive } = useNavItems();
 
@@ -49,7 +52,7 @@ export function Institutions() {
       results.every(result => result.data) ? results.reduce((sum, result) => sum + (result.data?.projectsActive ?? 0), 0) : null,
   });
 
-  if (isError) {
+  if (load === 'failed') {
     return <PageLoadError />;
   }
 
@@ -60,8 +63,8 @@ export function Institutions() {
         title={t('nav_institutions')}
         lead={t('institutions_intro')}
         stats={[
-          { value: isPending ? '—' : formatNumber(institutions.length, i18n.language), label: t('institutions_stat_count') },
-          { value: isPending || runningProjects === null ? '—' : formatNumber(runningProjects, i18n.language), label: t('projects_stat_running') },
+          { value: load !== 'ready' ? '—' : formatNumber(institutions.length, i18n.language), label: t('institutions_stat_count') },
+          { value: load !== 'ready' || runningProjects === null ? '—' : formatNumber(runningProjects, i18n.language), label: t('projects_stat_running') },
         ]}
         aside={<PageHeaderPhoto pageKey="institutions" fallback={<HeaderMosaic items={logoMosaic} fit="logo" />} />}
       />

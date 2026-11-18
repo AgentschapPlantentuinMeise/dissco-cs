@@ -35,6 +35,8 @@ import { AnnotateHelpBar } from './AnnotateHelpBar';
 import { AnnotateSidePanel } from './AnnotateSidePanel';
 import { AutosaveBanner } from './AutosaveBanner';
 import { AnnotatePageError } from './AnnotatePageError';
+import { failedToLoad } from '../../api/query-state';
+import { LoadingText } from '../../components/layout/LoadingText';
 
 // The annotate screen: the image, the form, and the help beside it. Only shown on a large enough
 // screen (see AnnotatePage).
@@ -61,26 +63,19 @@ export function AnnotateScreen() {
     if (navbar) setNavBottom(navbar.getBoundingClientRect().bottom);
   }, []);
 
-  const { data: structure, isError: structureError, error: structureErrorObj } = useQuery({
-    ...iiifQueries.manifestStructure(manifestId),
-    retry: false,
-  });
+  const structureQuery = useQuery({ ...iiifQueries.manifestStructure(manifestId), retry: false });
+  const structure = structureQuery.data;
   const canvases = structure?.items ?? [];
   const [canvasIndex, setCanvasIndex] = useState(0);
 
-  const { data: canvas } = useQuery({
-    ...iiifQueries.canvas(canvases[canvasIndex]?.id),
-  });
+  const canvasQuery = useQuery(iiifQueries.canvas(canvases[canvasIndex]?.id));
+  const canvas = canvasQuery.data;
 
-  const { data: prepared, isError: preparedError, error: preparedErrorObj } = useQuery({
-    ...projectQueries.prepareClaim(project?.id, manifestId),
-    retry: false,
-  });
+  const preparedQuery = useQuery({ ...projectQueries.prepareClaim(project?.id, manifestId), retry: false });
+  const prepared = preparedQuery.data;
 
-  const { data: model, isError: modelError, error: modelErrorObj } = useQuery({
-    ...captureModelQueries.model(prepared?.model?.id),
-    retry: false,
-  });
+  const modelQuery = useQuery({ ...captureModelQueries.model(prepared?.model?.id), retry: false });
+  const model = modelQuery.data;
 
   const claim = useTaskClaim({
     projectId: project?.id,
@@ -180,8 +175,10 @@ export function AnnotateScreen() {
     autosave.markDirty();
   };
 
-  if (structureError || preparedError || modelError) {
-    const err = structureErrorObj || preparedErrorObj || modelErrorObj;
+  // Without the image there is nothing to annotate, so a failed canvas counts as well.
+  const failedQuery = [structureQuery, preparedQuery, modelQuery, canvasQuery].find(failedToLoad);
+  if (failedQuery) {
+    const err = failedQuery.error;
     return (
       <AnnotatePageError
         projectSlug={project?.slug}
@@ -201,7 +198,7 @@ export function AnnotateScreen() {
   if (!project || !model || !doc.annotationDocument || !manifestId) {
     return (
       <CsPage>
-        <p className="py-16 text-center text-gray-500 m-0">{t('pdp_loading')}</p>
+        <LoadingText />
       </CsPage>
     );
   }

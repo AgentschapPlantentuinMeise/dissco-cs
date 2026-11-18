@@ -13,6 +13,7 @@ import { ReviewInlineExpansion } from './ReviewInlineExpansion';
 import { ReviewSearchInput } from './ReviewSearchInput';
 import { ReviewTable } from './ReviewTable';
 import { useReviewPage } from './use-review-page';
+import { LoadingText } from '../../components/layout/LoadingText';
 
 // The table never changes width or position: a clicked row opens underneath itself, with the
 // fields in a responsive grid (see ReviewInlineExpansion).
@@ -20,7 +21,7 @@ export function Review() {
   const c = useReviewPage();
   const { t, i18n } = c;
 
-  if (c.queryStatus === 'error') {
+  if (c.load === 'failed') {
     return <PageLoadError />;
   }
 
@@ -30,12 +31,12 @@ export function Review() {
         variant="compact"
         title={t('review_title')}
         lead={t('review_intro')}
-        stats={[{ value: c.queryStatus === 'success' ? c.rows.length : '—', label: t('review_stat_to_review') }]}
+        stats={[{ value: c.load === 'ready' ? c.rows.length : '—', label: t('review_stat_to_review') }]}
       />
       <PageSection>
         <div className="flex flex-wrap items-center gap-3">
           <ReviewSearchInput value={c.searchQuery} onChange={c.setSearchQuery} />
-          {c.queryStatus === 'success' && (
+          {c.load === 'ready' && (
             <ReviewCountSummary visibleCount={c.visibleRows.length} totalCount={c.rows.length} className="ml-auto" />
           )}
         </div>
@@ -126,13 +127,13 @@ export function Review() {
           </div>
         )}
 
-        {c.queryStatus === 'pending' && <p className="text-sm text-gray-500">{t('review_loading')}</p>}
+        {c.load === 'loading' && <LoadingText />}
 
-        {c.queryStatus === 'success' && c.rows.length === 0 && (
+        {c.load === 'ready' && c.rows.length === 0 && (
           <p className="text-sm text-gray-500">{t('review_empty')}</p>
         )}
 
-        {c.queryStatus === 'success' && c.rows.length > 0 && (
+        {c.load === 'ready' && c.rows.length > 0 && (
           <div className="bg-white border-t border-gray-200">
             <ReviewTable
               visibleRows={c.visibleRows}

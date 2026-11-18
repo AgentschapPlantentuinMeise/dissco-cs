@@ -30,6 +30,8 @@ import { ProjectForumTopics } from './ProjectForumTopics';
 import { usePagedGrid } from '../../hooks/use-paged-grid';
 import { useProjectManual } from '../../hooks/use-project-manual';
 import { Pagination } from '../../components/ui/Pagination';
+import { failedToLoad } from '../../api/query-state';
+import { LoadingText } from '../../components/layout/LoadingText';
 
 function manualSeenKey(projectSlug: string): string {
   return `project-manual-seen-${projectSlug}`;
@@ -37,7 +39,8 @@ function manualSeenKey(projectSlug: string): string {
 
 export function ProjectDetail() {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data: project, error: projectError } = useCurrentProject();
+  const projectQuery = useCurrentProject();
+  const project = projectQuery.data;
   const user = useCurrentUser();
   const navigate = useNavigate();
   const [manualOpen, setManualOpen] = useState(false);
@@ -63,10 +66,14 @@ export function ProjectDetail() {
   // The "choose where to start" grid leaves out manifests that are done or have their maximum of
   // volunteers (see projectsApi.getProgress) -- with a maximum of 1 that includes the user's own
   // saved task. This separate query shows those saved tasks instead of letting them disappear.
-  const { data: ownTasksData } = useQuery({ ...taskQueries.mineSaved(user?.id), enabled: !!project && !!user });
+  const ownTasksQuery = useQuery({ ...taskQueries.mineSaved(user?.id), enabled: !!project && !!user });
+  const ownTasksData = ownTasksQuery.data;
+  const ownTasksFailed = failedToLoad(ownTasksQuery);
   const ownSavedTasks = (ownTasksData?.tasks ?? []).filter(task => task.metadata?.project?.slug === project?.slug);
 
-  const { data: progress, isError: progressError } = useProjectProgress(project?.id);
+  const progressQuery = useProjectProgress(project?.id);
+  const progress = progressQuery.data;
+  const progressError = failedToLoad(progressQuery);
   const manifests = progress?.availableManifests ?? [];
   // The tiles are smaller than project cards, so a page holds more rows.
   const manifestGrid = usePagedGrid(manifests, 3);
@@ -98,9 +105,9 @@ export function ProjectDetail() {
     },
   });
 
-  if (projectError) {
+  if (failedToLoad(projectQuery)) {
     return (
-      <PageLoadError error={projectError} notFoundText={t('project_not_found')} back={{ href: backToProjects, label: t('projects_all') }} />
+      <PageLoadError error={projectQuery.error} notFoundText={t('project_not_found')} back={{ href: backToProjects, label: t('projects_all') }} />
     );
   }
 
@@ -108,7 +115,7 @@ export function ProjectDetail() {
     return (
       <CsPage>
         <PageSection>
-          <p className="py-16 text-center text-gray-500 m-0">{t('pdp_loading')}</p>
+          <LoadingText />
         </PageSection>
       </CsPage>
     );
@@ -120,6 +127,7 @@ export function ProjectDetail() {
   const imageUrl = projectImageUrl(project);
   const allTasksTaken = progress?.allTasksTaken ?? false;
   const showManifests = progressError || allTasksTaken || manifests.length > 0;
+  const showSavedTasks = ownTasksFailed || ownSavedTasks.length > 0;
 
   return (
     <CsPage>
@@ -200,8 +208,11 @@ export function ProjectDetail() {
         </PageSection>
       )}
 
-      {ownSavedTasks.length > 0 && (
+      {showSavedTasks && (
         <PageSection title={t('pdp_saved_tasks_title')}>
+          {ownTasksFailed ? (
+            <SectionLoadError />
+          ) : (
           <div className="border-t border-gray-100">
             {ownSavedTasks.map(task => {
               return (
@@ -215,6 +226,7 @@ export function ProjectDetail() {
               );
             })}
           </div>
+          )}
         </PageSection>
       )}
 
@@ -222,7 +234,7 @@ export function ProjectDetail() {
         <ProjectForumTopics
           projectSlug={project.slug}
           // The section above it is white only when the saved tasks are missing and the manifests show.
-          tone={ownSavedTasks.length === 0 && showManifests ? 'page' : 'white'}
+          tone={!showSavedTasks && showManifests ? 'page' : 'white'}
         />
       )}
 

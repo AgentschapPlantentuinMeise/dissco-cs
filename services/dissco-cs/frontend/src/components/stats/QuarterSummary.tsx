@@ -46,7 +46,7 @@ export function QuarterSummary({ quarter }: { quarter: HonourBoardQuarter }) {
   }
 
   const text = quarter.pending
-    ? t('card_loading')
+    ? t('common_loading')
     : t('honour_board_summary_past', { end: dayMonth(quarter.lastDay), count: quarter.data?.pool.length ?? 0, threshold });
   const winner = quarter.data?.winner;
   const prize = quarter.data?.prize;

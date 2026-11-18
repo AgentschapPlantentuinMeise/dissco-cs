@@ -5,13 +5,15 @@ import { PageSection } from '../../components/layout/PageSection';
 import { SectionLoadError } from '../../components/layout/SectionLoadError';
 import { NumberedSteps } from '../../components/ui/NumberedSteps';
 import { siteLangText } from '../../utility/site-lang-text';
+import { failedToLoad } from '../../api/query-state';
 
 // "How it works" on Home, with the steps set in page management. Left out when there are none.
 export function HomeStepsSection() {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data: steps, isError } = useQuery(homeStepQueries.list());
+  const stepsQuery = useQuery(homeStepQueries.list());
+  const steps = stepsQuery.data;
 
-  if (isError) {
+  if (failedToLoad(stepsQuery)) {
     return (
       <PageSection tone="white" title={t('home_steps_title')}>
         <SectionLoadError />

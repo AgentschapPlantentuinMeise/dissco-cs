@@ -9,6 +9,8 @@ import { FieldHelp } from './field-help';
 import { FieldHelpPanel } from './FieldHelpPanel';
 import { ManifestInfo } from './ManifestInfo';
 import { AnnotatePanelKind, HelpTarget } from './use-annotate-panel';
+import { loadState } from '../../api/query-state';
+import { SectionLoadError } from '../../components/layout/SectionLoadError';
 
 const TITLE_KEY: Record<AnnotatePanelKind, string> = {
   help: 'annotate_help_title',
@@ -53,10 +55,16 @@ export function AnnotateSidePanel({ kind, onClose, help, helpTarget, manifestId,
 
 function ManualPanel({ projectSlug }: { projectSlug: string }) {
   const { t } = useTranslation('dissco-cs');
-  const { data: manual, isPending } = useProjectManual(projectSlug);
+  const manualQuery = useProjectManual(projectSlug);
+  const manual = manualQuery.data;
+  const load = loadState(manualQuery);
 
-  if (isPending) {
-    return <p className="m-0 text-gray-500">{t('pdp_loading')}</p>;
+  // Compact on purpose: the side panel is narrow.
+  if (load === 'loading') {
+    return <p className="m-0 text-gray-500">{t('common_loading')}</p>;
+  }
+  if (load === 'failed') {
+    return <SectionLoadError />;
   }
   return manual ? <ManualContent manual={manual} projectSlug={projectSlug} /> : <p className="m-0 text-gray-500">{t('manual_modal_empty')}</p>;
 }

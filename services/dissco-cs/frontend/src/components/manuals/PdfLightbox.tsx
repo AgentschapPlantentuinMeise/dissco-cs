@@ -141,7 +141,7 @@ export function PdfLightbox({ pages, totalPages, index, onIndexChange, onClose }
             }}
           />
         ) : (
-          <span className="text-sm text-white/70">{t('manual_pdf_loading')}</span>
+          <span className="text-sm text-white/70">{t('common_loading')}</span>
         )}
       </div>
 

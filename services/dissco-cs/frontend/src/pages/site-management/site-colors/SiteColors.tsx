@@ -15,15 +15,16 @@ import { Button } from '../../../components/ui/Button';
 import { useSiteColors } from './use-site-colors';
 import { ColorRow } from './ColorRow';
 import { PalettePreview } from './PalettePreview';
+import { LoadingText } from '../../../components/layout/LoadingText';
 
 export function SiteColors() {
   const { t } = useTranslation('dissco-cs');
-  const { colors, isLoading, isError, isDirty, isValid, hasOwnPalette, warnings, setColor, discard, save, reset } = useSiteColors();
+  const { colors, loading, failed, isDirty, isValid, hasOwnPalette, warnings, setColor, discard, save, reset } = useSiteColors();
   const discardGuard = useDiscardGuard(isDirty);
   const [confirmReset, setConfirmReset] = useState(false);
 
   // The form would show the default palette, and saving it would replace the site's own colors.
-  if (isError) {
+  if (failed) {
     return <ManageLoadError />;
   }
 
@@ -32,8 +33,8 @@ export function SiteColors() {
       <PageBody>
         <PageHeader variant="plain" back={{ href: '/manage', label: t('sm_back_to_hub') }} title={t('sm_tile_colors_title')} lead={t('sm_colors_intro')} />
 
-        {isLoading ? (
-          <p className="text-center py-5">{t('loading_colors')}</p>
+        {loading ? (
+          <LoadingText />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
             <div>

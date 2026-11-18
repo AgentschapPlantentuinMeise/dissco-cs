@@ -7,6 +7,7 @@ import { TaskTable } from './TaskTable';
 import { TaskFilterBar } from './TaskFilterBar';
 import { TASKS_PER_PAGE, TaskTab } from './dashboard-tasks';
 import { UserDashboardState } from './use-user-dashboard';
+import { LoadingText } from '../../components/layout/LoadingText';
 
 const countClass = 'text-[0.75rem] font-semibold text-cs-primary bg-cs-primary/10 rounded-full px-2 tabular-nums';
 
@@ -50,7 +51,7 @@ export function MyTasksSection({ list, summary, userName, loading, onRelease }: 
         />
 
         {loading ? (
-          <p className="text-center py-16 text-gray-500 m-0">{t('my_tasks_loading')}</p>
+          <LoadingText />
         ) : list.tabTotal === 0 ? (
           <p className="px-1 py-10 text-center text-gray-500 m-0">{t(list.tab === 'saved' ? 'my_tasks_empty' : 'my_tasks_empty_done')}</p>
         ) : list.total === 0 ? (

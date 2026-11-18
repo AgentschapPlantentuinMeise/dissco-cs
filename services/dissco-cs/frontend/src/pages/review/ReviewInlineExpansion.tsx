@@ -9,6 +9,8 @@ import { SectionLoadError } from '../../components/layout/SectionLoadError';
 import { useReviewRevisionDocument } from './use-review-revision-document';
 import { localeText } from '../../utility/locale-text';
 import { LuTrash2 } from 'react-icons/lu';
+import { loadState } from '../../api/query-state';
+import { LoadingText } from '../../components/layout/LoadingText';
 
 interface ReviewInlineExpansionProps {
   row: ReviewTaskDto;
@@ -75,13 +77,15 @@ export function ReviewInlineExpansion({
     : '';
 
   const { revisionQuery, modelQuery, currentDocument, handleChange } = useReviewRevisionDocument(row, editedDocument, onDocumentChange);
+  // The model query waits for the revision, so "loading" covers both steps.
+  const load = loadState(revisionQuery, modelQuery);
 
   // Scroll the row into view only once the whole form is shown: before that the row only holds a
   // short "loading" text, and scrolling to that gives the wrong position once the form grows.
   useEffect(() => {
-    if (revisionQuery.status !== 'success' || modelQuery.status !== 'success') return;
+    if (load !== 'ready') return;
     document.querySelector(`tr[data-expansion-row-id="${row.id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [row.id, revisionQuery.status, modelQuery.status]);
+  }, [row.id, load]);
 
   if (!row.revisionId || !row.originalTaskId) {
     return (
@@ -91,15 +95,15 @@ export function ReviewInlineExpansion({
     );
   }
 
-  if (revisionQuery.status === 'pending' || modelQuery.status === 'pending') {
+  if (load === 'loading') {
     return (
       <ExpansionChrome title={title} subtitle={subtitle} onClose={onClose}>
-        <p className="text-sm text-gray-500">{t('review_detail_loading')}</p>
+        <LoadingText />
       </ExpansionChrome>
     );
   }
 
-  if (revisionQuery.status === 'error' || modelQuery.status === 'error' || !modelQuery.data || !revisionQuery.data || !currentDocument) {
+  if (load === 'failed' || !modelQuery.data || !revisionQuery.data || !currentDocument) {
     return (
       <ExpansionChrome title={title} subtitle={subtitle} onClose={onClose}>
         <SectionLoadError />

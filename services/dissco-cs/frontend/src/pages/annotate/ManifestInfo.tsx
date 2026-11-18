@@ -11,7 +11,7 @@ export function ManifestInfo({ manifestId }: { manifestId: number }) {
   const { isPending, items, summaryText, hasInfo } = useManifestInfo(manifestId);
 
   if (isPending) {
-    return <p className="m-0 text-gray-500">{t('pdp_loading')}</p>;
+    return <p className="m-0 text-gray-500">{t('common_loading')}</p>;
   }
 
   // The button is hidden without info, but this panel can stay open while moving to another task.

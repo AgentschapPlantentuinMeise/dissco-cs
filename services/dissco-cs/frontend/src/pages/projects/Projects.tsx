@@ -17,6 +17,8 @@ import { formatNumber } from '../../utility/format-number';
 import { localeText } from '../../utility/locale-text';
 import { projectImageUrl } from '../../utility/project-image-url';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
+import { loadState } from '../../api/query-state';
+import { LoadingText } from '../../components/layout/LoadingText';
 
 const ROWS_PER_PAGE = 2;
 
@@ -24,15 +26,17 @@ export function Projects() {
   // All pages, published-only, so every active project shows regardless of how many draft/paused
   // projects exist (and regardless of whether the viewer is a site-admin, who would otherwise see
   // every status unfiltered -- see projectsApi.list's `published` filter).
-  const { data: allProjects, status } = useQuery({
+  const projectsQuery = useQuery({
     ...projectQueries.listAll({ published: true }),
     staleTime: 5 * 60 * 1000,
   });
+  const allProjects = projectsQuery.data;
+  const load = loadState(projectsQuery);
   const { data: siteStats } = useSiteStats();
   const honourBoard = useSiteHonourBoard();
   const { t, i18n } = useTranslation('dissco-cs');
   const projects = (allProjects ?? []).filter((p: MadocProjectDto) => p.status === 1);
-  const isLoadingList = status === 'pending';
+  const isLoadingList = load === 'loading';
 
   const { gridRef, pageItems, currentPage, totalPages, setCurrentPage } = usePagedGrid(projects, ROWS_PER_PAGE);
   // A random pick for the header, not the first projects of the list -- those are right below it.
@@ -42,7 +46,7 @@ export function Projects() {
     [allProjects]
   );
 
-  if (status === 'error') {
+  if (load === 'failed') {
     return <PageLoadError />;
   }
 
@@ -73,7 +77,7 @@ export function Projects() {
         title={t('projects_section_title')}
         intro={isLoadingList ? undefined : t('projects_section_intro', { count: projects.length })}
       >
-        {isLoadingList && <p className="text-gray-600 m-0">{t('loading_projects')}</p>}
+        {isLoadingList && <LoadingText />}
         {!isLoadingList && projects.length === 0 && <p className="text-gray-600 m-0">{t('no_projects')}</p>}
         <div ref={gridRef} className="cs-card-grid">
           {pageItems.map((project: MadocProjectDto) => (

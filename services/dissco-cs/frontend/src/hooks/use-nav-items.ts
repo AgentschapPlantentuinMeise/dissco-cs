@@ -47,5 +47,5 @@ export function useNavItems() {
   // the page, the page would mount again, and so on: an endless white screen while the backend is down.
   const loading = isPending && errorUpdateCount === 0;
 
-  return { loading, isError: failedToLoad(query), isActive, getContent, getIntro, navItems, refresh };
+  return { loading, failed: failedToLoad(query), isActive, getContent, getIntro, navItems, refresh };
 }

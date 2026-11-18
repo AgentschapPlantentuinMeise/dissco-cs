@@ -4,6 +4,7 @@ import { HonourBoardQuarterDto, quarterOf } from '@dissco-cs/shared-types';
 import { statsQueries } from '../api/queries/stats';
 import { QuarterInfo, quarterTimeline } from '../components/stats/honour-board-timeline';
 import { usePollingWindow } from './use-polling-window';
+import { failedToLoad, loadState } from '../api/query-state';
 
 export interface HonourBoardQuarter extends QuarterInfo {
   data: HonourBoardQuarterDto | undefined;
@@ -37,8 +38,8 @@ export function useSiteHonourBoard(): HonourBoardQuarter[] {
     return {
       ...quarter,
       data,
-      pending: results[index].status === 'pending',
-      failed: !data && results[index].status === 'error',
+      pending: loadState(results[index]) === 'loading',
+      failed: !data && failedToLoad(results[index]),
     };
   });
 }

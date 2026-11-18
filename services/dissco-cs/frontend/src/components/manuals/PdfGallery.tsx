@@ -66,7 +66,7 @@ export function PdfGallery({
     <div className="mt-3">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs font-semibold text-gray-500">
-          {totalPages ? t('manual_pdf_pages_count', { count: totalPages }) : t('manual_pdf_loading')}
+          {totalPages ? t('manual_pdf_pages_count', { count: totalPages }) : t('common_loading')}
         </span>
         <a href={url} download={filename} className="text-xs font-semibold text-cs-primary hover:underline">
           {t('manual_pdf_download_original')}
