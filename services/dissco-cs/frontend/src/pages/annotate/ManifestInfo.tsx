@@ -3,6 +3,8 @@ import { MadocMetadataItemDto } from '@dissco-cs/shared-types';
 import { useLocaleString } from '../../components/ui/LocaleString';
 import { isWebLink, plainText } from './manifest-info';
 import { useManifestInfo } from './use-manifest-info';
+import { EmptyText } from '../../components/layout/EmptyText';
+import { LoadingText } from '../../components/layout/LoadingText';
 
 // The Info panel: what the institution tells about the object (the manifest's IIIF metadata), to
 // check a name or a date against while filling in the form.
@@ -11,12 +13,12 @@ export function ManifestInfo({ manifestId }: { manifestId: number }) {
   const { isPending, items, summaryText, hasInfo } = useManifestInfo(manifestId);
 
   if (isPending) {
-    return <p className="m-0 text-gray-500">{t('common_loading')}</p>;
+    return <LoadingText compact />;
   }
 
   // The button is hidden without info, but this panel can stay open while moving to another task.
   if (!hasInfo) {
-    return <p className="m-0 text-gray-500">{t('annotate_info_empty')}</p>;
+    return <EmptyText compact>{t('annotate_info_empty')}</EmptyText>;
   }
 
   return (

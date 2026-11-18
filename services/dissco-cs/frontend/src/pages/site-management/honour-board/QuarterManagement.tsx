@@ -12,6 +12,7 @@ import { quarterLabel } from '../../../components/stats/honour-board-timeline';
 import { PrizeForm } from './PrizeForm';
 import { useQuarterManagement } from './use-honour-board-management';
 import { LoadingText } from '../../../components/layout/LoadingText';
+import { EmptyText } from '../../../components/layout/EmptyText';
 
 // One quarter in management, closed by default: its thank-you (mode 'prize') and its pool, from
 // which the jury chooses the winner once the quarter is over.
@@ -62,7 +63,7 @@ export function QuarterManagement({ quarter, mode }: { quarter: HonourBoardQuart
               </p>
             )}
             {data.pool.length === 0 ? (
-              <p className="m-0 text-sm text-gray-600">{t('sm_honour_board_pool_empty')}</p>
+              <EmptyText>{t('sm_honour_board_pool_empty')}</EmptyText>
             ) : (
               <ul className="list-none m-0 p-0 flex flex-col divide-y divide-gray-100">
                 {data.pool.map(entry => (

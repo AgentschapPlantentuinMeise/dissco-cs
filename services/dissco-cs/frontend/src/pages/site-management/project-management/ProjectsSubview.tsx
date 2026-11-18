@@ -22,6 +22,7 @@ import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { useSavedFlash } from '../../../hooks/use-saved-flash';
 import { filterFieldClass, inputClass } from '../../../components/ui/input-styles';
 import { FormField } from '../../../components/ui/FormField';
+import { EmptyText } from '../../../components/layout/EmptyText';
 
 export function ProjectsSubview({ projects, manuals, institutions, institutionLinks }: {
   projects: MadocProjectDto[];
@@ -215,7 +216,7 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
               </Select>
             </FormField>
             {manuals.length === 0 ? (
-              <p className="text-sm text-gray-500 m-0">{t('sm_manuals_none_available')}</p>
+              <EmptyText compact>{t('sm_manuals_empty')}</EmptyText>
             ) : (
               <FormField label={t('sm_project_manual_label')}>
                 <Select

@@ -19,6 +19,7 @@ import { projectImageUrl } from '../../utility/project-image-url';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
 import { loadState } from '../../api/query-state';
 import { LoadingText } from '../../components/layout/LoadingText';
+import { EmptyText } from '../../components/layout/EmptyText';
 
 const ROWS_PER_PAGE = 2;
 
@@ -78,7 +79,7 @@ export function Projects() {
         intro={isLoadingList ? undefined : t('projects_section_intro', { count: projects.length })}
       >
         {isLoadingList && <LoadingText />}
-        {!isLoadingList && projects.length === 0 && <p className="text-gray-600 m-0">{t('no_projects')}</p>}
+        {!isLoadingList && projects.length === 0 && <EmptyText>{t('projects_empty')}</EmptyText>}
         <div ref={gridRef} className="cs-card-grid">
           {pageItems.map((project: MadocProjectDto) => (
             <ProjectCard key={project.id} projectSummaryData={project} />

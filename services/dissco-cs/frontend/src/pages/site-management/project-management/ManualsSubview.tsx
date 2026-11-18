@@ -19,6 +19,7 @@ import { MadocProjectDto, ManualSummaryDto, SITE_PAGE_LANGS, SitePageLang, manua
 import { rowHoverClass, savedRowClass } from '../../../components/ui/list-styles';
 import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { useSavedFlash } from '../../../hooks/use-saved-flash';
+import { EmptyText } from '../../../components/layout/EmptyText';
 
 export function ManualsSubview({ projects, manuals }: {
   projects: MadocProjectDto[];
@@ -105,7 +106,7 @@ export function ManualsSubview({ projects, manuals }: {
       </div>
 
       {manuals.length === 0 && !isFormOpen ? (
-        <p className="text-sm text-gray-500">{t('sm_manuals_none_available')}</p>
+        <EmptyText>{t('sm_manuals_empty')}</EmptyText>
       ) : (
       <ListWithPanel
         panelKey={editingId}

@@ -14,6 +14,7 @@ import { ReviewSearchInput } from './ReviewSearchInput';
 import { ReviewTable } from './ReviewTable';
 import { useReviewPage } from './use-review-page';
 import { LoadingText } from '../../components/layout/LoadingText';
+import { EmptyText } from '../../components/layout/EmptyText';
 
 // The table never changes width or position: a clicked row opens underneath itself, with the
 // fields in a responsive grid (see ReviewInlineExpansion).
@@ -130,7 +131,7 @@ export function Review() {
         {c.load === 'loading' && <LoadingText />}
 
         {c.load === 'ready' && c.rows.length === 0 && (
-          <p className="text-sm text-gray-500">{t('review_empty')}</p>
+          <EmptyText>{t('review_empty')}</EmptyText>
         )}
 
         {c.load === 'ready' && c.rows.length > 0 && (

@@ -8,6 +8,7 @@ import { ProjectCard } from '../../components/projects/ProjectCard';
 import { useGridColumnCount } from '../../hooks/use-grid-column-count';
 import { loadState } from '../../api/query-state';
 import { LoadingText } from '../../components/layout/LoadingText';
+import { EmptyText } from '../../components/layout/EmptyText';
 
 // Running projects on Home: exactly one full row, as many cards as fit next to each other on this
 // screen, so there is never a half-empty second row.
@@ -28,7 +29,7 @@ export function HomeProjectsSection() {
     >
       {load === 'loading' && <LoadingText />}
       {load === 'failed' && <SectionLoadError />}
-      {load === 'ready' && running.length === 0 && <p className="text-gray-600 m-0">{t('no_projects')}</p>}
+      {load === 'ready' && running.length === 0 && <EmptyText>{t('projects_empty')}</EmptyText>}
       <div ref={gridRef} className="cs-card-grid cs-card-grid--dense">
         {running.map((project: MadocProjectDto) => (
           <ProjectCard key={project.id} projectSummaryData={project} />

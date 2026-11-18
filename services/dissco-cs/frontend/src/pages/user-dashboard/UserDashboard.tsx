@@ -13,6 +13,7 @@ import { ForumCallout } from './ForumCallout';
 import { useUserDashboard } from './use-user-dashboard';
 import { useSiteName } from '../../hooks/use-site-name';
 import { LoadingText } from '../../components/layout/LoadingText';
+import { EmptyText } from '../../components/layout/EmptyText';
 
 // The personal dashboard (style guide, prototype "Dashboard"): my tasks, feedback from reviewers,
 // the user's year, and the institutions they helped with a call to the forum's open questions.
@@ -63,7 +64,7 @@ export function UserDashboard() {
         ) : feedback.load === 'failed' ? (
           <SectionLoadError />
         ) : feedback.threads.length === 0 ? (
-          <p className="text-gray-500 m-0">{t('dashboard_feedback_empty')}</p>
+          <EmptyText>{t('dashboard_feedback_empty')}</EmptyText>
         ) : (
           <ul className="list-none m-0 p-0">
             {feedback.threads.map(thread => (

@@ -24,6 +24,7 @@ import { rowHoverClass, savedRowClass } from '../../../components/ui/list-styles
 import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { useSavedFlash } from '../../../hooks/use-saved-flash';
 import { LoadingText } from '../../../components/layout/LoadingText';
+import { EmptyText } from '../../../components/layout/EmptyText';
 
 const emptyMultilingualText = Object.fromEntries(SITE_PAGE_LANGS.map(lang => [lang, ''])) as Record<SitePageLang, string>;
 
@@ -143,7 +144,7 @@ export function InstitutionManagement() {
         {listLoading && <LoadingText />}
 
         {!listLoading && institutions.length === 0 && !isFormOpen && (
-          <p className="text-gray-600">{t('sm_institutions_empty')}</p>
+          <EmptyText>{t('sm_institutions_empty')}</EmptyText>
         )}
 
         {!listLoading && (institutions.length > 0 || isFormOpen) && (

@@ -15,6 +15,7 @@ import { ForumReplyThread } from './ForumReplyThread';
 import { ForumToolbar } from './ForumToolbar';
 import { Pagination } from '../../components/ui/Pagination';
 import { LoadingText } from '../../components/layout/LoadingText';
+import { EmptyText } from '../../components/layout/EmptyText';
 
 export function Forum() {
   const { t } = useTranslation('dissco-cs');
@@ -63,9 +64,9 @@ export function Forum() {
             {c.topicsLoad === 'loading' ? (
               <LoadingText />
             ) : c.displayTopics.length === 0 && !c.showNewForm ? (
-              <p className="text-gray-500 text-[0.95rem] text-center py-10 m-0">
-                {c.activeFilter || c.searchQuery.trim() || c.projectFilterLabel ? t('forum_empty_search_or_filter') : t('forum_empty_start')}
-              </p>
+              <EmptyText>
+                {c.activeFilter || c.searchQuery.trim() || c.projectFilterLabel ? t('forum_filter_empty') : t('forum_empty')}
+              </EmptyText>
             ) : (
               <div id="forum-list" className="bg-white border-t-[3px] border-cs-primary scroll-mt-[90px]">
                 {c.pageTopics.map(topic => (

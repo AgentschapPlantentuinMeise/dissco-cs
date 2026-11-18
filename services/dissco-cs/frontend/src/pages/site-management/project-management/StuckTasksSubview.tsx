@@ -16,6 +16,7 @@ import { rowHoverClass } from '../../../components/ui/list-styles';
 import { loadState } from '../../../api/query-state';
 import { LoadingText } from '../../../components/layout/LoadingText';
 import { SectionLoadError } from '../../../components/layout/SectionLoadError';
+import { EmptyText } from '../../../components/layout/EmptyText';
 
 function statusLabelKey(status: number): string {
   return status === 0 ? 'sm_stuck_tasks_status_not_started' : 'sm_stuck_tasks_status_in_progress';
@@ -70,7 +71,7 @@ export function StuckTasksSubview() {
       {load === 'failed' && <SectionLoadError />}
 
       {load === 'ready' && tasks.length === 0 && manifestCounters.length === 0 && (
-        <p className="text-sm text-gray-500">{t('sm_stuck_tasks_empty')}</p>
+        <EmptyText>{t('sm_stuck_tasks_empty')}</EmptyText>
       )}
 
       {tasks.length > 0 && (

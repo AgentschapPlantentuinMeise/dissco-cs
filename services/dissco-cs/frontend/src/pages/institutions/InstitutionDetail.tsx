@@ -21,6 +21,7 @@ import { usePagedGrid } from '../../hooks/use-paged-grid';
 import { Pagination } from '../../components/ui/Pagination';
 import { failedToLoad, loadState } from '../../api/query-state';
 import { LoadingText } from '../../components/layout/LoadingText';
+import { EmptyText } from '../../components/layout/EmptyText';
 
 // Same as the Projects page.
 const ROWS_PER_PAGE = 2;
@@ -136,7 +137,7 @@ export function InstitutionDetail() {
         ) : projectsLoad === 'loading' ? (
           <LoadingText />
         ) : linkedProjects.length === 0 ? (
-          <p className="text-gray-600 m-0">{t('institution_projects_empty')}</p>
+          <EmptyText>{t('institution_projects_empty')}</EmptyText>
         ) : (
           <>
             <div ref={gridRef} className="cs-card-grid">

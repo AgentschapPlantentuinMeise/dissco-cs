@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { PageSection } from '../../components/layout/PageSection';
 import { formatNumber } from '../../utility/format-number';
 import { bestMonth, MonthCount, nextMilestone } from './dashboard-tasks';
+import { EmptyText } from '../../components/layout/EmptyText';
 
 const factClass = 'flex flex-col border-l-[3px] border-cs-primary pl-3.5';
 const factValueClass = 'text-[1.35rem] font-semibold leading-tight text-gray-900';
@@ -40,7 +41,7 @@ export function YourYear({ months, first, doneCount }: { months: MonthCount[]; f
             </div>
           </div>
         ) : (
-          <p className="m-0 text-gray-500">{t('dashboard_year_empty')}</p>
+          <EmptyText>{t('dashboard_year_empty')}</EmptyText>
         )}
 
         <div className="flex flex-col gap-4">

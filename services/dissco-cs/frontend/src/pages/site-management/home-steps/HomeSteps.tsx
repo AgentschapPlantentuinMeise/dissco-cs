@@ -26,6 +26,7 @@ import { failedToLoad } from '../../../api/query-state';
 import { defaultLang } from '../../../utility/site-lang-text';
 import { inputClass } from '../../../components/ui/input-styles';
 import { panelClass } from '../../../components/ui/panel-styles';
+import { EmptyText } from '../../../components/layout/EmptyText';
 
 const EMPTY_STEP: HomeStepDto = { title: {}, body: {} };
 
@@ -83,7 +84,7 @@ export function HomeSteps() {
       <div className={panelClass}>
         <LanguageTabs selected={selectedLang} onSelect={setSelectedLang} isMissing={isMissing} />
 
-        {steps.length === 0 && <p className="text-sm text-gray-500 mt-4">{t('sm_home_steps_none')}</p>}
+        {steps.length === 0 && <EmptyText>{t('sm_home_steps_empty')}</EmptyText>}
 
         <ol className="list-none m-0 p-0 mt-4 flex flex-col gap-4">
           {steps.map((step, index) => (

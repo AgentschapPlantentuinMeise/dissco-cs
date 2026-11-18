@@ -9,6 +9,7 @@ import { InstitutionCard } from '../../components/institutions/InstitutionCard';
 import { useSearch } from './use-search';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
 import { LoadingText } from '../../components/layout/LoadingText';
+import { EmptyText } from '../../components/layout/EmptyText';
 
 export function SearchResults() {
   const { t } = useTranslation('dissco-cs');
@@ -39,7 +40,7 @@ export function SearchResults() {
 
       {isActive && load === 'ready' && totalResults === 0 && (
         <PageSection>
-          <p className="text-gray-600 m-0">{t('search_no_results', { query })}</p>
+          <EmptyText>{t('search_empty', { query })}</EmptyText>
         </PageSection>
       )}
 

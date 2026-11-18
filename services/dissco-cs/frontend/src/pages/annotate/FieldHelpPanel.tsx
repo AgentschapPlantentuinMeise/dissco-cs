@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FieldHelp } from './field-help';
 import { HelpTarget } from './use-annotate-panel';
+import { EmptyText } from '../../components/layout/EmptyText';
 
 // The Uitleg panel: the model's instructions, then per group the fields that have a description.
 // Opened from a question mark, it scrolls to the help of that field or section and lights it up
@@ -29,7 +30,7 @@ export function FieldHelpPanel({ help, target }: { help: FieldHelp; target: Help
     }`;
 
   if (help.instructions.length === 0 && help.groups.length === 0) {
-    return <p className="m-0 text-gray-500">{t('annotate_help_empty')}</p>;
+    return <EmptyText compact>{t('annotate_help_empty')}</EmptyText>;
   }
 
   return (

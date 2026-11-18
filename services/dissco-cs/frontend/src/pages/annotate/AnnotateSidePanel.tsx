@@ -11,6 +11,8 @@ import { ManifestInfo } from './ManifestInfo';
 import { AnnotatePanelKind, HelpTarget } from './use-annotate-panel';
 import { loadState } from '../../api/query-state';
 import { SectionLoadError } from '../../components/layout/SectionLoadError';
+import { EmptyText } from '../../components/layout/EmptyText';
+import { LoadingText } from '../../components/layout/LoadingText';
 
 const TITLE_KEY: Record<AnnotatePanelKind, string> = {
   help: 'annotate_help_title',
@@ -61,10 +63,10 @@ function ManualPanel({ projectSlug }: { projectSlug: string }) {
 
   // Compact on purpose: the side panel is narrow.
   if (load === 'loading') {
-    return <p className="m-0 text-gray-500">{t('common_loading')}</p>;
+    return <LoadingText compact />;
   }
   if (load === 'failed') {
     return <SectionLoadError />;
   }
-  return manual ? <ManualContent manual={manual} projectSlug={projectSlug} /> : <p className="m-0 text-gray-500">{t('manual_modal_empty')}</p>;
+  return manual ? <ManualContent manual={manual} projectSlug={projectSlug} /> : <EmptyText compact>{t('manual_modal_empty')}</EmptyText>;
 }

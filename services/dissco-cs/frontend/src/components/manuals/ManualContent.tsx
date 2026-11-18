@@ -8,6 +8,7 @@ import { siteLangText } from '../../utility/site-lang-text';
 import { ATTACHMENT_MARKER, attachmentLang, splitBodyAroundMarker, splitIntoSections } from './manual-sections';
 import { markdownComponents } from './markdown-components';
 import { PdfGallery } from './PdfGallery';
+import { EmptyText } from '../layout/EmptyText';
 
 // A project's manual: its text in sections (one per "##" heading, to open and close) and its
 // attachment, where the text puts {{attachment}} or else after the last section.
@@ -26,7 +27,7 @@ export function ManualContent({ manual, projectSlug }: { manual: ManualDetailDto
   const markerUsed = attachmentNode !== null && content.includes(ATTACHMENT_MARKER);
 
   if (sections.length === 0 && !attachmentNode) {
-    return <p className="text-sm text-gray-500">{t('manual_modal_empty')}</p>;
+    return <EmptyText compact>{t('manual_modal_empty')}</EmptyText>;
   }
 
   return (

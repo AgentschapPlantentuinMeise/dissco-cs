@@ -24,6 +24,7 @@ import { rowHoverClass, savedRowClass } from '../../../components/ui/list-styles
 import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { useSavedFlash } from '../../../hooks/use-saved-flash';
 import { LoadingText } from '../../../components/layout/LoadingText';
+import { EmptyText } from '../../../components/layout/EmptyText';
 
 function targetLabel(t: (key: string) => string, announcement: AnnouncementDto): string {
   if (announcement.targetType === 'homepage') return t('sm_announcements_target_homepage');
@@ -140,7 +141,7 @@ export function Announcements() {
         {listLoading && <LoadingText />}
 
         {!listLoading && announcements.length === 0 && !isFormOpen && (
-          <p className="text-gray-600">{t('sm_announcements_empty')}</p>
+          <EmptyText>{t('sm_announcements_empty')}</EmptyText>
         )}
 
         {!listLoading && (announcements.length > 0 || isFormOpen) && (

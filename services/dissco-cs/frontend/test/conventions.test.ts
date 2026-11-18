@@ -316,6 +316,13 @@ const rules: ConventionRule[] = [
     instead: "<LoadingText /> for a part of a page, or t('common_loading') where it must stay compact (a card, a side panel)",
   },
   {
+    name: 'An empty list or section shows <EmptyText>',
+    // Empty-state keys end in _empty (projects_empty, forum_filter_empty); a key that merely contains
+    // it (sm_manuals_empty_note, a label) is not caught.
+    pattern: /<(p|span|div)\b[^>]*>\{t\('\w+_empty'/,
+    instead: "<EmptyText>{t('x_empty')}</EmptyText> (components/layout/EmptyText.tsx), with compact in a side panel or form",
+  },
+  {
     name: 'A signal colour is named after its meaning',
     pattern: /[a-z]-(red|green|amber|orange|yellow|lime|emerald|rose|pink)-\d{2,3}\b/,
     instead: 'danger (errors, required), success (saved), attention (announcements, warnings) or award (the winner), e.g. text-danger-700 -- defined once in tailwind.config.js',

@@ -19,6 +19,8 @@ import { usePagedGrid } from '../../hooks/use-paged-grid';
 import { useNavItems } from '../../hooks/use-nav-items';
 import { siteLangText } from '../../utility/site-lang-text';
 import { loadState } from '../../api/query-state';
+import { EmptyText } from '../../components/layout/EmptyText';
+import { LoadingText } from '../../components/layout/LoadingText';
 
 const ROWS_PER_PAGE = 2;
 
@@ -69,6 +71,8 @@ export function Institutions() {
         aside={<PageHeaderPhoto pageKey="institutions" fallback={<HeaderMosaic items={logoMosaic} fit="logo" />} />}
       />
       <PageSection>
+        {load === 'loading' && <LoadingText />}
+        {load === 'ready' && institutions.length === 0 && <EmptyText>{t('institutions_empty')}</EmptyText>}
         <div ref={gridRef} className="cs-card-grid">
           {pageItems.map(institution => (
             <InstitutionCard key={institution.id} institution={institution} />

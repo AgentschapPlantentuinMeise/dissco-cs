@@ -6,6 +6,7 @@ import { InstitutionCard } from '../../components/institutions/InstitutionCard';
 import { CardStat } from '../../components/ui/CardStat';
 import { formatNumber } from '../../utility/format-number';
 import { sharePercentage } from './dashboard-tasks';
+import { EmptyText } from '../../components/layout/EmptyText';
 
 // "Institutions you helped": the institution cards, with the user's own tasks for each and the
 // share of all that institution's completed tasks they make up. Who the work makes a difference
@@ -20,7 +21,7 @@ export function InstitutionsHelped({ helped, children }: {
   return (
     <PageSection tone="white" title={t('dashboard_institutions_title')} intro={t('dashboard_institutions_intro')}>
       {helped.length === 0 ? (
-        <p className="m-0 text-gray-500">{t('dashboard_institutions_empty')}</p>
+        <EmptyText>{t('dashboard_institutions_empty')}</EmptyText>
       ) : (
         <div className="cs-card-grid">
           {helped.map(({ institution, count }) => (
