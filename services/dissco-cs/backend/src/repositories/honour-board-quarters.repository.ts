@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
 import { HonourBoardPrizeDto, HonourBoardQuarterKey, MultilingualText } from '@dissco-cs/shared-types';
-import { QuarterCount, QuarterRecord } from '../madoc-db/honour-board.logic.js';
+import { QuarterCount, QuarterRecord } from '../logic/honour-board.logic.js';
 
 export type HonourBoardQuarterRow = {
   site_id: number;

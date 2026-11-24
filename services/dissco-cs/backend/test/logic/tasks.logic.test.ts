@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { shouldReopenManifest } from '../../src/madoc-client/tasks.logic.js';
+import { shouldReopenManifest } from '../../src/logic/tasks.logic.js';
 
 function claims(...statuses: number[]) {
   return statuses.map(status => ({ type: 'crowdsourcing-task', status }));

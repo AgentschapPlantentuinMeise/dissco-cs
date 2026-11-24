@@ -9,7 +9,7 @@ import {
   isActiveProject,
   projectsWithFormName,
   slugsWithFormNames,
-} from '../../src/controllers/forms.logic';
+} from '../../src/logic/forms.logic';
 
 function project(id: number, modelId: string, status: MadocProjectStatus = 1): MadocProjectDto {
   return { id, collection_id: id, slug: `p${id}`, task_id: `t${id}`, capture_model_id: modelId, label: { en: [`Project ${id}`] }, status };

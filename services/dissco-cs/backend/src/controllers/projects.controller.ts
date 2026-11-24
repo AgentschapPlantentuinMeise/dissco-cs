@@ -19,10 +19,10 @@ import { getMadocProjectTasks, getMadocTasksBySubjectAndType, resyncManifestTask
 import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
 import { FormsRepository, toFormLayoutDto } from '../repositories/forms.repository.js';
 import { fromBigint } from '../database/bigint.js';
-import { getProjectForm, listInstitutionIdsBySlug } from './forms.lookup.js';
+import { getProjectForm, listInstitutionIdsBySlug } from '../services/forms.service.js';
 import { sendFile } from '../infrastructure/file-http.js';
 import { safeSegment, siteLang, validateParams } from '../infrastructure/validate-params.js';
-import { computeProjectProgress, computeTaskDebug } from './projects.logic.js';
+import { computeProjectProgress, computeTaskDebug } from '../logic/projects.logic.js';
 import { MadocProjectListPageDto } from '@dissco-cs/shared-types';
 
 // Routes with a fixed path (such as /institution-links) are registered before the routes with a

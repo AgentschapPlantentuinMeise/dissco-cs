@@ -6,7 +6,7 @@ import { getMadocCaptureModel, listMadocProjectModels } from '../madoc-client/ca
 import { FormsRepository, toStoredFormDto } from '../repositories/forms.repository.js';
 import { InstitutionsRepository } from '../repositories/institutions.repository.js';
 import { ManualsRepository } from '../repositories/manuals.repository.js';
-import { collectLayoutFields, groupProjectsByFormName, isActiveProject, projectsWithFormName } from './forms.logic.js';
+import { collectLayoutFields, groupProjectsByFormName, isActiveProject, projectsWithFormName } from '../logic/forms.logic.js';
 import { checkFormLayout, formSaveSchema } from '@dissco-cs/shared-types';
 
 // For site admins. Visitors reach a form through a project: /projects/:projectId/form-layout,

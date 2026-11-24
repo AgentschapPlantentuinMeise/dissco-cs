@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { planManualAttachments } from '../../src/controllers/manuals.logic';
+import { planManualAttachments } from '../../src/logic/manuals.logic';
 
 const noText = {};
 const allText = { nl: 'tekst', en: 'text', fr: 'texte', de: 'Text' };

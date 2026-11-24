@@ -10,11 +10,11 @@ import {
 import { requireSiteAdmin } from '../auth/auth.js';
 import { fromBigint } from '../database/bigint.js';
 import { FormsRepository } from '../repositories/forms.repository.js';
-import { listManualProjectSlugs } from './forms.lookup.js';
+import { listManualProjectSlugs } from '../services/forms.service.js';
 import { intId, validateParams } from '../infrastructure/validate-params.js';
 import { MultipartBody, validateMultipart } from '../infrastructure/validate-multipart.js';
 import { checkUpload, uploadLimit } from '../infrastructure/file-http.js';
-import { planManualAttachments } from './manuals.logic.js';
+import { planManualAttachments } from '../logic/manuals.logic.js';
 import {
   MANUAL_ATTACHMENT_MIME_TYPES,
   MAX_MANUAL_ATTACHMENT_LENGTH,

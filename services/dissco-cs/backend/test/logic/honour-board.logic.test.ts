@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { HonourBoardSettingsDto } from '@dissco-cs/shared-types';
 
-import { canChooseWinner, QuarterCount, QuarterRecord, quarterToAdminDto, quarterToDto } from '../../src/madoc-db/honour-board.logic.js';
+import { canChooseWinner, QuarterCount, QuarterRecord, quarterToAdminDto, quarterToDto } from '../../src/logic/honour-board.logic.js';
 
 const count = (name: string, tasks: number): QuarterCount => ({ userUrn: `urn:madoc:user:${name}`, name, count: tasks });
 const counts = [count('dirk', 40), count('anna', 25), count('bert', 24), count('chris', 3)];

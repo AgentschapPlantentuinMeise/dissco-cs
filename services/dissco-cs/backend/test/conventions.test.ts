@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -9,6 +9,7 @@ import {
   findMissingCounterparts,
   findUndocumented,
   findViolations,
+  sourceFiles,
   violationMessage,
 } from '../../test-support/conventions';
 
@@ -46,7 +47,6 @@ const rules: ConventionRule[] = [
       'infrastructure/error-response.ts': 'app.onError, the central error handler',
       'repositories/app-log.repository.ts': 'fallback when app_log itself cannot be written',
       'madoc-db/swr-cache.ts': 'background refresh, outside any request',
-      'madoc-client/reviews.ts': 'best-effort enrichment of a review row, the request itself still succeeds',
     },
   },
   {
@@ -58,7 +58,7 @@ const rules: ConventionRule[] = [
   {
     name: 'A controller does not import from another controller',
     pattern: /from '\.\/[\w-]+\.controller\.js'/,
-    instead: "move the shared part to auth/ (guards like requireReviewerOrAdmin), infrastructure/ or a .logic.ts",
+    instead: "move the shared part to auth/ (guards like requireReviewerOrAdmin), infrastructure/, logic/ or services/",
   },
   {
     name: 'Ids that go into a Madoc URL are checked by validateParams or madocPath',
@@ -139,6 +139,16 @@ describe('backend conventions', () => {
     ];
     const instead = 'a /** */ block: what it does, @param per input, Returns: -- CLAUDE.md §7';
     expect(missing, `Every Madoc call and shared helper has a contract\nInstead: ${instead}\nFound:\n  ${missing.join('\n  ')}`).toEqual([]);
+  });
+
+  // One kind of code per folder: controllers/ answers HTTP, logic/ holds the pure rules (tested in
+  // test/logic/), services/ combines repositories, Madoc and caches for several controllers.
+  it('A .logic.ts file lives in logic/, and controllers/ holds only controllers', () => {
+    const misplaced = sourceFiles(srcDir)
+      .map(path => relative(srcDir, path).split(sep).join('/'))
+      .filter(path => (path.endsWith('.logic.ts') && !path.startsWith('logic/')) || (path.startsWith('controllers/') && !path.endsWith('.controller.ts')));
+    const instead = 'pure rules go to logic/<subject>.logic.ts, code that combines repositories and Madoc for several controllers to services/';
+    expect(misplaced, `A .logic.ts file lives in logic/, and controllers/ holds only controllers\nInstead: ${instead}\nFound:\n  ${misplaced.join('\n  ')}`).toEqual([]);
   });
 
   it('Every DTO mapper is in mappers.test.ts', () => {

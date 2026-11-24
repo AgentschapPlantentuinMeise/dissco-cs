@@ -2,7 +2,7 @@ import { HonourBoardQuarterKey, HonourBoardSettingsDto } from '@dissco-cs/shared
 import { SiteSettingsRepository, toHonourBoardSettingsDto } from '../repositories/site-settings.repository.js';
 import { HonourBoardQuartersRepository, toHonourBoardQuarterRecord } from '../repositories/honour-board-quarters.repository.js';
 import { HonourBoardRepository } from './honour-board.repository.js';
-import { QuarterCount, QuarterRecord } from './honour-board.logic.js';
+import { QuarterCount, QuarterRecord } from '../logic/honour-board.logic.js';
 
 export interface LoadedQuarter {
   settings: HonourBoardSettingsDto;

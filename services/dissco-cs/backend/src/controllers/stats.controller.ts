@@ -4,10 +4,10 @@ import { HonourBoardQuarterDto, HonourBoardQuarterKey } from '@dissco-cs/shared-
 
 import { InstitutionsRepository } from '../repositories/institutions.repository.js';
 import { FormsRepository } from '../repositories/forms.repository.js';
-import { listInstitutionProjectSlugs } from './forms.lookup.js';
+import { listInstitutionProjectSlugs } from '../services/forms.service.js';
 import { requestMadocUserIdentity, requireSiteId } from '../auth/auth.js';
 import { HonourBoardQuarterLoader } from '../madoc-db/honour-board.loader.js';
-import { quarterToDto } from '../madoc-db/honour-board.logic.js';
+import { quarterToDto } from '../logic/honour-board.logic.js';
 import { StatsRepository } from '../madoc-db/stats.repository.js';
 import { honourBoardQuarter, safeSegment, validateParams } from '../infrastructure/validate-params.js';
 

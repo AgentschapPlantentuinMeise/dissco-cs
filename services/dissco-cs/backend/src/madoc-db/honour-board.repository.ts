@@ -1,6 +1,6 @@
 import { MadocDbPools } from './pools.js';
 import { SwrCache } from './swr-cache.js';
-import { QuarterCount } from './honour-board.logic.js';
+import { QuarterCount } from '../logic/honour-board.logic.js';
 import { HonourBoardQuarterKey, isQuarterOver, quarterRange } from '@dissco-cs/shared-types';
 
 // A closed quarter only changes when a reviewer rejects one of its tasks, so an hour is fresh enough.

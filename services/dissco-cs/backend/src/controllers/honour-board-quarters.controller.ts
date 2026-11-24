@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { honourBoardPrizeSchema, honourBoardWinnerSchema, isQuarterOver } from '@dissco-cs/shared-types';
 import { HonourBoardQuartersRepository } from '../repositories/honour-board-quarters.repository.js';
 import { HonourBoardQuarterLoader } from '../madoc-db/honour-board.loader.js';
-import { canChooseWinner, quarterPool, quarterToAdminDto } from '../madoc-db/honour-board.logic.js';
+import { canChooseWinner, quarterPool, quarterToAdminDto } from '../logic/honour-board.logic.js';
 import { requireSiteAdmin } from '../auth/auth.js';
 import { validateJson } from '../infrastructure/validate-json.js';
 import { honourBoardQuarter, validateParams } from '../infrastructure/validate-params.js';

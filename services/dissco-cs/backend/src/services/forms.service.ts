@@ -3,7 +3,7 @@ import { SwrCache } from '../madoc-db/swr-cache.js';
 import { listAllMadocProjects } from '../madoc-client/projects.js';
 import { listMadocProjectModels } from '../madoc-client/capture-models.js';
 import { FormRow, FormsRepository, toStoredFormDto } from '../repositories/forms.repository.js';
-import { formNamesBySlug, institutionIdsBySlug, slugsWithFormNames } from './forms.logic.js';
+import { formNamesBySlug, institutionIdsBySlug, slugsWithFormNames } from '../logic/forms.logic.js';
 import { MadocProjectStatus, madocProjectVisibility } from '@dissco-cs/shared-types';
 
 type ProjectFormNames = {

@@ -2,7 +2,7 @@ import { serviceJson } from './client.js';
 import { collectAllPages } from './pagination.js';
 import { madocPath } from './path-segment.js';
 import { listAllMadocProjects } from './projects.js';
-import { shouldReopenManifest } from './tasks.logic.js';
+import { shouldReopenManifest } from '../logic/tasks.logic.js';
 import { MadocCrowdsourcingTaskDto, MadocInternationalString, MadocPagination } from '@dissco-cs/shared-types';
 
 /**

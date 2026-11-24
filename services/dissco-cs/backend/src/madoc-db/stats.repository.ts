@@ -12,7 +12,7 @@ const VOLUNTEERS_CACHE_TTL_MS = 5 * 60 * 1000;
 // otherwise `subject_parent` (the manifest of the single image). "Completed" counts each manifest
 // once, however many of its images or volunteers have a task on it -- counting per `subject` made
 // the total higher than the number of manifests in projects that hand out single images. Same rule
-// as manifestUrnOfTask in controllers/projects.logic.ts; NULL when the task points to no manifest.
+// as manifestUrnOfTask in logic/projects.logic.ts; NULL when the task points to no manifest.
 const MANIFEST_URN_SQL = `
   CASE
     WHEN subject LIKE 'urn:madoc:manifest:%' THEN subject

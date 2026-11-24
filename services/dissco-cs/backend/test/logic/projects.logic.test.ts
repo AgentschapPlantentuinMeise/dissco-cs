@@ -8,7 +8,7 @@ import {
   groupTasksByManifestId,
   manifestUrnOfTask,
   transcribedPercentage,
-} from '../../src/controllers/projects.logic.js';
+} from '../../src/logic/projects.logic.js';
 
 let nextId = 1;
 

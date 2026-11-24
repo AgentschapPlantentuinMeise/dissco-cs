@@ -3,7 +3,7 @@ import type { Context } from 'hono';
 import { requireSiteAdmin, requireSiteId } from '../auth/auth.js';
 import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
 import { FormsRepository } from '../repositories/forms.repository.js';
-import { listInstitutionProjectSlugs } from './forms.lookup.js';
+import { listInstitutionProjectSlugs } from '../services/forms.service.js';
 import { intId, safeSegment, validateParams } from '../infrastructure/validate-params.js';
 import { validateMultipart } from '../infrastructure/validate-multipart.js';
 import { Upload, checkUpload, sendFile, uploadLimit } from '../infrastructure/file-http.js';
