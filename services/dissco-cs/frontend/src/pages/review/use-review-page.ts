@@ -9,8 +9,10 @@ import { ReviewTaskDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-typ
 import { reportClientError } from '../../api/cs-client/client-errors';
 import { captureModelsApi } from '../../api/cs-client/capture-models';
 import { localeText } from '../../utility/locale-text';
-import { useCurrentUser } from '../../hooks/use-current-user';
 import { loadState } from '../../api/query-state';
+import { pageCount, pageOfItem, pageSlice } from '../../utility/paging';
+
+const ROWS_PER_PAGE = 25;
 
 export type SortKey = 'project' | 'subject' | 'status' | 'submitter' | 'reviewer' | 'modifiedAt';
 export type SortDir = 'asc' | 'desc';
@@ -42,13 +44,13 @@ function singleSubmitter(refs: BatchSubmitterRef[]): { id: number; name: string 
 // All data, filtering, sorting, selection and accept logic of the review page.
 export function useReviewPage() {
   const { t, i18n } = useTranslation('dissco-cs');
-  const user = useCurrentUser();
   const queryClient = useQueryClient();
   const tasksQuery = useQuery({ ...reviewQueries.tasks(), staleTime: 0 });
   const { data } = tasksQuery;
   const load = loadState(tasksQuery);
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQueryState] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [sortKey, setSortKey] = useState<SortKey>('modifiedAt');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -74,10 +76,18 @@ export function useReviewPage() {
   // the row. Hidden locally instead of waiting.
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
-  // A reviewer only ever sees the tasks assigned to them: the backend returns every open review
-  // task of the site, this page keeps only your own queue. So every row can be selected and
-  // accepted (Madoc would also refuse someone else's task, its "limited reviewer" check).
-  const rows = (data ?? []).filter(row => !!user && row.reviewerId === user.id && !dismissedIds.has(row.id));
+  // The backend only returns the caller's own queue, so every row can be selected and accepted
+  // (Madoc would also refuse someone else's task, its "limited reviewer" check).
+  const rows = useMemo(() => (data?.tasks ?? []).filter(row => !dismissedIds.has(row.id)), [data, dismissedIds]);
+  // Some reviews came without submitter and revision; the page says so and offers a retry.
+  const incomplete = data?.incomplete ?? false;
+  const retry = () => queryClient.invalidateQueries({ queryKey: reviewKeys.tasks() });
+
+  // A new search or sort starts again on page 1.
+  const setSearchQuery = (query: string) => {
+    setSearchQueryState(query);
+    setCurrentPage(1);
+  };
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -86,6 +96,7 @@ export function useReviewPage() {
       setSortKey(key);
       setSortDir('asc');
     }
+    setCurrentPage(1);
   };
 
   const visibleRows = useMemo(() => {
@@ -135,7 +146,26 @@ export function useReviewPage() {
     return sorted;
   }, [rows, searchQuery, sortKey, sortDir, i18n.language]);
 
-  const allVisibleSelected = visibleRows.length > 0 && visibleRows.every(row => selectedIds.has(row.id));
+  const totalPages = pageCount(visibleRows.length, ROWS_PER_PAGE);
+  // Capped, not reset: accepting the last rows of the last page moves you one page back.
+  const page = Math.min(currentPage, totalPages);
+  const pageRows = pageSlice(visibleRows, page, ROWS_PER_PAGE);
+
+  // The page follows the open row: the arrow keys and "next row" after ticking or releasing can
+  // move it onto another page. Choosing a page by hand closes the open row instead, otherwise the
+  // next change to the list would pull the page back to it.
+  useEffect(() => {
+    if (!openRowId) return;
+    const openPage = pageOfItem(visibleRows, row => row.id === openRowId, ROWS_PER_PAGE);
+    if (openPage !== null) setCurrentPage(openPage);
+  }, [openRowId, visibleRows]);
+  const goToPage = (nextPage: number) => {
+    setCurrentPage(nextPage);
+    setOpenRowId(null);
+  };
+
+  // "Select all" is the rows on the current page.
+  const allVisibleSelected = pageRows.length > 0 && pageRows.every(row => selectedIds.has(row.id));
 
   // A selection can span several submitters; feedback can only be sent when the whole selection
   // is from one submitter. Bulk accept does not depend on this.
@@ -157,9 +187,9 @@ export function useReviewPage() {
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (allVisibleSelected) {
-        visibleRows.forEach(row => next.delete(row.id));
+        pageRows.forEach(row => next.delete(row.id));
       } else {
-        visibleRows.forEach(row => next.add(row.id));
+        pageRows.forEach(row => next.add(row.id));
       }
       return next;
     });
@@ -365,6 +395,12 @@ export function useReviewPage() {
     load,
     rows,
     visibleRows,
+    pageRows,
+    page,
+    totalPages,
+    goToPage,
+    incomplete,
+    retry,
     searchQuery,
     setSearchQuery,
     sortKey,

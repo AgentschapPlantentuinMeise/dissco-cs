@@ -12,6 +12,7 @@ import { FeedbackModal } from './FeedbackModal';
 import { ReviewInlineExpansion } from './ReviewInlineExpansion';
 import { ReviewSearchInput } from './ReviewSearchInput';
 import { ReviewTable } from './ReviewTable';
+import { Pagination } from '../../components/ui/Pagination';
 import { useReviewPage } from './use-review-page';
 import { LoadingText } from '../../components/layout/LoadingText';
 import { EmptyText } from '../../components/layout/EmptyText';
@@ -145,10 +146,19 @@ export function Review() {
           <EmptyText>{t('review_empty')}</EmptyText>
         )}
 
+        {c.load === 'ready' && c.incomplete && (
+          <div role="alert" className="flex items-center gap-3 flex-wrap mb-4 px-5 py-3 bg-attention-50 border border-attention-200 rounded-lg text-attention-800 text-[0.95rem]">
+            <span>{t('review_list_incomplete')}</span>
+            <Button variant="secondary" size="sm" onClick={c.retry}>
+              {t('error_page_load_retry')}
+            </Button>
+          </div>
+        )}
+
         {c.load === 'ready' && c.rows.length > 0 && (
           <div className="bg-white border-t border-gray-200">
             <ReviewTable
-              visibleRows={c.visibleRows}
+              visibleRows={c.pageRows}
               sortKey={c.sortKey}
               sortDir={c.sortDir}
               toggleSort={c.toggleSort}
@@ -173,6 +183,7 @@ export function Review() {
                 />
               )}
             />
+            <Pagination currentPage={c.page} totalPages={c.totalPages} onChange={c.goToPage} label={t('review_pagination_label')} />
           </div>
         )}
 

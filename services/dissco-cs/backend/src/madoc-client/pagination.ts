@@ -18,19 +18,24 @@ export async function collectAllPages<T>(
 ): Promise<T[]> {
   const first = await fetchPage(1);
   const totalPages = first.totalPages ?? 1;
-  const items = [...first.items];
-  const groupSize = Math.max(1, concurrency);
+  const otherPages = Array.from({ length: Math.max(0, totalPages - 1) }, (_, index) => index + 2);
+  const results = await mapInGroups(otherPages, concurrency, fetchPage);
 
-  for (let start = 2; start <= totalPages; start += groupSize) {
-    const pages = [];
-    for (let page = start; page < start + groupSize && page <= totalPages; page++) {
-      pages.push(page);
-    }
-    const results = await Promise.all(pages.map(fetchPage));
-    for (const result of results) {
-      items.push(...result.items);
-    }
+  return [...first.items, ...results.flatMap(result => result.items)];
+}
+
+/**
+ * Runs `fn` for every item, at most `groupSize` at the same time: one group, then the next.
+ * @param items the inputs, e.g. page numbers or task ids
+ * @param groupSize how many may run at once (at least 1)
+ * @param fn the call per item
+ * Returns: the results in the order of `items`. Rejects with the first error, after its group ended.
+ */
+export async function mapInGroups<T, R>(items: T[], groupSize: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const size = Math.max(1, groupSize);
+  const results: R[] = [];
+  for (let start = 0; start < items.length; start += size) {
+    results.push(...(await Promise.all(items.slice(start, start + size).map(fn))));
   }
-
-  return items;
+  return results;
 }

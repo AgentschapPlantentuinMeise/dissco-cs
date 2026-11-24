@@ -450,6 +450,8 @@
   "review_intro": "Vérifiez les tâches soumises, acceptez-les ou donnez un retour.",
   "review_stat_to_review": "à relire",
   "review_empty": "Aucune tâche à réviser.",
+  "review_list_incomplete": "Toutes les révisions n'ont pas pu être chargées entièrement : pour certaines, le contributeur et les données soumises manquent.",
+  "review_pagination_label": "Pages des révisions",
   "review_search_placeholder": "Rechercher par projet ou manifeste...",
   "review_count_summary": "{{count, number}} sur {{total, number}} tâches",
   "review_status_not_started": "Pas commencé",

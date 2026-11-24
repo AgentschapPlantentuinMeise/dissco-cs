@@ -15,7 +15,8 @@ function mineQuery(userId: number) {
     type: 'crowdsourcing-task',
     all_tasks: true,
     assignee: `urn:madoc:user:${userId}`,
-    per_page: 100,
+    // The most Madoc's tasks-api gives per page; asking more still returns 50.
+    per_page: 50,
   };
 }
 

@@ -1,93 +1,75 @@
-import { fetchAllTasks, getMadocTaskDetail } from './tasks.js';
+import { appConfig } from '../config.js';
+import { mapInGroups } from './pagination.js';
+import { fetchAllTasks, getMadocProjectTasksByStatus, getMadocTaskDetail } from './tasks.js';
 import { getMadocProjectByRootTaskId } from './projects.js';
-import { MadocCrowdsourcingTaskDto, MadocInternationalString, MadocProjectDto, ReviewTaskDto } from '@dissco-cs/shared-types';
+import { missingOriginalTaskIds, OriginalTask, ReviewLookup } from '../logic/review.logic.js';
+import { MadocCrowdsourcingTaskDto, MadocProjectDto } from '@dissco-cs/shared-types';
 
-function parseUserId(urn: string | undefined): number | undefined {
-  const match = urn?.match(/^urn:madoc:user:(\d+)$/);
-  return match ? Number(match[1]) : undefined;
-}
+// A task that is under review is submitted (2), or back with its volunteer: changes requested (4),
+// or saved again as a draft (1) after that.
+const ORIGINAL_TASK_STATUSES = [1, 2, 4];
 
-function fetchMadocReviewTasks(siteId: number): Promise<MadocCrowdsourcingTaskDto[]> {
+function fetchMadocReviewTasks(siteId: number, reviewerUserId: number): Promise<MadocCrowdsourcingTaskDto[]> {
   return fetchAllTasks(siteId, {
     type: 'crowdsourcing-review',
     all_tasks: 'true',
     status: '0,1,2',
     detail: 'true',
+    assignee: `urn:madoc:user:${reviewerUserId}`,
   });
 }
 
 /**
- * Every open review task of the site, across all projects, with its submitter, reviewer and
- * project. Open = status 0 (not started), 1 (to handle) or 2 (in review), as in Madoc's own
- * REVIEW_STATUS_MAP. Per task this also asks Madoc for the original task (the submitter and the
- * revision) and, once per project, the project. Uses the service token.
+ * The open review tasks assigned to one reviewer, across all projects, plus the tasks under review
+ * and the projects they belong to. Open = status 0 (not started), 1 (to handle) or 2 (in review),
+ * as in Madoc's own REVIEW_STATUS_MAP. A review task only holds the id of the task under review,
+ * so per project (at the same time) this asks Madoc for the project and for its tasks that can be
+ * under review; a task not found that way is asked on its own. Uses the service token.
  * @param siteId the site
- * Returns: ReviewTaskDto[]. A failed lookup of a submitter or project leaves those fields empty
- *   instead of failing the whole list.
+ * @param reviewerUserId the reviewer's Madoc user id
+ * Returns: a ReviewLookup (toReviewTaskListDto turns it into the list). A failed lookup does not
+ *   throw: its error is in `errors` and what it would have found is missing. Throws when the
+ *   review tasks themselves cannot be fetched.
  */
-export async function getMadocReviewTasks(siteId: number): Promise<ReviewTaskDto[]> {
-  const tasks = await fetchMadocReviewTasks(siteId);
+export async function fetchMadocReviewLookup(siteId: number, reviewerUserId: number): Promise<ReviewLookup> {
+  const reviewTasks = await fetchMadocReviewTasks(siteId, reviewerUserId);
+  const errors: unknown[] = [];
+
+  const rootTasks = [...new Set(reviewTasks.flatMap(task => (task.root_task ? [task.root_task] : [])))];
   const projectByRootTask = new Map<string, MadocProjectDto | null>();
+  const originalsById = new Map<string, OriginalTask>();
+  const failedRootTasks = new Set<string>();
 
-  const rows: ReviewTaskDto[] = [];
-  for (const task of tasks) {
-    let submitter: string | undefined;
-    let submitterId: number | undefined;
-    let revisionId: string | undefined;
-    const originalTaskId = typeof task.parameters?.[0] === 'string' ? (task.parameters[0] as string) : undefined;
-    if (originalTaskId) {
-      try {
-        const originalTask = await getMadocTaskDetail(siteId, originalTaskId);
-        submitter = originalTask.assignee?.name;
-        submitterId = parseUserId(originalTask.assignee?.id);
-        revisionId = originalTask.state?.revisionId;
-        if (!revisionId) {
-          console.warn('[review] original task has no state.revisionId', {
-            reviewTaskId: task.id,
-            originalTaskId,
-            status: originalTask.status,
-            state: originalTask.state,
-          });
-        }
-      } catch (err) {
-        console.error('[review] getMadocTaskDetail (submitter) failed', { siteId, originalTaskId }, err);
-      }
-    }
-
-    // Madoc does not fill in task.metadata.project for review tasks, so the project is looked up
-    // through root_task -- once per project.
-    let project: MadocProjectDto | null = null;
-    if (task.root_task) {
-      if (projectByRootTask.has(task.root_task)) {
-        project = projectByRootTask.get(task.root_task) ?? null;
+  await Promise.all(
+    rootTasks.map(async rootTask => {
+      const [project, originals] = await Promise.allSettled([
+        getMadocProjectByRootTaskId(siteId, rootTask),
+        getMadocProjectTasksByStatus(siteId, rootTask, ORIGINAL_TASK_STATUSES),
+      ]);
+      if (project.status === 'fulfilled') {
+        projectByRootTask.set(rootTask, project.value);
       } else {
-        try {
-          project = await getMadocProjectByRootTaskId(siteId, task.root_task);
-        } catch (err) {
-          console.error('[review] getMadocProjectByRootTaskId failed', { siteId, rootTask: task.root_task }, err);
-        }
-        projectByRootTask.set(task.root_task, project);
+        errors.push(project.reason);
       }
+      if (originals.status === 'fulfilled') {
+        for (const task of originals.value) originalsById.set(task.id, task);
+      } else {
+        errors.push(originals.reason);
+        failedRootTasks.add(rootTask);
+      }
+    })
+  );
+
+  // A task under review with a status we did not expect: asked on its own. Not for a project
+  // whose lookup failed: that would be one call per review, the very thing this avoids.
+  const reachable = reviewTasks.filter(task => !task.root_task || !failedRootTasks.has(task.root_task));
+  await mapInGroups(missingOriginalTaskIds(reachable, originalsById), appConfig.madocPageConcurrency, async id => {
+    try {
+      originalsById.set(id, await getMadocTaskDetail(siteId, id));
+    } catch (err) {
+      errors.push(err);
     }
+  });
 
-    rows.push({
-      id: task.id,
-      project: { id: project?.id, slug: project?.slug, label: project?.label },
-      subject: { id: task.metadata?.subject?.id, label: task.metadata?.subject?.label as MadocInternationalString | string | undefined },
-      subjectRaw: task.subject,
-      subjectParentRaw: task.subject_parent,
-      status: task.status,
-      statusText: task.status_text,
-      submitter,
-      submitterId,
-      reviewer: task.assignee?.name,
-      reviewerId: parseUserId(task.assignee?.id),
-      originalTaskId,
-      revisionId,
-      // Madoc always fills this in for a real task; the shared type marks it optional only for other calls.
-      modifiedAt: task.modified_at ?? 0,
-    });
-  }
-
-  return rows;
+  return { reviewTasks, originalsById, projectByRootTask, errors };
 }

@@ -1,16 +1,17 @@
 import { csFetch, csFetchField } from './request';
 import { urlPath } from '../url';
-import { ReviewTaskDto } from '@dissco-cs/shared-types';
+import { ReviewTaskListDto } from '@dissco-cs/shared-types';
 
 export const reviewApi = {
   /**
-   * Every still-open review task of the site (status 0 not started, 1 to handle, 2 in review),
-   * across all projects, with the assigned reviewer.
+   * The still-open review tasks assigned to the caller (status 0 not started, 1 to handle, 2 in
+   * review), across all projects, with the submitter and revision of the task under review.
    * Input: none.
    * Who: reviewer or site admin.
-   * Returns: ReviewTaskDto[]; 403 not a reviewer.
+   * Returns: ReviewTaskListDto; incomplete is true when the submitter and revision of some rows
+   *   could not be looked up (those fields are empty). 403 not a reviewer.
    */
-  listTasks: () => csFetchField<ReviewTaskDto[]>('/review/tasks', 'tasks'),
+  listTasks: () => csFetch<ReviewTaskListDto>('/review/tasks'),
 
   /**
    * Whether the caller has the site role 'reviewer'. A site admin gets false here unless that is

@@ -450,6 +450,8 @@
   "review_intro": "Check the submitted tasks, accept them or give feedback.",
   "review_stat_to_review": "to review",
   "review_empty": "No tasks to review.",
+  "review_list_incomplete": "Not all reviews could be loaded completely: some are missing the submitter and the submitted data.",
+  "review_pagination_label": "Review pages",
   "review_search_placeholder": "Search by project or manifest...",
   "review_count_summary": "{{count, number}} of {{total, number}} tasks",
   "review_status_not_started": "Not started",

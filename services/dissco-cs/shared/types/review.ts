@@ -16,3 +16,10 @@ export type ReviewTaskDto = {
   revisionId?: string;
   modifiedAt: number;
 };
+
+// The reviewer's open reviews. incomplete: the submitter and revision of some reviews could not be
+// looked up (a project's lookup failed); those rows are listed with these fields empty.
+export type ReviewTaskListDto = {
+  tasks: ReviewTaskDto[];
+  incomplete: boolean;
+};

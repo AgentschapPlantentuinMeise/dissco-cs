@@ -14,6 +14,8 @@ export type MadocCrowdsourcingTaskDto = {
   // Madoc sends this as a number (milliseconds since 1970), not as a date string.
   modified_at?: number;
   assignee?: { id: string; name?: string };
+  // Only with detail=true. revisionId: the revision the volunteer saved for this task.
+  state?: { revisionId?: string };
   // Not from Madoc: we fill these in ourselves for the stuck-tasks page (getStuckManifestCounters),
   // from the task's details and a count of its subtasks that were not abandoned.
   maxContributors?: number;

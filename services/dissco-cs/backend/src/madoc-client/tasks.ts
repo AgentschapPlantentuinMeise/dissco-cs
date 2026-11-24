@@ -6,8 +6,8 @@ import { shouldReopenManifest } from './tasks.logic.js';
 import { MadocCrowdsourcingTaskDto, MadocInternationalString, MadocPagination } from '@dissco-cs/shared-types';
 
 /**
- * Every page of a query on Madoc's task list, one page after the other (100 tasks per page).
- * Uses the service token.
+ * Every page of a query on Madoc's task list, one page after the other (50 tasks per page, the
+ * most Madoc's tasks-api gives per page). Uses the service token.
  * @param siteId the site
  * @param query Madoc's /api/tasks filters, e.g. { type, status: '0,1', root_task_id }
  * Returns: the tasks of all pages.
@@ -16,7 +16,7 @@ export function fetchAllTasks<T = MadocCrowdsourcingTaskDto>(siteId: number, que
   return collectAllPages(async page => {
     const data = await serviceJson<{ tasks: T[]; pagination?: MadocPagination }>('/api/tasks', {
       siteId,
-      query: { ...query, per_page: '100', page: String(page) },
+      query: { ...query, per_page: '50', page: String(page) },
     });
     return { items: data.tasks, totalPages: data.pagination?.totalPages };
   });
@@ -82,6 +82,29 @@ export function getMadocProjectTasks(siteId: number, rootTaskId: string): Promis
     all_tasks: 'true',
     detail: 'true',
   });
+}
+
+/**
+ * The volunteer tasks of a project with one of these statuses, with details (assignee, state),
+ * in one call: `all=true` makes Madoc skip paging, which it only allows the service token (an
+ * admin). Uses the service token.
+ * @param rootTaskId the project's root task (MadocProjectDto.task_id, or a task's root_task)
+ * @param statuses e.g. [1, 2, 4]
+ * Returns: MadocCrowdsourcingTaskDto[]. Throws a MadocHttpError when Madoc answers with an error.
+ */
+export async function getMadocProjectTasksByStatus(siteId: number, rootTaskId: string, statuses: number[]): Promise<MadocCrowdsourcingTaskDto[]> {
+  const data = await serviceJson<{ tasks: MadocCrowdsourcingTaskDto[] }>('/api/tasks', {
+    siteId,
+    query: {
+      root_task_id: rootTaskId,
+      type: 'crowdsourcing-task',
+      status: statuses.join(','),
+      all_tasks: 'true',
+      detail: 'true',
+      all: 'true',
+    },
+  });
+  return data.tasks;
 }
 
 /**
