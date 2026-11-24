@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { LuCheck } from 'react-icons/lu';
-import { DocumentPath } from '../../../utility/annotation-document';
+import { DocumentPath } from '../../utility/annotation-document';
 
 export interface SelectorControls {
   drawingPath?: DocumentPath | null;

@@ -12,6 +12,7 @@ import { toHomeStepDto } from '../../src/repositories/home-steps.repository.js';
 import { toUserProfileDto } from '../../src/repositories/user-profile.repository.js';
 import { toHonourBoardSettingsDto } from '../../src/repositories/site-settings.repository.js';
 import { toHonourBoardQuarterRecord } from '../../src/repositories/honour-board-quarters.repository.js';
+import { toFormLayoutDto, toStoredFormDto } from '../../src/repositories/forms.repository.js';
 
 // The DTO rule (see CLAUDE.md): camelCase, every field listed explicitly, never internal columns
 // such as site_id. Checking the exact key set catches both a forgotten rename and a `...row`
@@ -30,6 +31,22 @@ describe('DTO mappers', () => {
       id: 7, title: { nl: 'T' }, description: { nl: 'D' }, targetType: 'project', targetProjectSlug: 'p',
       isActive: true, startDate: '2026-01-02T03:04:05.000Z', endDate: null,
     });
+  });
+
+  it('toStoredFormDto', () => {
+    const layout_items = [{ kind: 'row' as const, terms: ['habitat'] }];
+    const dto = toStoredFormDto({
+      site_id: 3, form_name: 'Review project 3', template_project_id: 4, institution_id: '5', manual_id: null, layout_items,
+      updated_at: later, updated_by: 11,
+    });
+    expect(dto).toEqual({ formName: 'Review project 3', templateProjectId: 4, institutionId: 5, manualId: null, layout: layout_items });
+  });
+
+  it('toFormLayoutDto', () => {
+    const layout_items = [{ kind: 'row' as const, terms: ['habitat'] }];
+    const row = { site_id: 3, form_name: 'Review project 3', template_project_id: null, institution_id: null, manual_id: null, updated_at: later, updated_by: 11 };
+    expect(toFormLayoutDto({ ...row, layout_items })).toEqual({ formName: 'Review project 3', items: layout_items });
+    expect(toFormLayoutDto({ ...row, layout_items: null })).toBeNull();
   });
 
   it('toInstitutionDto', () => {

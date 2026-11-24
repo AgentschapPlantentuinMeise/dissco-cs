@@ -134,6 +134,16 @@ export function collectSelectorStates(document: MadocAnnotationDocumentDto, path
   return results;
 }
 
+/**
+ * The key that links a field's question mark to its help: the terms of its document path without
+ * the list positions, so every copy of a repeated field or group points to the same help.
+ * @param path the field's document path, e.g. ['identification', 0, 'name', 0]
+ * Returns: e.g. 'identification.name'.
+ */
+export function fieldHelpKey(path: DocumentPath): string {
+  return path.filter(part => typeof part === 'string').join('.');
+}
+
 /** Path equality by value, since paths are recreated on every render. */
 export function pathsEqual(a: DocumentPath | null | undefined, b: DocumentPath | null | undefined): boolean {
   if (!a || !b) return a === b;

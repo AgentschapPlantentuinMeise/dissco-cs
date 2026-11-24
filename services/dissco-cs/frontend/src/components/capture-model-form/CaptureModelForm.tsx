@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LuArrowLeft, LuCircleHelp } from 'react-icons/lu';
-import { SavedNotice } from '../../../components/ui/SavedNotice';
-import { MadocCaptureModelDto, MadocStructureNodeDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
-import { DocumentPath } from '../../../utility/annotation-document';
-import { collectMissingRequiredLabels, hasVisibleRequiredField, resolveSectionModels, resolveSingleChoice } from './capture-model-rules';
+import { SavedNotice } from '../ui/SavedNotice';
+import { FormLayoutItem, MadocCaptureModelDto, MadocStructureNodeDto, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
+import { DocumentPath } from '../../utility/annotation-document';
+import { applyFormLayout, collectMissingRequiredLabels, hasVisibleRequiredField, resolveSectionModels, resolveSingleChoice } from './capture-model-rules';
 import { Fieldset } from './Fieldset';
+import { FormBlocks } from './FormBlocks';
 import { ModelFields } from './ModelFields';
 import { SelectorControls } from './SelectorControl';
-import { Button } from '../../../components/ui/Button';
-import { IconButton } from '../../../components/ui/IconButton';
+import { Button } from '../ui/Button';
+import { IconButton } from '../ui/IconButton';
 
 export interface CaptureModelFormProps {
   model: MadocCaptureModelDto;
@@ -36,6 +37,8 @@ export interface CaptureModelFormProps {
   readOnlyBanner?: string;
   /** Opens the Uitleg panel at a field's help (key from fieldHelpKey). */
   onShowHelp?: (helpKey: string) => void;
+  /** The project's form layout; it replaces Madoc's own order and sections. Without one the form follows the model. */
+  layout?: FormLayoutItem[];
 }
 
 export function CaptureModelForm({
@@ -54,6 +57,7 @@ export function CaptureModelForm({
   readOnly,
   readOnlyBanner,
   onShowHelp,
+  layout,
 }: CaptureModelFormProps) {
   const { t } = useTranslation('dissco-cs');
   const selectorControls: SelectorControls = { drawingPath, onRequestDraw, onCancelDraw, onClearSelector };
@@ -84,6 +88,9 @@ export function CaptureModelForm({
   }, [sectionModels, current]);
 
   const activeModel = current.type === 'model' ? current : combinedSectionsModel;
+
+  // With a layout, the fields of every Madoc section are laid out together in its own sections.
+  const layoutBlocks = useMemo(() => (layout && activeModel ? applyFormLayout(layout, activeModel.fields) : null), [layout, activeModel]);
 
   useEffect(() => {
     if (activeModel) onActiveStructureChange?.(activeModel);
@@ -148,7 +155,16 @@ export function CaptureModelForm({
             <span className="text-danger-500">*</span> {t('annotate_required_legend')}
           </p>
         )}
-        {sectionModels
+        {layoutBlocks ? (
+          <FormBlocks
+            blocks={layoutBlocks}
+            document={document}
+            pathPrefix={[]}
+            onChange={onChange}
+            selectorControls={selectorControls}
+            onShowHelp={onShowHelp}
+          />
+        ) : sectionModels
           ? sectionModels.map(sectionModel => (
               <Fieldset
                 key={sectionModel.id}

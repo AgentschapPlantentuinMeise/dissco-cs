@@ -52,23 +52,12 @@ export class ManualsRepository {
     return `${this.manualFolder(manualId)}/${lang}`;
   }
 
-  async listManuals(siteId: number): Promise<ManualSummary[]> {
+  // Without linkedProjectSlugs: those come from Madoc (the projects whose form name has the manual).
+  async listManuals(siteId: number): Promise<Omit<ManualSummary, 'linkedProjectSlugs'>[]> {
     const manuals = await this.pool.query<ManualRow>(
       `SELECT * FROM ${this.table('manuals')} WHERE site_id = $1 ORDER BY updated_at DESC`,
       [siteId]
     );
-
-    const links = await this.pool.query<{ manual_id: number; project_slug: string }>(
-      `SELECT manual_id, project_slug FROM ${this.table('project_manual_links')} WHERE site_id = $1`,
-      [siteId]
-    );
-
-    const linksByManual = new Map<number, string[]>();
-    for (const row of links.rows) {
-      const list = linksByManual.get(row.manual_id) ?? [];
-      list.push(row.project_slug);
-      linksByManual.set(row.manual_id, list);
-    }
 
     const manualIds = manuals.rows.map(manual => manual.id);
     const attachments =
@@ -88,22 +77,8 @@ export class ManualsRepository {
 
     return manuals.rows.map(manual => ({
       ...manual,
-      linkedProjectSlugs: linksByManual.get(manual.id) ?? [],
       attachmentLangs: attachmentLangsByManual.get(manual.id) ?? [],
     }));
-  }
-
-  async getManualForProject(siteId: number, projectSlug: string): Promise<ManualRow | null> {
-    const result = await this.pool.query<ManualRow>(
-      `
-      SELECT m.* FROM ${this.table('manuals')} m
-      JOIN ${this.table('project_manual_links')} l ON l.manual_id = m.id
-      WHERE l.site_id = $1 AND l.project_slug = $2
-    `,
-      [siteId, projectSlug]
-    );
-
-    return result.rows[0] ?? null;
   }
 
   async getManualById(siteId: number, manualId: number): Promise<ManualRow | null> {
@@ -205,37 +180,6 @@ export class ManualsRepository {
       await this.files.removeDir(this.manualFolder(manualId));
     }
     return deleted;
-  }
-
-  async setProjectLink(siteId: number, userId: number, projectSlug: string, manualId: number | null): Promise<void> {
-    if (manualId === null) {
-      await this.pool.query(
-        `DELETE FROM ${this.table('project_manual_links')} WHERE site_id = $1 AND project_slug = $2`,
-        [siteId, projectSlug]
-      );
-      return;
-    }
-
-    await this.pool.query(
-      `
-      INSERT INTO ${this.table('project_manual_links')} (site_id, project_slug, manual_id, updated_by)
-      VALUES ($1, $2, $3, $4)
-      ON CONFLICT (site_id, project_slug) DO UPDATE
-      SET manual_id = EXCLUDED.manual_id, updated_at = NOW(), updated_by = EXCLUDED.updated_by
-    `,
-      [siteId, projectSlug, manualId, userId]
-    );
-  }
-
-  // Removes links to projects that were deleted in Madoc (see
-  // InstitutionsRepository.pruneOrphanedProjectLinks).
-  async pruneOrphanedProjectLinks(siteId: number, liveSlugs: string[]): Promise<number> {
-    const result = await this.pool.query(
-      `DELETE FROM ${this.table('project_manual_links')} WHERE site_id = $1 AND project_slug <> ALL($2::text[])`,
-      [siteId, liveSlugs]
-    );
-
-    return result.rowCount ?? 0;
   }
 
   async listAttachmentMeta(manualId: number): Promise<ManualAttachmentMeta[]> {

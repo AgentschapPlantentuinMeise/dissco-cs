@@ -22,6 +22,8 @@ import { ProjectManagement } from './pages/site-management/project-management/Pr
 import { Announcements } from './pages/site-management/announcements/Announcements';
 import { PageManagement } from './pages/site-management/page-management/PageManagement';
 import { InstitutionManagement } from './pages/site-management/institution-management/InstitutionManagement';
+import { FormManagement } from './pages/site-management/form-management/FormManagement';
+import { ManualManagement } from './pages/site-management/manual-management/ManualManagement';
 import { SiteColors } from './pages/site-management/site-colors/SiteColors';
 import { SiteImages } from './pages/site-management/site-images/SiteImages';
 import { HomeSteps } from './pages/site-management/home-steps/HomeSteps';
@@ -59,6 +61,8 @@ export function App() {
           <Route path="/review" element={<AuthGate requireReviewer><Review /></AuthGate>} />
           <Route path="/manage" element={<AuthGate requireAdmin><SiteManagement /></AuthGate>} />
           <Route path="/manage/projects" element={<AuthGate requireAdmin><ProjectManagement /></AuthGate>} />
+          <Route path="/manage/forms" element={<AuthGate requireAdmin><FormManagement /></AuthGate>} />
+          <Route path="/manage/manuals" element={<AuthGate requireAdmin><ManualManagement /></AuthGate>} />
           <Route path="/manage/announcements" element={<AuthGate requireAdmin><Announcements /></AuthGate>} />
           <Route path="/manage/pages" element={<AuthGate requireAdmin><PageManagement /></AuthGate>} />
           <Route path="/manage/institutions" element={<AuthGate requireAdmin><InstitutionManagement /></AuthGate>} />

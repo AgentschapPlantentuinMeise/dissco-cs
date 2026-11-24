@@ -6,6 +6,21 @@ import { MadocInternationalString } from './common.js';
 // 0 paused, 1 active, 2 completed, 3 archived, 4 prepared -- the values Madoc's
 // update-project-status.ts accepts.
 export type MadocProjectStatus = 0 | 1 | 2 | 3 | 4;
+export const MADOC_PROJECT_STATUS_ARCHIVED = 3;
+
+export type MadocProjectVisibility = 'published' | 'unpublished' | 'archived';
+
+/**
+ * Who can see a project, by its Madoc status: active and completed projects are public; paused and
+ * prepared ones only admins see, e.g. a template project that is copied but never published itself.
+ * @param status MadocProjectDto.status
+ * Returns: 'published' (1, 2), 'archived' (3) or 'unpublished' (0, 4).
+ */
+export function madocProjectVisibility(status: MadocProjectStatus): MadocProjectVisibility {
+  if (status === 1 || status === 2) return 'published';
+  if (status === MADOC_PROJECT_STATUS_ARCHIVED) return 'archived';
+  return 'unpublished';
+}
 
 export type MadocProjectThumbnail = string | { id: string };
 
@@ -23,6 +38,8 @@ export type MadocProjectDto = {
   collection_id: number;
   slug: string;
   task_id: string;
+  // The project's own capture model; Madoc copies it for every image a volunteer works on.
+  capture_model_id: string;
   label: MadocInternationalString;
   summary?: MadocInternationalString;
   status: MadocProjectStatus;

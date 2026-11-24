@@ -17,57 +17,39 @@ import { getMadocProject } from '../madoc-client/projects.js';
 import { getMadocCollectionManifestThumbnails, getMadocProjectManifests } from '../madoc-client/collections.js';
 import { getMadocProjectTasks, getMadocTasksBySubjectAndType, resyncManifestTaskCounter } from '../madoc-client/tasks.js';
 import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
-import { validateJson } from '../infrastructure/validate-json.js';
+import { FormsRepository, toFormLayoutDto } from '../repositories/forms.repository.js';
+import { fromBigint } from '../database/bigint.js';
+import { getProjectForm, listInstitutionIdsBySlug } from './forms.lookup.js';
 import { sendFile } from '../infrastructure/file-http.js';
-import { projectSlug, safeSegment, siteLang, validateParams } from '../infrastructure/validate-params.js';
+import { safeSegment, siteLang, validateParams } from '../infrastructure/validate-params.js';
 import { computeProjectProgress, computeTaskDebug } from './projects.logic.js';
-import {
-  MadocProjectListPageDto,
-  pruneProjectLinksSchema,
-  setInstitutionLinkSchema,
-  setManualLinkSchema,
-} from '@dissco-cs/shared-types';
+import { MadocProjectListPageDto } from '@dissco-cs/shared-types';
 
 // Routes with a fixed path (such as /institution-links) are registered before the routes with a
 // /:projectId placeholder. Hono tries routes in the order they are registered, so otherwise
 // /:projectId would also catch 'institution-links', as if it were a project id.
-export function projectsController(institutionsRepository: InstitutionsRepository, manualsRepository: ManualsRepository): Hono {
+export function projectsController(
+  institutionsRepository: InstitutionsRepository,
+  manualsRepository: ManualsRepository,
+  formsRepository: FormsRepository
+): Hono {
   const app = new Hono();
 
-  // ---- admin: project <-> institution / manual links, site-wide ----
+  async function manualOfProject(siteId: number, projectSlug: string) {
+    const links = await getProjectForm(formsRepository, siteId, projectSlug);
+    return links?.manual_id ? manualsRepository.getManualById(siteId, fromBigint(links.manual_id)) : null;
+  }
+
+  // ---- project -> institution, site-wide, for any logged-in user ----
 
   app.get('/institution-links', async c => {
-    const identity = requireSiteAdmin(c);
+    const identity = requireUser(c);
     if (identity instanceof Response) {
       return identity;
     }
 
-    const links = await institutionsRepository.listProjectLinks(identity.siteId);
+    const links = await listInstitutionIdsBySlug(formsRepository, identity.siteId);
     return c.json({ links });
-  });
-
-  app.post('/institution-links/prune', validateJson(pruneProjectLinksSchema), async c => {
-    const identity = requireSiteAdmin(c);
-    if (identity instanceof Response) {
-      return identity;
-    }
-
-    const input = c.req.valid('json');
-
-    const removed = await institutionsRepository.pruneOrphanedProjectLinks(identity.siteId, input.liveSlugs);
-    return c.json({ removed });
-  });
-
-  app.post('/manual-links/prune', validateJson(pruneProjectLinksSchema), async c => {
-    const identity = requireSiteAdmin(c);
-    if (identity instanceof Response) {
-      return identity;
-    }
-
-    const input = c.req.valid('json');
-
-    const removed = await manualsRepository.pruneOrphanedProjectLinks(identity.siteId, input.liveSlugs);
-    return c.json({ removed });
   });
 
   // ---- public: project list + detail (Madoc's site API, forwarded as the visitor) ----
@@ -265,7 +247,29 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     return c.json(computeTaskDebug(manifestItems, tasks));
   });
 
-  // ---- manual: public read, admin link ----
+  // ---- form layout: read for the annotation page ----
+
+  // The layout belongs to the label of the project's own model, not to the label of the copy a
+  // volunteer works on: a copy keeps the label it had when it was made, so after the model is
+  // renamed in Madoc an older copy would still point to the old layout. That label comes from the
+  // cached project -> form name list (as for the institution and manual), so opening a task costs
+  // no Madoc calls; a renamed model or a new project shows up here within about a minute.
+  app.get('/:projectId/form-layout', validateParams({ projectId: safeSegment }), async c => {
+    const identity = requireUser(c);
+    if (identity instanceof Response) {
+      return identity;
+    }
+
+    const form = await getProjectForm(formsRepository, identity.siteId, c.req.valid('param').projectId);
+    const layout = form ? toFormLayoutDto(form) : null;
+    if (!layout) {
+      return c.notFound();
+    }
+
+    return c.json(layout);
+  });
+
+  // ---- manual and institution: through the project's form (forms) ----
 
   app.get('/:projectId/manual', validateParams({ projectId: safeSegment }), async c => {
     const siteId = await requireSiteId(c);
@@ -273,7 +277,7 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
       return siteId;
     }
 
-    const manual = await manualsRepository.getManualForProject(siteId, c.req.valid('param').projectId);
+    const manual = await manualOfProject(siteId, c.req.valid('param').projectId);
     if (!manual) {
       return c.notFound();
     }
@@ -289,7 +293,7 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
 
     const { projectId, lang } = c.req.valid('param');
 
-    const manual = await manualsRepository.getManualForProject(siteId, projectId);
+    const manual = await manualOfProject(siteId, projectId);
     if (!manual) {
       return c.notFound();
     }
@@ -303,58 +307,19 @@ export function projectsController(institutionsRepository: InstitutionsRepositor
     return sendFile(c, file.buffer, file.mimeType);
   });
 
-  app.put('/:projectId/manual-link', validateParams({ projectId: projectSlug }), validateJson(setManualLinkSchema), async c => {
-    const identity = requireSiteAdmin(c);
-    if (identity instanceof Response) {
-      return identity;
-    }
-
-    const input = c.req.valid('json');
-
-    if (input.manualId !== null) {
-      const manual = await manualsRepository.getManualById(identity.siteId, input.manualId);
-      if (!manual) {
-        return c.json({ error: 'Manual not found' }, 404);
-      }
-    }
-
-    await manualsRepository.setProjectLink(identity.siteId, identity.userId, c.req.valid('param').projectId, input.manualId);
-    return c.body(null, 204);
-  });
-
-  // ---- institution: public read, admin link ----
-
   app.get('/:projectId/institution', validateParams({ projectId: safeSegment }), async c => {
     const siteId = await requireSiteId(c);
     if (siteId instanceof Response) {
       return siteId;
     }
 
-    const institution = await institutionsRepository.getActiveInstitutionForProjectSlug(siteId, c.req.valid('param').projectId);
-    if (!institution) {
+    const links = await getProjectForm(formsRepository, siteId, c.req.valid('param').projectId);
+    const institution = links?.institution_id ? await institutionsRepository.getInstitutionById(siteId, fromBigint(links.institution_id)) : null;
+    if (!institution?.is_active) {
       return c.notFound();
     }
 
     return c.json(toInstitutionDto(institution));
-  });
-
-  app.put('/:projectId/institution-link', validateParams({ projectId: projectSlug }), validateJson(setInstitutionLinkSchema), async c => {
-    const identity = requireSiteAdmin(c);
-    if (identity instanceof Response) {
-      return identity;
-    }
-
-    const input = c.req.valid('json');
-
-    if (input.institutionId !== null) {
-      const institution = await institutionsRepository.getInstitutionById(identity.siteId, input.institutionId);
-      if (!institution) {
-        return c.json({ error: 'Institution not found' }, 404);
-      }
-    }
-
-    await institutionsRepository.setProjectLink(identity.siteId, identity.userId, c.req.valid('param').projectId, input.institutionId);
-    return c.body(null, 204);
   });
 
   return app;

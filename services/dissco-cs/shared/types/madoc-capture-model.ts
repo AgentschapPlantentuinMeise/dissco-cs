@@ -70,6 +70,16 @@ export interface MadocAnnotationDocumentDto {
   };
 }
 
+/**
+ * Whether a field or group of fields is required. The model editor's "required" checkbox saves its
+ * ticked state as the array ['on'], not as true -- seen in a real model's JSON.
+ * @param required the required setting of a field or entity (MadocBasePropertyDto.required)
+ * Returns: true for true or a non-empty array.
+ */
+export function isRequired(required: boolean | string[] | undefined): boolean {
+  return Array.isArray(required) ? required.length > 0 : !!required;
+}
+
 export type MadocNestedModelFields = [string, MadocModelFields];
 
 export interface MadocModelFields extends Array<string | MadocNestedModelFields> {}

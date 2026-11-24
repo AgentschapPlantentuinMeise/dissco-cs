@@ -1,13 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { LuCircleHelp } from 'react-icons/lu';
-import { MadocBaseFieldDto } from '@dissco-cs/shared-types';
+import { MadocBaseFieldDto, isRequired } from '@dissco-cs/shared-types';
 import { fieldRegistry } from './fields/registry';
-import { DocumentPath, pathsEqual } from '../../../utility/annotation-document';
-import { isRequired } from './capture-model-rules';
+import { DocumentPath, fieldHelpKey, pathsEqual } from '../../utility/annotation-document';
 import { SelectorControl, SelectorControls } from './SelectorControl';
-import { IconButton } from '../../../components/ui/IconButton';
-import { fieldHelpKey } from '../field-help';
+import { IconButton } from '../ui/IconButton';
 
 interface FieldInputProps {
   field: MadocBaseFieldDto;

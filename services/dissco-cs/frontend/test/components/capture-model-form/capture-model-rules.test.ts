@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { MadocAnnotationDocumentDto, MadocBaseFieldDto, MadocStructureNodeDto } from '@dissco-cs/shared-types';
+import { MadocAnnotationDocumentDto, MadocBaseFieldDto, MadocStructureNodeDto, isRequired } from '@dissco-cs/shared-types';
 
 import {
+  applyFormLayout,
   collectMissingRequiredLabels,
   groupRangeFields,
   hasVisibleRequiredField,
   isDependentSatisfied,
   isFieldEmpty,
-  isRequired,
   resolveSectionModels,
   resolveSingleChoice,
-} from '../../../../src/pages/annotate/form/capture-model-rules';
+} from '../../../src/components/capture-model-form/capture-model-rules';
 
 function field(overrides: Partial<MadocBaseFieldDto>): MadocBaseFieldDto {
   return { id: 'f', type: 'text-field', label: 'Field', value: '', ...overrides };
@@ -98,9 +98,9 @@ describe('structure', () => {
 
 describe('groupRangeFields', () => {
   it('pairs adjacent <prefix>From / <prefix>To terms, with or without a separator', () => {
-    expect(groupRangeFields(['collectionDateFrom', 'collectionDateTo'])).toEqual([{ kind: 'range', from: 'collectionDateFrom', to: 'collectionDateTo' }]);
-    expect(groupRangeFields(['depth_from', 'depth_to'])).toEqual([{ kind: 'range', from: 'depth_from', to: 'depth_to' }]);
-    expect(groupRangeFields(['altitude-FROM', 'Altitude-to'])).toEqual([{ kind: 'range', from: 'altitude-FROM', to: 'Altitude-to' }]);
+    expect(groupRangeFields(['collectionDateFrom', 'collectionDateTo'])).toEqual([{ kind: 'row', terms: ['collectionDateFrom', 'collectionDateTo'] }]);
+    expect(groupRangeFields(['depth_from', 'depth_to'])).toEqual([{ kind: 'row', terms: ['depth_from', 'depth_to'] }]);
+    expect(groupRangeFields(['altitude-FROM', 'Altitude-to'])).toEqual([{ kind: 'row', terms: ['altitude-FROM', 'Altitude-to'] }]);
   });
 
   it('keeps fields apart when they are not adjacent, reversed or have another prefix', () => {
@@ -114,6 +114,64 @@ describe('groupRangeFields', () => {
     expect(groupRangeFields(['dateFrom', ['dateTo', ['x']]])).toEqual([
       { kind: 'entry', entry: 'dateFrom' },
       { kind: 'entry', entry: ['dateTo', ['x']] },
+    ]);
+  });
+});
+
+describe('applyFormLayout', () => {
+  const title = { nl: 'Verzamelgegevens', en: 'Collection data', fr: 'Données de collecte', de: 'Sammeldaten' };
+
+  it('places loose rows and sections in the order of the layout', () => {
+    const blocks = applyFormLayout(
+      [
+        { kind: 'row', terms: ['scientificName'] },
+        { kind: 'section', title, rows: [{ kind: 'row', terms: ['day', 'month', 'year'] }, { kind: 'row', terms: ['habitat'] }] },
+      ],
+      ['habitat', 'year', 'month', 'day', 'scientificName']
+    );
+    expect(blocks).toEqual([
+      { kind: 'entry', entry: 'scientificName' },
+      {
+        kind: 'section',
+        title,
+        rows: [
+          { kind: 'row', terms: ['day', 'month', 'year'] },
+          { kind: 'entry', entry: 'habitat' },
+        ],
+      },
+    ]);
+  });
+
+  it('puts the fields the layout does not place last, with the From/To rule', () => {
+    expect(applyFormLayout([{ kind: 'row', terms: ['habitat'] }], ['dateFrom', 'dateTo', 'habitat', 'country'])).toEqual([
+      { kind: 'entry', entry: 'habitat' },
+      { kind: 'row', terms: ['dateFrom', 'dateTo'] },
+      { kind: 'entry', entry: 'country' },
+    ]);
+  });
+
+  it('skips terms the model does not have and drops a section left empty', () => {
+    const blocks = applyFormLayout(
+      [
+        { kind: 'row', terms: ['oldField', 'habitat'] },
+        { kind: 'section', title, rows: [{ kind: 'row', terms: ['gone'] }] },
+      ],
+      ['habitat']
+    );
+    expect(blocks).toEqual([{ kind: 'entry', entry: 'habitat' }]);
+  });
+
+  it('places a term only once, even when the layout repeats it', () => {
+    expect(applyFormLayout([{ kind: 'row', terms: ['habitat'] }, { kind: 'row', terms: ['habitat'] }], ['habitat'])).toEqual([
+      { kind: 'entry', entry: 'habitat' },
+    ]);
+  });
+
+  it('gives a group of fields (entity) a block of its own, also when the layout put it in a row', () => {
+    const collector: [string, string[]] = ['collector', ['name']];
+    expect(applyFormLayout([{ kind: 'row', terms: ['collector', 'habitat'] }], [collector, 'habitat'])).toEqual([
+      { kind: 'entry', entry: collector },
+      { kind: 'entry', entry: 'habitat' },
     ]);
   });
 });

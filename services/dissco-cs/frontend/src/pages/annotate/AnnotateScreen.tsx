@@ -19,7 +19,7 @@ import { useProjectManual } from '../../hooks/use-project-manual';
 import { ForumTopicInput, MadocBoxSelectorState } from '@dissco-cs/shared-types';
 import { AnnotateLayout } from './AnnotateLayout';
 import { OpenSeadragonViewer } from '../../components/iiif/OpenSeadragonViewer';
-import { CaptureModelForm } from './form/CaptureModelForm';
+import { CaptureModelForm } from '../../components/capture-model-form/CaptureModelForm';
 import { DocumentPath } from '../../utility/annotation-document';
 import { getImageServiceId } from '../../utility/get-image-service-id';
 import { isContributorLimitReached } from './claim-errors';
@@ -76,6 +76,7 @@ export function AnnotateScreen() {
 
   const modelQuery = useQuery({ ...captureModelQueries.model(prepared?.model?.id), retry: false });
   const model = modelQuery.data;
+  const formLayoutQuery = useQuery(projectQueries.formLayout(project?.slug));
 
   const claim = useTaskClaim({
     projectId: project?.id,
@@ -197,7 +198,8 @@ export function AnnotateScreen() {
     return <AnnotatePageError projectSlug={project?.slug} error={{ kind: 'no-model' }} />;
   }
 
-  if (!project || !model || !doc.annotationDocument || !manifestId) {
+  // Waiting for the layout too, so the form does not first appear in Madoc's order and then jump.
+  if (!project || !model || !doc.annotationDocument || !manifestId || formLayoutQuery.isPending) {
     return (
       <CsPage>
         <LoadingText />
@@ -254,6 +256,7 @@ export function AnnotateScreen() {
               readOnly={isSubmittedTask}
               readOnlyBanner={isSubmittedTask ? t('annotate_already_submitted') : undefined}
               onShowHelp={key => forumGuard.guard(() => panel.showHelp(key))}
+              layout={formLayoutQuery.data?.items}
             />
           }
           panel={

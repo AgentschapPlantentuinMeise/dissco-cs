@@ -1,43 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { projectKeys } from '../../../api/queries/projects';
-import { manualKeys } from '../../../api/queries/manuals';
-import { institutionKeys } from '../../../api/queries/institutions';
-import { projectsApi } from '../../../api/cs-client/projects';
-import { SaveButton } from '../../../components/ui/SaveButton';
-import { CancelButton } from '../../../components/ui/CancelButton';
-import { DiscardDialog } from '../../../components/ui/DiscardDialog';
-import { useDiscardGuard } from '../../../hooks/use-discard-guard';
-import { ListWithPanel } from '../../../components/layout/ListWithPanel';
-import { IconButton } from '../../../components/ui/IconButton';
-import { LuPencil } from 'react-icons/lu';
 import { Select } from '../../../components/ui/Select';
-import { manualHasContent } from './manual-content';
 import { localeText } from '../../../utility/locale-text';
 import { siteLangText } from '../../../utility/site-lang-text';
-import { MadocProjectDto, InstitutionDto, ManualSummaryDto } from '@dissco-cs/shared-types';
-import { rowHoverClass, savedRowClass } from '../../../components/ui/list-styles';
-import { SavedNotice } from '../../../components/ui/SavedNotice';
-import { useSavedFlash } from '../../../hooks/use-saved-flash';
-import { filterFieldClass, inputClass } from '../../../components/ui/input-styles';
-import { FormField } from '../../../components/ui/FormField';
-import { EmptyText } from '../../../components/layout/EmptyText';
+import { FormDto, MadocProjectDto, InstitutionDto, ManualSummaryDto } from '@dissco-cs/shared-types';
+import { rowHoverClass } from '../../../components/ui/list-styles';
+import { filterFieldClass } from '../../../components/ui/input-styles';
+import { MadocProjectAdminLink } from '../../../components/projects/MadocProjectAdminLink';
 
-export function ProjectsSubview({ projects, manuals, institutions, institutionLinks }: {
+// Read only: a project gets its institution and manual through its form name, which is
+// set on the Forms page.
+export function ProjectsSubview({ projects, manuals, institutions, forms }: {
   projects: MadocProjectDto[];
   manuals: ManualSummaryDto[];
   institutions: InstitutionDto[];
-  institutionLinks: Record<string, number>;
+  forms: FormDto[];
 }) {
   const { t, i18n } = useTranslation('dissco-cs');
   const projectLabel = (project: MadocProjectDto) => localeText(project.label, i18n.language) || project.slug;
-  const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterInstitutionId, setFilterInstitutionId] = useState<'all' | 'none' | string>('all');
   const [filterManualId, setFilterManualId] = useState<'all' | 'none' | string>('all');
-  const [pickedInstitutionId, setPickedInstitutionId] = useState<number | ''>('');
-  const [pickedManualId, setPickedManualId] = useState<number | ''>('');
+
+  const formBySlug = new Map(forms.flatMap(form => form.projects.map(project => [project.slug, form] as const)));
 
   const filteredProjects = projects.filter(project => {
     const matchesSearch = projectLabel(project)
@@ -45,77 +30,23 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
       .includes(searchQuery.trim().toLowerCase());
     if (!matchesSearch) return false;
 
-    const institutionId = institutionLinks[project.slug];
-    if (filterInstitutionId === 'none' && institutionId !== undefined) return false;
+    const form = formBySlug.get(project.slug);
+    const institutionId = form?.institutionId ?? null;
+    if (filterInstitutionId === 'none' && institutionId !== null) return false;
     if (filterInstitutionId !== 'all' && filterInstitutionId !== 'none' && String(institutionId) !== filterInstitutionId) return false;
 
-    const linkedManual = manuals.find(m => m.linkedProjectSlugs.includes(project.slug));
-    if (filterManualId === 'none' && linkedManual) return false;
-    if (filterManualId !== 'all' && filterManualId !== 'none' && String(linkedManual?.id) !== filterManualId) return false;
+    const manualId = form?.manualId ?? null;
+    if (filterManualId === 'none' && manualId !== null) return false;
+    if (filterManualId !== 'all' && filterManualId !== 'none' && String(manualId) !== filterManualId) return false;
 
     return true;
   });
-
-  const editingProject = editingSlug ? projects.find(p => p.slug === editingSlug) ?? null : null;
-  const linkedManual = editingProject
-    ? manuals.find(m => m.linkedProjectSlugs.includes(editingProject.slug))
-    : undefined;
-
-  // Re-initializes the fields when the edited row changes or after a successful save (which
-  // refreshes institutionLinks/manuals).
-  useEffect(() => {
-    if (!editingProject) return;
-    setPickedInstitutionId(institutionLinks[editingProject.slug] ?? '');
-    setPickedManualId(linkedManual ? linkedManual.id : '');
-    // Only editingProject.slug and linkedManual.id are read here, not the objects themselves --
-    // listing the full objects would re-run this on every projects/manuals refetch that returns a
-    // new array reference, even when the actual selection hasn't changed.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editingProject?.slug, institutionLinks, linkedManual?.id]);
-
-  const canSave = pickedInstitutionId !== '' && pickedManualId !== '';
-  const discardGuard = useDiscardGuard(
-    !!editingProject &&
-      (pickedInstitutionId !== (institutionLinks[editingProject.slug] ?? '') || pickedManualId !== (linkedManual?.id ?? ''))
-  );
-
-  const queryClient = useQueryClient();
-  const { savedId: savedSlug, flash } = useSavedFlash<string>();
-  const { mutate: saveLinks, isPending: saving } = useMutation({
-    mutationFn: async ({ slug, institutionId, manualId }: { slug: string; institutionId: number; manualId: number }) => {
-      await projectsApi.setInstitutionLink(slug, institutionId);
-      await projectsApi.setManualLink(slug, manualId);
-    },
-    onSuccess: async (_result, { slug }) => {
-      // The admin lists here plus the public project page (its institution and manual). The row
-      // closes only once they are refreshed, otherwise it shows the old values for a moment.
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: projectKeys.institutionLinks() }),
-        queryClient.invalidateQueries({ queryKey: projectKeys.institution(slug) }),
-        queryClient.invalidateQueries({ queryKey: projectKeys.manual(slug) }),
-        queryClient.invalidateQueries({ queryKey: institutionKeys.all }),
-        queryClient.invalidateQueries({ queryKey: manualKeys.all }),
-      ]);
-      setEditingSlug(null);
-      flash(slug);
-    },
-  });
-
-  const save = () => {
-    if (!editingProject || !canSave) return;
-    saveLinks({ slug: editingProject.slug, institutionId: Number(pickedInstitutionId), manualId: Number(pickedManualId) });
-  };
 
   return (
     <div>
       <p className="text-sm text-gray-500 mb-4">{t('sm_project_links_intro')}</p>
 
-      <ListWithPanel
-        panelKey={editingSlug}
-        onClose={() => discardGuard.guard(() => setEditingSlug(null))}
-        panelTitle={editingProject && projectLabel(editingProject)}
-        list={
-      <div className="bg-white border-t border-gray-200">
+      <div className="bg-white border-t border-gray-200 overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
             <tr className="text-left text-[0.7rem] uppercase tracking-wide text-gray-400">
@@ -128,6 +59,7 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
                   className={filterFieldClass}
                 />
               </th>
+              <th className="px-4 py-3 font-bold align-top">{t('sm_form_layouts_table_form')}</th>
               <th className="px-4 py-3 font-bold align-top">
                 <div className="mb-1.5">{t('sm_project_institution_label')}</div>
                 <Select
@@ -160,21 +92,22 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
                   ))}
                 </Select>
               </th>
-              <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody>
             {filteredProjects.map(project => {
-              const linked = manuals.find(m => m.linkedProjectSlugs.includes(project.slug));
-              const institution = institutions.find(inst => inst.id === institutionLinks[project.slug]);
-              const isEditing = editingSlug === project.slug;
+              const form = formBySlug.get(project.slug);
+              const linked = manuals.find(m => m.id === form?.manualId);
+              const institution = institutions.find(inst => inst.id === form?.institutionId);
               return (
-                <tr
-                  key={project.slug}
-                  className={`${rowHoverClass} ${isEditing ? 'bg-gray-50' : savedSlug === project.slug ? savedRowClass : ''}`}
-                >
+                <tr key={project.slug} className={rowHoverClass}>
                   <td className="px-4 py-3 border-t border-gray-100 align-top">
-                    <b>{projectLabel(project)}</b>
+                    <b>
+                      <MadocProjectAdminLink project={project} />
+                    </b>
+                  </td>
+                  <td className="px-4 py-3 border-t border-gray-100 text-sm text-gray-500 align-top">
+                    {form?.formName ?? t('sm_manuals_chip_none')}
                   </td>
                   <td className="px-4 py-3 border-t border-gray-100 text-sm text-gray-500 align-top">
                     {institution ? siteLangText(institution.name, i18n.language, `#${institution.id}`) : t('sm_manuals_chip_none')}
@@ -182,79 +115,12 @@ export function ProjectsSubview({ projects, manuals, institutions, institutionLi
                   <td className="px-4 py-3 border-t border-gray-100 text-sm text-gray-500 align-top">
                     {linked ? siteLangText(linked.title, i18n.language, `#${linked.id}`) : t('sm_manuals_chip_none')}
                   </td>
-                  <td className="px-4 py-3 border-t border-gray-100 text-right whitespace-nowrap align-top">
-                    <span className="inline-flex items-center gap-4">
-                      {savedSlug === project.slug && <SavedNotice />}
-                      <IconButton icon={LuPencil} label={t('common_edit')} onClick={() => discardGuard.guard(() => setEditingSlug(project.slug))} />
-                    </span>
-                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
-        }
-        panel={editingProject ? (
-          <div className="flex flex-col gap-4">
-            <FormField label={t('sm_project_institution_label')}>
-              <Select
-                value={pickedInstitutionId}
-                onChange={e => setPickedInstitutionId(e.target.value ? Number(e.target.value) : '')}
-                className={`${inputClass} w-full`}
-              >
-                {pickedInstitutionId === '' && (
-                  <option value="" disabled>
-                    {t('sm_project_institution_placeholder')}
-                  </option>
-                )}
-                {institutions.map(inst => (
-                  <option key={inst.id} value={inst.id}>
-                    {siteLangText(inst.name, i18n.language, `#${inst.id}`)}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-            {manuals.length === 0 ? (
-              <EmptyText compact>{t('sm_manuals_empty')}</EmptyText>
-            ) : (
-              <FormField label={t('sm_project_manual_label')}>
-                <Select
-                  value={pickedManualId}
-                  onChange={e => setPickedManualId(e.target.value ? Number(e.target.value) : '')}
-                  className={`${inputClass} w-full`}
-                >
-                  {pickedManualId === '' && (
-                    <option value="" disabled>
-                      {t('sm_manuals_pick_placeholder')}
-                    </option>
-                  )}
-                  {manuals.map(manual => {
-                    const hasContent = manualHasContent(manual);
-                    return (
-                      <option key={manual.id} value={manual.id} disabled={!hasContent}>
-                        {siteLangText(manual.title, i18n.language, `#${manual.id}`)}
-                        {!hasContent
-                          ? ` — ${t('sm_manuals_empty_note')}`
-                          : manual.linkedProjectSlugs.length > 0
-                            ? ` — ${t('sm_manuals_used_by_count', { count: manual.linkedProjectSlugs.length })}`
-                            : ''}
-                      </option>
-                    );
-                  })}
-                </Select>
-                <span className="text-xs text-gray-500">{t('sm_project_manual_edit_hint')}</span>
-              </FormField>
-            )}
-            <div className="flex items-center gap-3">
-              <SaveButton onClick={save} disabled={!canSave} loading={saving} />
-              <CancelButton onClick={() => discardGuard.guard(() => setEditingSlug(null))} />
-            </div>
-          </div>
-        ) : null}
-      />
-
-      <DiscardDialog guard={discardGuard} />
     </div>
   );
 }

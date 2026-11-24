@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ManualSummaryDto, attachmentLangsAfterSave, checkManualContent } from '@dissco-cs/shared-types';
 
-import { manualHasContent } from '../../../../src/pages/site-management/project-management/manual-content';
+import { manualHasContent } from '../../../src/components/manuals/manual-content';
 
 const allText = { nl: 'tekst', en: 'text', fr: 'texte', de: 'Text' };
 const ALL = ['nl', 'en', 'fr', 'de'] as const;

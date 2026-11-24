@@ -3,6 +3,8 @@ import { Context, Hono } from 'hono';
 import { HonourBoardQuarterDto, HonourBoardQuarterKey } from '@dissco-cs/shared-types';
 
 import { InstitutionsRepository } from '../repositories/institutions.repository.js';
+import { FormsRepository } from '../repositories/forms.repository.js';
+import { listInstitutionProjectSlugs } from './forms.lookup.js';
 import { requestMadocUserIdentity, requireSiteId } from '../auth/auth.js';
 import { HonourBoardQuarterLoader } from '../madoc-db/honour-board.loader.js';
 import { quarterToDto } from '../madoc-db/honour-board.logic.js';
@@ -17,6 +19,7 @@ import { honourBoardQuarter, safeSegment, validateParams } from '../infrastructu
 // Exception: the site's volunteer count is recalculated at most every 5 minutes, also via /current.
 export function statsController(
   institutionsRepository: InstitutionsRepository,
+  formsRepository: FormsRepository,
   statsRepository: StatsRepository,
   quarterLoader: HonourBoardQuarterLoader
 ): Hono {
@@ -97,7 +100,7 @@ export function statsController(
       return scope;
     }
 
-    const projectSlugs = await institutionsRepository.listProjectSlugsForInstitution(scope.siteId, scope.institutionId);
+    const projectSlugs = await listInstitutionProjectSlugs(formsRepository, scope.siteId, scope.institutionId);
     const overview = await statsRepository.getInstitution(scope.siteId, scope.institutionId, projectSlugs);
     return c.json(overview);
   });
@@ -113,7 +116,7 @@ export function statsController(
       return c.json(cached);
     }
 
-    const projectSlugs = await institutionsRepository.listProjectSlugsForInstitution(scope.siteId, scope.institutionId);
+    const projectSlugs = await listInstitutionProjectSlugs(formsRepository, scope.siteId, scope.institutionId);
     const overview = await statsRepository.getInstitution(scope.siteId, scope.institutionId, projectSlugs);
     return c.json(overview);
   });

@@ -126,7 +126,7 @@ export class StatsRepository {
 
   // ---- institution ----
 
-  // Turns project slugs (from dissco-cs's own institution links) into Madoc's project rows.
+  // Turns project slugs (the projects whose form name is linked to the institution) into Madoc's project rows.
   async resolveProjects(siteId: number, projectSlugs: string[]): Promise<InstitutionProjectRow[]> {
     if (projectSlugs.length === 0) {
       return [];
@@ -151,7 +151,7 @@ export class StatsRepository {
     });
   }
 
-  // Scoped to one institution's linked projects (dissco_cs.project_institution_links) instead of
+  // Scoped to one institution's projects (through dissco_cs.forms) instead of
   // every project on the site. "Projects completed" here means 100% transcribed (completed >= total
   // manifests), not a Madoc project status -- so totals are computed per project (GROUP BY) rather
   // than as one site-wide sum, then classified in application code.

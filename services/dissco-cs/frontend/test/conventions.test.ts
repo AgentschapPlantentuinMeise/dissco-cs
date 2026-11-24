@@ -35,7 +35,7 @@ const rules: ConventionRule[] = [
     instead: 'a method in api/cs-client/ (our backend) or api/madoc-auth/',
     allowedIn: {
       'api/': 'the api layer itself',
-      'pages/annotate/form/fields/AutocompleteField.tsx': 'external autocomplete source configured in the capture model, not our backend',
+      'components/capture-model-form/fields/AutocompleteField.tsx': 'external autocomplete source configured in the capture model, not our backend',
     },
   },
   {
@@ -230,7 +230,6 @@ const rules: ConventionRule[] = [
     instead: '<LanguageTabs selected onSelect isMissing /> (components/ui/LanguageTabs.tsx)',
     allowedIn: {
       'components/ui/LanguageTabs.tsx': 'the component itself',
-      'pages/site-management/project-management/ManualForm.tsx': 'names the missing languages inside a message, not buttons',
     },
   },
   {
@@ -332,7 +331,7 @@ const rules: ConventionRule[] = [
     instead:
       '<FormField error> under a field, <FieldErrorText> where a field cannot sit in a FormField, <FormError> for a refusal under a form',
     allowedIn: {
-      'pages/site-management/project-management/ManualsSubview.tsx': 'the "incomplete" label in the manuals table is a status of a row, not a form error',
+      'pages/site-management/manual-management/ManualManagement.tsx': 'the "incomplete" label in the manuals table is a status of a row, not a form error',
     },
   },
   {

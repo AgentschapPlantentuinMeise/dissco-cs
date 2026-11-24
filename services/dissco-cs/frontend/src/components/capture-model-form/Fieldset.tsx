@@ -1,5 +1,5 @@
 import React from 'react';
-import { Disclosure } from '../../../components/ui/Disclosure';
+import { Disclosure } from '../ui/Disclosure';
 
 // `collapsible` separates two uses: an entity group gets a fixed frame (a border to show its fields
 // belong together, no open/close), while the sections of a 'tabs' model can be opened and closed.

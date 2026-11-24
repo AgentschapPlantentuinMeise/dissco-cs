@@ -2,6 +2,8 @@ import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { requireSiteAdmin, requireSiteId } from '../auth/auth.js';
 import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
+import { FormsRepository } from '../repositories/forms.repository.js';
+import { listInstitutionProjectSlugs } from './forms.lookup.js';
 import { intId, safeSegment, validateParams } from '../infrastructure/validate-params.js';
 import { validateMultipart } from '../infrastructure/validate-multipart.js';
 import { Upload, checkUpload, sendFile, uploadLimit } from '../infrastructure/file-http.js';
@@ -31,7 +33,7 @@ async function readLogo(c: Context, files: Record<string, File>): Promise<Upload
   return file ? checkUpload(c, file, MAX_IMAGE_UPLOAD_SIZE, IMAGE_UPLOAD_MIME_TYPES) : null;
 }
 
-export function institutionsController(institutionsRepository: InstitutionsRepository): Hono {
+export function institutionsController(institutionsRepository: InstitutionsRepository, formsRepository: FormsRepository): Hono {
   const app = new Hono();
 
   app.get('/active', async c => {
@@ -69,7 +71,7 @@ export function institutionsController(institutionsRepository: InstitutionsRepos
       return c.notFound();
     }
 
-    const projectSlugs = await institutionsRepository.listProjectSlugsForInstitution(siteId, institution.id);
+    const projectSlugs = await listInstitutionProjectSlugs(formsRepository, siteId, institution.id);
     return c.json({ projectSlugs });
   });
 

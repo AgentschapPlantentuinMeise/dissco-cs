@@ -1,7 +1,13 @@
 import { useTranslation } from 'react-i18next';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { manualKeys } from '../../../api/queries/manuals';
-import { projectKeys } from '../../../api/queries/projects';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { manualKeys, manualQueries } from '../../../api/queries/manuals';
+import { projectKeys, projectQueries } from '../../../api/queries/projects';
+import { failedToLoad, loadState } from '../../../api/query-state';
+import { CsPage } from '../../../components/layout/CsPage';
+import { PageHeader } from '../../../components/layout/PageHeader';
+import { PageBody } from '../../../components/layout/PageBody';
+import { LoadingText } from '../../../components/layout/LoadingText';
+import { ManageLoadError } from '../ManageLoadError';
 import { manualsApi } from '../../../api/cs-client/manuals';
 import { Button } from '../../../components/ui/Button';
 import { IconButton } from '../../../components/ui/IconButton';
@@ -12,21 +18,23 @@ import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
 import { ListWithPanel } from '../../../components/layout/ListWithPanel';
 import { useItemEditor } from '../../../hooks/use-item-editor';
 import { EMPTY_MANUAL_DRAFT, ManualDraft, ManualForm } from './ManualForm';
-import { manualHasContent } from './manual-content';
+import { manualHasContent } from '../../../components/manuals/manual-content';
 import { localeText } from '../../../utility/locale-text';
 import { siteLangText } from '../../../utility/site-lang-text';
-import { MadocProjectDto, ManualSummaryDto, SITE_PAGE_LANGS, SitePageLang, manualSaveSchema } from '@dissco-cs/shared-types';
+import { ManualSummaryDto, SITE_PAGE_LANGS, SitePageLang, manualSaveSchema } from '@dissco-cs/shared-types';
 import { rowHoverClass, savedRowClass } from '../../../components/ui/list-styles';
 import { SavedNotice } from '../../../components/ui/SavedNotice';
 import { useSavedFlash } from '../../../hooks/use-saved-flash';
 import { EmptyText } from '../../../components/layout/EmptyText';
 import { formatDay } from '../../../utility/format-date';
 
-export function ManualsSubview({ projects, manuals }: {
-  projects: MadocProjectDto[];
-  manuals: ManualSummaryDto[];
-}) {
+export function ManualManagement() {
   const { t, i18n } = useTranslation('dissco-cs');
+  const manualsQuery = useQuery(manualQueries.list());
+  // Every status, so a manual linked only to an unpublished project still shows that project's name.
+  const projectsQuery = useQuery(projectQueries.listAll());
+  const manuals = manualsQuery.data ?? [];
+  const projects = projectsQuery.data ?? [];
   const {
     editingId,
     isFormOpen,
@@ -100,13 +108,22 @@ export function ManualsSubview({ projects, manuals }: {
     },
   });
 
-  return (
-    <div>
-      <div className="flex justify-end mb-4">
-        <Button size="sm" onClick={startCreate}>{t('sm_manuals_new')}</Button>
-      </div>
+  // The project names are only a nicer label than the slug, so the page works without them.
+  if (failedToLoad(manualsQuery)) return <ManageLoadError />;
 
-      {manuals.length === 0 && !isFormOpen ? (
+  return (
+    <CsPage>
+      <PageBody>
+      <PageHeader
+        variant="plain"
+        back={{ href: '/manage', label: t('sm_back_to_hub') }}
+        title={t('sm_tile_manuals_title')}
+        actions={<Button size="sm" onClick={startCreate}>{t('sm_manuals_new')}</Button>}
+      />
+
+      {loadState(manualsQuery) === 'loading' ? (
+        <LoadingText />
+      ) : manuals.length === 0 && !isFormOpen ? (
         <EmptyText>{t('sm_manuals_empty')}</EmptyText>
       ) : (
       <ListWithPanel
@@ -197,6 +214,7 @@ export function ManualsSubview({ projects, manuals }: {
       )}
 
       <DiscardDialog guard={discardGuard} />
-    </div>
+      </PageBody>
+    </CsPage>
   );
 }

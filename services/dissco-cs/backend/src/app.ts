@@ -14,6 +14,7 @@ import { clientErrorsController } from './controllers/client-errors.controller.j
 import { contactController } from './controllers/contact.controller.js';
 import { captureModelsController } from './controllers/capture-models.controller.js';
 import { forumController } from './controllers/forum.controller.js';
+import { formsController } from './controllers/forms.controller.js';
 import { iiifController } from './controllers/iiif.controller.js';
 import { institutionsController } from './controllers/institutions.controller.js';
 import { manualsController } from './controllers/manuals.controller.js';
@@ -56,13 +57,14 @@ export function createDisscoCSApp(
   app.route('/api/dissco-cs/site-images', siteImagesController(database.siteImages));
   app.route('/api/dissco-cs/home-steps', homeStepsController(database.homeSteps));
   app.route('/api/dissco-cs/announcements', announcementsController(database.announcements));
-  app.route('/api/dissco-cs/institutions', institutionsController(database.institutions));
-  app.route('/api/dissco-cs/stats', statsController(database.institutions, statsRepository, quarterLoader));
-  app.route('/api/dissco-cs/projects', projectsController(database.institutions, database.manuals));
+  app.route('/api/dissco-cs/institutions', institutionsController(database.institutions, database.forms));
+  app.route('/api/dissco-cs/stats', statsController(database.institutions, database.forms, statsRepository, quarterLoader));
+  app.route('/api/dissco-cs/projects', projectsController(database.institutions, database.manuals, database.forms));
   app.route('/api/dissco-cs/tasks', tasksController());
   app.route('/api/dissco-cs/iiif', iiifController());
   app.route('/api/dissco-cs/capture-models', captureModelsController());
-  app.route('/api/dissco-cs/manuals', manualsController(database.manuals));
+  app.route('/api/dissco-cs/manuals', manualsController(database.manuals, database.forms));
+  app.route('/api/dissco-cs/forms', formsController(database.forms, database.institutions, database.manuals));
   app.route('/api/dissco-cs/review', reviewController());
   app.route('/api/dissco-cs/feedback', feedbackController(database.feedback));
   app.route('/api/dissco-cs/user-profile', userProfileController(database.userProfile));

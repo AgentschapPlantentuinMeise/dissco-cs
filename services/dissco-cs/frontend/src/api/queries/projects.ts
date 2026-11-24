@@ -14,6 +14,8 @@ export const projectKeys = {
   taskDebug: (projectId: string | number | undefined) => [...projectKeys.all, 'task-debug', String(projectId)] as const,
   manuals: () => [...projectKeys.all, 'manual'] as const,
   manual: (projectSlug: string | undefined) => [...projectKeys.manuals(), projectSlug] as const,
+  formLayouts: () => [...projectKeys.all, 'form-layout'] as const,
+  formLayout: (projectSlug: string | undefined) => [...projectKeys.formLayouts(), projectSlug] as const,
   institution: (projectSlug: string | undefined) => [...projectKeys.all, 'institution', projectSlug] as const,
   institutionLinks: () => [...projectKeys.all, 'institution-links'] as const,
   prepareClaim: (projectId: string | number | undefined, manifestId: number | undefined) =>
@@ -43,6 +45,14 @@ export const projectQueries = {
 
   manual: (projectSlug: string | undefined) =>
     queryOptions({ queryKey: projectKeys.manual(projectSlug), queryFn: () => projectsApi.getManual(projectSlug!), enabled: !!projectSlug }),
+
+  // A project without a layout answers 404, so data stays undefined and the form follows the model.
+  formLayout: (projectSlug: string | undefined) =>
+    queryOptions({
+      queryKey: projectKeys.formLayout(projectSlug),
+      queryFn: () => projectsApi.getFormLayout(projectSlug!),
+      enabled: !!projectSlug,
+    }),
 
   institution: (projectSlug: string | undefined) =>
     queryOptions({

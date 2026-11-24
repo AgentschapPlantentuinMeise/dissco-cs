@@ -3,6 +3,13 @@ import { SitePageLang } from '@dissco-cs/shared-types';
 import { LANGUAGES } from '../../utility/site-lang-text';
 import { Tabs } from './Tabs';
 
+// The names of site languages in the visitor's language, joined for a message such as "the title
+// is missing in: English, French".
+export function useLanguageNames() {
+  const { t } = useTranslation('dissco-cs');
+  return (langs: SitePageLang[]) => langs.map(lang => t(`lang_${lang}`)).join(', ');
+}
+
 // The language tabs above a multilingual form (one per site language). `isMissing` marks a
 // language that still needs content with a small dot.
 export function LanguageTabs({ selected, onSelect, isMissing }: {

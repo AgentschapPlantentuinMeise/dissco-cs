@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { MadocAnnotationDocumentDto, MadocBaseFieldDto, MadocStructureNodeDto } from '@dissco-cs/shared-types';
 
-import { collectFieldHelp, fieldHelpKey, helpModelsFor } from '../../../src/pages/annotate/field-help';
+import { collectFieldHelp, helpModelsFor } from '../../../src/pages/annotate/field-help';
+import { fieldHelpKey } from '../../../src/utility/annotation-document';
 
 type ModelNode = MadocStructureNodeDto & { type: 'model' };
 

@@ -1,7 +1,9 @@
 ﻿import { useTranslation } from 'react-i18next';
 import {
   LuAward,
+  LuBookOpen,
   LuBuilding2,
+  LuClipboardList,
   LuFileText,
   LuFolder,
   LuImage,
@@ -35,6 +37,8 @@ export function SiteManagement() {
       titleKey: 'sm_group_projects',
       links: [
         { href: '/manage/projects', icon: LuFolder, titleKey: 'sm_tile_projects_title', descKey: 'sm_tile_projects_desc' },
+        { href: '/manage/forms', icon: LuClipboardList, titleKey: 'sm_tile_forms_title', descKey: 'sm_tile_forms_desc' },
+        { href: '/manage/manuals', icon: LuBookOpen, titleKey: 'sm_tile_manuals_title', descKey: 'sm_tile_manuals_desc' },
         { href: '/manage/institutions', icon: LuBuilding2, titleKey: 'sm_tile_institutions_title', descKey: 'sm_tile_institutions_desc' },
       ],
     },

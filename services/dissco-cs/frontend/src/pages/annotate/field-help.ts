@@ -1,6 +1,5 @@
 import { MadocAnnotationDocumentDto, MadocModelFields, MadocNestedModelFields, MadocStructureNodeDto } from '@dissco-cs/shared-types';
-import { DocumentPath } from '../../utility/annotation-document';
-import { isDependentSatisfied, isEntityList, resolveSectionModels } from './form/capture-model-rules';
+import { isDependentSatisfied, isEntityList, resolveSectionModels } from '../../components/capture-model-form/capture-model-rules';
 
 // The help a model author wrote in Madoc's model editor: "Instructions" on a model, "Description"
 // on a field or a group of fields (entity). The annotate page shows it in the Uitleg panel.
@@ -24,16 +23,6 @@ export interface FieldHelpGroup {
 export interface FieldHelp {
   instructions: string[];
   groups: FieldHelpGroup[];
-}
-
-/**
- * The key that links a field's question mark to its help: the terms of its document path without
- * the list positions, so every copy of a repeated field or group points to the same help.
- * @param path the field's document path, e.g. ['identification', 0, 'name', 0]
- * Returns: e.g. 'identification.name'.
- */
-export function fieldHelpKey(path: DocumentPath): string {
-  return path.filter(part => typeof part === 'string').join('.');
 }
 
 /**

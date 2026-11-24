@@ -11,6 +11,7 @@ import {
   MAX_INSTITUTION_PHONE_LENGTH,
   MAX_INSTITUTION_SLUG_LENGTH,
   MAX_INSTITUTION_WEBSITE_LENGTH,
+  MAX_FORM_NAME_LENGTH,
   MAX_PROJECT_SLUG_LENGTH,
   MAX_SITE_IMAGE_CREDIT_LENGTH,
 } from '@dissco-cs/shared-types';
@@ -148,22 +149,6 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
     `);
 
     await client.query(`
-      CREATE TABLE IF NOT EXISTS ${schemaRef}.project_institution_links (
-        site_id INTEGER NOT NULL,
-        project_slug VARCHAR(${MAX_PROJECT_SLUG_LENGTH}) NOT NULL,
-        institution_id BIGINT NOT NULL REFERENCES ${schemaRef}.institutions (id) ON DELETE CASCADE,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_by INTEGER NOT NULL,
-        PRIMARY KEY (site_id, project_slug)
-      )
-    `);
-
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS project_institution_links_institution_idx
-      ON ${schemaRef}.project_institution_links (institution_id)
-    `);
-
-    await client.query(`
       CREATE TABLE IF NOT EXISTS ${schemaRef}.manuals (
         id BIGSERIAL PRIMARY KEY,
         site_id INTEGER NOT NULL,
@@ -179,22 +164,6 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
     await client.query(`
       CREATE INDEX IF NOT EXISTS manuals_site_idx
       ON ${schemaRef}.manuals (site_id)
-    `);
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS ${schemaRef}.project_manual_links (
-        site_id INTEGER NOT NULL,
-        project_slug VARCHAR(${MAX_PROJECT_SLUG_LENGTH}) NOT NULL,
-        manual_id BIGINT NOT NULL REFERENCES ${schemaRef}.manuals (id) ON DELETE CASCADE,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_by INTEGER NOT NULL,
-        PRIMARY KEY (site_id, project_slug)
-      )
-    `);
-
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS project_manual_links_manual_idx
-      ON ${schemaRef}.project_manual_links (manual_id)
     `);
 
     await client.query(`
@@ -338,6 +307,26 @@ export async function runMigrations(pool: Pool, schemaRef: string): Promise<void
         PRIMARY KEY (site_id, quarter)
       )
     `);
+
+    // What every project with this Madoc form name gets: its institution, manual and layout (null:
+    // Madoc's own field order). Deleting the institution or manual only empties its column, so the
+    // rest of the form stays. template_project_id is a Madoc project id (no foreign key: projects
+    // live in Madoc's database); the admin list ignores it once that project no longer has the form.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS ${schemaRef}.forms (
+        site_id INTEGER NOT NULL,
+        form_name VARCHAR(${MAX_FORM_NAME_LENGTH}) NOT NULL,
+        template_project_id INTEGER,
+        institution_id BIGINT REFERENCES ${schemaRef}.institutions (id) ON DELETE SET NULL,
+        manual_id BIGINT REFERENCES ${schemaRef}.manuals (id) ON DELETE SET NULL,
+        layout_items JSONB,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_by INTEGER NOT NULL,
+        PRIMARY KEY (site_id, form_name)
+      )
+    `);
+
+ 
 
     // Errors only (level 'error'); requests go to stdout. Old rows are not cleaned up yet.
     await client.query(`

@@ -8,6 +8,9 @@ import {
   toManualSummaryDto,
 } from '../repositories/manuals.repository.js';
 import { requireSiteAdmin } from '../auth/auth.js';
+import { fromBigint } from '../database/bigint.js';
+import { FormsRepository } from '../repositories/forms.repository.js';
+import { listManualProjectSlugs } from './forms.lookup.js';
 import { intId, validateParams } from '../infrastructure/validate-params.js';
 import { MultipartBody, validateMultipart } from '../infrastructure/validate-multipart.js';
 import { checkUpload, uploadLimit } from '../infrastructure/file-http.js';
@@ -27,7 +30,7 @@ import {
 // 3 bytes in UTF-8. The gateway's limit for this route (dissco-cs-api.conf) must stay above this.
 const MAX_MANUAL_SAVE_SIZE = SITE_PAGE_LANGS.length * (MAX_MANUAL_ATTACHMENT_LENGTH + 3 * MAX_MANUAL_CONTENT_LENGTH);
 
-export function manualsController(manualsRepository: ManualsRepository): Hono {
+export function manualsController(manualsRepository: ManualsRepository, formsRepository: FormsRepository): Hono {
   const app = new Hono();
 
   // Checks the whole save before anything is written (400, 413, 415), then saves it as one.
@@ -65,8 +68,13 @@ export function manualsController(manualsRepository: ManualsRepository): Hono {
       return identity;
     }
 
-    const manuals = await manualsRepository.listManuals(identity.siteId);
-    return c.json({ manuals: manuals.map(toManualSummaryDto) });
+    const [manuals, slugsByManual] = await Promise.all([
+      manualsRepository.listManuals(identity.siteId),
+      listManualProjectSlugs(formsRepository, identity.siteId),
+    ]);
+    return c.json({
+      manuals: manuals.map(manual => toManualSummaryDto({ ...manual, linkedProjectSlugs: slugsByManual.get(fromBigint(manual.id)) ?? [] })),
+    });
   });
 
   app.post('/', uploadLimit(MAX_MANUAL_SAVE_SIZE), validateMultipart(manualSaveSchema), async c => {

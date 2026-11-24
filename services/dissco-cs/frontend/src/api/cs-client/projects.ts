@@ -1,6 +1,7 @@
 import { csFetch, csFetchField } from './request';
 import { urlPath, withSite } from '../url';
 import {
+  FormLayoutDto,
   InstitutionDto,
   ManualDetailDto,
   MadocCreateResourceClaimDto,
@@ -178,10 +179,22 @@ export const projectsApi = {
    */
   getTaskDebug: (projectId: string | number) => csFetch<ProjectDebugDto>(urlPath`/projects/${projectId}/task-debug`),
 
+  // ---- the project's form layout ----
+
+  /**
+   * The form layout of a project: the layout of the project's form name.
+   * @param projectSlug the project's slug (MadocProjectDto.slug)
+   * Who: logged-in user.
+   * Returns: FormLayoutDto; 404 when the project's form name has no layout, or when the project is
+   *   not known yet (a new project or a renamed model shows up within about a minute).
+   */
+  getFormLayout: (projectSlug: string) => csFetch<FormLayoutDto>(urlPath`/projects/${projectSlug}/form-layout`),
+
   // ---- the project's manual ----
 
   /**
-   * The manual linked to a project: title, text and attachments per language.
+   * The manual of a project, through the project's form name: title, text and
+   * attachments per language.
    * @param projectSlug the project's slug
    * Who: anyone.
    * Returns: ManualDetailDto; 404 when the project has no manual.
@@ -198,35 +211,10 @@ export const projectsApi = {
   manualAttachmentUrl: (projectSlug: string, lang: SitePageLang) =>
     withSite(urlPath`/api/dissco-cs/projects/${projectSlug}/manual/attachment/${lang}`),
 
-  /**
-   * Links a project to a manual, or unlinks it.
-   * @param projectSlug the project's slug
-   * @param manualId the manual (ManualSummaryDto.id), or null to unlink
-   * Who: site admin.
-   * Returns: nothing (204); 404 unknown manual.
-   */
-  setManualLink: (projectSlug: string, manualId: number | null) =>
-    csFetch<void>(urlPath`/projects/${projectSlug}/manual-link`, {
-      method: 'PUT',
-      body: JSON.stringify({ manualId }),
-    }),
-
-  /**
-   * Removes manual links of projects that no longer exist in Madoc.
-   * @param liveSlugs the slugs of every project that still exists (from listAll)
-   * Who: site admin.
-   * Returns: the number of links removed.
-   */
-  pruneManualLinks: (liveSlugs: string[]) =>
-    csFetchField<number>('/projects/manual-links/prune', 'removed', {
-      method: 'POST',
-      body: JSON.stringify({ liveSlugs }),
-    }),
-
   // ---- the project's institution ----
 
   /**
-   * The active institution a project is linked to.
+   * The active institution of a project, through the project's form name.
    * @param projectSlug the project's slug
    * Who: anyone.
    * Returns: InstitutionDto; 404 when there is none, or it is inactive.
@@ -235,35 +223,11 @@ export const projectsApi = {
     csFetch<InstitutionDto>(withSite(urlPath`/projects/${projectSlug}/institution`)),
 
   /**
-   * Which institution every project is linked to.
+   * Which institution every project belongs to, through the project's form name (the
+   * institution set for that form in formsApi).
    * Input: none.
-   * Who: site admin.
+   * Who: logged-in user.
    * Returns: project slug -> institution id.
    */
   listInstitutionLinks: () => csFetchField<Record<string, number>>('/projects/institution-links', 'links'),
-
-  /**
-   * Links a project to an institution, or unlinks it.
-   * @param projectSlug the project's slug
-   * @param institutionId the institution (InstitutionDto.id), or null to unlink
-   * Who: site admin.
-   * Returns: nothing (204); 404 unknown institution.
-   */
-  setInstitutionLink: (projectSlug: string, institutionId: number | null) =>
-    csFetch<void>(urlPath`/projects/${projectSlug}/institution-link`, {
-      method: 'PUT',
-      body: JSON.stringify({ institutionId }),
-    }),
-
-  /**
-   * Removes institution links of projects that no longer exist in Madoc.
-   * @param liveSlugs the slugs of every project that still exists (from listAll)
-   * Who: site admin.
-   * Returns: the number of links removed.
-   */
-  pruneInstitutionLinks: (liveSlugs: string[]) =>
-    csFetchField<number>('/projects/institution-links/prune', 'removed', {
-      method: 'POST',
-      body: JSON.stringify({ liveSlugs }),
-    }),
 };

@@ -93,28 +93,6 @@ export class InstitutionsRepository {
     return result.rows[0] ?? null;
   }
 
-  async getActiveInstitutionForProjectSlug(siteId: number, projectSlug: string): Promise<InstitutionRow | null> {
-    const result = await this.pool.query<InstitutionRow>(
-      `
-      SELECT i.* FROM ${this.table('institutions')} i
-      JOIN ${this.table('project_institution_links')} l ON l.institution_id = i.id
-      WHERE l.site_id = $1 AND l.project_slug = $2 AND i.is_active = TRUE
-    `,
-      [siteId, projectSlug]
-    );
-
-    return result.rows[0] ?? null;
-  }
-
-  async listProjectSlugsForInstitution(siteId: number, institutionId: number): Promise<string[]> {
-    const result = await this.pool.query<{ project_slug: string }>(
-      `SELECT project_slug FROM ${this.table('project_institution_links')} WHERE site_id = $1 AND institution_id = $2`,
-      [siteId, institutionId]
-    );
-
-    return result.rows.map(row => row.project_slug);
-  }
-
   async createInstitution(siteId: number, userId: number, input: InstitutionInput, logo: InstitutionLogo): Promise<InstitutionRow> {
     const slug = await this.uniqueInstitutionSlug(siteId, firstFilledLang(input.name) ?? '', null);
 
@@ -209,51 +187,6 @@ export class InstitutionsRepository {
     );
 
     return result.rows[0] ?? null;
-  }
-
-  async listProjectLinks(siteId: number): Promise<Record<string, number>> {
-    const result = await this.pool.query<{ project_slug: string; institution_id: number }>(
-      `SELECT project_slug, institution_id FROM ${this.table('project_institution_links')} WHERE site_id = $1`,
-      [siteId]
-    );
-
-    const links: Record<string, number> = {};
-    for (const row of result.rows) {
-      links[row.project_slug] = fromBigint(row.institution_id);
-    }
-
-    return links;
-  }
-
-  async setProjectLink(siteId: number, userId: number, projectSlug: string, institutionId: number | null): Promise<void> {
-    if (institutionId === null) {
-      await this.pool.query(
-        `DELETE FROM ${this.table('project_institution_links')} WHERE site_id = $1 AND project_slug = $2`,
-        [siteId, projectSlug]
-      );
-      return;
-    }
-
-    await this.pool.query(
-      `
-      INSERT INTO ${this.table('project_institution_links')} (site_id, project_slug, institution_id, updated_by)
-      VALUES ($1, $2, $3, $4)
-      ON CONFLICT (site_id, project_slug) DO UPDATE
-      SET institution_id = EXCLUDED.institution_id, updated_at = NOW(), updated_by = EXCLUDED.updated_by
-    `,
-      [siteId, projectSlug, institutionId, userId]
-    );
-  }
-
-  // Removes links to projects that were deleted in Madoc. dissco-cs is not told when Madoc deletes
-  // a project, so this compares against the current project list that the caller passes in.
-  async pruneOrphanedProjectLinks(siteId: number, liveSlugs: string[]): Promise<number> {
-    const result = await this.pool.query(
-      `DELETE FROM ${this.table('project_institution_links')} WHERE site_id = $1 AND project_slug <> ALL($2::text[])`,
-      [siteId, liveSlugs]
-    );
-
-    return result.rowCount ?? 0;
   }
 
   async deleteInstitution(siteId: number, id: number): Promise<boolean> {

@@ -1,4 +1,13 @@
-import { MadocAnnotationDocumentDto, MadocBaseFieldDto, MadocModelFields, MadocNestedModelFields, MadocStructureNodeDto } from '@dissco-cs/shared-types';
+import {
+  FormLayoutItem,
+  MadocAnnotationDocumentDto,
+  MadocBaseFieldDto,
+  MadocModelFields,
+  MadocNestedModelFields,
+  MadocStructureNodeDto,
+  MultilingualText,
+  isRequired,
+} from '@dissco-cs/shared-types';
 
 // Rules of a capture model: which fields are visible, required and filled in. They decide whether
 // the "required field" legend shows and whether the task may be submitted.
@@ -28,12 +37,6 @@ export function isDependentSatisfied(dependent: string | undefined, document: Ma
   }
   const field = dependentEntry as MadocBaseFieldDto;
   return !(!field.value || field.value === '') || !!field.selector?.state;
-}
-
-// The admin model-editor's "required" checkbox saves its checked state as the array ['on'],
-// not a boolean — confirmed by inspecting a real model's logged JSON.
-export function isRequired(required: boolean | string[] | undefined): boolean {
-  return Array.isArray(required) ? required.length > 0 : !!required;
 }
 
 export function isFieldEmpty(field: MadocBaseFieldDto): boolean {
@@ -98,7 +101,8 @@ export function collectMissingRequiredLabels(fields: MadocModelFields, document:
   return labels;
 }
 
-export type FieldRow = { kind: 'entry'; entry: MadocModelFields[number] } | { kind: 'range'; from: string; to: string };
+// One line of the form: a single entry (a field, or a group of fields), or 2 to 3 fields side by side.
+export type FieldRow = { kind: 'entry'; entry: MadocModelFields[number] } | { kind: 'row'; terms: string[] };
 
 // Madoc's model editor has no layout setting, and grouping fields in an entity would split them into
 // a separate export file. So a range is recognised by its terms instead: two adjacent fields named
@@ -119,13 +123,46 @@ export function groupRangeFields(fields: MadocModelFields): FieldRow[] {
     const from = rangePart(entry);
     const to = rangePart(next);
     if (from?.end === 'from' && to?.end === 'to' && from.prefix === to.prefix) {
-      rows.push({ kind: 'range', from: entry as string, to: next as string });
+      rows.push({ kind: 'row', terms: [entry as string, next as string] });
       i++;
     } else {
       rows.push({ kind: 'entry', entry });
     }
   }
   return rows;
+}
+
+// A block of the form: a row, or a titled section with rows.
+export type FormBlock = FieldRow | { kind: 'section'; title: MultilingualText; rows: FieldRow[] };
+
+const termOf = (entry: MadocModelFields[number]) => (Array.isArray(entry) ? entry[0] : entry);
+
+// Lays out a model's fields with a form layout (see form-layout.ts in shared). A term the model
+// does not have is skipped, because the layout may have been made for a copy of the model with
+// other fields; a section left empty is dropped. The fields the layout does not place come last,
+// with the From/To rule, so a field added to the model later never disappears from the form.
+export function applyFormLayout(items: FormLayoutItem[], fields: MadocModelFields): FormBlock[] {
+  const entryByTerm = new Map(fields.map(entry => [termOf(entry), entry]));
+  const placed = new Set<string>();
+
+  const toRows = (terms: string[]): FieldRow[] => {
+    const known = terms.filter(term => entryByTerm.has(term) && !placed.has(term));
+    known.forEach(term => placed.add(term));
+    const entries = known.map(term => entryByTerm.get(term)!);
+    // A group of fields (an entity) is a block of its own, so a row with one is split up again.
+    if (entries.length === 1 || entries.some(Array.isArray)) {
+      return entries.map(entry => ({ kind: 'entry', entry }));
+    }
+    return entries.length > 0 ? [{ kind: 'row', terms: known }] : [];
+  };
+
+  const blocks = items.flatMap((item): FormBlock[] => {
+    if (item.kind === 'row') return toRows(item.terms);
+    const rows = item.rows.flatMap(row => toRows(row.terms));
+    return rows.length > 0 ? [{ kind: 'section', title: item.title, rows }] : [];
+  });
+
+  return [...blocks, ...groupRangeFields(fields.filter(entry => !placed.has(termOf(entry))))];
 }
 
 // Every capture model's top-level structure is technically a 'choice' (Madoc's model editor always

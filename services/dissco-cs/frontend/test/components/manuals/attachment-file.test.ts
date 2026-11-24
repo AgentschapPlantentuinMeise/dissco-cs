@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_MANUAL_ATTACHMENT_LENGTH } from '@dissco-cs/shared-types';
 
-import { attachmentFileError } from '../../../../src/pages/site-management/project-management/manual-content';
+import { attachmentFileError } from '../../../src/components/manuals/manual-content';
 
 const pdfBytes = '%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n';
 

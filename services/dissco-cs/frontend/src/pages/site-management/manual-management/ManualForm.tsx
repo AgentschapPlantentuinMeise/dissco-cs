@@ -20,9 +20,9 @@ import { CancelButton } from '../../../components/ui/CancelButton';
 import { Button } from '../../../components/ui/Button';
 import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
 import { MarkdownToolbar } from '../../../components/ui/MarkdownToolbar';
-import { LanguageTabs } from '../../../components/ui/LanguageTabs';
+import { LanguageTabs, useLanguageNames } from '../../../components/ui/LanguageTabs';
 import { inputClass } from '../../../components/ui/input-styles';
-import { AttachmentFileError, attachmentFileError } from './manual-content';
+import { AttachmentFileError, attachmentFileError } from '../../../components/manuals/manual-content';
 import { FieldErrorText, FormField } from '../../../components/ui/FormField';
 import { SaveHint } from '../../../components/ui/SaveHint';
 import { useLeftFields } from '../../../hooks/use-left-fields';
@@ -54,6 +54,7 @@ export function ManualForm({ manualId, storedLangs, draft, setDraft, selectedLan
   onCancel: () => void;
 }) {
   const { t, i18n } = useTranslation('dissco-cs');
+  const languageNames = useLanguageNames();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Only for the name and size of a stored attachment.
@@ -202,7 +203,7 @@ export function ManualForm({ manualId, storedLangs, draft, setDraft, selectedLan
         <SaveButton onClick={onSave} disabled={!canSave} loading={saving} />
         <CancelButton onClick={onCancel} />
         {missingLangs.length > 0 ? (
-          <SaveHint>{t('sm_manuals_missing_langs', { langs: missingLangs.map(lang => t(`lang_${lang}`)).join(', ') })}</SaveHint>
+          <SaveHint>{t('sm_manuals_missing_langs', { langs: languageNames(missingLangs) })}</SaveHint>
         ) : (
           !contentCheck.hasContent && <SaveHint>{t('sm_manuals_needs_content')}</SaveHint>
         )}

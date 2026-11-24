@@ -1,13 +1,12 @@
 import React from 'react';
-import { MadocModelFields, MadocNestedModelFields, MadocAnnotationDocumentDto } from '@dissco-cs/shared-types';
-import { DocumentPath } from '../../../utility/annotation-document';
-import { groupRangeFields, isDependentSatisfied, isEntityList, isRequired } from './capture-model-rules';
+import { MadocModelFields, MadocNestedModelFields, MadocAnnotationDocumentDto, isRequired } from '@dissco-cs/shared-types';
+import { DocumentPath } from '../../utility/annotation-document';
+import { FieldRow, groupRangeFields, isDependentSatisfied, isEntityList } from './capture-model-rules';
 import { Fieldset } from './Fieldset';
 import { FieldInput } from './FieldInput';
 import { SelectorControls } from './SelectorControl';
 
-interface ModelFieldsProps {
-  fields: MadocModelFields;
+export interface FieldContext {
   document: MadocAnnotationDocumentDto;
   pathPrefix: DocumentPath;
   onChange: (path: DocumentPath, value: unknown) => void;
@@ -16,10 +15,17 @@ interface ModelFieldsProps {
   onShowHelp?: (helpKey: string) => void;
 }
 
-// The inputs for a list of model fields. A nested entry (an entity) becomes a framed group that
-// renders its own fields again with this component, one level deeper in the document path.
-// A From/To pair (see groupRangeFields) is shown side by side.
-export function ModelFields({ fields, document, pathPrefix, onChange, selectorControls, onShowHelp }: ModelFieldsProps) {
+// The inputs for a list of model fields, with a From/To pair side by side (see groupRangeFields).
+export function ModelFields({ fields, ...context }: FieldContext & { fields: MadocModelFields }) {
+  return <FieldRows rows={groupRangeFields(fields)} {...context} />;
+}
+
+// The inputs for rows of fields. A nested entry (an entity) becomes a framed group that renders its
+// own fields again with ModelFields, one level deeper in the document path. A row of several fields
+// puts them side by side; on a narrow panel they wrap below each other.
+export function FieldRows({ rows, ...context }: FieldContext & { rows: FieldRow[] }) {
+  const { document, pathPrefix, onChange, selectorControls, onShowHelp } = context;
+
   const renderFields = (term: string) => {
     const list = document.properties[term] ?? [];
     const fieldList = !isEntityList(list) ? list : [];
@@ -47,14 +53,7 @@ export function ModelFields({ fields, document, pathPrefix, onChange, selectorCo
       <Fieldset key={term} label={entities[0]?.label ?? term} required={isRequired(entities[0]?.required)} collapsible={false}>
         {entities.map((entity, idx) => (
           <div key={entity.id ?? idx} className="mb-2">
-            <ModelFields
-              fields={nestedFields}
-              document={entity}
-              pathPrefix={[...pathPrefix, term, idx]}
-              onChange={onChange}
-              selectorControls={selectorControls}
-              onShowHelp={onShowHelp}
-            />
+            <ModelFields {...context} fields={nestedFields} document={entity} pathPrefix={[...pathPrefix, term, idx]} />
           </div>
         ))}
       </Fieldset>
@@ -63,12 +62,12 @@ export function ModelFields({ fields, document, pathPrefix, onChange, selectorCo
 
   return (
     <>
-      {groupRangeFields(fields).map(row => {
-        if (row.kind === 'range') {
-          // A hidden half leaves no empty column, so the visible one takes the full width.
-          const columns = [row.from, row.to].map(renderFields).filter(column => column.length > 0);
+      {rows.map(row => {
+        if (row.kind === 'row') {
+          // A hidden field leaves no empty column, so the visible ones take the full width.
+          const columns = row.terms.map(renderFields).filter(column => column.length > 0);
           return (
-            <div key={row.from} className="grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-x-3">
+            <div key={row.terms.join('|')} className="grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-x-3">
               {columns.map((column, idx) => (
                 <div key={idx}>{column}</div>
               ))}

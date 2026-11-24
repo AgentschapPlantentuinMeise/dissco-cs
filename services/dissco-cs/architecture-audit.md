@@ -146,9 +146,9 @@ Tussen `listReplies` en `markTopicSeen` kan een andere gebruiker een reply poste
 
 ---
 
-### 2.4 `project_institution_links` is one-to-one, maar de naam suggereert many
+### 2.4 `form_links` is one-to-one, maar de naam suggereert many
 
-Beide tabellen (`project_institution_links`, `project_manual_links`) hebben `PRIMARY KEY (site_id, project_slug)` — één project heeft dus maximaal één instelling en één handleiding. Maar de namen (meervoud, `*_links`) suggereren een many-to-many relatie.
+De tabel `form_links` heeft `PRIMARY KEY (site_id, form_name)` — één formulier heeft dus maximaal één instelling en één handleiding. Maar de naam (meervoud, `*_links`) suggereert een many-to-many relatie.
 
 Als de productowner vraagt "kan een project twee instellingen hebben?", leidt dit tot een schema-wijziging die vermijdbaar was geweest met betere naamgeving en documentatie van de werkelijke kardinaliteit.
 

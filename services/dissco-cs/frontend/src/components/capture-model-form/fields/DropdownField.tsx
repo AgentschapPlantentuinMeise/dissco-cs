@@ -1,4 +1,4 @@
-import { Select } from '../../../../components/ui/Select';
+import { Select } from '../../ui/Select';
 import { FieldProps } from './registry';
 
 export function DropdownField({ field, path, onChange }: FieldProps) {

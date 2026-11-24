@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { FieldProps } from './registry';
-import { reportClientError } from '../../../../api/cs-client/client-errors';
+import { reportClientError } from '../../../api/cs-client/client-errors';
 
 type CompletionItem = { uri: string; label: string; resource_class?: string };
 type AutocompleteValue = { uri: string; label: string; resource_class?: string };
