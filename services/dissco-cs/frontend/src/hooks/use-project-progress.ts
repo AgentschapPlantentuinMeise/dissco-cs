@@ -51,7 +51,11 @@ function runQueued<T>(task: (signal: AbortSignal) => Promise<T>, signal: AbortSi
 // staleTime 0: every page or card that shows the progress fetches it fresh, instead of showing
 // data up to 60 s old after a submit or accept elsewhere in the app. refetchOnWindowFocus is off:
 // otherwise every focus switch would repeat it, once per visible card, without anything changed.
-export function useProjectProgress(projectId: number | string | undefined) {
+function useQueuedProgress<T>(
+  projectId: number | string | undefined,
+  queryKey: readonly unknown[],
+  fetchProgress: (projectId: number | string, signal: AbortSignal) => Promise<T>
+) {
   const controllerRef = useRef<AbortController | null>(null);
 
   // Unmounting (e.g. a page change) or a new projectId cancels this card's own request: a request
@@ -63,13 +67,24 @@ export function useProjectProgress(projectId: number | string | undefined) {
   // Key from the shared factory (so invalidating projectKeys.progress/all reaches this card), but
   // its own queryFn: the request goes through the module-level queue above.
   return useQuery({
-    ...projectQueries.progress(projectId),
+    queryKey,
+    enabled: !!projectId,
     queryFn: () => {
       controllerRef.current = new AbortController();
-      return runQueued(signal => projectsApi.getProgress(projectId!, signal), controllerRef.current.signal);
+      return runQueued(signal => fetchProgress(projectId!, signal), controllerRef.current.signal);
     },
     staleTime: 0,
     refetchOnWindowFocus: false,
     retry: 1,
   });
+}
+
+/** The numbers of a project's progress, for a project card. */
+export function useProjectProgress(projectId: number | string | undefined) {
+  return useQueuedProgress(projectId, projectQueries.progress(projectId).queryKey, projectsApi.getProgress);
+}
+
+/** The progress plus the manifests that can still be picked, with thumbnails: for the project page. */
+export function useProjectProgressWithManifests(projectId: number | string | undefined) {
+  return useQueuedProgress(projectId, projectQueries.progressWithManifests(projectId).queryKey, projectsApi.getProgressWithManifests);
 }

@@ -5,7 +5,7 @@ import { taskQueries } from '../../api/queries/tasks';
 import { projectQueries } from '../../api/queries/projects';
 import { useTranslation } from 'react-i18next';
 import { useCurrentProject } from '../../hooks/use-current-project';
-import { useProjectProgress } from '../../hooks/use-project-progress';
+import { useProjectProgressWithManifests } from '../../hooks/use-project-progress';
 import { useCurrentUser } from '../../hooks/use-current-user';
 import { useBackHref } from '../../hooks/use-return-link';
 import { projectsApi } from '../../api/cs-client/projects';
@@ -71,7 +71,7 @@ export function ProjectDetail() {
   const ownTasksFailed = failedToLoad(ownTasksQuery);
   const ownSavedTasks = (ownTasksData?.tasks ?? []).filter(task => task.metadata?.project?.slug === project?.slug);
 
-  const progressQuery = useProjectProgress(project?.id);
+  const progressQuery = useProjectProgressWithManifests(project?.id);
   const progress = progressQuery.data;
   const progressError = failedToLoad(progressQuery);
   const manifests = progress?.availableManifests ?? [];

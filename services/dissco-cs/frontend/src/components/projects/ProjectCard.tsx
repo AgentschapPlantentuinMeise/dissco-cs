@@ -32,7 +32,7 @@ export function ProjectCard({ projectSummaryData }: ProjectCardProps) {
       state={returnState}
       className="flex flex-col bg-white rounded-md overflow-hidden transition-transform duration-200 cursor-pointer h-full no-underline text-inherit hover:-translate-y-1"
     >
-      <div className="h-[190px] w-full bg-cover bg-center bg-gray-100" style={{ backgroundImage: `url(${imageUrl})` }} />
+      <div className="h-[190px] w-full bg-cover bg-center bg-gray-100" style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined} />
       <div className="px-[22px] pt-5 pb-[22px] flex flex-col gap-2 flex-grow min-w-0">
         <LocaleString as="h3" className="text-[1.3rem] font-medium leading-tight m-0 text-cs-primary">
           {projectSummaryData.label}

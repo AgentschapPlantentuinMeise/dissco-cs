@@ -3,7 +3,7 @@ import {
   MadocCrowdsourcingTaskDto,
   MadocProjectConfig,
   ProjectDebugDto,
-  ProjectProgressDto,
+  ProjectProgressWithManifestsDto,
 } from '@dissco-cs/shared-types';
 
 const MANIFEST_URN_PREFIX = 'urn:madoc:manifest:';
@@ -74,17 +74,18 @@ export function countVolunteers(tasks: MadocCrowdsourcingTaskDto[]): number {
 /**
  * A project's progress: how much is transcribed, and which manifests can still be picked.
  * @param input.manifestItems the manifests of the project's collection (no sub-collections)
- * @param input.thumbnails manifest id -> thumbnail URL
+ * @param input.thumbnails manifest id -> thumbnail URL (empty when the caller does not show them)
  * @param input.tasks every crowdsourcing-task of the project
  * @param input.config the project's Madoc config
- * Returns: the ProjectProgressDto the /progress route sends.
+ * Returns: the numbers plus the available manifests; the /progress route leaves the manifests out
+ *   unless they are asked for.
  */
 export function computeProjectProgress(input: {
   manifestItems: MadocCollectionStructureItemDto[];
   thumbnails: Map<number, string | undefined>;
   tasks: MadocCrowdsourcingTaskDto[];
   config: MadocProjectConfig;
-}): ProjectProgressDto {
+}): ProjectProgressWithManifestsDto {
   const { manifestItems, thumbnails, tasks, config } = input;
   const tasksByManifestId = groupTasksByManifestId(tasks);
 

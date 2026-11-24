@@ -186,15 +186,20 @@ export function projectsController(
     }
 
     const { projectId } = c.req.valid('param');
+    // Only the project page lists the available manifests. Project cards show just the numbers,
+    // so for them the thumbnails (a Madoc call per 24 manifests) are not fetched and the list is
+    // left out of the answer.
+    const withManifests = c.req.query('manifests') === 'true';
 
     const project = await getMadocProject(siteId, projectId);
     const [manifestItems, tasks, thumbnails] = await Promise.all([
       getMadocProjectManifests(siteId, project.collection_id),
       getMadocProjectTasks(siteId, project.task_id),
-      getMadocCollectionManifestThumbnails(siteId, project.collection_id),
+      withManifests ? getMadocCollectionManifestThumbnails(siteId, project.collection_id) : new Map<number, string | undefined>(),
     ]);
 
-    return c.json(computeProjectProgress({ manifestItems, thumbnails, tasks, config: project.config ?? {} }));
+    const { availableManifests, ...numbers } = computeProjectProgress({ manifestItems, thumbnails, tasks, config: project.config ?? {} });
+    return c.json(withManifests ? { ...numbers, availableManifests } : numbers);
   });
 
   // ---- logged-in user: manifest claim resync ----

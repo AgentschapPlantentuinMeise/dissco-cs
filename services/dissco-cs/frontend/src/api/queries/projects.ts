@@ -11,6 +11,8 @@ export const projectKeys = {
   listAll: (filter: ProjectListFilter) => [...projectKeys.all, 'list-all', filter] as const,
   detail: (projectId: string | number | undefined) => [...projectKeys.all, 'detail', String(projectId)] as const,
   progress: (projectId: string | number | undefined) => [...projectKeys.all, 'progress', String(projectId)] as const,
+  // Under progress(projectId), so invalidating a project's progress refreshes this one too.
+  progressWithManifests: (projectId: string | number | undefined) => [...projectKeys.progress(projectId), 'manifests'] as const,
   taskDebug: (projectId: string | number | undefined) => [...projectKeys.all, 'task-debug', String(projectId)] as const,
   manuals: () => [...projectKeys.all, 'manual'] as const,
   manual: (projectSlug: string | undefined) => [...projectKeys.manuals(), projectSlug] as const,
@@ -37,6 +39,13 @@ export const projectQueries = {
     queryOptions({
       queryKey: projectKeys.progress(projectId),
       queryFn: ({ signal }) => projectsApi.getProgress(projectId!, signal),
+      enabled: !!projectId,
+    }),
+
+  progressWithManifests: (projectId: string | number | undefined) =>
+    queryOptions({
+      queryKey: projectKeys.progressWithManifests(projectId),
+      queryFn: ({ signal }) => projectsApi.getProgressWithManifests(projectId!, signal),
       enabled: !!projectId,
     }),
 

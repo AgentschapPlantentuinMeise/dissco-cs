@@ -11,6 +11,7 @@ import {
   MadocRandomManifestDto,
   ProjectDebugDto,
   ProjectProgressDto,
+  ProjectProgressWithManifestsDto,
   SitePageLang,
 } from '@dissco-cs/shared-types';
 
@@ -161,7 +162,8 @@ export const projectsApi = {
 
   /**
    * How far a project is, the same for every visitor: the percentage of manifests in review or
-   * accepted, and which manifests can still be picked (not done, contributor maximum not reached).
+   * accepted, the number of manifests and volunteers, and whether every manifest is taken. For a
+   * project card; the project page uses getProgressWithManifests.
    * @param projectId Madoc project id or slug
    * @param signal optional, to cancel the request
    * Who: anyone.
@@ -169,6 +171,18 @@ export const projectsApi = {
    */
   getProgress: (projectId: string | number, signal?: AbortSignal) =>
     csFetch<ProjectProgressDto>(withSite(urlPath`/projects/${projectId}/progress`), { signal }),
+
+  /**
+   * getProgress plus the manifests that can still be picked (not done, contributor maximum not
+   * reached), with their thumbnails. Heavier: the server reads every page of the collection for the
+   * thumbnails.
+   * @param projectId Madoc project id or slug
+   * @param signal optional, to cancel the request
+   * Who: anyone.
+   * Returns: ProjectProgressWithManifestsDto.
+   */
+  getProgressWithManifests: (projectId: string | number, signal?: AbortSignal) =>
+    csFetch<ProjectProgressWithManifestsDto>(withSite(urlPath`/projects/${projectId}/progress`, { manifests: true }), { signal }),
 
   /**
    * Per manifest of a project, its tasks and whether it counts as transcribed (a task with status
