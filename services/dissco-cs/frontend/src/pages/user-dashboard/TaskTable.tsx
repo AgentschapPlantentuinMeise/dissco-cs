@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MyTaskDto } from '@dissco-cs/shared-types';
 import { HrefLink } from '../../utility/href-link';
-import { buildTaskLink } from '../../utility/build-task-link';
+import { buildMyTaskLink } from '../../utility/build-task-link';
 import { formatTimeAgo } from '../../utility/format-date';
 import { Button } from '../../components/ui/Button';
 import { IconButton } from '../../components/ui/IconButton';
@@ -73,7 +73,7 @@ export function TaskTable({ tasks, userName, variant, onRelease }: {
                       </button>
                     ) : (
                       <HrefLink
-                        href={buildTaskLink(task)}
+                        href={buildMyTaskLink(task)}
                         state={{ returnTo: '/my-dashboard' }}
                         className="text-cs-primary no-underline font-medium hover:underline"
                       >

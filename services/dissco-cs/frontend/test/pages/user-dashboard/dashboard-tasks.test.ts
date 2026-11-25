@@ -18,7 +18,7 @@ const fungi = { id: 1, slug: 'fungi' };
 const birds = { id: 2, slug: 'birds' };
 
 function task(overrides: Partial<MyTaskDto>): MyTaskDto {
-  return { id: 't', name: '', status: 1, subject: 's', rootTask: 'r', modifiedAt: 1, project: fungi, ...overrides };
+  return { id: 't', name: '', status: 1, subject: 's', subjectParent: null, rootTask: 'r', modifiedAt: 1, project: fungi, ...overrides };
 }
 
 describe('summarizeTasks', () => {

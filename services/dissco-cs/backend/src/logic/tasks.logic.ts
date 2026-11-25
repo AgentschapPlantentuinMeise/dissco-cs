@@ -14,6 +14,7 @@ export function toMyTask(task: MadocCrowdsourcingTaskDto): MyTaskDto {
     name: task.name ?? '',
     status: task.status,
     subject: task.subject ?? null,
+    subjectParent: task.subject_parent || null,
     rootTask: task.root_task ?? null,
     modifiedAt: task.modified_at ?? null,
     project: project ? { id: project.id, slug: project.slug, label: project.label } : null,

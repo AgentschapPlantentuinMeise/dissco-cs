@@ -16,6 +16,8 @@ export type MyTaskDto = {
   status: number;
   // The object the task is about, e.g. 'urn:madoc:manifest:12'.
   subject: string | null;
+  // The manifest above the subject when the subject is a canvas, e.g. 'urn:madoc:manifest:12'.
+  subjectParent: string | null;
   // The project's root task: one object can have a task in several projects.
   rootTask: string | null;
   // Milliseconds since 1970.
