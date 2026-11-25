@@ -8,8 +8,19 @@ export const captureModelKeys = {
 };
 
 export const captureModelQueries = {
+  // The annotate page builds its form from this model (use-annotation-document). After a save the
+  // model in Madoc holds the saved values, so a refetch (e.g. on returning to the browser tab)
+  // brought a changed model and the form was set up again, empty, while the volunteer was working.
+  // So it never refetches on its own (staleTime Infinity), and it is dropped from the cache as soon
+  // as nobody shows it (gcTime 0), so opening the task again still loads it afresh.
   model: (modelId: string | undefined) =>
-    queryOptions({ queryKey: captureModelKeys.model(modelId), queryFn: () => captureModelsApi.get(modelId!), enabled: !!modelId }),
+    queryOptions({
+      queryKey: captureModelKeys.model(modelId),
+      queryFn: () => captureModelsApi.get(modelId!),
+      enabled: !!modelId,
+      staleTime: Infinity,
+      gcTime: 0,
+    }),
 
   revision: (revisionId: string | undefined) =>
     queryOptions({
