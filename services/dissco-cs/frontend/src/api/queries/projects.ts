@@ -4,7 +4,7 @@ import { projectsApi } from '../cs-client/projects';
 type ProjectListFilter = { published?: boolean };
 
 // Every project query key starts with 'projects', so invalidating projectKeys.all refreshes lists,
-// details, progress and links in one go.
+// details, progress and links in one go. Except prepareClaim: see projectQueries.prepareClaim.
 export const projectKeys = {
   all: ['projects'] as const,
   list: (filter: ProjectListFilter & { page: number }) => [...projectKeys.all, 'list', filter] as const,
@@ -21,7 +21,7 @@ export const projectKeys = {
   institution: (projectSlug: string | undefined) => [...projectKeys.all, 'institution', projectSlug] as const,
   institutionLinks: () => [...projectKeys.all, 'institution-links'] as const,
   prepareClaim: (projectId: string | number | undefined, manifestId: number | undefined) =>
-    [...projectKeys.all, 'prepare-claim', String(projectId), manifestId] as const,
+    ['prepare-claim', String(projectId), manifestId] as const,
 };
 
 export const projectQueries = {
@@ -73,10 +73,19 @@ export const projectQueries = {
   institutionLinks: () => queryOptions({ queryKey: projectKeys.institutionLinks(), queryFn: () => projectsApi.listInstitutionLinks() }),
 
   // A POST used as a read: makes sure the capture model for this claim exists and returns its id.
+  // The answer decides the claim (use-task-claim) and whether the form starts blank
+  // (use-annotation-document). A refetch with a changed answer, e.g. on returning to the browser
+  // tab, released and reclaimed the task and emptied the form while the volunteer was typing. So it
+  // never refetches on its own (staleTime Infinity), and it is dropped from the cache as soon as the
+  // task is left (gcTime 0), so coming back to the same manifest still asks Madoc afresh. Its key is
+  // outside projectKeys.all on purpose: invalidating all projects refetches active queries whatever
+  // their staleTime, and would do the same harm.
   prepareClaim: (projectId: string | number | undefined, manifestId: number | undefined) =>
     queryOptions({
       queryKey: projectKeys.prepareClaim(projectId, manifestId),
       queryFn: () => projectsApi.prepareClaim(projectId!, { manifestId }),
       enabled: !!projectId && !!manifestId,
+      staleTime: Infinity,
+      gcTime: 0,
     }),
 };
