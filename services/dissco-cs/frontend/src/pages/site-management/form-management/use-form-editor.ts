@@ -38,7 +38,9 @@ export function useFormEditor() {
   const [editing, setEditing] = useState<FormDto | null>(null);
   const [draft, setDraft] = useState<FormDraft>(EMPTY_DRAFT);
   const [selectedLang, setSelectedLang] = useState<SitePageLang>(defaultLang(i18n.language));
-  const fieldsQuery = useQuery({ ...formQueries.fields(editing?.formName ?? ''), enabled: editing !== null });
+  // The fields cost Madoc a call per project using the form, and only a layout uses them: not
+  // fetched while the form has none (e.g. when only its institution or manual changes).
+  const fieldsQuery = useQuery({ ...formQueries.fields(editing?.formName ?? ''), enabled: editing !== null && draft.layout !== null });
   const discardGuard = useDiscardGuard(editing !== null && hasDraftChanged(draft, toDraft(editing)));
   const { savedId: savedFormName, flash } = useSavedFlash<string>();
 

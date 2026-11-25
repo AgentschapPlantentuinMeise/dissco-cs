@@ -23,16 +23,11 @@ export function formsController(
     return projectsWithFormName(projects, models, formName);
   }
 
-  // Archived projects are left out: they do not block removing a layout, and their fields are not
-  // required in it.
-  async function activeProjectsWithFormName(siteId: number, formName: string) {
-    return (await allProjectsWithFormName(siteId, formName)).filter(isActiveProject);
-  }
-
-  async function fieldsOfFormName(siteId: number, formName: string) {
-    const projects = await activeProjectsWithFormName(siteId, formName);
-    const models = await Promise.all(projects.map(project => getMadocCaptureModel(siteId, project.capture_model_id)));
-    return { projectCount: projects.length, fields: collectLayoutFields(models) };
+  // Only the active projects count (isActiveProject): archived ones do not block removing a layout,
+  // and their fields are not required in it. One Madoc call per project for its model.
+  async function fieldsOfProjects(siteId: number, activeProjects: Awaited<ReturnType<typeof allProjectsWithFormName>>) {
+    const models = await Promise.all(activeProjects.map(project => getMadocCaptureModel(siteId, project.capture_model_id)));
+    return { projectCount: activeProjects.length, fields: collectLayoutFields(models) };
   }
 
   app.get('/', async c => {
@@ -60,7 +55,8 @@ export function formsController(
       return c.json({ error: 'formName is required' }, 400);
     }
 
-    return c.json(await fieldsOfFormName(identity.siteId, formName));
+    const projects = await allProjectsWithFormName(identity.siteId, formName);
+    return c.json(await fieldsOfProjects(identity.siteId, projects.filter(isActiveProject)));
   });
 
   app.put('/', validateJson(formSaveSchema), async c => {
@@ -71,10 +67,12 @@ export function formsController(
 
     const input = c.req.valid('json');
 
-    if (
-      input.templateProjectId !== null &&
-      !(await allProjectsWithFormName(identity.siteId, input.formName)).some(project => project.id === input.templateProjectId)
-    ) {
+    // Madoc's whole project list plus its model list: fetched once, and only when a check below
+    // needs it.
+    let formProjects: ReturnType<typeof allProjectsWithFormName> | undefined;
+    const projects = () => (formProjects ??= allProjectsWithFormName(identity.siteId, input.formName));
+
+    if (input.templateProjectId !== null && !(await projects()).some(project => project.id === input.templateProjectId)) {
       return c.json({ error: 'Template project does not use this form' }, 400);
     }
     if (input.institutionId !== null && !(await institutionsRepository.getInstitutionById(identity.siteId, input.institutionId))) {
@@ -86,7 +84,7 @@ export function formsController(
 
     if (input.layout !== null) {
       // The editor runs the same check before saving, so this only answers a request that skipped it.
-      const { fields } = await fieldsOfFormName(identity.siteId, input.formName);
+      const { fields } = await fieldsOfProjects(identity.siteId, (await projects()).filter(isActiveProject));
       const problems = checkFormLayout(input.layout, fields);
       if (problems.length > 0) {
         return c.json({ error: `Layout breaks its rules: ${problems.map(problem => `${problem.kind} ${problem.term}`).join(', ')}` }, 400);
@@ -94,7 +92,7 @@ export function formsController(
     } else if ((await formsRepository.getForm(identity.siteId, input.formName))?.layout_items) {
       // Without its layout an active project falls back to Madoc's field order in the middle of the
       // work, so the layout can only go once no active project uses the form.
-      if ((await activeProjectsWithFormName(identity.siteId, input.formName)).length > 0) {
+      if ((await projects()).some(isActiveProject)) {
         return c.json({ error: 'Active projects still use this layout' }, 409);
       }
     }
