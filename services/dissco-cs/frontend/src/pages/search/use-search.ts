@@ -21,8 +21,8 @@ function matchesInternationalString(value: unknown, needle: string): boolean {
 }
 
 export function useSearch(query: string) {
-  const projectsQuery = useQuery({ ...projectQueries.listAll(), staleTime: 5 * 60 * 1000 });
-  const institutionsQuery = useQuery({ ...institutionQueries.active(), staleTime: 5 * 60 * 1000 });
+  const projectsQuery = useQuery(projectQueries.listAll());
+  const institutionsQuery = useQuery(institutionQueries.active());
 
   const trimmed = query.trim().toLowerCase();
   const isActive = trimmed.length >= MIN_QUERY_LENGTH;

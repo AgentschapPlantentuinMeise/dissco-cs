@@ -27,10 +27,7 @@ export function Projects() {
   // All pages, published-only, so every active project shows regardless of how many draft/paused
   // projects exist (and regardless of whether the viewer is a site-admin, who would otherwise see
   // every status unfiltered -- see projectsApi.list's `published` filter).
-  const projectsQuery = useQuery({
-    ...projectQueries.listAll({ published: true }),
-    staleTime: 5 * 60 * 1000,
-  });
+  const projectsQuery = useQuery(projectQueries.listAll({ published: true }));
   const allProjects = projectsQuery.data;
   const load = loadState(projectsQuery);
   const { data: siteStats } = useSiteStats();

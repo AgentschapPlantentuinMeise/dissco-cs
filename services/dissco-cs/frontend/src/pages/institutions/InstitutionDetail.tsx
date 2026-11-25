@@ -38,10 +38,7 @@ export function InstitutionDetail() {
   // All pages, published-only -- same reasoning as Homepage/Projects.tsx: a site-admin viewer
   // otherwise gets every status unfiltered from page 1 only, which can miss this institution's
   // linked projects entirely if enough other/older projects exist.
-  const allProjectsQuery = useQuery({
-    ...projectQueries.listAll({ published: true }),
-    staleTime: 5 * 60 * 1000,
-  });
+  const allProjectsQuery = useQuery(projectQueries.listAll({ published: true }));
   const allProjects = allProjectsQuery.data;
   const projectsLoad = loadState(projectSlugsQuery, allProjectsQuery);
   const linkedProjects = (allProjects ?? []).filter((p: MadocProjectDto) => projectSlugs.includes(p.slug));

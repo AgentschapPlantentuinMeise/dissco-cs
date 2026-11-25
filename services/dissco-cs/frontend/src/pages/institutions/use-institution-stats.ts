@@ -5,10 +5,9 @@ import { usePollingWindow } from '../../hooks/use-polling-window';
 // One triggering fetch on page load (starts a background recompute if the cache is stale) plus
 // a separate, side-effect-free poll every 15s for 2 minutes after mount, then stopping -- that
 // only reads whatever the cache currently holds and must never cause a recompute, so it hits a
-// different, pure-read endpoint. refetchOnWindowFocus is off on the triggering query so
-// tab-switching doesn't also trigger SQL.
+// different, pure-read endpoint.
 export function useInstitutionStats(slug: string | undefined) {
-  const initial = useQuery({ ...statsQueries.institution(slug), refetchOnWindowFocus: false });
+  const initial = useQuery(statsQueries.institution(slug));
   const refetchInterval = usePollingWindow();
   const peek = useQuery({ ...statsQueries.institutionCurrent(slug), refetchInterval });
 

@@ -25,7 +25,7 @@ interface InstitutionCardProps {
 // (cached) stats.
 export function InstitutionCard({ institution, footer }: InstitutionCardProps) {
   const { t, i18n } = useTranslation('dissco-cs');
-  const statsQuery = useQuery({ ...statsQueries.institution(institution.slug), refetchOnWindowFocus: false });
+  const statsQuery = useQuery(statsQueries.institution(institution.slug));
   const stats = statsQuery.data;
   const name = siteLangText(institution.name, i18n.language, institution.slug);
   const returnState = useReturnState();

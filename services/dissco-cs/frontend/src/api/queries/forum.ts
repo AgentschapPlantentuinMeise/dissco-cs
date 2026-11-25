@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { forumApi } from '../cs-client/forum';
+import { LIVE } from './freshness';
 
 export const forumKeys = {
   all: ['forum'] as const,
@@ -10,7 +11,7 @@ export const forumKeys = {
 
 export const forumQueries = {
   // Shared by the forum page and the dashboard widget.
-  topics: () => queryOptions({ queryKey: forumKeys.topics(), queryFn: () => forumApi.listTopics() }),
+  topics: () => queryOptions({ queryKey: forumKeys.topics(), queryFn: () => forumApi.listTopics(), ...LIVE }),
 
   // The navbar badge, deliberately under its own key: the forum page keeps showing the unread
   // markers it opened with, while visiting it already marks topics seen on the server -- the forum
@@ -23,8 +24,9 @@ export const forumQueries = {
         const topics = await forumApi.listTopics();
         return topics.filter(m => m.lastSeenReplyCount === null || m.replyCount > m.lastSeenReplyCount).length;
       },
+      ...LIVE,
     }),
 
   replies: (topicId: number | null) =>
-    queryOptions({ queryKey: forumKeys.replies(topicId), queryFn: () => forumApi.listReplies(topicId!), enabled: topicId !== null }),
+    queryOptions({ queryKey: forumKeys.replies(topicId), queryFn: () => forumApi.listReplies(topicId!), enabled: topicId !== null, ...LIVE }),
 };

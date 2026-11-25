@@ -12,6 +12,7 @@ Regels voor de frontend. Zie ook `../CLAUDE.md` (gedeeld met de backend).
 - Do prefer composition over prop drilling
 - Don't mutate state directly
 - Don't store derived values in state (calculate on render instead)
+- Don't let a query whose data an effect turns into editable state refetch on its own (`FROZEN_UNTIL_LEFT` in `api/queries/freshness.ts`): a refetch with changed data resets what the user typed
 - Do shape a page like `pages/review/`: logic (queries, state, mutations, handlers) in a `use-<page>.ts` hook, calculation rules as pure functions in a `.ts` file with a test, and the parts as small components next to the page
 - Do give every page a folder, with the page itself inside (`pages/forum/Forum.tsx`, `pages/site-management/announcements/Announcements.tsx`) — also a page that is a single file today. The folder is named after the page or its domain in kebab-case: pages of the same domain share one folder (`pages/auth/Login.tsx`, `pages/auth/Register.tsx`, `pages/institutions/InstitutionDetail.tsx`, `pages/search/SearchResults.tsx`)
 - Do keep the look content-agnostic (no leaves, no "specimens"): the platform is open source and must also work for other kinds of collections

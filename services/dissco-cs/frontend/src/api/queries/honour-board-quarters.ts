@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { HonourBoardQuarterKey } from '@dissco-cs/shared-types';
 import { honourBoardQuartersApi } from '../cs-client/honour-board-quarters';
+import { STATIC } from './freshness';
 
 export const honourBoardQuarterKeys = {
   all: ['honour-board-quarters'] as const,
@@ -9,5 +10,5 @@ export const honourBoardQuarterKeys = {
 
 export const honourBoardQuarterQueries = {
   detail: (quarter: HonourBoardQuarterKey) =>
-    queryOptions({ queryKey: honourBoardQuarterKeys.detail(quarter), queryFn: () => honourBoardQuartersApi.get(quarter) }),
+    queryOptions({ queryKey: honourBoardQuarterKeys.detail(quarter), queryFn: () => honourBoardQuartersApi.get(quarter), ...STATIC }),
 };

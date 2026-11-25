@@ -2,6 +2,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { SiteImageDto } from '@dissco-cs/shared-types';
 import { siteImagesApi } from '../cs-client/site-images';
 import { readSiteCache, writeSiteCache } from '../../utility/site-cache';
+import { STATIC } from './freshness';
 
 export const siteImageKeys = {
   all: ['site-images'] as const,
@@ -23,5 +24,6 @@ export const siteImageQueries = {
       },
       initialData: () => readSiteCache<SiteImageDto[]>(CACHE_NAME),
       initialDataUpdatedAt: 0,
+      ...STATIC,
     }),
 };

@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { feedbackApi } from '../cs-client/feedback';
+import { LIVE } from './freshness';
 
 // Shared by the dashboard and the navbar's unread badge.
 export const feedbackKeys = {
@@ -9,6 +10,6 @@ export const feedbackKeys = {
 };
 
 export const feedbackQueries = {
-  threads: () => queryOptions({ queryKey: feedbackKeys.threads(), queryFn: () => feedbackApi.listThreads() }),
-  thread: (threadId: number) => queryOptions({ queryKey: feedbackKeys.thread(threadId), queryFn: () => feedbackApi.getThread(threadId) }),
+  threads: () => queryOptions({ queryKey: feedbackKeys.threads(), queryFn: () => feedbackApi.listThreads(), ...LIVE }),
+  thread: (threadId: number) => queryOptions({ queryKey: feedbackKeys.thread(threadId), queryFn: () => feedbackApi.getThread(threadId), ...LIVE }),
 };

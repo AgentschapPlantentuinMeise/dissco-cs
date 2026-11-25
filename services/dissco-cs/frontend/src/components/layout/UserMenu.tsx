@@ -32,7 +32,6 @@ export function UserMenu({ user }: { user: CurrentUser }) {
   const { data: isReviewer } = useQuery({
     ...reviewQueries.isReviewer(),
     enabled: !showAdmin,
-    staleTime: 5 * 60 * 1000,
   });
   const showReview = showAdmin || !!isReviewer;
 

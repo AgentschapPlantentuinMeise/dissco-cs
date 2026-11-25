@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { institutionsApi } from '../cs-client/institutions';
+import { STATIC } from './freshness';
 
 export const institutionKeys = {
   all: ['institutions'] as const,
@@ -10,17 +11,18 @@ export const institutionKeys = {
 };
 
 export const institutionQueries = {
-  active: () => queryOptions({ queryKey: institutionKeys.active(), queryFn: () => institutionsApi.listActive() }),
+  active: () => queryOptions({ queryKey: institutionKeys.active(), queryFn: () => institutionsApi.listActive(), ...STATIC }),
 
   detail: (slug: string | undefined) =>
-    queryOptions({ queryKey: institutionKeys.detail(slug), queryFn: () => institutionsApi.getActive(slug!), enabled: !!slug }),
+    queryOptions({ queryKey: institutionKeys.detail(slug), queryFn: () => institutionsApi.getActive(slug!), enabled: !!slug, ...STATIC }),
 
   projectSlugs: (slug: string | undefined) =>
     queryOptions({
       queryKey: institutionKeys.projectSlugs(slug),
       queryFn: () => institutionsApi.listActiveProjectSlugs(slug!),
       enabled: !!slug,
+      ...STATIC,
     }),
 
-  admin: () => queryOptions({ queryKey: institutionKeys.admin(), queryFn: () => institutionsApi.listAdmin() }),
+  admin: () => queryOptions({ queryKey: institutionKeys.admin(), queryFn: () => institutionsApi.listAdmin(), ...STATIC }),
 };

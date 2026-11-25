@@ -37,10 +37,7 @@ export function TaskDebugSubview({ projects }: { projects: MadocProjectDto[] }) 
 
   const selectedProject = projects.find(p => p.slug === selectedSlug) ?? null;
 
-  const debugQuery = useQuery({
-    ...projectQueries.taskDebug(selectedProject?.id),
-    staleTime: 0,
-  });
+  const debugQuery = useQuery(projectQueries.taskDebug(selectedProject?.id));
   const { data } = debugQuery;
   const load = loadState(debugQuery);
 

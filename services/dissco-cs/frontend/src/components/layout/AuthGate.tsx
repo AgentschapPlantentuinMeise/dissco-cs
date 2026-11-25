@@ -21,7 +21,6 @@ export function AuthGate({
   const reviewerQuery = useQuery({
     ...reviewQueries.isReviewer(),
     enabled: !!requireReviewer && !!user && !isAdmin,
-    staleTime: 5 * 60 * 1000,
   });
 
   if (!user) {

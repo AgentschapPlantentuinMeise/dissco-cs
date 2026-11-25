@@ -45,7 +45,7 @@ function singleSubmitter(refs: BatchSubmitterRef[]): { id: number; name: string 
 export function useReviewPage() {
   const { t, i18n } = useTranslation('dissco-cs');
   const queryClient = useQueryClient();
-  const tasksQuery = useQuery({ ...reviewQueries.tasks(), staleTime: 0 });
+  const tasksQuery = useQuery(reviewQueries.tasks());
   const { data } = tasksQuery;
   const load = loadState(tasksQuery);
 

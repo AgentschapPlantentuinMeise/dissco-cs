@@ -24,10 +24,7 @@ export function useForumPage() {
   const user = useCurrentUser();
   const queryClient = useQueryClient();
 
-  const { data: allProjects } = useQuery({
-    ...projectQueries.listAll({ published: true }),
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: allProjects } = useQuery(projectQueries.listAll({ published: true }));
   const projectOptions = useMemo(
     () => (allProjects || []).map((p: MadocProjectDto) => ({ slug: p.slug, label: localeText(p.label, i18n.language) })),
     [allProjects, i18n.language]

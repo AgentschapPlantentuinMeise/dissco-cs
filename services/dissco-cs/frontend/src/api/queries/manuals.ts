@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { manualsApi } from '../cs-client/manuals';
+import { STATIC } from './freshness';
 
 // The manual library (admin). A project's own manual is projectQueries.manual.
 export const manualKeys = {
@@ -9,6 +10,6 @@ export const manualKeys = {
 };
 
 export const manualQueries = {
-  list: () => queryOptions({ queryKey: manualKeys.list(), queryFn: () => manualsApi.list() }),
-  detail: (manualId: number) => queryOptions({ queryKey: manualKeys.detail(manualId), queryFn: () => manualsApi.get(manualId) }),
+  list: () => queryOptions({ queryKey: manualKeys.list(), queryFn: () => manualsApi.list(), ...STATIC }),
+  detail: (manualId: number) => queryOptions({ queryKey: manualKeys.detail(manualId), queryFn: () => manualsApi.get(manualId), ...STATIC }),
 };

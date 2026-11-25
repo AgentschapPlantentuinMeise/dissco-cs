@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { tasksApi } from '../cs-client/tasks';
 import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
+import { LIVE } from './freshness';
 
 export const taskKeys = {
   all: ['tasks'] as const,
@@ -29,6 +30,7 @@ export const taskQueries = {
         tasks: await tasksApi.listAll<MadocCrowdsourcingTaskDto>({ ...mineQuery(userId!), sort_by: 'newest', detail: true }),
       }),
       enabled: !!userId,
+      ...LIVE,
     }),
 
   // The user's own saved-but-not-submitted tasks (status 1), first page.
@@ -37,10 +39,11 @@ export const taskQueries = {
       queryKey: taskKeys.mineSaved(userId),
       queryFn: () => tasksApi.list<MadocCrowdsourcingTaskDto>(1, { ...mineQuery(userId!), status: 1, detail: true }),
       enabled: !!userId,
+      ...LIVE,
     }),
 
   detail: (taskId: string | undefined) =>
-    queryOptions({ queryKey: taskKeys.detail(taskId), queryFn: () => tasksApi.get(taskId!), enabled: !!taskId }),
+    queryOptions({ queryKey: taskKeys.detail(taskId), queryFn: () => tasksApi.get(taskId!), enabled: !!taskId, ...LIVE }),
 
-  stuck: () => queryOptions({ queryKey: taskKeys.stuck(), queryFn: () => tasksApi.listStuck() }),
+  stuck: () => queryOptions({ queryKey: taskKeys.stuck(), queryFn: () => tasksApi.listStuck(), ...LIVE }),
 };

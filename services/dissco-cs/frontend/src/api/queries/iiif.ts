@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { iiifApi } from '../cs-client/iiif';
+import { FIXED_PER_ID, STATIC } from './freshness';
 
 export const iiifKeys = {
   all: ['iiif'] as const,
@@ -11,13 +12,14 @@ export const iiifKeys = {
 
 export const iiifQueries = {
   canvas: (canvasId: number | undefined) =>
-    queryOptions({ queryKey: iiifKeys.canvas(canvasId), queryFn: () => iiifApi.getCanvas(canvasId!), enabled: !!canvasId }),
+    queryOptions({ queryKey: iiifKeys.canvas(canvasId), queryFn: () => iiifApi.getCanvas(canvasId!), enabled: !!canvasId, ...FIXED_PER_ID }),
 
   manifestStructure: (manifestId: number | undefined) =>
     queryOptions({
       queryKey: iiifKeys.manifestStructure(manifestId),
       queryFn: () => iiifApi.getManifestStructure(manifestId!),
       enabled: !!manifestId,
+      ...FIXED_PER_ID,
     }),
 
   manifestMetadata: (manifestId: number | undefined) =>
@@ -25,7 +27,8 @@ export const iiifQueries = {
       queryKey: iiifKeys.manifestMetadata(manifestId),
       queryFn: () => iiifApi.getManifestMetadata(manifestId!),
       enabled: !!manifestId,
+      ...FIXED_PER_ID,
     }),
 
-  collections: () => queryOptions({ queryKey: iiifKeys.collections(), queryFn: () => iiifApi.listCollections() }),
+  collections: () => queryOptions({ queryKey: iiifKeys.collections(), queryFn: () => iiifApi.listCollections(), ...STATIC }),
 };

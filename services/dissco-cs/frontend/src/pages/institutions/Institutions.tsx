@@ -49,7 +49,7 @@ export function Institutions() {
   // The same per-institution stats the cards below read, so these come from the cache. A project
   // is linked to at most one institution, so the sum counts no project twice.
   const runningProjects = useQueries({
-    queries: institutions.map(institution => ({ ...statsQueries.institution(institution.slug), refetchOnWindowFocus: false })),
+    queries: institutions.map(institution => statsQueries.institution(institution.slug)),
     combine: results =>
       results.every(result => result.data) ? results.reduce((sum, result) => sum + (result.data?.projectsActive ?? 0), 0) : null,
   });

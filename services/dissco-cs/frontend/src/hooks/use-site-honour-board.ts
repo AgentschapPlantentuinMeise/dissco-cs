@@ -17,8 +17,7 @@ export interface HonourBoardQuarter extends QuarterInfo {
 // so each quarter shows as soon as its own data is in. Per quarter: one normal fetch when the page opens (the
 // backend answers from its cache and recalculates in the background). The running quarter also
 // gets a cache-only poll every 15 s during the first 2 minutes, which never starts a
-// recalculation. refetchOnWindowFocus is off on the normal fetch, so switching browser tabs does
-// not start database queries.
+// recalculation.
 export function useSiteHonourBoard(): HonourBoardQuarter[] {
   // Fixed while the page is open, so the quarters and their query keys do not shift under it.
   const now = useMemo(() => new Date(), []);
@@ -26,10 +25,7 @@ export function useSiteHonourBoard(): HonourBoardQuarter[] {
   const refetchInterval = usePollingWindow();
 
   const results = useQueries({
-    queries: timeline.map(quarter => ({
-      ...statsQueries.honourBoard(quarter.key),
-      refetchOnWindowFocus: false,
-    })),
+    queries: timeline.map(quarter => statsQueries.honourBoard(quarter.key)),
   });
   const peek = useQuery({ ...statsQueries.honourBoardCurrent(quarterOf(now)), refetchInterval });
 

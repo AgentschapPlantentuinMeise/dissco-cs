@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { captureModelsApi } from '../cs-client/capture-models';
+import { FROZEN_UNTIL_LEFT } from './freshness';
 
 export const captureModelKeys = {
   all: ['capture-models'] as const,
@@ -18,8 +19,7 @@ export const captureModelQueries = {
       queryKey: captureModelKeys.model(modelId),
       queryFn: () => captureModelsApi.get(modelId!),
       enabled: !!modelId,
-      staleTime: Infinity,
-      gcTime: 0,
+      ...FROZEN_UNTIL_LEFT,
     }),
 
   revision: (revisionId: string | undefined) =>

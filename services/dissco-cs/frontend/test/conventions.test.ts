@@ -384,6 +384,16 @@ const rules: ConventionRule[] = [
       'pages/review/FeedbackModal.tsx': 'existing, from before the choice for teal and green',
     },
   },
+  {
+    name: 'How long data stays fresh is set in the query factory, not where the query is used',
+    pattern: /\b(staleTime|gcTime|refetchOnWindowFocus)\s*:/,
+    instead: 'a kind from api/queries/freshness.ts (STATIC, LIVE, FIXED_PER_ID, FROZEN_UNTIL_LEFT; SLOW is the default) in the factory in api/queries/',
+    allowedIn: {
+      'api/queries/': 'the query factories themselves',
+      'api/query-client.ts': 'sets the default',
+      'hooks/use-project-progress.ts': 'builds its own query around a request queue, with only the key taken from the factory',
+    },
+  },
 ];
 
 // A key is in use when it occurs as a quoted string, when it is a plural form (key_one, key_other) of

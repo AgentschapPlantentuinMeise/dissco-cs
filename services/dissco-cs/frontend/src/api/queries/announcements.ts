@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { announcementsApi } from '../cs-client/announcements';
 import { AnnouncementTargetType } from '@dissco-cs/shared-types';
+import { STATIC } from './freshness';
 
 export const announcementKeys = {
   all: ['announcements'] as const,
@@ -9,7 +10,7 @@ export const announcementKeys = {
 };
 
 export const announcementQueries = {
-  admin: () => queryOptions({ queryKey: announcementKeys.admin(), queryFn: () => announcementsApi.listAdmin() }),
+  admin: () => queryOptions({ queryKey: announcementKeys.admin(), queryFn: () => announcementsApi.listAdmin(), ...STATIC }),
   active: (target: AnnouncementTargetType, projectSlug?: string) =>
-    queryOptions({ queryKey: announcementKeys.active(target, projectSlug), queryFn: () => announcementsApi.listActive(target, projectSlug) }),
+    queryOptions({ queryKey: announcementKeys.active(target, projectSlug), queryFn: () => announcementsApi.listActive(target, projectSlug), ...STATIC }),
 };

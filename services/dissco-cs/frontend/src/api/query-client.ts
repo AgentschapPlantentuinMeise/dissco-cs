@@ -1,6 +1,7 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 import { reportClientError } from './cs-client/client-errors';
 import { ErrorMessageKey, showError } from './error-toast';
+import { SLOW } from './queries/freshness';
 
 type AppMutationMeta = {
   // Which message the toast shows when this mutation fails (default: error_save_failed).
@@ -29,7 +30,9 @@ export const queryClient = new QueryClient({
     // No automatic retries: TanStack's default (3, after 1, 2 and 4 seconds) kept a blank page up
     // for about 7 seconds before the load error showed, and 14 behind PageGate. The error page has
     // a "Try again" button, so the user decides. A query can still set its own retry.
-    queries: { retry: false },
+    // staleTime: TanStack's default 0 refetched everything on screen on every return to the tab.
+    // Each factory in api/queries/ picks its kind from freshness.ts; this is the one for the rest.
+    queries: { retry: false, staleTime: SLOW.staleTime },
   },
   queryCache: new QueryCache({
     onError: error => reportClientError(error, 'query'),

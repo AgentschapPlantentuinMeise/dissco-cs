@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { projectsApi } from '../cs-client/projects';
+import { FROZEN_UNTIL_LEFT, LIVE, STATIC } from './freshness';
 
 type ProjectListFilter = { published?: boolean };
 
@@ -50,10 +51,10 @@ export const projectQueries = {
     }),
 
   taskDebug: (projectId: string | number | undefined) =>
-    queryOptions({ queryKey: projectKeys.taskDebug(projectId), queryFn: () => projectsApi.getTaskDebug(projectId!), enabled: !!projectId }),
+    queryOptions({ queryKey: projectKeys.taskDebug(projectId), queryFn: () => projectsApi.getTaskDebug(projectId!), enabled: !!projectId, ...LIVE }),
 
   manual: (projectSlug: string | undefined) =>
-    queryOptions({ queryKey: projectKeys.manual(projectSlug), queryFn: () => projectsApi.getManual(projectSlug!), enabled: !!projectSlug }),
+    queryOptions({ queryKey: projectKeys.manual(projectSlug), queryFn: () => projectsApi.getManual(projectSlug!), enabled: !!projectSlug, ...STATIC }),
 
   // A project without a layout answers 404, so data stays undefined and the form follows the model.
   formLayout: (projectSlug: string | undefined) =>
@@ -61,6 +62,7 @@ export const projectQueries = {
       queryKey: projectKeys.formLayout(projectSlug),
       queryFn: () => projectsApi.getFormLayout(projectSlug!),
       enabled: !!projectSlug,
+      ...STATIC,
     }),
 
   institution: (projectSlug: string | undefined) =>
@@ -68,9 +70,10 @@ export const projectQueries = {
       queryKey: projectKeys.institution(projectSlug),
       queryFn: () => projectsApi.getInstitution(projectSlug!),
       enabled: !!projectSlug,
+      ...STATIC,
     }),
 
-  institutionLinks: () => queryOptions({ queryKey: projectKeys.institutionLinks(), queryFn: () => projectsApi.listInstitutionLinks() }),
+  institutionLinks: () => queryOptions({ queryKey: projectKeys.institutionLinks(), queryFn: () => projectsApi.listInstitutionLinks(), ...STATIC }),
 
   // A POST used as a read: makes sure the capture model for this claim exists and returns its id.
   // The answer decides the claim (use-task-claim) and whether the form starts blank
@@ -85,7 +88,6 @@ export const projectQueries = {
       queryKey: projectKeys.prepareClaim(projectId, manifestId),
       queryFn: () => projectsApi.prepareClaim(projectId!, { manifestId }),
       enabled: !!projectId && !!manifestId,
-      staleTime: Infinity,
-      gcTime: 0,
+      ...FROZEN_UNTIL_LEFT,
     }),
 };

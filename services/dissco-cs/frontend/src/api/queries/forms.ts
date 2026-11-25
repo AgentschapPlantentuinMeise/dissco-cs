@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { formsApi } from '../cs-client/forms';
+import { STATIC } from './freshness';
 
 // The forms (admin). What a project's annotation page uses is projectQueries.formLayout.
 export const formKeys = {
@@ -9,7 +10,7 @@ export const formKeys = {
 };
 
 export const formQueries = {
-  list: () => queryOptions({ queryKey: formKeys.list(), queryFn: () => formsApi.list() }),
+  list: () => queryOptions({ queryKey: formKeys.list(), queryFn: () => formsApi.list(), ...STATIC }),
   fields: (formName: string) =>
-    queryOptions({ queryKey: formKeys.fields(formName), queryFn: () => formsApi.getFields(formName), enabled: !!formName }),
+    queryOptions({ queryKey: formKeys.fields(formName), queryFn: () => formsApi.getFields(formName), enabled: !!formName, ...STATIC }),
 };

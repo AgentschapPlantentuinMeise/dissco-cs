@@ -20,7 +20,7 @@ export function About() {
   const { getIntro } = useNavItems();
   const platformName = useSiteName();
   // The same queries as the Projects and Institutions pages, so these usually come from the cache.
-  const { data: projects } = useQuery({ ...projectQueries.listAll({ published: true }), staleTime: 5 * 60 * 1000 });
+  const { data: projects } = useQuery(projectQueries.listAll({ published: true }));
   const { data: institutions } = useQuery(institutionQueries.active());
 
   const format = (n: number | undefined) => (n === undefined ? '—' : formatNumber(n, i18n.language));

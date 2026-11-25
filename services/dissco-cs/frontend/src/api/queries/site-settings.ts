@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { siteSettingsApi } from '../cs-client/site-settings';
+import { STATIC } from './freshness';
 
 export const siteSettingsKeys = {
   all: ['site-settings'] as const,
@@ -7,5 +8,5 @@ export const siteSettingsKeys = {
 };
 
 export const siteSettingsQueries = {
-  honourBoard: () => queryOptions({ queryKey: siteSettingsKeys.honourBoard(), queryFn: () => siteSettingsApi.getHonourBoard() }),
+  honourBoard: () => queryOptions({ queryKey: siteSettingsKeys.honourBoard(), queryFn: () => siteSettingsApi.getHonourBoard(), ...STATIC }),
 };

@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { reviewApi } from '../cs-client/review';
+import { LIVE, STATIC } from './freshness';
 
 export const reviewKeys = {
   all: ['review'] as const,
@@ -8,6 +9,6 @@ export const reviewKeys = {
 };
 
 export const reviewQueries = {
-  isReviewer: () => queryOptions({ queryKey: reviewKeys.isReviewer(), queryFn: () => reviewApi.isReviewer() }),
-  tasks: () => queryOptions({ queryKey: reviewKeys.tasks(), queryFn: () => reviewApi.listTasks() }),
+  isReviewer: () => queryOptions({ queryKey: reviewKeys.isReviewer(), queryFn: () => reviewApi.isReviewer(), ...STATIC }),
+  tasks: () => queryOptions({ queryKey: reviewKeys.tasks(), queryFn: () => reviewApi.listTasks(), ...LIVE }),
 };
