@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
+import { MyTaskDto } from '@dissco-cs/shared-types';
 import { feedbackQueries } from '../../api/queries/feedback';
 import { forumQueries } from '../../api/queries/forum';
 import { projectKeys, projectQueries } from '../../api/queries/projects';
@@ -35,11 +35,11 @@ export function useUserDashboard() {
   const user = useCurrentUser();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [releaseTarget, setReleaseTarget] = useState<MadocCrowdsourcingTaskDto | null>(null);
+  const [releaseTarget, setReleaseTarget] = useState<MyTaskDto | null>(null);
   const [openThreadId, setOpenThreadId] = useState<number | null>(null);
 
   const { mutate: releaseTask } = useMutation({
-    mutationFn: (task: MadocCrowdsourcingTaskDto) => tasksApi.update(task.id, { status: -1, status_text: 'abandoned' }),
+    mutationFn: (task: MyTaskDto) => tasksApi.update(task.id, { status: -1, status_text: 'abandoned' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.all });
       queryClient.invalidateQueries({ queryKey: projectKeys.all });
@@ -48,11 +48,9 @@ export function useUserDashboard() {
   });
 
   const tasksQuery = useQuery(taskQueries.mine(user?.id));
-  const tasksData = tasksQuery.data;
 
-  // taskQueries.mine (all_tasks: true) is forwarded as the user, so it only ever returns the calling
-  // user's own tasks for a non-admin contributor (see docs/MANIFEST-CLAIMS.md) — so the site-wide
-  // total has to come from the backend-computed stats instead, same as the homepage banner.
+  // taskQueries.mine only holds the user's own tasks, so the site-wide total comes from the
+  // backend-computed stats instead, same as the homepage banner.
   const { data: siteStats } = useSiteStats();
 
   const { data: unansweredCount = 0 } = useQuery({
@@ -87,7 +85,7 @@ export function useUserDashboard() {
   };
 
   const userName = user?.name ?? '';
-  const summary = summarizeTasks(tasksData?.tasks ?? []);
+  const summary = summarizeTasks(tasksQuery.data ?? []);
   const tabTasks = tab === 'saved' ? summary.savedTasks : summary.doneTasks;
   const shownTasks = sortTasks(filterTasks(tabTasks, { query, projectId }, i18n.language, userName), sort, i18n.language, userName);
   const totalPages = pageCount(shownTasks.length, TASKS_PER_PAGE);

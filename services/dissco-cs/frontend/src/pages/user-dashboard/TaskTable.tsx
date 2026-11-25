@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
+import { MyTaskDto } from '@dissco-cs/shared-types';
 import { HrefLink } from '../../utility/href-link';
 import { buildTaskLink } from '../../utility/build-task-link';
 import { formatTimeAgo } from '../../utility/format-date';
@@ -33,14 +33,14 @@ const tdClass = 'px-4 py-[14px] text-[0.9rem] text-[#343a40] align-middle max-[6
 // One page of the user's tasks. Saved tasks link to the annotate page (which returns here after
 // saving) and can be released; done tasks open a read-only view of what was submitted.
 export function TaskTable({ tasks, userName, variant, onRelease }: {
-  tasks: MadocCrowdsourcingTaskDto[];
+  tasks: MyTaskDto[];
   userName: string;
   variant: TaskTab;
-  onRelease?: (task: MadocCrowdsourcingTaskDto) => void;
+  onRelease?: (task: MyTaskDto) => void;
 }) {
   const { t, i18n } = useTranslation('dissco-cs');
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [previewTask, setPreviewTask] = useState<MadocCrowdsourcingTaskDto | null>(null);
+  const [previewTask, setPreviewTask] = useState<MyTaskDto | null>(null);
   const columnCount = 5;
 
   return (
@@ -86,7 +86,7 @@ export function TaskTable({ tasks, userName, variant, onRelease }: {
                     <span className={`${badgeBase} ${BADGE_CLASSES[badge.variant]}`}>{t(badge.label)}</span>
                   </td>
                   <td className={`${tdClass} text-gray-500 whitespace-nowrap max-[600px]:text-[0.8rem]`}>
-                    {task.modified_at ? formatTimeAgo(new Date(task.modified_at).toISOString(), i18n.language) : '—'}
+                    {task.modifiedAt ? formatTimeAgo(new Date(task.modifiedAt).toISOString(), i18n.language) : '—'}
                   </td>
                   <td className={`${tdClass} text-right max-[600px]:text-left`}>
                     {variant === 'saved' && onRelease && (

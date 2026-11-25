@@ -22,13 +22,12 @@ function mineQuery(userId: number) {
 }
 
 export const taskQueries = {
-  // All of the user's own crowdsourcing tasks, every page, newest first.
+  // All of the user's own crowdsourcing tasks, newest first. userId is only part of the key, so
+  // another user logging in on the same tab never sees this user's cached list.
   mine: (userId: number | undefined) =>
     queryOptions({
       queryKey: taskKeys.mine(userId),
-      queryFn: async () => ({
-        tasks: await tasksApi.listAll<MadocCrowdsourcingTaskDto>({ ...mineQuery(userId!), sort_by: 'newest', detail: true }),
-      }),
+      queryFn: () => tasksApi.listMine(),
       enabled: !!userId,
       ...LIVE,
     }),

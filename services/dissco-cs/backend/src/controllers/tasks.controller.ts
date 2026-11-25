@@ -1,18 +1,15 @@
 import { Hono } from 'hono';
 
-import { requestBearerToken, requireSiteAdmin } from '../auth/auth.js';
-import { appConfig } from '../config.js';
+import { requestBearerToken, requireSiteAdmin, requireUser } from '../auth/auth.js';
+import { forwardJsonBody, forwardQuery, madocFetch, relayMadocResponse } from '../madoc-client/client.js';
 import {
-  forwardJsonBody,
-  forwardQuery,
-  madocErrorResponse,
-  madocFetch,
-  madocJson,
-  relayMadocResponse,
-} from '../madoc-client/client.js';
-import { collectAllPages } from '../madoc-client/pagination.js';
-import { MadocCrowdsourcingTaskDto, MadocPagination } from '@dissco-cs/shared-types';
-import { getStuckMadocTasks, getStuckManifestCounters, resyncManifestTaskCounter, updateMadocTask } from '../madoc-client/tasks.js';
+  getMadocUserTasks,
+  getStuckMadocTasks,
+  getStuckManifestCounters,
+  resyncManifestTaskCounter,
+  updateMadocTask,
+} from '../madoc-client/tasks.js';
+import { toMyTask } from '../logic/tasks.logic.js';
 import { safeSegment, validateParams } from '../infrastructure/validate-params.js';
 
 // /stuck is registered before /:taskId on purpose: Hono tries routes in the order they are
@@ -59,29 +56,18 @@ export function tasksController(): Hono {
   // ---- the user's own tasks ----
 
   app.get('/', async c => {
-    const userToken = requestBearerToken(c);
-    if (c.req.query('all') !== 'true') {
-      return relayMadocResponse(await madocFetch(`/api/tasks${forwardQuery(c)}`, userToken));
+    return relayMadocResponse(await madocFetch(`/api/tasks${forwardQuery(c)}`, requestBearerToken(c)));
+  });
+
+  // Registered before /:taskId, which would otherwise take 'mine' for a task id.
+  app.get('/mine', async c => {
+    const identity = requireUser(c);
+    if (identity instanceof Response) {
+      return identity;
     }
 
-    const query = new URLSearchParams(c.req.query());
-    for (const ours of ['slug', 'all', 'page']) {
-      query.delete(ours);
-    }
-
-    try {
-      const tasks = await collectAllPages(async page => {
-        query.set('page', String(page));
-        const data = await madocJson<{ tasks: MadocCrowdsourcingTaskDto[]; pagination?: MadocPagination }>(
-          `/api/tasks?${query}`,
-          userToken
-        );
-        return { items: data.tasks, totalPages: data.pagination?.totalPages };
-      }, appConfig.madocPageConcurrency);
-      return c.json({ tasks });
-    } catch (err) {
-      return madocErrorResponse(err);
-    }
+    const tasks = await getMadocUserTasks(identity.siteId, identity.userId);
+    return c.json({ tasks: tasks.map(toMyTask) });
   });
 
   app.get('/:taskId', validateParams({ taskId: safeSegment }), async c => {

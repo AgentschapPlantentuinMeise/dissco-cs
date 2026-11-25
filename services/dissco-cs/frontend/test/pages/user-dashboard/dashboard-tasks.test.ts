@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
+import { MyTaskDto } from '@dissco-cs/shared-types';
 
 import {
   filterTasks,
@@ -17,8 +17,8 @@ import {
 const fungi = { id: 1, slug: 'fungi' };
 const birds = { id: 2, slug: 'birds' };
 
-function task(overrides: Partial<MadocCrowdsourcingTaskDto>): MadocCrowdsourcingTaskDto {
-  return { id: 't', status: 1, subject: 's', root_task: 'r', modified_at: 1, metadata: { project: fungi }, ...overrides };
+function task(overrides: Partial<MyTaskDto>): MyTaskDto {
+  return { id: 't', name: '', status: 1, subject: 's', rootTask: 'r', modifiedAt: 1, project: fungi, ...overrides };
 }
 
 describe('summarizeTasks', () => {
@@ -34,9 +34,9 @@ describe('summarizeTasks', () => {
 
   it('keeps only the latest task per object', () => {
     const summary = summarizeTasks([
-      task({ id: 'old', subject: 's1', status: 2, modified_at: 100 }),
-      task({ id: 'new', subject: 's1', status: 1, modified_at: 200 }),
-      task({ id: 'other-root', subject: 's1', root_task: 'r2', status: 2 }),
+      task({ id: 'old', subject: 's1', status: 2, modifiedAt: 100 }),
+      task({ id: 'new', subject: 's1', status: 1, modifiedAt: 200 }),
+      task({ id: 'other-root', subject: 's1', rootTask: 'r2', status: 2 }),
     ]);
     expect(summary.contributedTasks.map(t => t.id).sort()).toEqual(['new', 'other-root']);
   });
@@ -54,8 +54,8 @@ describe('summarizeTasks', () => {
 
   it("counts completed tasks like the backend: status 2 and 3 of every task, also an older one of the same object", () => {
     const summary = summarizeTasks([
-      task({ id: 'a', subject: 's1', status: 2, modified_at: 100 }),
-      task({ id: 'b', subject: 's1', status: 3, modified_at: 200 }),
+      task({ id: 'a', subject: 's1', status: 2, modifiedAt: 100 }),
+      task({ id: 'b', subject: 's1', status: 3, modifiedAt: 200 }),
       task({ id: 'c', subject: 's2', status: 5 }),
     ]);
     expect(summary.userDoneCount).toBe(2);
@@ -65,8 +65,8 @@ describe('summarizeTasks', () => {
     const summary = summarizeTasks([
       task({ id: 'a', subject: 's1' }),
       task({ id: 'b', subject: 's2' }),
-      task({ id: 'c', subject: 's3', metadata: { project: birds } }),
-      task({ id: 'd', subject: 's4', metadata: undefined }),
+      task({ id: 'c', subject: 's3', project: birds }),
+      task({ id: 'd', subject: 's4', project: null }),
     ]);
     expect(summary.projectCount).toBe(2);
     expect(summary.projectTaskCounts.map(({ id, value }) => ({ id, value }))).toEqual([
@@ -85,9 +85,9 @@ describe('shareOfTotal', () => {
 
 const herbs = { id: 3, slug: 'herbs', label: { nl: ['Kruiden'], en: ['Herbs'] } };
 const list = [
-  task({ id: 'a', name: 'Jan: Etiket 12', modified_at: 300, metadata: { project: fungi } }),
-  task({ id: 'b', name: 'Jan: Brief 4', modified_at: 100, metadata: { project: herbs } }),
-  task({ id: 'c', name: 'Jan: Album 7', modified_at: 200, metadata: { project: birds } }),
+  task({ id: 'a', name: 'Jan: Etiket 12', modifiedAt: 300, project: fungi }),
+  task({ id: 'b', name: 'Jan: Brief 4', modifiedAt: 100, project: herbs }),
+  task({ id: 'c', name: 'Jan: Album 7', modifiedAt: 200, project: birds }),
 ];
 
 describe('filterTasks', () => {
@@ -151,11 +151,11 @@ describe('monthlyCounts', () => {
   it('counts tasks in their month and leaves out older or undated ones', () => {
     const months = monthlyCounts(
       [
-        task({ id: 'a', modified_at: at(2026, 9, 1) }),
-        task({ id: 'b', modified_at: at(2026, 9, 20) }),
-        task({ id: 'c', modified_at: at(2025, 10, 30) }),
-        task({ id: 'd', modified_at: at(2025, 9, 31) }),
-        task({ id: 'e', modified_at: undefined }),
+        task({ id: 'a', modifiedAt: at(2026, 9, 1) }),
+        task({ id: 'b', modifiedAt: at(2026, 9, 20) }),
+        task({ id: 'c', modifiedAt: at(2025, 10, 30) }),
+        task({ id: 'd', modifiedAt: at(2025, 9, 31) }),
+        task({ id: 'e', modifiedAt: null }),
       ],
       now
     );
@@ -182,8 +182,8 @@ describe('bestMonth', () => {
 
 describe('firstContribution', () => {
   it('gives the earliest date, or null without dates', () => {
-    expect(firstContribution([task({ modified_at: 300 }), task({ modified_at: 100 }), task({ modified_at: undefined })])).toBe(100);
-    expect(firstContribution([task({ modified_at: undefined })])).toBeNull();
+    expect(firstContribution([task({ modifiedAt: 300 }), task({ modifiedAt: 100 }), task({ modifiedAt: null })])).toBe(100);
+    expect(firstContribution([task({ modifiedAt: null })])).toBeNull();
   });
 });
 
@@ -205,11 +205,11 @@ describe('tasksPerInstitution', () => {
   it('counts per linked institution, the most first, and leaves out projects without one', () => {
     const counts = tasksPerInstitution(
       [
-        task({ id: 'a', metadata: { project: fungi } }),
-        task({ id: 'b', metadata: { project: birds } }),
-        task({ id: 'c', metadata: { project: birds } }),
-        task({ id: 'd', metadata: { project: herbs } }),
-        task({ id: 'e', metadata: undefined }),
+        task({ id: 'a', project: fungi }),
+        task({ id: 'b', project: birds }),
+        task({ id: 'c', project: birds }),
+        task({ id: 'd', project: herbs }),
+        task({ id: 'e', project: null }),
       ],
       { fungi: 7, birds: 9 }
     );

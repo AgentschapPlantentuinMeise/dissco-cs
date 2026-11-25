@@ -108,6 +108,30 @@ export async function getMadocProjectTasksByStatus(siteId: number, rootTaskId: s
 }
 
 /**
+ * Every volunteer task assigned to one user on this site, with details, in one call: `all=true`
+ * makes Madoc skip paging, which it only allows the service token (an admin). That token sees
+ * everyone's tasks, so userId must be the logged-in user's own id (identity.userId), never a value
+ * from the request. Uses the service token.
+ * @param siteId the site (identity.siteId)
+ * @param userId the Madoc user id of the logged-in user (identity.userId)
+ * Returns: MadocCrowdsourcingTaskDto[], newest first. Throws a MadocHttpError when Madoc answers
+ *   with an error.
+ */
+export async function getMadocUserTasks(siteId: number, userId: number): Promise<MadocCrowdsourcingTaskDto[]> {
+  const data = await serviceJson<{ tasks: MadocCrowdsourcingTaskDto[] }>('/api/tasks', {
+    siteId,
+    query: {
+      assignee: `urn:madoc:user:${userId}`,
+      type: 'crowdsourcing-task',
+      all_tasks: 'true',
+      detail: 'true',
+      all: 'true',
+    },
+  });
+  return data.tasks;
+}
+
+/**
  * Reopens a full manifest when there is room again. Madoc only recounts how many volunteers work
  * on a manifest when someone claims it, not when someone lets it go, so a manifest can stay
  * marked full (status 2) after all its claims were abandoned. This sets it back to status 1

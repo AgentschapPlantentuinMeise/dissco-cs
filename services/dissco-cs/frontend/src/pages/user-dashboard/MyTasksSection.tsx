@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
+import { MyTaskDto } from '@dissco-cs/shared-types';
 import { PageSection } from '../../components/layout/PageSection';
 import { Pagination } from '../../components/ui/Pagination';
 import { Tabs } from '../../components/ui/Tabs';
@@ -19,7 +19,7 @@ export function MyTasksSection({ list, summary, userName, loading, onRelease }: 
   summary: UserDashboardState['summary'];
   userName: string;
   loading: boolean;
-  onRelease: (task: MadocCrowdsourcingTaskDto) => void;
+  onRelease: (task: MyTaskDto) => void;
 }) {
   const { t } = useTranslation('dissco-cs');
   const tabLabel = (key: string, count: number) => (

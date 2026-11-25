@@ -14,6 +14,7 @@ export * from './project.js';
 export * from './review.js';
 export * from './madoc-capture-model.js';
 export * from './madoc-crowdsourcing-task.js';
+export * from './my-task.js';
 export * from './madoc-iiif.js';
 export * from './madoc-auth.js';
 export * from './site-theme.js';

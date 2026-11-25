@@ -1,6 +1,6 @@
 import { csFetch, csFetchField } from './request';
 import { urlPath, withQuery } from '../url';
-import { MadocCrowdsourcingTaskDto, MadocPagination } from '@dissco-cs/shared-types';
+import { MadocCrowdsourcingTaskDto, MadocPagination, MyTaskDto } from '@dissco-cs/shared-types';
 
 export const tasksApi = {
   /**
@@ -16,13 +16,13 @@ export const tasksApi = {
     ),
 
   /**
-   * Same as list, but every page at once (the backend walks Madoc's pages).
-   * @param query extra Madoc /api/tasks filters, passed on unchecked
+   * All of the caller's own volunteer tasks on this site, in one go, with only the fields the
+   * dashboard uses.
+   * Input: none; the user comes from the login.
    * Who: logged-in user.
-   * Returns: the tasks, all pages together.
+   * Returns: MyTaskDto[], newest first.
    */
-  listAll: <T = unknown>(query: Record<string, unknown> = {}) =>
-    csFetchField<T[]>(withQuery('/tasks', { ...query, all: true }), 'tasks'),
+  listMine: () => csFetchField<MyTaskDto[]>('/tasks/mine', 'tasks'),
 
   /**
    * One task with its details, asked as the caller.

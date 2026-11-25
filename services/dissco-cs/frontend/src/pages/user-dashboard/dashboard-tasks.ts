@@ -1,18 +1,18 @@
-import { MadocCrowdsourcingTaskDto } from '@dissco-cs/shared-types';
+import { MyTaskDto, MyTaskProjectDto } from '@dissco-cs/shared-types';
 import { localeText } from '../../utility/locale-text';
 import { taskDisplayName } from '../../utility/task-display-name';
 
 export interface ProjectTaskCount {
   id: string;
   value: number;
-  project: NonNullable<NonNullable<MadocCrowdsourcingTaskDto['metadata']>['project']>;
+  project: MyTaskProjectDto;
 }
 
 export interface TaskSummary {
-  savedTasks: MadocCrowdsourcingTaskDto[];
-  doneTasks: MadocCrowdsourcingTaskDto[];
+  savedTasks: MyTaskDto[];
+  doneTasks: MyTaskDto[];
   // Every task the user worked on, one per object (saved, submitted, reviewed, ...).
-  contributedTasks: MadocCrowdsourcingTaskDto[];
+  contributedTasks: MyTaskDto[];
   // The backend's own definition of "completed" (status 2 or 3, see fetchSiteTaskTotals in
   // madoc-db/stats.repository.ts), so it lines up with siteStats.tasksCompleted.
   userDoneCount: number;
@@ -22,7 +22,7 @@ export interface TaskSummary {
 
 // The user's task list as the dashboard shows it: duplicates removed, unstarted (0) and abandoned
 // (-1) claims left out, and only the latest task per object (subject + root task).
-export function summarizeTasks(tasks: MadocCrowdsourcingTaskDto[]): TaskSummary {
+export function summarizeTasks(tasks: MyTaskDto[]): TaskSummary {
   const seen = new Set<string>();
   const uniqueTasks = tasks.filter(task => {
     const id = task.id ?? '';
@@ -32,11 +32,11 @@ export function summarizeTasks(tasks: MadocCrowdsourcingTaskDto[]): TaskSummary 
   });
 
   const realTasks = uniqueTasks.filter(task => task.status !== 0 && task.status !== -1);
-  const latestPerSubject = new Map<string, MadocCrowdsourcingTaskDto>();
+  const latestPerSubject = new Map<string, MyTaskDto>();
   for (const task of realTasks) {
-    const key = `${task.subject ?? task.id}|${task.root_task ?? ''}`;
+    const key = `${task.subject ?? task.id}|${task.rootTask ?? ''}`;
     const existing = latestPerSubject.get(key);
-    if (!existing || (task.modified_at ?? '') > (existing.modified_at ?? '')) {
+    if (!existing || (task.modifiedAt ?? '') > (existing.modifiedAt ?? '')) {
       latestPerSubject.set(key, task);
     }
   }
@@ -44,7 +44,7 @@ export function summarizeTasks(tasks: MadocCrowdsourcingTaskDto[]): TaskSummary 
 
   const projectTaskCounts = new Map<string, ProjectTaskCount>();
   for (const task of contributedTasks) {
-    const project = task.metadata?.project;
+    const project = task.project;
     if (!project) continue;
     const id = String(project.id);
     projectTaskCounts.set(id, { id, value: (projectTaskCounts.get(id)?.value ?? 0) + 1, project });
@@ -75,12 +75,12 @@ export const TASKS_PER_PAGE = 10;
 
 /**
  * The name of a task's project in the given language, falling back to its slug.
- * @param task the task (MadocCrowdsourcingTaskDto), its project from metadata.project
+ * @param task the task (MyTaskDto)
  * @param language the site language (i18n.language)
  * Returns: the name, or '' when the task has no project.
  */
-export function taskProjectName(task: MadocCrowdsourcingTaskDto, language: string): string {
-  const project = task.metadata?.project;
+export function taskProjectName(task: MyTaskDto, language: string): string {
+  const project = task.project;
   return project ? localeText(project.label, language) || project.slug : '';
 }
 
@@ -94,14 +94,14 @@ export function taskProjectName(task: MadocCrowdsourcingTaskDto, language: strin
  * Returns: the matching tasks, in the same order.
  */
 export function filterTasks(
-  tasks: MadocCrowdsourcingTaskDto[],
+  tasks: MyTaskDto[],
   { query, projectId }: { query: string; projectId: string },
   language: string,
   userName: string
-): MadocCrowdsourcingTaskDto[] {
+): MyTaskDto[] {
   const needle = query.trim().toLowerCase();
   return tasks.filter(task => {
-    if (projectId && String(task.metadata?.project?.id ?? '') !== projectId) return false;
+    if (projectId && String(task.project?.id ?? '') !== projectId) return false;
     if (!needle) return true;
     return (
       taskDisplayName(task, userName).toLowerCase().includes(needle) ||
@@ -119,13 +119,13 @@ export function filterTasks(
  * @param userName the user's name, stripped from the task names
  * Returns: a new, sorted array.
  */
-export function sortTasks(tasks: MadocCrowdsourcingTaskDto[], sort: TaskSort, language: string, userName: string): MadocCrowdsourcingTaskDto[] {
+export function sortTasks(tasks: MyTaskDto[], sort: TaskSort, language: string, userName: string): MyTaskDto[] {
   const compare = new Intl.Collator(language).compare;
   const sorted = tasks.slice();
   if (sort === 'date') {
-    return sorted.sort((a, b) => (b.modified_at ?? 0) - (a.modified_at ?? 0));
+    return sorted.sort((a, b) => (b.modifiedAt ?? 0) - (a.modifiedAt ?? 0));
   }
-  const key = sort === 'name' ? (task: MadocCrowdsourcingTaskDto) => taskDisplayName(task, userName) : (task: MadocCrowdsourcingTaskDto) => taskProjectName(task, language);
+  const key = sort === 'name' ? (task: MyTaskDto) => taskDisplayName(task, userName) : (task: MyTaskDto) => taskProjectName(task, language);
   return sorted.sort((a, b) => compare(key(a), key(b)));
 }
 
@@ -135,10 +135,10 @@ export function sortTasks(tasks: MadocCrowdsourcingTaskDto[], sort: TaskSort, la
  * @param language the site language, for the names
  * Returns: one { id, name } per project, the id as a string.
  */
-export function taskProjectOptions(tasks: MadocCrowdsourcingTaskDto[], language: string): { id: string; name: string }[] {
+export function taskProjectOptions(tasks: MyTaskDto[], language: string): { id: string; name: string }[] {
   const options = new Map<string, string>();
   for (const task of tasks) {
-    const project = task.metadata?.project;
+    const project = task.project;
     if (project) options.set(String(project.id), taskProjectName(task, language));
   }
   const compare = new Intl.Collator(language).compare;
@@ -146,7 +146,7 @@ export function taskProjectOptions(tasks: MadocCrowdsourcingTaskDto[], language:
 }
 
 // ---- "Your year" ----
-// Months are counted on a task's modified_at, the only date the task list has: a task a reviewer
+// Months are counted on a task's modifiedAt, the only date the task list has: a task a reviewer
 // accepts a month later can move to that month. Good enough for a personal overview.
 
 export interface MonthCount {
@@ -163,15 +163,15 @@ export interface MonthCount {
  * @param months how many months, the current one included
  * Returns: one entry per month, oldest first; a month without tasks counts 0.
  */
-export function monthlyCounts(tasks: MadocCrowdsourcingTaskDto[], now: Date, months = 12): MonthCount[] {
+export function monthlyCounts(tasks: MyTaskDto[], now: Date, months = 12): MonthCount[] {
   const result: MonthCount[] = [];
   for (let i = months - 1; i >= 0; i--) {
     const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
     result.push({ year: start.getFullYear(), month: start.getMonth(), count: 0 });
   }
   for (const task of tasks) {
-    if (!task.modified_at) continue;
-    const date = new Date(task.modified_at);
+    if (!task.modifiedAt) continue;
+    const date = new Date(task.modifiedAt);
     const slot = result.find(m => m.year === date.getFullYear() && m.month === date.getMonth());
     if (slot) slot.count++;
   }
@@ -194,10 +194,10 @@ export function bestMonth(months: MonthCount[]): MonthCount | null {
 /**
  * When the user first worked on a task.
  * @param tasks the user's tasks
- * Returns: the earliest modified_at (milliseconds since 1970), or null without dated tasks.
+ * Returns: the earliest modifiedAt (milliseconds since 1970), or null without dated tasks.
  */
-export function firstContribution(tasks: MadocCrowdsourcingTaskDto[]): number | null {
-  const dates = tasks.map(task => task.modified_at).filter((date): date is number => !!date);
+export function firstContribution(tasks: MyTaskDto[]): number | null {
+  const dates = tasks.map(task => task.modifiedAt).filter((date): date is number => !!date);
   return dates.length ? Math.min(...dates) : null;
 }
 
@@ -228,10 +228,10 @@ export function nextMilestone(count: number): { previous: number; next: number }
  * @param links project slug -> institution id (projectsApi.listInstitutionLinks)
  * Returns: one entry per institution, the most tasks first.
  */
-export function tasksPerInstitution(tasks: MadocCrowdsourcingTaskDto[], links: Record<string, number>): { institutionId: number; count: number }[] {
+export function tasksPerInstitution(tasks: MyTaskDto[], links: Record<string, number>): { institutionId: number; count: number }[] {
   const counts = new Map<number, number>();
   for (const task of tasks) {
-    const institutionId = task.metadata?.project ? links[task.metadata.project.slug] : undefined;
+    const institutionId = task.project ? links[task.project.slug] : undefined;
     if (institutionId !== undefined) counts.set(institutionId, (counts.get(institutionId) ?? 0) + 1);
   }
   return Array.from(counts, ([institutionId, count]) => ({ institutionId, count })).sort((a, b) => b.count - a.count);

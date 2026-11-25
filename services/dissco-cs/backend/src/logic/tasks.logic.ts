@@ -1,3 +1,25 @@
+import { MadocCrowdsourcingTaskDto, MyTaskDto } from '@dissco-cs/shared-types';
+
+/**
+ * One of the user's own tasks in the shape the dashboard needs: Madoc's task without its object
+ * label, thumbnail, state and parameters.
+ * @param task a task from Madoc's task list, asked with detail=true (otherwise subject, root_task
+ *   and modified_at are missing)
+ * Returns: the MyTaskDto; a field Madoc did not send becomes null.
+ */
+export function toMyTask(task: MadocCrowdsourcingTaskDto): MyTaskDto {
+  const project = task.metadata?.project;
+  return {
+    id: task.id,
+    name: task.name ?? '',
+    status: task.status,
+    subject: task.subject ?? null,
+    rootTask: task.root_task ?? null,
+    modifiedAt: task.modified_at ?? null,
+    project: project ? { id: project.id, slug: project.slug, label: project.label } : null,
+  };
+}
+
 export interface ManifestTaskDetail {
   status: number;
   state?: { maxContributors?: number };
