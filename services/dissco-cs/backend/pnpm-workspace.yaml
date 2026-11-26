@@ -1,2 +1,4 @@
 allowBuilds:
   esbuild: true
+  # sharp ships a prebuilt binary per platform (@img/sharp-*); its script only builds from source.
+  sharp: false

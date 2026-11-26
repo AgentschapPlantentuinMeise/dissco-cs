@@ -4,6 +4,7 @@ import { SiteImagesRepository, toSiteImageDto } from '../repositories/site-image
 import { requireSiteAdmin, requireSiteId } from '../auth/auth.js';
 import { validateJson } from '../infrastructure/validate-json.js';
 import { readUpload, sendFile, uploadLimit } from '../infrastructure/file-http.js';
+import { shrinkImage } from '../infrastructure/image-resize.js';
 import { siteImageKey, validateParams } from '../infrastructure/validate-params.js';
 
 export function siteImagesController(siteImagesRepository: SiteImagesRepository): Hono {
@@ -50,7 +51,9 @@ export function siteImagesController(siteImagesRepository: SiteImagesRepository)
       return upload;
     }
 
-    await siteImagesRepository.upsertFile(identity.siteId, identity.userId, c.req.valid('param').key, upload);
+    const key = c.req.valid('param').key;
+    const image = await shrinkImage(upload.buffer, key === 'logo' ? 'logo' : 'photo');
+    await siteImagesRepository.upsertFile(identity.siteId, identity.userId, key, image);
     return c.body(null, 204);
   });
 

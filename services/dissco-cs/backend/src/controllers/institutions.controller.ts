@@ -1,12 +1,13 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { requireSiteAdmin, requireSiteId } from '../auth/auth.js';
-import { InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
+import { InstitutionLogo, InstitutionsRepository, toInstitutionDto } from '../repositories/institutions.repository.js';
 import { FormsRepository } from '../repositories/forms.repository.js';
 import { listInstitutionProjectSlugs } from '../services/forms.service.js';
 import { intId, safeSegment, validateParams } from '../infrastructure/validate-params.js';
 import { validateMultipart } from '../infrastructure/validate-multipart.js';
-import { Upload, checkUpload, sendFile, uploadLimit } from '../infrastructure/file-http.js';
+import { checkUpload, sendFile, uploadLimit } from '../infrastructure/file-http.js';
+import { shrinkImage } from '../infrastructure/image-resize.js';
 import {
   IMAGE_UPLOAD_MIME_TYPES,
   INSTITUTION_LOGO_FIELD,
@@ -27,10 +28,15 @@ const MAX_INSTITUTION_SAVE_SIZE =
   3 * SITE_PAGE_LANGS.length * (MAX_INSTITUTION_NAME_LENGTH + MAX_INSTITUTION_DESCRIPTION_LENGTH) +
   3 * (MAX_EMAIL_LENGTH + MAX_INSTITUTION_PHONE_LENGTH + MAX_INSTITUTION_WEBSITE_LENGTH);
 
-// The logo from the multipart body: null when none was sent, or the error Response (413, 415).
-async function readLogo(c: Context, files: Record<string, File>): Promise<Upload | Response | null> {
+// The logo from the multipart body, shrunk to the size it shows at: null when none was sent, or the
+// error Response (413, 415).
+async function readLogo(c: Context, files: Record<string, File>): Promise<InstitutionLogo | Response | null> {
   const file = files[INSTITUTION_LOGO_FIELD];
-  return file ? checkUpload(c, file, MAX_IMAGE_UPLOAD_SIZE, IMAGE_UPLOAD_MIME_TYPES) : null;
+  if (!file) {
+    return null;
+  }
+  const upload = await checkUpload(c, file, MAX_IMAGE_UPLOAD_SIZE, IMAGE_UPLOAD_MIME_TYPES);
+  return upload instanceof Response ? upload : shrinkImage(upload.buffer, 'logo');
 }
 
 export function institutionsController(institutionsRepository: InstitutionsRepository, formsRepository: FormsRepository): Hono {

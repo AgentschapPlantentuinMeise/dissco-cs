@@ -34,7 +34,7 @@ export const disscoCSConfig = {
       labelKey: 'footer_built_with',
     },
   ] as { name: string; url: string; logoUrl: string; labelKey?: string }[],
-  heroBgUrl: new URL('./images/backgroundflower.png', import.meta.url).href,
+  heroBgUrl: new URL('./images/backgroundflower.webp', import.meta.url).href,
   heroBgCredit: 'Maarten Strack van Schijndel',
 
   supportedLanguages: SITE_PAGE_LANGS.map(code => ({ label: LANGUAGE_NAMES[code], code })),
