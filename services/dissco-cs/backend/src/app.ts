@@ -78,9 +78,19 @@ export function createDisscoCSApp(
     app.use('/cs-assets/*', serveStatic({
       root: './frontend-dist',
       rewriteRequestPath: path => path.replace('/cs-assets', ''),
+      // The build puts a hash in every file name: a release gives a changed file a new name, so a
+      // name never gets other content and the browser may keep the file for a year.
+      onFound: (_path, c) => {
+        c.header('Cache-Control', 'public, max-age=31536000, immutable');
+      },
     }));
 
-    app.get('/s/*', c => c.html(indexHtml));
+    // The opposite for the page itself: after a release the browser must fetch the new index.html,
+    // because it names the new files.
+    app.get('/s/*', c => {
+      c.header('Cache-Control', 'no-cache');
+      return c.html(indexHtml);
+    });
   }
 
   return app;

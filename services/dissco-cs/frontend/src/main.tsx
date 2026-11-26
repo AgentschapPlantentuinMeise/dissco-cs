@@ -7,11 +7,13 @@ import { App } from './App';
 import { queryClient } from './api/query-client';
 import { listenForUncaughtErrors } from './api/uncaught-errors';
 import { recordVisit } from './utility/record-visit';
+import { reloadAfterRelease } from './utility/reload-after-release';
 import { Toast } from './components/layout/Toast';
 import { SiteThemeSync } from './components/layout/SiteThemeSync';
 import { applySiteColors, readCachedSiteColors } from './utility/site-colors';
 
 listenForUncaughtErrors();
+reloadAfterRelease();
 recordVisit();
 applySiteColors(readCachedSiteColors());
 
