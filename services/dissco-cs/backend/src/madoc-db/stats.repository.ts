@@ -6,6 +6,9 @@ export type InstitutionProjectRow = { id: number; task_id: string; status: numbe
 
 type SiteTaskTotals = { completed: number; total: number };
 
+// What the cache holds; whether a recalculation runs is added when answering.
+type InstitutionCounts = Omit<InstitutionStatsDto, 'refreshing'>;
+
 const VOLUNTEERS_CACHE_TTL_MS = 5 * 60 * 1000;
 
 // The manifest a volunteer task is about: `subject` when the project hands out whole manifests,
@@ -19,7 +22,7 @@ const MANIFEST_URN_SQL = `
     WHEN subject_parent LIKE 'urn:madoc:manifest:%' THEN subject_parent
   END`;
 
-const EMPTY_INSTITUTION_STATS: InstitutionStatsDto = {
+const EMPTY_INSTITUTION_STATS: InstitutionCounts = {
   volunteers: 0,
   tasksCompleted: 0,
   tasksTotal: 0,
@@ -39,7 +42,7 @@ const EMPTY_INSTITUTION_STATS: InstitutionStatsDto = {
 export class StatsRepository {
   private readonly siteVolunteers = new SwrCache<number, number>('stats:site-volunteers', VOLUNTEERS_CACHE_TTL_MS);
   private readonly siteTaskTotals = new SwrCache<number, SiteTaskTotals>('stats:site-task-totals');
-  private readonly institutionStats = new SwrCache<string, InstitutionStatsDto>('stats:institution');
+  private readonly institutionStats = new SwrCache<string, InstitutionCounts>('stats:institution');
 
   constructor(private readonly pools: MadocDbPools) {}
 
@@ -50,7 +53,7 @@ export class StatsRepository {
       this.getSiteVolunteers(siteId),
       this.siteTaskTotals.get(siteId, () => this.fetchSiteTaskTotals(siteId)),
     ]);
-    return { volunteers, tasksCompleted: taskTotals.completed, tasksTotal: taskTotals.total };
+    return this.siteStats(siteId, volunteers, taskTotals);
   }
 
   // For the /current poll: task totals are read from cache only (falling back to a live query only
@@ -60,7 +63,16 @@ export class StatsRepository {
       this.getSiteVolunteers(siteId),
       this.siteTaskTotals.peek(siteId) ?? this.siteTaskTotals.get(siteId, () => this.fetchSiteTaskTotals(siteId)),
     ]);
-    return { volunteers, tasksCompleted: taskTotals.completed, tasksTotal: taskTotals.total };
+    return this.siteStats(siteId, volunteers, taskTotals);
+  }
+
+  private siteStats(siteId: number, volunteers: number, taskTotals: SiteTaskTotals): SiteStatsDto {
+    return {
+      volunteers,
+      tasksCompleted: taskTotals.completed,
+      tasksTotal: taskTotals.total,
+      refreshing: this.siteVolunteers.isRefreshing(siteId) || this.siteTaskTotals.isRefreshing(siteId),
+    };
   }
 
   private getSiteVolunteers(siteId: number): Promise<number> {
@@ -141,21 +153,25 @@ export class StatsRepository {
   }
 
   peekInstitution(siteId: number, institutionId: number): InstitutionStatsDto | null {
-    return this.institutionStats.peek(`${siteId}:${institutionId}`);
+    const key = `${siteId}:${institutionId}`;
+    const counts = this.institutionStats.peek(key);
+    return counts && { ...counts, refreshing: this.institutionStats.isRefreshing(key) };
   }
 
   async getInstitution(siteId: number, institutionId: number, projectSlugs: string[]): Promise<InstitutionStatsDto> {
-    return this.institutionStats.get(`${siteId}:${institutionId}`, async () => {
+    const key = `${siteId}:${institutionId}`;
+    const counts = await this.institutionStats.get(key, async () => {
       const projects = await this.resolveProjects(siteId, projectSlugs);
       return this.fetchInstitutionStats(projects);
     });
+    return { ...counts, refreshing: this.institutionStats.isRefreshing(key) };
   }
 
   // Scoped to one institution's projects (through dissco_cs.forms) instead of
   // every project on the site. "Projects completed" here means 100% transcribed (completed >= total
   // manifests), not a Madoc project status -- so totals are computed per project (GROUP BY) rather
   // than as one site-wide sum, then classified in application code.
-  private async fetchInstitutionStats(projects: InstitutionProjectRow[]): Promise<InstitutionStatsDto> {
+  private async fetchInstitutionStats(projects: InstitutionProjectRow[]): Promise<InstitutionCounts> {
     if (projects.length === 0) {
       return EMPTY_INSTITUTION_STATS;
     }

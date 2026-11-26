@@ -19,6 +19,11 @@ export class SwrCache<K, V> {
     return this.entries.get(key)?.value ?? null;
   }
 
+  // True while a background refresh of this key runs: a read soon after may return other numbers.
+  isRefreshing(key: K): boolean {
+    return this.entries.get(key)?.refreshing ?? false;
+  }
+
   async get(key: K, load: () => Promise<V>): Promise<V> {
     const cached = this.entries.get(key);
 

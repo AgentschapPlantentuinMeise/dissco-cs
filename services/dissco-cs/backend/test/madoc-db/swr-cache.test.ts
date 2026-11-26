@@ -84,6 +84,35 @@ describe('SwrCache', () => {
     expect(load).toHaveBeenCalledTimes(3);
   });
 
+  it('isRefreshing is true only while a background refresh runs', async () => {
+    const cache = new SwrCache<string, number>('test');
+    expect(cache.isRefreshing('k')).toBe(false);
+
+    await cache.get('k', async () => 1);
+    expect(cache.isRefreshing('k')).toBe(false);
+
+    // A refresh that finishes only when the test says so, like a slow database query.
+    let finish: (value: number) => void = () => {};
+    await cache.get('k', () => new Promise<number>(resolve => (finish = resolve)));
+    expect(cache.isRefreshing('k')).toBe(true);
+    finish(2);
+    await settle();
+    expect(cache.isRefreshing('k')).toBe(false);
+    expect(cache.peek('k')).toBe(2);
+  });
+
+  it('isRefreshing turns false again when a refresh fails', async () => {
+    const cache = new SwrCache<string, number>('test');
+    const { load, setMode } = counter();
+    await cache.get('k', load);
+
+    setMode('fail');
+    await cache.get('k', load);
+    expect(cache.isRefreshing('k')).toBe(true);
+    await settle();
+    expect(cache.isRefreshing('k')).toBe(false);
+  });
+
   it('peek never loads', async () => {
     const cache = new SwrCache<string, number>('test');
     const { load } = counter();

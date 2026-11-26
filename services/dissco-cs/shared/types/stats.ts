@@ -2,10 +2,14 @@ import { z } from 'zod';
 import { MultilingualText, multilingualTextSchema } from './common.js';
 import { HonourBoardMode } from './site-settings.js';
 
+// refreshing (on every stats answer): the backend is recalculating these numbers in the background,
+// so its /current route will soon have newer ones. The frontend polls only while this is true.
+
 export type SiteStatsDto = {
   volunteers: number;
   tasksCompleted: number;
   tasksTotal: number;
+  refreshing: boolean;
 };
 
 export type InstitutionStatsDto = {
@@ -14,6 +18,7 @@ export type InstitutionStatsDto = {
   tasksTotal: number;
   projectsActive: number;
   projectsCompleted: number;
+  refreshing: boolean;
 };
 
 // A calendar quarter, e.g. '2026-Q4' for October to December 2026.
@@ -38,6 +43,7 @@ export type HonourBoardQuarterDto = {
   // Both only in the mode 'prize', otherwise null.
   prize: HonourBoardPrizeDto | null;
   winner: HonourBoardPoolEntryDto | null;
+  refreshing: boolean;
 };
 
 // A quarter as a site admin sees it in management, whatever the mode. Once a winner is chosen, the

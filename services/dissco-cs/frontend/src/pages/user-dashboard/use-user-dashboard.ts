@@ -8,9 +8,9 @@ import { forumQueries } from '../../api/queries/forum';
 import { projectKeys, projectQueries } from '../../api/queries/projects';
 import { institutionQueries } from '../../api/queries/institutions';
 import { taskKeys, taskQueries } from '../../api/queries/tasks';
+import { statsQueries } from '../../api/queries/stats';
 import { tasksApi } from '../../api/cs-client/tasks';
 import { useCurrentUser } from '../../hooks/use-current-user';
-import { useSiteStats } from '../../hooks/use-site-stats';
 import { pageCount, pageSlice, parsePageParam } from '../../utility/paging';
 import {
   filterTasks,
@@ -50,8 +50,9 @@ export function useUserDashboard() {
   const tasksQuery = useQuery(taskQueries.mine(user?.id));
 
   // taskQueries.mine only holds the user's own tasks, so the site-wide total comes from the
-  // backend-computed stats instead, same as the homepage banner.
-  const { data: siteStats } = useSiteStats();
+  // backend-computed stats instead, same as the homepage banner. Without polling: a newer total
+  // would only shift one percentage in the opening line.
+  const { data: siteStats } = useQuery(statsQueries.site());
 
   const { data: unansweredCount = 0 } = useQuery({
     ...forumQueries.topics(),

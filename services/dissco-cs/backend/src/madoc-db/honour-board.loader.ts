@@ -8,6 +8,8 @@ export interface LoadedQuarter {
   settings: HonourBoardSettingsDto;
   record: QuarterRecord | null;
   counts: QuarterCount[];
+  // The counts are being recalculated in the background: a cache-only read soon may differ.
+  refreshing: boolean;
 }
 
 // Everything that decides a quarter's pool, for the public band and for management alike. The site's
@@ -33,6 +35,11 @@ export class HonourBoardQuarterLoader {
         ? []
         : ((cachedOnly ? this.honourBoardRepository.peekCounts(siteId, quarter) : null) ??
           (await this.honourBoardRepository.getCounts(siteId, quarter)));
-    return { settings, record: toHonourBoardQuarterRecord(quarterRow), counts };
+    return {
+      settings,
+      record: toHonourBoardQuarterRecord(quarterRow),
+      counts,
+      refreshing: settings.mode !== 'off' && this.honourBoardRepository.isRefreshing(siteId, quarter),
+    };
   }
 }

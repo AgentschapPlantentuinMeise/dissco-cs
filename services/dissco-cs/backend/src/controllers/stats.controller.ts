@@ -70,8 +70,8 @@ export function statsController(
     quarter: HonourBoardQuarterKey,
     cachedOnly: boolean
   ): Promise<HonourBoardQuarterDto> {
-    const { settings, record, counts } = await quarterLoader.load(siteId, quarter, cachedOnly);
-    return quarterToDto(counts, settings, record, userUrnOf(c));
+    const { settings, record, counts, refreshing } = await quarterLoader.load(siteId, quarter, cachedOnly);
+    return { ...quarterToDto(counts, settings, record, userUrnOf(c)), refreshing };
   }
 
   app.get('/honour-board/:quarter', validateParams({ quarter: honourBoardQuarter }), async c => {

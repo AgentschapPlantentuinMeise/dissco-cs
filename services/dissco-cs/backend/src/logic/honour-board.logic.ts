@@ -59,7 +59,7 @@ export function quarterPool(
  * @param settings the site's mode and threshold
  * @param record what a site admin stored for the quarter; null when nothing
  * @param userUrn the viewer, e.g. 'urn:madoc:user:5'; null when not logged in
- * Returns: HonourBoardQuarterDto. Mode 'off': an empty pool and no viewer. A logged-in viewer
+ * Returns: HonourBoardQuarterDto without `refreshing` (the caller knows about the cache). Mode 'off': an empty pool and no viewer. A logged-in viewer
  *   without tasks this quarter has count 0; their count stays live after a winner is chosen. Prize
  *   and winner only in the mode 'prize'.
  */
@@ -68,7 +68,7 @@ export function quarterToDto(
   settings: HonourBoardSettingsDto,
   record: QuarterRecord | null,
   userUrn: string | null
-): HonourBoardQuarterDto {
+): Omit<HonourBoardQuarterDto, 'refreshing'> {
   if (settings.mode === 'off') {
     return { mode: 'off', threshold: settings.threshold, pool: [], you: null, prize: null, winner: null };
   }

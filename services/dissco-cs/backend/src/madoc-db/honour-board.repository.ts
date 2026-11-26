@@ -66,6 +66,14 @@ export class HonourBoardRepository {
   }
 
   /**
+   * Whether the counts of this quarter are being recalculated in the background right now.
+   * Returns: true until that recalculation has finished or failed.
+   */
+  isRefreshing(siteId: number, quarter: HonourBoardQuarterKey): boolean {
+    return this.cacheFor(quarter).isRefreshing(`${siteId}:${quarter}`);
+  }
+
+  /**
    * The number of tasks per volunteer in a quarter: from the cache, recalculated in the background.
    * Returns: an empty list for a quarter that has not started.
    */
