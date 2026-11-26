@@ -6,6 +6,7 @@ Regels voor de frontend. Zie ook `../CLAUDE.md` (gedeeld met de backend).
 
 - Do keep hook signatures focused on a single domain
 - Do build with the shared building blocks; the conventions tests reject an own version and name the one to use. A component is a plain function, not `React.FC` (inline props and a named `interface XProps` are both fine: never rewrite one into the other). An action button with a label is a `<Button>`; icon buttons, tabs, menu items and toggles are not Buttons
+- Do let a page draw only its own content: the navbar, announcement strip and footer come from the layout route (`SiteLayout`) in `App.tsx`
 - Do open every page with `<PageHeader>`: `split-banner` for public pages with an image, `compact` for working pages (forum, dashboard, review, help), `plain` for login and site management. Below it, `<PageSection>` blocks on public and working pages (tones alternate page / white / tint), and one `<PageBody>` on a plain page
 - Do use `React.memo()` for expensive components, and `useMemo()`/`useCallback()` for expensive calculations
 - Do expose imperative handlers via callbacks rather than mutating shared state

@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import { CsPage } from './CsPage';
 import { PageError } from './PageError';
 import { buttonClass } from '../ui/Button';
 import { HrefLink } from '../../utility/href-link';
@@ -18,10 +17,8 @@ export function BackLink({ href, label }: { href: string; label: string }) {
 export function PageNotFound({ text, back }: { text: string; back: { href: string; label: string } }) {
   const { t } = useTranslation('dissco-cs');
   return (
-    <CsPage>
-      <PageError role="status" title={t('error_not_found_title')} text={text}>
-        <BackLink {...back} />
-      </PageError>
-    </CsPage>
+    <PageError role="status" title={t('error_not_found_title')} text={text}>
+      <BackLink {...back} />
+    </PageError>
   );
 }

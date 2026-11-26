@@ -9,7 +9,6 @@ import { DeleteIconButton } from '../../../components/ui/DeleteIconButton';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { SaveButton } from '../../../components/ui/SaveButton';
 import { SavedNotice } from '../../../components/ui/SavedNotice';
-import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
 import { ManageLoadError } from '../ManageLoadError';
@@ -40,7 +39,7 @@ export function SiteImages() {
   }
 
   return (
-    <CsPage>
+    <>
       <PageBody>
         <PageHeader
           variant="plain"
@@ -61,7 +60,7 @@ export function SiteImages() {
         ))}
       </ul>
       </PageBody>
-    </CsPage>
+    </>
   );
 }
 

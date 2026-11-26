@@ -1,4 +1,3 @@
-import { CsPage } from '../../components/layout/CsPage';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PageSection } from '../../components/layout/PageSection';
 import { PageLoadError } from '../../components/layout/PageLoadError';
@@ -49,7 +48,7 @@ export function Review() {
   }
 
   return (
-    <CsPage>
+    <>
       <PageHeader
         variant="compact"
         title={t('review_title')}
@@ -222,6 +221,6 @@ export function Review() {
           sending={c.sendingFeedback}
         />
       )}
-    </CsPage>
+    </>
   );
 }

@@ -10,7 +10,6 @@ import { ApiError } from '../../api/cs-client/request';
 import { forumApi } from '../../api/cs-client/forum';
 import { useCurrentProject } from '../../hooks/use-current-project';
 import { useRouteContext } from '../../hooks/use-route-context';
-import { CsPage } from '../../components/layout/CsPage';
 import { useLocaleString } from '../../components/ui/LocaleString';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { DiscardDialog } from '../../components/ui/DiscardDialog';
@@ -201,16 +200,14 @@ export function AnnotateScreen() {
   // Waiting for the layout too, so the form does not first appear in Madoc's order and then jump.
   if (!project || !model || !doc.annotationDocument || !manifestId || formLayoutQuery.isPending) {
     return (
-      <CsPage>
-        <LoadingText />
-      </CsPage>
+      <LoadingText />
     );
   }
 
   const isSubmittedTask = !!prepared && (prepared.claim?.status as number) >= 2;
 
   return (
-    <CsPage fullScreen>
+    <>
       {/* navBottom is measured from the actual navbar, not guessed, so this section's height
           exactly fills the rest of the viewport — no page-level scrollbar on top of the panel's own. */}
       <div className="flex flex-col" style={{ height: `calc(100vh - ${navBottom}px)` }}>
@@ -293,6 +290,6 @@ export function AnnotateScreen() {
       )}
 
       <DiscardDialog guard={forumGuard} />
-    </CsPage>
+    </>
   );
 }

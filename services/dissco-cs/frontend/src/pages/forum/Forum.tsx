@@ -1,6 +1,5 @@
 ﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { CsPage } from '../../components/layout/CsPage';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PageSection } from '../../components/layout/PageSection';
 import { PageLoadError } from '../../components/layout/PageLoadError';
@@ -27,7 +26,7 @@ export function Forum() {
   }
 
   return (
-    <CsPage>
+    <>
       <PageHeader
         variant="compact"
         title={t('nav_forum')}
@@ -143,6 +142,6 @@ export function Forum() {
 
         <DiscardDialog guard={c.newFormGuard} />
       </PageSection>
-    </CsPage>
+    </>
   );
 }

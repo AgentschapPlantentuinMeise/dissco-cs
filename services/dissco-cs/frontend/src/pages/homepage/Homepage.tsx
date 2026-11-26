@@ -1,6 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CsPage } from '../../components/layout/CsPage';
 import { WelcomeModal } from './WelcomeModal';
 import { HomeProjectsSection } from './HomeProjectsSection';
 import { HomeStepsSection } from './HomeStepsSection';
@@ -28,7 +27,7 @@ export function Homepage() {
   }
 
   return (
-    <CsPage>
+    <>
       <WelcomeModal />
       <PageHeader
         variant="split-banner"
@@ -57,6 +56,6 @@ export function Homepage() {
       </main>
 
       <HonourBoardTimeline board={honourBoard} />
-    </CsPage>
+    </>
   );
 }

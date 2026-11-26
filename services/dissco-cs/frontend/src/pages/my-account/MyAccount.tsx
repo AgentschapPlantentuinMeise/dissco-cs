@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import { failedToLoad } from '../../api/query-state';
-import { CsPage } from '../../components/layout/CsPage';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PageLoadError } from '../../components/layout/PageLoadError';
 import { PageSection } from '../../components/layout/PageSection';
@@ -24,7 +23,7 @@ export function MyAccount() {
   }
 
   return (
-    <CsPage>
+    <>
       <PageHeader variant="compact" title={t('my_account_title')} lead={t('my_account_lead')} />
       {!account || !profile ? (
         <PageSection>
@@ -60,6 +59,6 @@ export function MyAccount() {
           </PageSection>
         </>
       )}
-    </CsPage>
+    </>
   );
 }

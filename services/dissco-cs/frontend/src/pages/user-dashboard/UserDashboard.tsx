@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import { CsPage } from '../../components/layout/CsPage';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PageSection } from '../../components/layout/PageSection';
@@ -33,7 +32,7 @@ export function UserDashboard() {
   }
 
   return (
-    <CsPage>
+    <>
       <PageHeader
         variant="compact"
         title={t('dashboard_welcome', { name: user.name })}
@@ -96,6 +95,6 @@ export function UserDashboard() {
           onCancel={release.cancel}
         />
       )}
-    </CsPage>
+    </>
   );
 }

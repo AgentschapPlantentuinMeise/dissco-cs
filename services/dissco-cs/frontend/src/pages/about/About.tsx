@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { MadocProjectDto } from '@dissco-cs/shared-types';
 import { projectQueries } from '../../api/queries/projects';
 import { institutionQueries } from '../../api/queries/institutions';
-import { CsPage } from '../../components/layout/CsPage';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PageHeaderPhoto } from '../../components/layout/PageHeaderPhoto';
 import { PageSection } from '../../components/layout/PageSection';
@@ -27,7 +26,7 @@ export function About() {
   const runningProjects = projects?.filter((project: MadocProjectDto) => project.status === 1).length;
 
   return (
-    <CsPage>
+    <>
       <PageHeader
         variant="split-banner"
         title={t('nav_about', { platformName })}
@@ -56,6 +55,6 @@ export function About() {
         intro={t('about_start_intro')}
         action={{ href: '/explore', label: t('about_start_action') }}
       />
-    </CsPage>
+    </>
   );
 }

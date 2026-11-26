@@ -15,7 +15,6 @@ import {
   LuUserCog,
 } from 'react-icons/lu';
 import { getSiteSlug } from '../../api/slug';
-import { CsPage } from '../../components/layout/CsPage';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PageBody } from '../../components/layout/PageBody';
 import { ManageGroup, ManageList } from './ManageList';
@@ -72,11 +71,9 @@ export function SiteManagement() {
   ];
 
   return (
-    <CsPage>
-      <PageBody>
-        <PageHeader variant="plain" title={t('sm_title')} lead={t('sm_intro')} />
-        <ManageList groups={groups} />
-      </PageBody>
-    </CsPage>
+    <PageBody>
+      <PageHeader variant="plain" title={t('sm_title')} lead={t('sm_intro')} />
+      <ManageList groups={groups} />
+    </PageBody>
   );
 }

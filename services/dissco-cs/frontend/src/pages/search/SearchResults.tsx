@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { CsPage } from '../../components/layout/CsPage';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PageSection } from '../../components/layout/PageSection';
 import { SectionLoadError } from '../../components/layout/SectionLoadError';
@@ -20,7 +19,7 @@ export function SearchResults() {
   const totalResults = projects.length + institutions.length;
 
   return (
-    <CsPage>
+    <>
       <PageHeader
         variant="compact"
         title={t('search_results_title', { query })}
@@ -63,6 +62,6 @@ export function SearchResults() {
           </div>
         </PageSection>
       )}
-    </CsPage>
+    </>
   );
 }

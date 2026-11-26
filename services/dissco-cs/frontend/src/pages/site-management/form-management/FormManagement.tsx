@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { LuPencil } from 'react-icons/lu';
 import { institutionQueries } from '../../../api/queries/institutions';
 import { manualQueries } from '../../../api/queries/manuals';
-import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
 import { ManageLoadError } from '../ManageLoadError';
@@ -36,12 +35,10 @@ export function FormManagement() {
   if (state === 'failed') return <ManageLoadError />;
 
   const page = (content: ReactNode) => (
-    <CsPage>
-      <PageBody>
-        <PageHeader variant="plain" back={{ href: '/manage', label: t('sm_back_to_hub') }} title={t('sm_tile_forms_title')} />
-        {content}
-      </PageBody>
-    </CsPage>
+    <PageBody>
+      <PageHeader variant="plain" back={{ href: '/manage', label: t('sm_back_to_hub') }} title={t('sm_tile_forms_title')} />
+      {content}
+    </PageBody>
   );
 
   if (state === 'loading') return page(<LoadingText />);

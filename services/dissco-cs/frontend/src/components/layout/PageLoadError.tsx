@@ -1,6 +1,5 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { CsPage } from './CsPage';
 import { PageError } from './PageError';
 import { BackLink, PageNotFound } from './PageNotFound';
 import { Button } from '../ui/Button';
@@ -25,11 +24,9 @@ export function PageLoadError({ error, notFoundText, back }: PageLoadErrorProps)
   }
 
   return (
-    <CsPage>
-      <PageError title={t('error_page_load_title')} text={t('error_page_load_text')}>
-        <Button onClick={() => window.location.reload()}>{t('error_page_load_retry')}</Button>
-        {back && <BackLink {...back} />}
-      </PageError>
-    </CsPage>
+    <PageError title={t('error_page_load_title')} text={t('error_page_load_text')}>
+      <Button onClick={() => window.location.reload()}>{t('error_page_load_retry')}</Button>
+      {back && <BackLink {...back} />}
+    </PageError>
   );
 }

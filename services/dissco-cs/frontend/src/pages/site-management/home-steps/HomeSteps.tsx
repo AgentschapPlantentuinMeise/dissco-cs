@@ -18,7 +18,6 @@ import { MoveButtons } from '../../../components/ui/MoveButtons';
 import { LanguageTabs } from '../../../components/ui/LanguageTabs';
 import { SaveButton } from '../../../components/ui/SaveButton';
 import { SavedNotice } from '../../../components/ui/SavedNotice';
-import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
 import { ManageLoadError } from '../ManageLoadError';
@@ -80,7 +79,7 @@ export function HomeSteps() {
   }
 
   return (
-    <CsPage>
+    <>
       <PageBody>
         <PageHeader
           variant="plain"
@@ -153,6 +152,6 @@ export function HomeSteps() {
         </div>
       </div>
       </PageBody>
-    </CsPage>
+    </>
   );
 }

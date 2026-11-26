@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { announcementKeys, announcementQueries } from '../../../api/queries/announcements';
 import { projectQueries } from '../../../api/queries/projects';
-import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
 import { ManageLoadError } from '../ManageLoadError';
@@ -129,105 +128,103 @@ export function Announcements() {
   }
 
   return (
-    <CsPage>
-      <PageBody>
-        <PageHeader
-          variant="plain"
-          back={{ href: '/manage', label: t('sm_back_to_hub') }}
-          title={t('sm_tile_announcements_title')}
-          actions={<Button size="sm" onClick={startCreate}>{t('sm_announcements_new')}</Button>}
+    <PageBody>
+      <PageHeader
+        variant="plain"
+        back={{ href: '/manage', label: t('sm_back_to_hub') }}
+        title={t('sm_tile_announcements_title')}
+        actions={<Button size="sm" onClick={startCreate}>{t('sm_announcements_new')}</Button>}
+      />
+
+      {listLoading && <LoadingText />}
+
+      {!listLoading && announcements.length === 0 && !isFormOpen && (
+        <EmptyText>{t('sm_announcements_empty')}</EmptyText>
+      )}
+
+      {!listLoading && (announcements.length > 0 || isFormOpen) && (
+        <ListWithPanel
+          panelKey={editingId}
+          onClose={cancelForm}
+          panelTitle={editingId !== null ? t('sm_announcements_edit') : t('sm_announcements_new')}
+          list={
+          <ul className="list-none m-0 p-0 bg-white border-t border-gray-200 divide-y divide-gray-100">
+            {isFormOpen && editingId === null && (
+              <li className="flex items-center gap-3 px-4 py-3 border-l-4 border-l-cs-primary bg-gray-50">
+                <div className="min-w-0">
+                  <p className="font-semibold m-0 italic text-gray-500 truncate">{t('sm_announcements_draft_name')}</p>
+                  <p className="text-xs text-gray-400 m-0">{t('sm_announcements_draft_hint')}</p>
+                </div>
+              </li>
+            )}
+            {announcements.map(announcement => (
+              <li
+                key={announcement.id}
+                className={`flex items-center justify-between gap-4 px-4 py-3 border-l-4 ${rowHoverClass} ${
+                  editingId === announcement.id
+                    ? 'bg-gray-50 border-l-cs-primary'
+                    : savedId === announcement.id
+                      ? savedRowClass
+                      : 'border-l-transparent'
+                }`}
+              >
+                <div className="min-w-0">
+                  <p className="font-semibold m-0 truncate">{siteLangText(announcement.title, i18n.language, String(announcement.id))}</p>
+                  <p className="text-sm text-gray-500 m-0">
+                    {targetLabel(t, announcement)}
+                    {(announcement.startDate || announcement.endDate) && (
+                      <>
+                        {' · '}
+                        {announcement.startDate ? toDateInputValue(announcement.startDate) : t('sm_announcements_no_date')}
+                        {' – '}
+                        {announcement.endDate ? toDateInputValue(announcement.endDate) : t('sm_announcements_no_date')}
+                      </>
+                    )}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  {savedId === announcement.id && <SavedNotice />}
+                  <ActiveStatusToggle
+                    active={announcement.isActive}
+                    onChange={() => toggleActive(announcement)}
+                    label={siteLangText(announcement.title, i18n.language, String(announcement.id))}
+                  />
+                  <IconButton icon={LuPencil} label={t('common_edit')} onClick={() => startEdit(announcement)} />
+                  <DeleteIconButton onClick={() => setPendingDeleteId(announcement.id)} />
+                </div>
+              </li>
+            ))}
+          </ul>
+          }
+          panel={isFormOpen ? (
+            <AnnouncementForm
+              key={editingId ?? 'new'}
+              draft={draft}
+              setDraft={setDraft}
+              selectedLang={selectedLang}
+              onSelectLang={setSelectedLang}
+              projects={projects}
+              saving={saving}
+              onSave={save}
+              onCancel={cancelForm}
+            />
+          ) : null}
         />
+      )}
 
-        {listLoading && <LoadingText />}
+      {pendingDeleteId !== null && (
+        <ConfirmDialog
+          title={t('sm_announcements_confirm_delete_title')}
+          message={t('sm_announcements_confirm_delete')}
+          confirmLabel={t('common_delete')}
+          cancelLabel={t('common_cancel')}
+          onConfirm={confirmDelete}
+          onCancel={() => setPendingDeleteId(null)}
+        />
+      )}
 
-        {!listLoading && announcements.length === 0 && !isFormOpen && (
-          <EmptyText>{t('sm_announcements_empty')}</EmptyText>
-        )}
-
-        {!listLoading && (announcements.length > 0 || isFormOpen) && (
-          <ListWithPanel
-            panelKey={editingId}
-            onClose={cancelForm}
-            panelTitle={editingId !== null ? t('sm_announcements_edit') : t('sm_announcements_new')}
-            list={
-            <ul className="list-none m-0 p-0 bg-white border-t border-gray-200 divide-y divide-gray-100">
-              {isFormOpen && editingId === null && (
-                <li className="flex items-center gap-3 px-4 py-3 border-l-4 border-l-cs-primary bg-gray-50">
-                  <div className="min-w-0">
-                    <p className="font-semibold m-0 italic text-gray-500 truncate">{t('sm_announcements_draft_name')}</p>
-                    <p className="text-xs text-gray-400 m-0">{t('sm_announcements_draft_hint')}</p>
-                  </div>
-                </li>
-              )}
-              {announcements.map(announcement => (
-                <li
-                  key={announcement.id}
-                  className={`flex items-center justify-between gap-4 px-4 py-3 border-l-4 ${rowHoverClass} ${
-                    editingId === announcement.id
-                      ? 'bg-gray-50 border-l-cs-primary'
-                      : savedId === announcement.id
-                        ? savedRowClass
-                        : 'border-l-transparent'
-                  }`}
-                >
-                  <div className="min-w-0">
-                    <p className="font-semibold m-0 truncate">{siteLangText(announcement.title, i18n.language, String(announcement.id))}</p>
-                    <p className="text-sm text-gray-500 m-0">
-                      {targetLabel(t, announcement)}
-                      {(announcement.startDate || announcement.endDate) && (
-                        <>
-                          {' · '}
-                          {announcement.startDate ? toDateInputValue(announcement.startDate) : t('sm_announcements_no_date')}
-                          {' – '}
-                          {announcement.endDate ? toDateInputValue(announcement.endDate) : t('sm_announcements_no_date')}
-                        </>
-                      )}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3 shrink-0">
-                    {savedId === announcement.id && <SavedNotice />}
-                    <ActiveStatusToggle
-                      active={announcement.isActive}
-                      onChange={() => toggleActive(announcement)}
-                      label={siteLangText(announcement.title, i18n.language, String(announcement.id))}
-                    />
-                    <IconButton icon={LuPencil} label={t('common_edit')} onClick={() => startEdit(announcement)} />
-                    <DeleteIconButton onClick={() => setPendingDeleteId(announcement.id)} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-            }
-            panel={isFormOpen ? (
-              <AnnouncementForm
-                key={editingId ?? 'new'}
-                draft={draft}
-                setDraft={setDraft}
-                selectedLang={selectedLang}
-                onSelectLang={setSelectedLang}
-                projects={projects}
-                saving={saving}
-                onSave={save}
-                onCancel={cancelForm}
-              />
-            ) : null}
-          />
-        )}
-
-        {pendingDeleteId !== null && (
-          <ConfirmDialog
-            title={t('sm_announcements_confirm_delete_title')}
-            message={t('sm_announcements_confirm_delete')}
-            confirmLabel={t('common_delete')}
-            cancelLabel={t('common_cancel')}
-            onConfirm={confirmDelete}
-            onCancel={() => setPendingDeleteId(null)}
-          />
-        )}
-
-        <DiscardDialog guard={discardGuard} />
-      </PageBody>
-    </CsPage>
+      <DiscardDialog guard={discardGuard} />
+    </PageBody>
   );
 }

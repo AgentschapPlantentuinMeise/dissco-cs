@@ -14,7 +14,6 @@ import { taskDisplayName } from '../../utility/task-display-name';
 import { HrefLink } from '../../utility/href-link';
 import { LocaleString } from '../../components/ui/LocaleString';
 import { Button } from '../../components/ui/Button';
-import { CsPage } from '../../components/layout/CsPage';
 import { HeaderImage, PageHeader } from '../../components/layout/PageHeader';
 import { ProjectAboutAside } from './ProjectAboutAside';
 import { PageSection } from '../../components/layout/PageSection';
@@ -113,11 +112,9 @@ export function ProjectDetail() {
 
   if (!project) {
     return (
-      <CsPage>
-        <PageSection>
-          <LoadingText />
-        </PageSection>
-      </CsPage>
+      <PageSection>
+        <LoadingText />
+      </PageSection>
     );
   }
 
@@ -130,7 +127,7 @@ export function ProjectDetail() {
   const showSavedTasks = ownTasksFailed || ownSavedTasks.length > 0;
 
   return (
-    <CsPage>
+    <>
       <PageHeader
         variant="split-banner"
         back={{ href: backToProjects, label: t('projects_all') }}
@@ -244,6 +241,6 @@ export function ProjectDetail() {
         onClose={() => setManualOpen(false)}
         onShown={markManualSeen}
       />
-    </CsPage>
+    </>
   );
 }

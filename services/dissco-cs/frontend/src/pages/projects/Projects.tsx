@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { shuffle } from 'lodash-es';
 import { useQuery } from '@tanstack/react-query';
 import { projectQueries } from '../../api/queries/projects';
-import { CsPage } from '../../components/layout/CsPage';
 import { PageLoadError } from '../../components/layout/PageLoadError';
 import { ProjectCard } from '../../components/projects/ProjectCard';
 import { HeaderMosaic, PageHeader } from '../../components/layout/PageHeader';
@@ -49,7 +48,7 @@ export function Projects() {
   }
 
   return (
-    <CsPage>
+    <>
       <PageHeader
         variant="split-banner"
         title={t('projects_title')}
@@ -86,6 +85,6 @@ export function Projects() {
       </PageSection>
 
       <HonourBoardTimeline board={honourBoard} />
-    </CsPage>
+    </>
   );
 }

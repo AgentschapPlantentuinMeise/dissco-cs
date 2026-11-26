@@ -5,7 +5,6 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { institutionQueries } from '../../api/queries/institutions';
 import { institutionsApi } from '../../api/cs-client/institutions';
 import { statsQueries } from '../../api/queries/stats';
-import { CsPage } from '../../components/layout/CsPage';
 import { PageLoadError } from '../../components/layout/PageLoadError';
 import { InstitutionCard } from '../../components/institutions/InstitutionCard';
 import { HeaderMosaic, PageHeader } from '../../components/layout/PageHeader';
@@ -59,7 +58,7 @@ export function Institutions() {
   }
 
   return (
-    <CsPage>
+    <>
       <PageHeader
         variant="split-banner"
         title={t('nav_institutions')}
@@ -90,6 +89,6 @@ export function Institutions() {
       />
 
       <HonourBoardTimeline board={honourBoard} />
-    </CsPage>
+    </>
   );
 }

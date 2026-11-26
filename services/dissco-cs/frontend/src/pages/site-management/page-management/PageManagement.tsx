@@ -1,7 +1,6 @@
 ﻿import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
 import { ManageLoadError } from '../ManageLoadError';
@@ -151,150 +150,148 @@ export function PageManagement() {
   }
 
   return (
-    <CsPage>
-      <PageBody>
-        <PageHeader variant="plain" back={{ href: '/manage', label: t('sm_back_to_hub') }} title={t('sm_tile_pages_title')} />
+    <PageBody>
+      <PageHeader variant="plain" back={{ href: '/manage', label: t('sm_back_to_hub') }} title={t('sm_tile_pages_title')} />
 
-        <ListWithPanel
-          panelKey={selectedKey}
-          panelTitle={selectedKey && t(pageLabelKey(selectedKey))}
-          onClose={() => discardGuard.guard(() => setSelectedKey(null))}
-          list={
-          <ul className="list-none m-0 p-0 bg-white border-t border-gray-200 divide-y divide-gray-100">
-            {pages.map(page => {
-              const key = page.pageKey;
-              return (
-                <li
-                  key={key}
-                  className={`flex items-center justify-between gap-2 px-4 py-3 border-l-4 ${rowHoverClass} ${
-                    selectedKey === key ? 'bg-gray-50 border-l-cs-primary' : savedKey === key ? savedRowClass : 'border-l-transparent'
-                  }`}
+      <ListWithPanel
+        panelKey={selectedKey}
+        panelTitle={selectedKey && t(pageLabelKey(selectedKey))}
+        onClose={() => discardGuard.guard(() => setSelectedKey(null))}
+        list={
+        <ul className="list-none m-0 p-0 bg-white border-t border-gray-200 divide-y divide-gray-100">
+          {pages.map(page => {
+            const key = page.pageKey;
+            return (
+              <li
+                key={key}
+                className={`flex items-center justify-between gap-2 px-4 py-3 border-l-4 ${rowHoverClass} ${
+                  selectedKey === key ? 'bg-gray-50 border-l-cs-primary' : savedKey === key ? savedRowClass : 'border-l-transparent'
+                }`}
+              >
+                <span
+                  className={`truncate min-w-0 ${selectedKey === key ? 'font-semibold' : ''}`}
+                  title={t(pageLabelKey(key))}
                 >
-                  <span
-                    className={`truncate min-w-0 ${selectedKey === key ? 'font-semibold' : ''}`}
-                    title={t(pageLabelKey(key))}
-                  >
-                    {t(pageLabelKey(key))}
-                  </span>
+                  {t(pageLabelKey(key))}
+                </span>
 
-                  <span className="flex items-center gap-3 flex-shrink-0">
-                    {savedKey === key && <SavedNotice />}
-                    <ActiveStatusToggle
-                      active={isActive(key)}
-                      onChange={() => toggleActive(key)}
-                      label={t(pageLabelKey(key))}
-                      labelWidthClassName="w-12"
-                    />
-
-                    <span className="w-7 flex justify-center">
-                      {CONTENT_PAGE_KEYS.includes(key) && (
-                        <IconButton icon={LuPencil} label={t('sm_pages_edit')} onClick={() => discardGuard.guard(() => setSelectedKey(key))} />
-                      )}
-                    </span>
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-          }
-          panel={selectedKey ? (
-            <div>
-              <LanguageTabs
-                selected={selectedLang}
-                onSelect={setSelectedLang}
-                isMissing={lang => contentRequired && !(draftContent[lang] ?? '').trim()}
-              />
-
-              {selectedKey !== 'welcome' && (
-                <FormField label={t('sm_pages_intro_label')} className="mb-4">
-                  <input
-                    type="text"
-                    value={draftIntro[selectedLang] ?? ''}
-                    onChange={e => {
-                      setDraftIntro(prev => ({ ...prev, [selectedLang]: e.target.value }));
-                    }}
-                    maxLength={MAX_NAV_ITEM_INTRO_LENGTH}
-                    className={inputClass}
+                <span className="flex items-center gap-3 flex-shrink-0">
+                  {savedKey === key && <SavedNotice />}
+                  <ActiveStatusToggle
+                    active={isActive(key)}
+                    onChange={() => toggleActive(key)}
+                    label={t(pageLabelKey(key))}
+                    labelWidthClassName="w-12"
                   />
-                  <span className="text-xs text-gray-500">
-                    {defaultIntroKey
-                      ? t('sm_pages_intro_hint_default', { text: t(defaultIntroKey) })
-                      : t('sm_pages_intro_hint_empty')}
+
+                  <span className="w-7 flex justify-center">
+                    {CONTENT_PAGE_KEYS.includes(key) && (
+                      <IconButton icon={LuPencil} label={t('sm_pages_edit')} onClick={() => discardGuard.guard(() => setSelectedKey(key))} />
+                    )}
                   </span>
-                </FormField>
-              )}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+        }
+        panel={selectedKey ? (
+          <div>
+            <LanguageTabs
+              selected={selectedLang}
+              onSelect={setSelectedLang}
+              isMissing={lang => contentRequired && !(draftContent[lang] ?? '').trim()}
+            />
 
-              <MarkdownToolbar
-                textareaRef={textareaRef}
-                value={draftContent[selectedLang] ?? ''}
-                onChange={next => {
-                  setDraftContent(prev => ({ ...prev, [selectedLang]: next }));
-                }}
-              />
-              <textarea
-                ref={textareaRef}
-                value={draftContent[selectedLang] ?? ''}
-                onChange={e => {
-                  setDraftContent(prev => ({ ...prev, [selectedLang]: e.target.value }));
-                }}
-                onBlur={leave('content')}
-                aria-invalid={!!contentError}
-                maxLength={MAX_NAV_ITEM_CONTENT_LENGTH}
-                placeholder={t('sm_pages_content_placeholder')}
-                className={`${inputClass} w-full min-h-[260px] rounded-t-none font-mono`}
-              />
-              {contentError && <FieldErrorText>{contentError}</FieldErrorText>}
-
-              {selectedKey === 'welcome' && (
-                <p className="text-sm text-gray-500 mt-2">
-                  {t('sm_pages_welcome_hint')} <code>{'{{name}}'}</code>
-                </p>
-              )}
-
-              {isContact && (
-                <>
-                  <div className="flex items-center gap-3 mt-4">
-                    <ToggleSwitch
-                      checked={draftShowContactForm}
-                      onChange={() => setDraftShowContactForm(show => !show)}
-                      label={t('sm_pages_contact_show_form')}
-                    />
-                    <span className="text-sm font-medium text-gray-700">{t('sm_pages_contact_show_form')}</span>
-                  </div>
-
-                  {draftShowContactForm && (
-                    <FormField label={t('sm_pages_contact_email_label')} className="mt-4" error={emailError}>
-                      <input
-                        type="email"
-                        value={draftContactEmail}
-                        onChange={e => setDraftContactEmail(e.target.value)}
-                        onBlur={leave('email')}
-                        aria-invalid={!!emailError}
-                        maxLength={MAX_EMAIL_LENGTH}
-                        placeholder={t('sm_pages_contact_email_placeholder')}
-                        className={`${inputClass} max-w-sm`}
-                      />
-                    </FormField>
-                  )}
-                </>
-              )}
-
-              <div className="flex items-center gap-3 mt-4">
-                <SaveButton
-                  onClick={saveContent}
-                  loading={savingContent}
-                  disabled={!canSave}
+            {selectedKey !== 'welcome' && (
+              <FormField label={t('sm_pages_intro_label')} className="mb-4">
+                <input
+                  type="text"
+                  value={draftIntro[selectedLang] ?? ''}
+                  onChange={e => {
+                    setDraftIntro(prev => ({ ...prev, [selectedLang]: e.target.value }));
+                  }}
+                  maxLength={MAX_NAV_ITEM_INTRO_LENGTH}
+                  className={inputClass}
                 />
-                <CancelButton onClick={() => discardGuard.guard(() => setSelectedKey(null))} />
+                <span className="text-xs text-gray-500">
+                  {defaultIntroKey
+                    ? t('sm_pages_intro_hint_default', { text: t(defaultIntroKey) })
+                    : t('sm_pages_intro_hint_empty')}
+                </span>
+              </FormField>
+            )}
 
-                {!canSave && <SaveHint>{t('common_fill_required_fields')}</SaveHint>}
-              </div>
+            <MarkdownToolbar
+              textareaRef={textareaRef}
+              value={draftContent[selectedLang] ?? ''}
+              onChange={next => {
+                setDraftContent(prev => ({ ...prev, [selectedLang]: next }));
+              }}
+            />
+            <textarea
+              ref={textareaRef}
+              value={draftContent[selectedLang] ?? ''}
+              onChange={e => {
+                setDraftContent(prev => ({ ...prev, [selectedLang]: e.target.value }));
+              }}
+              onBlur={leave('content')}
+              aria-invalid={!!contentError}
+              maxLength={MAX_NAV_ITEM_CONTENT_LENGTH}
+              placeholder={t('sm_pages_content_placeholder')}
+              className={`${inputClass} w-full min-h-[260px] rounded-t-none font-mono`}
+            />
+            {contentError && <FieldErrorText>{contentError}</FieldErrorText>}
+
+            {selectedKey === 'welcome' && (
+              <p className="text-sm text-gray-500 mt-2">
+                {t('sm_pages_welcome_hint')} <code>{'{{name}}'}</code>
+              </p>
+            )}
+
+            {isContact && (
+              <>
+                <div className="flex items-center gap-3 mt-4">
+                  <ToggleSwitch
+                    checked={draftShowContactForm}
+                    onChange={() => setDraftShowContactForm(show => !show)}
+                    label={t('sm_pages_contact_show_form')}
+                  />
+                  <span className="text-sm font-medium text-gray-700">{t('sm_pages_contact_show_form')}</span>
+                </div>
+
+                {draftShowContactForm && (
+                  <FormField label={t('sm_pages_contact_email_label')} className="mt-4" error={emailError}>
+                    <input
+                      type="email"
+                      value={draftContactEmail}
+                      onChange={e => setDraftContactEmail(e.target.value)}
+                      onBlur={leave('email')}
+                      aria-invalid={!!emailError}
+                      maxLength={MAX_EMAIL_LENGTH}
+                      placeholder={t('sm_pages_contact_email_placeholder')}
+                      className={`${inputClass} max-w-sm`}
+                    />
+                  </FormField>
+                )}
+              </>
+            )}
+
+            <div className="flex items-center gap-3 mt-4">
+              <SaveButton
+                onClick={saveContent}
+                loading={savingContent}
+                disabled={!canSave}
+              />
+              <CancelButton onClick={() => discardGuard.guard(() => setSelectedKey(null))} />
+
+              {!canSave && <SaveHint>{t('common_fill_required_fields')}</SaveHint>}
             </div>
-          ) : null}
-        />
+          </div>
+        ) : null}
+      />
 
-        <DiscardDialog guard={discardGuard} />
-      </PageBody>
-    </CsPage>
+      <DiscardDialog guard={discardGuard} />
+    </PageBody>
   );
 }

@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { manualKeys, manualQueries } from '../../../api/queries/manuals';
 import { projectKeys, projectQueries } from '../../../api/queries/projects';
 import { failedToLoad, loadState } from '../../../api/query-state';
-import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
 import { LoadingText } from '../../../components/layout/LoadingText';
@@ -112,7 +111,7 @@ export function ManualManagement() {
   if (failedToLoad(manualsQuery)) return <ManageLoadError />;
 
   return (
-    <CsPage>
+    <>
       <PageBody>
       <PageHeader
         variant="plain"
@@ -215,6 +214,6 @@ export function ManualManagement() {
 
       <DiscardDialog guard={discardGuard} />
       </PageBody>
-    </CsPage>
+    </>
   );
 }

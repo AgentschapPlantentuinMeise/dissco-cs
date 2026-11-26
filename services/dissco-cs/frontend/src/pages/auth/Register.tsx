@@ -3,7 +3,6 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { useSearchParams } from 'react-router-dom';
-import { CsPage } from '../../components/layout/CsPage';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PageBody } from '../../components/layout/PageBody';
 import { TermsModal } from '../../components/auth/TermsModal';
@@ -58,30 +57,24 @@ export function Register() {
   }
 
   if (termsQuery.isPending || (code && !invitation)) {
-    return (
-      <CsPage>{null}</CsPage>
-    );
+    return null;
   }
 
   if (code && invitation && 'expired' in invitation) {
     return (
-      <CsPage>
-        <PageBody width="narrow">
-          <PageHeader variant="plain" title={t('register_title')} />
-          <FormError>{t('register_invitation_expired')}</FormError>
-        </PageBody>
-      </CsPage>
+      <PageBody width="narrow">
+        <PageHeader variant="plain" title={t('register_title')} />
+        <FormError>{t('register_invitation_expired')}</FormError>
+      </PageBody>
     );
   }
 
   if (code && invitation && user) {
     return (
-      <CsPage>
-        <PageBody width="narrow">
-          <PageHeader variant="plain" title={t('register_title')} />
-          <p className="text-base text-gray-600">{t('register_already_logged_in', { name: user.name })}</p>
-        </PageBody>
-      </CsPage>
+      <PageBody width="narrow">
+        <PageHeader variant="plain" title={t('register_title')} />
+        <p className="text-base text-gray-600">{t('register_already_logged_in', { name: user.name })}</p>
+      </PageBody>
     );
   }
 
@@ -96,21 +89,19 @@ export function Register() {
 
   if (registration.isSuccess) {
     return (
-      <CsPage>
-        <PageBody width="narrow">
-          <PageHeader variant="plain" title={t('register_title')} />
-          {registration.data.emailSent ? (
-            <p>{t('register_success_email_sent')}</p>
-          ) : (
-            <p>{t('register_success_no_email')}</p>
-          )}
-        </PageBody>
-      </CsPage>
+      <PageBody width="narrow">
+        <PageHeader variant="plain" title={t('register_title')} />
+        {registration.data.emailSent ? (
+          <p>{t('register_success_email_sent')}</p>
+        ) : (
+          <p>{t('register_success_no_email')}</p>
+        )}
+      </PageBody>
     );
   }
 
   return (
-    <CsPage>
+    <>
       <PageBody width="narrow">
         <PageHeader
           variant="plain"
@@ -181,6 +172,6 @@ export function Register() {
           onCancel={() => setShowTermsPopup(false)}
         />
       )}
-    </CsPage>
+    </>
   );
 }

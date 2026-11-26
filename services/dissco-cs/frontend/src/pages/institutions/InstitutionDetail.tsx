@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { institutionQueries } from '../../api/queries/institutions';
 import { institutionsApi } from '../../api/cs-client/institutions';
 import { projectQueries } from '../../api/queries/projects';
-import { CsPage } from '../../components/layout/CsPage';
 import { HeaderLogo, PageHeader } from '../../components/layout/PageHeader';
 import { LuMail, LuPhone, LuGlobe } from 'react-icons/lu';
 import { PageSection } from '../../components/layout/PageSection';
@@ -68,18 +67,16 @@ export function InstitutionDetail() {
 
   if (!institution) {
     return (
-      <CsPage>
-        <div className="cs-container cs-container--wide py-10">
-          <LoadingText />
-        </div>
-      </CsPage>
+      <div className="cs-container cs-container--wide py-10">
+        <LoadingText />
+      </div>
     );
   }
 
   const logoUrl = institutionsApi.logoUrl(institution);
 
   return (
-    <CsPage>
+    <>
       <PageHeader
         variant="split-banner"
         back={{ href: backToInstitutions, label: t('institutions_all') }}
@@ -146,6 +143,6 @@ export function InstitutionDetail() {
           </>
         )}
       </PageSection>
-    </CsPage>
+    </>
   );
 }

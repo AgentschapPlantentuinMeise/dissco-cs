@@ -2,7 +2,6 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { useLocation, useSearchParams } from 'react-router-dom';
-import { CsPage } from '../../components/layout/CsPage';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PageBody } from '../../components/layout/PageBody';
 import { setPassword as submitSetPassword } from '../../api/madoc-auth/auth';
@@ -49,38 +48,34 @@ export function SetPassword() {
 
   if (!c1 || !c2 || linkQuery.data?.valid === false) {
     return (
-      <CsPage>
-        <PageBody width="narrow">
-          <PageHeader variant="plain" title={t('set_password_title')} />
-          <FormError>{t('set_password_invalid_link')}</FormError>
-        </PageBody>
-      </CsPage>
+      <PageBody width="narrow">
+        <PageHeader variant="plain" title={t('set_password_title')} />
+        <FormError>{t('set_password_invalid_link')}</FormError>
+      </PageBody>
     );
   }
 
   return (
-    <CsPage>
-      <PageBody width="narrow">
-        <PageHeader variant="plain" title={t('set_password_title')} lead={t('set_password_intro')} />
+    <PageBody width="narrow">
+      <PageHeader variant="plain" title={t('set_password_title')} lead={t('set_password_intro')} />
 
-        <form noValidate onSubmit={form.handleSubmit(values => save.mutate(values))} className="flex flex-col gap-4">
-          <NewPasswordFields
-            password={password}
-            passwordProps={form.field('password', { deps: 'confirmPassword' })}
-            passwordError={form.errorFor('password')}
-            confirmProps={form.field('confirmPassword')}
-            confirmError={form.errorFor('confirmPassword')}
-          />
+      <form noValidate onSubmit={form.handleSubmit(values => save.mutate(values))} className="flex flex-col gap-4">
+        <NewPasswordFields
+          password={password}
+          passwordProps={form.field('password', { deps: 'confirmPassword' })}
+          passwordError={form.errorFor('password')}
+          confirmProps={form.field('confirmPassword')}
+          confirmError={form.errorFor('confirmPassword')}
+        />
 
-          {save.isError && <FormError>{t(authErrorKey(save.error, 'set_password_form_error'))}</FormError>}
+        {save.isError && <FormError>{t(authErrorKey(save.error, 'set_password_form_error'))}</FormError>}
 
-          <div>
-            <Button type="submit" disabled={!canSubmit} loading={save.isPending}>
-              {t('set_password_form_submit')}
-            </Button>
-          </div>
-        </form>
-      </PageBody>
-    </CsPage>
+        <div>
+          <Button type="submit" disabled={!canSubmit} loading={save.isPending}>
+            {t('set_password_form_submit')}
+          </Button>
+        </div>
+      </form>
+    </PageBody>
   );
 }

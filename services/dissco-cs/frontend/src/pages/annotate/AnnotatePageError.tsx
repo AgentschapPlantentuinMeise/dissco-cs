@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { CsPage } from '../../components/layout/CsPage';
 import { PageError } from '../../components/layout/PageError';
 import { Button } from '../../components/ui/Button';
 
@@ -31,24 +30,20 @@ export function AnnotatePageError({ projectSlug, error }: { projectSlug: string 
     </Button>
   );
 
-  return (
-    <CsPage>
-      {error.kind === 'full' ? (
-        <PageError role="status" title={t('annotate_full_title')} text={t('annotate_full_text')}>
-          <Button onClick={error.onNext} loading={error.isLoadingNext}>
-            {t('annotate_next_task')}
-          </Button>
-          {backToProject}
-        </PageError>
-      ) : error.kind === 'small-screen' ? (
-        <PageError role="status" title={t('annotate_small_screen_title')} text={t('annotate_small_screen_text')}>
-          {backToProject}
-        </PageError>
-      ) : (
-        <PageError title={t('annotate_error_title')} text={t(TEXT_KEYS[error.kind])}>
-          {backToProject}
-        </PageError>
-      )}
-    </CsPage>
+  return error.kind === 'full' ? (
+    <PageError role="status" title={t('annotate_full_title')} text={t('annotate_full_text')}>
+      <Button onClick={error.onNext} loading={error.isLoadingNext}>
+        {t('annotate_next_task')}
+      </Button>
+      {backToProject}
+    </PageError>
+  ) : error.kind === 'small-screen' ? (
+    <PageError role="status" title={t('annotate_small_screen_title')} text={t('annotate_small_screen_text')}>
+      {backToProject}
+    </PageError>
+  ) : (
+    <PageError title={t('annotate_error_title')} text={t(TEXT_KEYS[error.kind])}>
+      {backToProject}
+    </PageError>
   );
 }

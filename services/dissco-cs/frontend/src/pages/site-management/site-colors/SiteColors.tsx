@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SITE_COLOR_KEYS } from '@dissco-cs/shared-types';
-import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
 import { ManageLoadError } from '../ManageLoadError';
@@ -30,7 +29,7 @@ export function SiteColors() {
   }
 
   return (
-    <CsPage>
+    <>
       <PageBody>
         <PageHeader variant="plain" back={{ href: '/manage', label: t('sm_back_to_hub') }} title={t('sm_tile_colors_title')} lead={t('sm_colors_intro')} />
 
@@ -84,6 +83,6 @@ export function SiteColors() {
       )}
 
       <DiscardDialog guard={discardGuard} />
-    </CsPage>
+    </>
   );
 }

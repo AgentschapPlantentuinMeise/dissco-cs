@@ -1,7 +1,6 @@
 ﻿import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { useMutation } from '@tanstack/react-query';
-import { CsPage } from '../../components/layout/CsPage';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { ManagedTextSection } from '../../components/layout/ManagedTextSection';
 import { PageSection } from '../../components/layout/PageSection';
@@ -35,7 +34,7 @@ export function Contact() {
   const submit = form.handleSubmit(values => send(values));
 
   return (
-    <CsPage>
+    <>
       <PageHeader variant="compact" title={t('nav_contact')} lead={getIntro('contact', i18n.language) || t('contact_intro_default')} />
       {getContent('contact', i18n.language)?.trim() && <ManagedTextSection pageKey="contact" />}
 
@@ -73,6 +72,6 @@ export function Contact() {
           </form>
         </PageSection>
       )}
-    </CsPage>
+    </>
   );
 }

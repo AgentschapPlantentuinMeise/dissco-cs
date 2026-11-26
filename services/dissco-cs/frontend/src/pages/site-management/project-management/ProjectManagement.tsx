@@ -5,7 +5,6 @@ import { projectQueries } from '../../../api/queries/projects';
 import { manualQueries } from '../../../api/queries/manuals';
 import { institutionQueries } from '../../../api/queries/institutions';
 import { formQueries } from '../../../api/queries/forms';
-import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
 import { ManageLoadError } from '../ManageLoadError';
@@ -40,28 +39,26 @@ export function ProjectManagement() {
   }
 
   return (
-    <CsPage>
-      <PageBody>
-        <PageHeader variant="plain" back={{ href: '/manage', label: t('sm_back_to_hub') }} title={t('sm_tile_projects_title')} />
+    <PageBody>
+      <PageHeader variant="plain" back={{ href: '/manage', label: t('sm_back_to_hub') }} title={t('sm_tile_projects_title')} />
 
-        <Tabs
-          selected={tab}
-          onSelect={setTab}
-          tabs={[
-            { key: 'projects', label: t('sm_manuals_tab_projects') },
-            { key: 'stuck-tasks', label: t('sm_tile_stuck_tasks_title') },
-            { key: 'task-debug', label: 'Task status (debug)' },
-            { key: 'bulk-create', label: t('sm_manuals_tab_bulk') },
-          ]}
-        />
+      <Tabs
+        selected={tab}
+        onSelect={setTab}
+        tabs={[
+          { key: 'projects', label: t('sm_manuals_tab_projects') },
+          { key: 'stuck-tasks', label: t('sm_tile_stuck_tasks_title') },
+          { key: 'task-debug', label: 'Task status (debug)' },
+          { key: 'bulk-create', label: t('sm_manuals_tab_bulk') },
+        ]}
+      />
 
-        {tab === 'projects' && (
-          <ProjectsSubview projects={projects} manuals={manuals} institutions={institutions} forms={forms} />
-        )}
-        {tab === 'stuck-tasks' && <StuckTasksSubview />}
-        {tab === 'task-debug' && <TaskDebugSubview projects={projects} />}
-        {tab === 'bulk-create' && <BulkCreateProjectsSubview projects={projects} />}
-      </PageBody>
-    </CsPage>
+      {tab === 'projects' && (
+        <ProjectsSubview projects={projects} manuals={manuals} institutions={institutions} forms={forms} />
+      )}
+      {tab === 'stuck-tasks' && <StuckTasksSubview />}
+      {tab === 'task-debug' && <TaskDebugSubview projects={projects} />}
+      {tab === 'bulk-create' && <BulkCreateProjectsSubview projects={projects} />}
+    </PageBody>
   );
 }

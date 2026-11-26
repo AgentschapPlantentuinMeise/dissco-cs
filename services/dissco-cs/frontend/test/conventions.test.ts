@@ -385,6 +385,12 @@ const rules: ConventionRule[] = [
     },
   },
   {
+    name: 'The navbar and footer come from the layout route, a page draws only its own content',
+    pattern: /<(Navbar|SiteFooter|AnnouncementStrip)\b/,
+    instead: 'nothing: SiteLayout (components/layout/SiteLayout.tsx) sets them on every route in App.tsx',
+    allowedIn: { 'components/layout/SiteLayout.tsx': 'the layout itself' },
+  },
+  {
     name: 'How long data stays fresh is set in the query factory, not where the query is used',
     pattern: /\b(staleTime|gcTime|refetchOnWindowFocus)\s*:/,
     instead: 'a kind from api/queries/freshness.ts (STATIC, LIVE, FIXED_PER_ID, FROZEN_UNTIL_LEFT; SLOW is the default) in the factory in api/queries/',

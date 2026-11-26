@@ -3,7 +3,6 @@ import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { useSearchParams } from 'react-router-dom';
-import { CsPage } from '../../components/layout/CsPage';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { PageBody } from '../../components/layout/PageBody';
 import { PasswordInput } from '../../components/auth/PasswordInput';
@@ -76,7 +75,7 @@ export function Login() {
   };
 
   return (
-    <CsPage>
+    <>
       <PageBody width="narrow">
         <PageHeader
           variant="plain"
@@ -137,6 +136,6 @@ export function Login() {
           disabled={termsMutation.isPending}
         />
       )}
-    </CsPage>
+    </>
   );
 }

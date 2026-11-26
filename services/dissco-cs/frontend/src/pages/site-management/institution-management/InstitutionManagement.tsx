@@ -2,7 +2,6 @@
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { institutionKeys, institutionQueries } from '../../../api/queries/institutions';
-import { CsPage } from '../../../components/layout/CsPage';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBody } from '../../../components/layout/PageBody';
 import { ManageLoadError } from '../ManageLoadError';
@@ -132,99 +131,97 @@ export function InstitutionManagement() {
   }
 
   return (
-    <CsPage>
-      <PageBody>
-        <PageHeader
-          variant="plain"
-          back={{ href: '/manage', label: t('sm_back_to_hub') }}
-          title={t('sm_tile_institutions_title')}
-          actions={<Button size="sm" onClick={startCreate}>{t('sm_institutions_new')}</Button>}
+    <PageBody>
+      <PageHeader
+        variant="plain"
+        back={{ href: '/manage', label: t('sm_back_to_hub') }}
+        title={t('sm_tile_institutions_title')}
+        actions={<Button size="sm" onClick={startCreate}>{t('sm_institutions_new')}</Button>}
+      />
+
+      {listLoading && <LoadingText />}
+
+      {!listLoading && institutions.length === 0 && !isFormOpen && (
+        <EmptyText>{t('sm_institutions_empty')}</EmptyText>
+      )}
+
+      {!listLoading && (institutions.length > 0 || isFormOpen) && (
+        <ListWithPanel
+          panelKey={editingId}
+          onClose={cancelForm}
+          panelTitle={editingId !== null ? t('sm_institutions_edit') : t('sm_institutions_new')}
+          list={
+          <ul className="list-none m-0 p-0 bg-white border-t border-gray-200 divide-y divide-gray-100">
+            {isFormOpen && editingId === null && (
+              <li className="flex items-center gap-3 px-4 py-3 border-l-4 border-l-cs-primary bg-gray-50">
+                <div className="h-10 w-10 flex-shrink-0 border border-dashed border-gray-300 rounded" />
+                <div className="min-w-0">
+                  <p className="font-semibold m-0 italic text-gray-500 truncate">{t('sm_institutions_draft_name')}</p>
+                  <p className="text-xs text-gray-400 m-0">{t('sm_institutions_draft_hint')}</p>
+                </div>
+              </li>
+            )}
+            {institutions.map(institution => (
+              <li
+                key={institution.id}
+                className={`flex items-center justify-between gap-4 px-4 py-3 border-l-4 ${rowHoverClass} ${
+                  editingId === institution.id
+                    ? 'bg-gray-50 border-l-cs-primary'
+                    : savedId === institution.id
+                      ? savedRowClass
+                      : 'border-l-transparent'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className="h-10 w-10 flex-shrink-0 bg-contain bg-center bg-no-repeat bg-gray-100 rounded"
+                    style={{ backgroundImage: institution.logoUpdatedAt ? `url(${institutionsApi.logoUrl(institution)})` : undefined }}
+                  />
+                  <p className="font-semibold m-0 truncate">{siteLangText(institution.name, i18n.language, institution.slug)}</p>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  {savedId === institution.id && <SavedNotice />}
+                  <ActiveStatusToggle
+                    active={institution.isActive}
+                    onChange={() => toggleActive(institution)}
+                    label={siteLangText(institution.name, i18n.language, institution.slug)}
+                  />
+                  <IconButton icon={LuPencil} label={t('common_edit')} onClick={() => startEdit(institution)} />
+                  <DeleteIconButton onClick={() => setPendingDeleteId(institution.id)} />
+                </div>
+              </li>
+            ))}
+          </ul>
+          }
+          panel={isFormOpen ? (
+            <InstitutionForm
+              key={editingId ?? 'new'}
+              draft={draft}
+              setDraft={setDraft}
+              currentLogoUrl={editingInstitution ? institutionsApi.logoUrl(editingInstitution) : null}
+              selectedLang={selectedLang}
+              onSelectLang={setSelectedLang}
+              saving={saving}
+              onSave={save}
+              onCancel={cancelForm}
+            />
+          ) : null}
         />
+      )}
 
-        {listLoading && <LoadingText />}
+      {pendingDeleteId !== null && (
+        <ConfirmDialog
+          title={t('sm_institutions_confirm_delete_title')}
+          message={t('sm_institutions_confirm_delete')}
+          confirmLabel={t('common_delete')}
+          cancelLabel={t('common_cancel')}
+          onConfirm={confirmDelete}
+          onCancel={() => setPendingDeleteId(null)}
+        />
+      )}
 
-        {!listLoading && institutions.length === 0 && !isFormOpen && (
-          <EmptyText>{t('sm_institutions_empty')}</EmptyText>
-        )}
-
-        {!listLoading && (institutions.length > 0 || isFormOpen) && (
-          <ListWithPanel
-            panelKey={editingId}
-            onClose={cancelForm}
-            panelTitle={editingId !== null ? t('sm_institutions_edit') : t('sm_institutions_new')}
-            list={
-            <ul className="list-none m-0 p-0 bg-white border-t border-gray-200 divide-y divide-gray-100">
-              {isFormOpen && editingId === null && (
-                <li className="flex items-center gap-3 px-4 py-3 border-l-4 border-l-cs-primary bg-gray-50">
-                  <div className="h-10 w-10 flex-shrink-0 border border-dashed border-gray-300 rounded" />
-                  <div className="min-w-0">
-                    <p className="font-semibold m-0 italic text-gray-500 truncate">{t('sm_institutions_draft_name')}</p>
-                    <p className="text-xs text-gray-400 m-0">{t('sm_institutions_draft_hint')}</p>
-                  </div>
-                </li>
-              )}
-              {institutions.map(institution => (
-                <li
-                  key={institution.id}
-                  className={`flex items-center justify-between gap-4 px-4 py-3 border-l-4 ${rowHoverClass} ${
-                    editingId === institution.id
-                      ? 'bg-gray-50 border-l-cs-primary'
-                      : savedId === institution.id
-                        ? savedRowClass
-                        : 'border-l-transparent'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className="h-10 w-10 flex-shrink-0 bg-contain bg-center bg-no-repeat bg-gray-100 rounded"
-                      style={{ backgroundImage: institution.logoUpdatedAt ? `url(${institutionsApi.logoUrl(institution)})` : undefined }}
-                    />
-                    <p className="font-semibold m-0 truncate">{siteLangText(institution.name, i18n.language, institution.slug)}</p>
-                  </div>
-
-                  <div className="flex items-center gap-3 shrink-0">
-                    {savedId === institution.id && <SavedNotice />}
-                    <ActiveStatusToggle
-                      active={institution.isActive}
-                      onChange={() => toggleActive(institution)}
-                      label={siteLangText(institution.name, i18n.language, institution.slug)}
-                    />
-                    <IconButton icon={LuPencil} label={t('common_edit')} onClick={() => startEdit(institution)} />
-                    <DeleteIconButton onClick={() => setPendingDeleteId(institution.id)} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-            }
-            panel={isFormOpen ? (
-              <InstitutionForm
-                key={editingId ?? 'new'}
-                draft={draft}
-                setDraft={setDraft}
-                currentLogoUrl={editingInstitution ? institutionsApi.logoUrl(editingInstitution) : null}
-                selectedLang={selectedLang}
-                onSelectLang={setSelectedLang}
-                saving={saving}
-                onSave={save}
-                onCancel={cancelForm}
-              />
-            ) : null}
-          />
-        )}
-
-        {pendingDeleteId !== null && (
-          <ConfirmDialog
-            title={t('sm_institutions_confirm_delete_title')}
-            message={t('sm_institutions_confirm_delete')}
-            confirmLabel={t('common_delete')}
-            cancelLabel={t('common_cancel')}
-            onConfirm={confirmDelete}
-            onCancel={() => setPendingDeleteId(null)}
-          />
-        )}
-
-        <DiscardDialog guard={discardGuard} />
-      </PageBody>
-    </CsPage>
+      <DiscardDialog guard={discardGuard} />
+    </PageBody>
   );
 }
