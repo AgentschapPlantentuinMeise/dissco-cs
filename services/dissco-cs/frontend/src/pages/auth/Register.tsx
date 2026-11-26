@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
@@ -34,6 +34,12 @@ export function Register() {
   const form = useValidatedForm(registerSchema, { name: '', email: '' });
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsPopup, setShowTermsPopup] = useState(false);
+
+  // The captcha's script defines <cap-widget>; only this page needs it, so it loads here and not
+  // with every page. The element shows as soon as the script has arrived.
+  useEffect(() => {
+    void import('@cap.js/widget');
+  }, []);
 
   const invitationQuery = useQuery(authQueries.invitation(code));
   const termsQuery = useQuery(authQueries.terms());
@@ -129,7 +135,7 @@ export function Register() {
             <input {...form.field('email')} type="email" autoComplete="email" maxLength={MAX_EMAIL_LENGTH} className={inputClass} />
           </FormField>
 
-          {/* @ts-expect-error custom element from @cap.js/widget, loaded in index.html */}
+          {/* @ts-expect-error custom element from @cap.js/widget (loaded above), unknown to JSX */}
           <cap-widget data-cap-api-endpoint={`/s/${getSiteSlug()}/madoc/api/captcha/`} />
 
           {terms && (

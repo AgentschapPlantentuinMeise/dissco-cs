@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@cap.js/widget':
+        specifier: 0.1.57
+        version: 0.1.57
       '@dissco-cs/shared-types':
         specifier: file:../shared
         version: file:../shared
@@ -216,6 +219,9 @@ packages:
 
   '@cacheable/utils@2.5.0':
     resolution: {integrity: sha512-buipgOVDkkPXNR5+xBpDw7Zk2n1EvU7qBJCNUcL7rhQ//kfpOXPAvQ511Os0vpLYJ1pZnvudNytkQt2hst3wqA==}
+
+  '@cap.js/widget@0.1.57':
+    resolution: {integrity: sha512-IgWepPHHsn1FcB5msL/TQtZZixGm9KAp7rpNbDmdo/i10EhDA74TlMU9zbZ6H8wwcCtlond/m+pAcLr1RiQ1og==}
 
   '@dissco-cs/shared-types@file:../shared':
     resolution: {directory: ../shared, type: directory}
@@ -2378,6 +2384,8 @@ snapshots:
     dependencies:
       hashery: 1.5.1
       keyv: 5.6.0
+
+  '@cap.js/widget@0.1.57': {}
 
   '@dissco-cs/shared-types@file:../shared':
     dependencies:
