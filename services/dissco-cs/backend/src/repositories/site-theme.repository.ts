@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import { SiteColors, SiteThemeDto } from '@dissco-cs/shared-types';
+import { caches } from '../infrastructure/cache/caches.js';
 
 export type SiteThemeRow = {
   site_id: number;
@@ -22,9 +23,12 @@ export class SiteThemeRepository {
     return `${this.schemaRef}.site_theme`;
   }
 
-  async get(siteId: number): Promise<SiteThemeRow | null> {
-    const result = await this.pool.query<SiteThemeRow>(`SELECT * FROM ${this.table} WHERE site_id = $1`, [siteId]);
-    return result.rows[0] ?? null;
+  // Read on every page (the site's colors), changed only by the writes below, which clear the cache.
+  get(siteId: number): Promise<SiteThemeRow | null> {
+    return caches.siteTheme.get(siteId, 'all', async () => {
+      const result = await this.pool.query<SiteThemeRow>(`SELECT * FROM ${this.table} WHERE site_id = $1`, [siteId]);
+      return result.rows[0] ?? null;
+    });
   }
 
   async upsertColors(siteId: number, userId: number, colors: SiteColors): Promise<void> {
@@ -43,6 +47,7 @@ export class SiteThemeRepository {
     `,
       [siteId, colors.primary, colors.secondary, colors.accent, colors.dark, colors.tertiary, userId]
     );
+    caches.siteTheme.clear(siteId);
   }
 
   async clearColors(siteId: number, userId: number): Promise<void> {
@@ -55,6 +60,7 @@ export class SiteThemeRepository {
     `,
       [siteId, userId]
     );
+    caches.siteTheme.clear(siteId);
   }
 
 }

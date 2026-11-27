@@ -5,8 +5,9 @@ import { SwrCache } from './swr-cache.js';
 export class SiteCache<V> {
   private readonly cache: SwrCache<string, V>;
 
-  constructor(label: string, options: { ttlMs: number }) {
-    this.cache = new SwrCache<string, V>(label, options.ttlMs);
+  // untilChanged: never refreshed by time; the routes that change the data call clear().
+  constructor(label: string, options: { ttlMs: number } | { untilChanged: true }) {
+    this.cache = new SwrCache<string, V>(label, 'ttlMs' in options ? options.ttlMs : Infinity);
   }
 
   get(siteId: number, key: string, load: () => Promise<V>): Promise<V> {

@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+import { caches } from '../infrastructure/cache/caches.js';
 import { NAV_ITEM_KEYS, NavItemContactEmailDto, NavItemContentKey, NavItemDto, NavItemKey, SitePageLang } from '@dissco-cs/shared-types';
 
 export type NavItemRow = {
@@ -24,7 +25,12 @@ export class NavItemsRepository {
     return `${this.schemaRef}.${name}`;
   }
 
-  async getNavItems(siteId: number): Promise<NavItemRow[]> {
+  // Read on every page (the navbar), changed only by the writes below, which clear the cache.
+  getNavItems(siteId: number): Promise<NavItemRow[]> {
+    return caches.navItems.get(siteId, 'all', () => this.queryNavItems(siteId));
+  }
+
+  private async queryNavItems(siteId: number): Promise<NavItemRow[]> {
     const result = await this.pool.query<NavItemRow>(
       `SELECT * FROM ${this.table('nav_items')} WHERE site_id = $1`,
       [siteId]
@@ -72,6 +78,7 @@ export class NavItemsRepository {
     `,
       [siteId, pageKey, isActive, userId]
     );
+    caches.navItems.clear(siteId);
   }
 
   async upsertNavItemContent(
@@ -93,6 +100,7 @@ export class NavItemsRepository {
     `,
       [siteId, pageKey, lang, contentMd, intro, userId]
     );
+    caches.navItems.clear(siteId);
   }
 
   async setContactEmail(siteId: number, userId: number, email: string): Promise<void> {
@@ -105,6 +113,7 @@ export class NavItemsRepository {
     `,
       [siteId, email, userId]
     );
+    caches.navItems.clear(siteId);
   }
 
   async setShowContactForm(siteId: number, userId: number, showForm: boolean): Promise<void> {
@@ -117,6 +126,7 @@ export class NavItemsRepository {
     `,
       [siteId, showForm, userId]
     );
+    caches.navItems.clear(siteId);
   }
 
   async getContactEmail(siteId: number): Promise<string | null> {

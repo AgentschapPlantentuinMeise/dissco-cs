@@ -2,10 +2,12 @@ import { ProjectProgressDto } from '@dissco-cs/shared-types';
 import type { QuarterCount } from '../../logic/honour-board.logic.js';
 import type { InstitutionCounts, SiteTaskTotals } from '../../madoc-db/stats.repository.js';
 import type { ProjectFormNames } from '../../services/forms.service.js';
+import type { NavItemRow } from '../../repositories/nav-items.repository.js';
+import type { SiteThemeRow } from '../../repositories/site-theme.repository.js';
 import { SiteCache } from './site-cache.js';
 
 // Every cache of the backend, with how long an entry stays fresh and why. Values are the same for
-// every visitor of a site; nothing per user is cached here. Each cache lives in this one process's
+// every visitor of a site, except siteUserRole, which is per user (why: see its comment below). Each cache lives in this one process's
 // memory: with several backend containers, a change would only reach the cache of the one that
 // handled it. A ttlMs of 0 means: every read answers from the cache and starts a refresh.
 //
@@ -32,4 +34,17 @@ export const caches = {
   // changes when a reviewer rejects one of its tasks, so an hour is fresh enough.
   honourBoardRunning: new SiteCache<QuarterCount[]>('honour-board', { ttlMs: 0 }),
   honourBoardClosed: new SiteCache<QuarterCount[]>('honour-board-closed', { ttlMs: 60 * 60 * 1000 }),
+
+  // Madoc's site title (key 'title'), shown in the navbar on every page. It is changed in Madoc's
+  // site admin, which does not tell us, so a rename shows up within 5 minutes.
+  siteTitle: new SiteCache<string | null>('site-title', { ttlMs: 5 * 60 * 1000 }),
+
+  // A user's site role (key: the Madoc user id), asked for every review call. The one cache per
+  // user, on purpose: a role changes rarely, and a removed reviewer keeps access for about a minute.
+  siteUserRole: new SiteCache<string | null>('site-user-role', { ttlMs: 60_000 }),
+
+  // Our own tables, only changed through our own admin routes: those writes clear the site's entry
+  // (in the repository, after the write), so the admin who just saved sees the change at once.
+  navItems: new SiteCache<NavItemRow[]>('nav-items', { untilChanged: true }),
+  siteTheme: new SiteCache<SiteThemeRow | null>('site-theme', { untilChanged: true }),
 };

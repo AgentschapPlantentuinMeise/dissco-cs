@@ -39,4 +39,18 @@ describe('SiteCache', () => {
     expect(cache.peek(1, 'a')).toBeNull();
     expect(cache.peek(2, 'a')).toBe(1);
   });
+
+  it('untilChanged never refreshes by itself, only after clear', async () => {
+    const cache = new SiteCache<number>('test', { untilChanged: true });
+    await cache.get(1, 'k', async () => 1);
+
+    const load = vi.fn(async () => 2);
+    expect(await cache.get(1, 'k', load)).toBe(1);
+    await settle();
+    expect(load).not.toHaveBeenCalled();
+
+    cache.clear(1);
+    expect(await cache.get(1, 'k', load)).toBe(2);
+  });
 });
+

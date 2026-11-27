@@ -1,18 +1,22 @@
 import { serviceJson } from './client.js';
 import { madocPath } from './path-segment.js';
+import { caches } from '../infrastructure/cache/caches.js';
 
 /**
  * A user's role on the site (e.g. 'reviewer', 'trusted-user', 'admin'). This is the site-wide
- * role, not the reviewer assigned to a single project. Uses the service token.
+ * role, not the reviewer assigned to a single project. Cached per user for a minute
+ * (caches.siteUserRole). Uses the service token.
  * @param siteId the site
  * @param userId Madoc user id
  * Returns: the role, or null when Madoc gives none. Throws a MadocHttpError when Madoc answers
  *   with an error.
  */
-export async function getMadocSiteUserRole(siteId: number, userId: number): Promise<string | null> {
-  const data = await serviceJson<{ user?: { site_role?: string } }>(madocPath`/api/madoc/manage-site/users/${userId}`, {
-    siteId,
-    headers: { 'x-madoc-user-id': String(userId) },
+export function getMadocSiteUserRole(siteId: number, userId: number): Promise<string | null> {
+  return caches.siteUserRole.get(siteId, String(userId), async () => {
+    const data = await serviceJson<{ user?: { site_role?: string } }>(madocPath`/api/madoc/manage-site/users/${userId}`, {
+      siteId,
+      headers: { 'x-madoc-user-id': String(userId) },
+    });
+    return data.user?.site_role ?? null;
   });
-  return data.user?.site_role ?? null;
 }

@@ -1,5 +1,6 @@
 import { serviceFetch } from './client.js';
 import { isSafeSegment, madocPath } from './path-segment.js';
+import { caches } from '../infrastructure/cache/caches.js';
 
 const siteIdBySlugCache = new Map<string, number>();
 
@@ -37,15 +38,22 @@ export async function getSiteIdBySlug(slug: string): Promise<number | null> {
 
 /**
  * The site's title, as set when the site was created in Madoc or later in Madoc's site admin.
- * Not cached, so a rename in Madoc shows on the next page load. Uses the service token.
+ * Cached per site (caches.siteTitle), so a rename in Madoc shows within 5 minutes. Uses the
+ * service token.
  * @param slug the site's slug, e.g. from the `slug` query parameter
  * Returns: the title, or null when the slug is not safe or Madoc does not know it.
  */
 export async function getSiteTitle(slug: string): Promise<string | null> {
-  if (!isSafeSegment(slug)) {
+  // Also rejects an unsafe or unknown slug, so only real sites get a cache entry.
+  const siteId = await getSiteIdBySlug(slug);
+  if (siteId === null) {
     return null;
   }
 
+  return caches.siteTitle.get(siteId, 'title', () => fetchSiteTitle(slug));
+}
+
+async function fetchSiteTitle(slug: string): Promise<string | null> {
   const response = await serviceFetch(madocPath`/s/${slug}/madoc/api/site`);
   if (!response.ok) {
     return null;
