@@ -45,3 +45,4 @@ services/dissco-cs/backend/dist
 services/dissco-cs/frontend/dist
 services/dissco-cs/shared/dist
 TODO.md
+.claude/agents/code-reviewer.md

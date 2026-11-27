@@ -35,7 +35,7 @@ function blankEntity(entity: MadocAnnotationDocumentDto): void {
  * Same shape as the model's document (same fields/entities), but with every value and selector
  * state cleared — used for a genuinely new claim, since the model's own `document` may still carry
  * values from a previous, possibly abandoned, contribution (capture models are shared per manifest,
- * not per user — see docs/MANIFEST-CLAIMS.md).
+ * not per user).
  */
 export function createBlankDocument(model: MadocCaptureModelDto): MadocAnnotationDocumentDto {
   const clone: MadocAnnotationDocumentDto = JSON.parse(JSON.stringify(model.document));
