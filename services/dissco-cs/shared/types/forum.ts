@@ -17,6 +17,13 @@ export type ForumTopicDto = {
   lastSeenReplyCount: number | null;
 };
 
+// The forum's numbers for the caller, without the topics themselves: topics with replies the
+// caller has not seen (or never opened), and topics without any reply yet.
+export type ForumCountsDto = {
+  unread: number;
+  unanswered: number;
+};
+
 export type ForumReplyDto = {
   id: number;
   topicId: number;

@@ -36,10 +36,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
   const showReview = showAdmin || !!isReviewer;
 
   // Refreshed by invalidation from the dashboard (no window events).
-  const { data: feedbackUnreadCount = 0 } = useQuery({
-    ...feedbackQueries.threads(),
-    select: threads => threads.reduce((sum, thread) => sum + thread.unreadCount, 0),
-  });
+  const { data: feedbackUnreadCount = 0 } = useQuery({ ...feedbackQueries.unreadCount(), select: count => count.unread });
   const supportLinks = linksFor(SUPPORT_LINK_KEYS);
 
   return (

@@ -1,16 +1,24 @@
 import { csFetch, csFetchField } from './request';
-import { urlPath } from '../url';
-import { ForumTopicDto, ForumReplyDto, ForumTopicInput } from '@dissco-cs/shared-types';
+import { urlPath, withQuery } from '../url';
+import { ForumCountsDto, ForumTopicDto, ForumReplyDto, ForumTopicInput } from '@dissco-cs/shared-types';
 
 export const forumApi = {
   /**
-   * All topics of this site, most recent activity first, each with its reply count and how many
+   * The topics of this site, most recent activity first, each with its reply count and how many
    * replies the caller has seen (null = never opened).
-   * Input: none.
+   * @param projectSlug only the topics about this project (MadocProjectDto.slug); undefined for all
    * Who: logged-in user.
    * Returns: ForumTopicDto[].
    */
-  listTopics: () => csFetchField<ForumTopicDto[]>('/forum/topics', 'topics'),
+  listTopics: (projectSlug?: string) => csFetchField<ForumTopicDto[]>(withQuery('/forum/topics', { project: projectSlug }), 'topics'),
+
+  /**
+   * The caller's forum numbers, counted on the server instead of from the whole topic list.
+   * Input: none.
+   * Who: logged-in user.
+   * Returns: ForumCountsDto (unread topics, topics without replies).
+   */
+  counts: () => csFetch<ForumCountsDto>('/forum/counts'),
 
   /**
    * Creates a topic in the caller's name; it counts as read for the caller.

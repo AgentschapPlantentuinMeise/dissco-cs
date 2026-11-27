@@ -39,7 +39,8 @@ export class ForumRepository {
     return `${this.schemaRef}.${name}`;
   }
 
-  async listTopics(siteId: number, userId: number): Promise<ForumTopicWithReplyCount[]> {
+  // projectSlug: only the topics about that project (the project page); null for all of them.
+  async listTopics(siteId: number, userId: number, projectSlug: string | null = null): Promise<ForumTopicWithReplyCount[]> {
     const result = await this.pool.query<ForumTopicWithReplyCount>(
       `
       SELECT t.*, COUNT(r.id)::int AS reply_count,
@@ -47,14 +48,37 @@ export class ForumRepository {
       FROM ${this.table('forum_topics')} t
       LEFT JOIN ${this.table('forum_replies')} r ON r.topic_id = t.id
       LEFT JOIN ${this.table('forum_read_state')} rs ON rs.topic_id = t.id AND rs.user_id = $2
-      WHERE t.site_id = $1
+      WHERE t.site_id = $1 AND ($3::text IS NULL OR t.project_slug = $3)
       GROUP BY t.id, rs.last_seen_reply_count
       ORDER BY t.last_activity DESC
+    `,
+      [siteId, userId, projectSlug]
+    );
+
+    return result.rows;
+  }
+
+  // The navbar badge and the dashboard only need these two numbers, not every topic with its text.
+  // Unread: the same rule as the forum page's filter -- never opened, or more replies than seen.
+  async countTopics(siteId: number, userId: number): Promise<{ unread: number; unanswered: number }> {
+    const result = await this.pool.query<{ unread: number; unanswered: number }>(
+      `
+      SELECT
+        COUNT(*) FILTER (WHERE rs.last_seen_reply_count IS NULL OR topics.reply_count > rs.last_seen_reply_count)::int AS unread,
+        COUNT(*) FILTER (WHERE topics.reply_count = 0)::int AS unanswered
+      FROM (
+        SELECT t.id, COUNT(r.id) AS reply_count
+        FROM ${this.table('forum_topics')} t
+        LEFT JOIN ${this.table('forum_replies')} r ON r.topic_id = t.id
+        WHERE t.site_id = $1
+        GROUP BY t.id
+      ) topics
+      LEFT JOIN ${this.table('forum_read_state')} rs ON rs.topic_id = topics.id AND rs.user_id = $2
     `,
       [siteId, userId]
     );
 
-    return result.rows;
+    return result.rows[0];
   }
 
   async createTopic(input: {

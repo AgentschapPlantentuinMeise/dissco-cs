@@ -1,9 +1,7 @@
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { forumQueries } from '../../api/queries/forum';
 import { withQuery } from '../../api/url';
-import { filterTopics, sortByLastActivity } from '../../components/forum/forum-topics';
 import { PageSection, PageSectionTone } from '../../components/layout/PageSection';
 import { CardStat } from '../../components/ui/CardStat';
 import { rowHoverClass } from '../../components/ui/list-styles';
@@ -18,11 +16,8 @@ const badgeClass = 'text-[0.68rem] font-semibold text-gray-500 bg-gray-100 round
 // Only for logged-in users, like the forum itself. Without questions the section is left out.
 export function ProjectForumTopics({ projectSlug, tone }: { projectSlug: string; tone: PageSectionTone }) {
   const { t, i18n } = useTranslation('dissco-cs');
-  const { data: topics } = useQuery(forumQueries.topics());
-  const projectTopics = useMemo(
-    () => filterTopics(sortByLastActivity(topics ?? []), { query: '', filter: null, userId: undefined, projectSlug }),
-    [topics, projectSlug]
-  );
+  // Only this project's topics, latest activity first (the backend sorts).
+  const { data: projectTopics = [] } = useQuery(forumQueries.projectTopics(projectSlug));
 
   if (projectTopics.length === 0) {
     return null;

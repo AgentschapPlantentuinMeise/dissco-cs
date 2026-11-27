@@ -26,9 +26,11 @@ export const caches = {
 
   // The site's number of volunteers (key 'all'): changes slowly, so at most every 5 minutes.
   siteVolunteers: new SiteCache<number>('stats:site-volunteers', { ttlMs: 5 * 60 * 1000 }),
-  // The site's completed and total tasks (key 'all'), and an institution's numbers (key: its id).
+  // The site's completed and total tasks (key 'all').
   siteTaskTotals: new SiteCache<SiteTaskTotals>('stats:site-task-totals', { ttlMs: 0 }),
-  institutionStats: new SiteCache<InstitutionCounts>('stats:institution', { ttlMs: 0 }),
+  // An institution's numbers (key: its id). Every institution card asks for them, so 30 s: with 0,
+  // a visit to Institutions recalculated every institution (3-4 queries each) on every read.
+  institutionStats: new SiteCache<InstitutionCounts>('stats:institution', { ttlMs: 30_000 }),
 
   // Tasks per volunteer in a quarter (key: the quarter, e.g. '2026-Q4'). A closed quarter only
   // changes when a reviewer rejects one of its tasks, so an hour is fresh enough.

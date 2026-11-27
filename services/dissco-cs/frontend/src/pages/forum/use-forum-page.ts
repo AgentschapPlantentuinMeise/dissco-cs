@@ -97,7 +97,7 @@ export function useForumPage() {
     didVisit.current = true;
     forumApi
       .visitForum()
-      .then(() => queryClient.invalidateQueries({ queryKey: forumKeys.unreadCount() }))
+      .then(() => queryClient.invalidateQueries({ queryKey: forumKeys.counts() }))
       .catch(err => reportClientError(err, 'action'));
   }, [topicsQuery.isFetchedAfterMount, queryClient]);
 
@@ -126,7 +126,7 @@ export function useForumPage() {
 
   // Any change to the topic list may change the unread count in the navbar badge.
   useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: forumKeys.unreadCount() });
+    queryClient.invalidateQueries({ queryKey: forumKeys.counts() });
   }, [topicsQuery.data, queryClient]);
 
   const filterCounts = useMemo(

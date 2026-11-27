@@ -11,7 +11,7 @@ export function ForumNavLink() {
   const { t } = useTranslation('dissco-cs');
   const location = useLocation();
   // Refreshed by invalidation from the forum page (no window events).
-  const { data: unreadCount = 0 } = useQuery(forumQueries.unreadCount());
+  const { data: unreadCount = 0 } = useQuery({ ...forumQueries.counts(), select: counts => counts.unread });
   const isCurrent = location.pathname.startsWith('/forum');
 
   return (

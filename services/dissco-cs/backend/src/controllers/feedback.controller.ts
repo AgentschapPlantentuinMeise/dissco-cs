@@ -18,6 +18,15 @@ export function feedbackController(feedbackRepository: FeedbackRepository): Hono
     return c.json({ threads: threads.map(toFeedbackThreadDto) });
   });
 
+  app.get('/unread-count', async c => {
+    const identity = requireUser(c);
+    if (identity instanceof Response) {
+      return identity;
+    }
+
+    return c.json({ unread: await feedbackRepository.countUnread(identity.siteId, identity.userId) });
+  });
+
   app.post('/threads', validateJson(feedbackThreadInputSchema), async c => {
     const identity = await requireReviewerOrAdmin(c);
     if (identity instanceof Response) {

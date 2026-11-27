@@ -18,8 +18,19 @@ export function forumController(forumRepository: ForumRepository): Hono {
       return identity;
     }
 
-    const topics = await forumRepository.listTopics(identity.siteId, identity.userId);
+    // ?project=<slug>: only that project's topics, for the project page.
+    const topics = await forumRepository.listTopics(identity.siteId, identity.userId, c.req.query('project') ?? null);
     return c.json({ topics: topics.map(toForumTopicDto) });
+  });
+
+  app.get('/counts', async c => {
+    const identity = requireUser(c);
+    if (identity instanceof Response) {
+      return identity;
+    }
+
+    const { unread, unanswered } = await forumRepository.countTopics(identity.siteId, identity.userId);
+    return c.json({ unread, unanswered });
   });
 
   app.post('/topics/visit', async c => {

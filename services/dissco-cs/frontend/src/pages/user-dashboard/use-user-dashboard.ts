@@ -55,8 +55,8 @@ export function useUserDashboard() {
   const { data: siteStats } = useQuery(statsQueries.site());
 
   const { data: unansweredCount = 0 } = useQuery({
-    ...forumQueries.topics(),
-    select: topics => topics.filter(topic => topic.replyCount === 0).length,
+    ...forumQueries.counts(),
+    select: counts => counts.unanswered,
     enabled: !!user,
   });
   const { data: institutionLinks } = useQuery(projectQueries.institutionLinks());

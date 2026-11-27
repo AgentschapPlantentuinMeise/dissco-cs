@@ -66,6 +66,25 @@ export class FeedbackRepository {
     return result.rows;
   }
 
+  // The navbar badge: the sum of unreadCount over listThreadsForUser, counted in the database.
+  async countUnread(siteId: number, userId: number): Promise<number> {
+    const result = await this.pool.query<{ unread: number }>(
+      `
+      SELECT COUNT(m.id)::int AS unread
+      FROM ${this.table('feedback_threads')} t
+      JOIN ${this.table('feedback_messages')} m ON m.thread_id = t.id
+      WHERE t.site_id = $1 AND (
+        (t.recipient_user_id = $2 AND t.recipient_hidden_at IS NULL)
+        OR (t.reviewer_user_id = $2 AND t.reviewer_hidden_at IS NULL)
+      )
+        AND m.author_user_id != $2 AND m.read_at IS NULL
+    `,
+      [siteId, userId]
+    );
+
+    return result.rows[0]?.unread ?? 0;
+  }
+
   async createThread(input: {
     siteId: number;
     reviewerUserId: number;

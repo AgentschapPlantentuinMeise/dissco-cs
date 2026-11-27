@@ -18,6 +18,11 @@ export type FeedbackThreadDto = {
   unreadCount: number;
 };
 
+// Unread messages from others in the caller's own (not deleted) threads, without the threads.
+export type FeedbackUnreadCountDto = {
+  unread: number;
+};
+
 export type FeedbackMessageDto = {
   id: number;
   threadId: number;

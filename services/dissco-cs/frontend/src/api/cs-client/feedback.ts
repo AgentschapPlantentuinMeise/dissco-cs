@@ -1,6 +1,6 @@
 import { csFetch, csFetchField } from './request';
 import { urlPath } from '../url';
-import { FeedbackThreadDto, FeedbackMessageDto, FeedbackThreadInput } from '@dissco-cs/shared-types';
+import { FeedbackThreadDto, FeedbackMessageDto, FeedbackThreadInput, FeedbackUnreadCountDto } from '@dissco-cs/shared-types';
 
 export const feedbackApi = {
   /**
@@ -11,6 +11,14 @@ export const feedbackApi = {
    * Returns: FeedbackThreadDto[].
    */
   listThreads: () => csFetchField<FeedbackThreadDto[]>('/feedback/threads', 'threads'),
+
+  /**
+   * How many messages from others are unread in the caller's threads, counted on the server.
+   * Input: none.
+   * Who: logged-in user.
+   * Returns: FeedbackUnreadCountDto.
+   */
+  unreadCount: () => csFetch<FeedbackUnreadCountDto>('/feedback/unread-count'),
 
   /**
    * Starts a feedback thread from the caller (as reviewer) to a volunteer, with a first message.
