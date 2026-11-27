@@ -10,6 +10,7 @@ import {
   updateMadocTask,
 } from '../madoc-client/tasks.js';
 import { toMyTask } from '../logic/tasks.logic.js';
+import { markProgressStaleAfter } from '../services/project-progress.service.js';
 import { safeSegment, validateParams } from '../infrastructure/validate-params.js';
 
 // /stuck is registered before /:taskId on purpose: Hono tries routes in the order they are
@@ -79,7 +80,10 @@ export function tasksController(): Hono {
   app.patch('/:taskId', validateParams({ taskId: safeSegment }), async c => {
     const { taskId } = c.req.valid('param');
 
-    return forwardJsonBody(c, `/api/tasks/${taskId}`, 'PATCH', requestBearerToken(c));
+    const response = await forwardJsonBody(c, `/api/tasks/${taskId}`, 'PATCH', requestBearerToken(c));
+    // Status 2: the volunteer submitted the task.
+    await markProgressStaleAfter(c, response, 2);
+    return response;
   });
 
   return app;

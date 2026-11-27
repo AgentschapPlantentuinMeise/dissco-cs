@@ -1,10 +1,8 @@
 import { MadocDbPools } from './pools.js';
-import { SwrCache } from './swr-cache.js';
+import { caches } from '../infrastructure/cache/caches.js';
+import { SiteCache } from '../infrastructure/cache/site-cache.js';
 import { QuarterCount } from '../logic/honour-board.logic.js';
 import { HonourBoardQuarterKey, isQuarterOver, quarterRange } from '@dissco-cs/shared-types';
-
-// A closed quarter only changes when a reviewer rejects one of its tasks, so an hour is fresh enough.
-const CLOSED_QUARTER_TTL_MS = 60 * 60 * 1000;
 
 // Reads tasks-api's own `tasks` table directly (read-only, reusing its DB user) rather than the
 // Madoc gateway API -- there's no per-assignee aggregation endpoint, and this table is already
@@ -12,11 +10,6 @@ const CLOSED_QUARTER_TTL_MS = 60 * 60 * 1000;
 // containment check). Site scoping matches how madoc-ts itself tags tasks, e.g. getSiteId() in
 // queue/scheduler.ts: `context` is a jsonb array of URNs including `urn:madoc:site:<id>`.
 export class HonourBoardRepository {
-  // Cached per site and quarter (not per requesting user) -- the counts are the same for everyone
-  // looking at that site, only "you" differs, and that's derived in-memory from the cached counts.
-  private readonly runningCounts = new SwrCache<string, QuarterCount[]>('honour-board');
-  private readonly closedCounts = new SwrCache<string, QuarterCount[]>('honour-board-closed', CLOSED_QUARTER_TTL_MS);
-
   constructor(private readonly pools: MadocDbPools) {}
 
   private async fetchCounts(siteId: number, start: Date, end: Date): Promise<QuarterCount[]> {
@@ -53,8 +46,10 @@ export class HonourBoardRepository {
     }));
   }
 
-  private cacheFor(quarter: HonourBoardQuarterKey): SwrCache<string, QuarterCount[]> {
-    return isQuarterOver(quarter, new Date()) ? this.closedCounts : this.runningCounts;
+  // Cached per site and quarter (not per requesting user) -- the counts are the same for everyone
+  // looking at that site, only "you" differs, and that's derived in-memory from the cached counts.
+  private cacheFor(quarter: HonourBoardQuarterKey): SiteCache<QuarterCount[]> {
+    return isQuarterOver(quarter, new Date()) ? caches.honourBoardClosed : caches.honourBoardRunning;
   }
 
   /**
@@ -62,7 +57,7 @@ export class HonourBoardRepository {
    * Returns: null only when this quarter has never been cached yet for this site.
    */
   peekCounts(siteId: number, quarter: HonourBoardQuarterKey): QuarterCount[] | null {
-    return this.cacheFor(quarter).peek(`${siteId}:${quarter}`);
+    return this.cacheFor(quarter).peek(siteId, quarter);
   }
 
   /**
@@ -70,7 +65,7 @@ export class HonourBoardRepository {
    * Returns: true until that recalculation has finished or failed.
    */
   isRefreshing(siteId: number, quarter: HonourBoardQuarterKey): boolean {
-    return this.cacheFor(quarter).isRefreshing(`${siteId}:${quarter}`);
+    return this.cacheFor(quarter).isRefreshing(siteId, quarter);
   }
 
   /**
@@ -82,6 +77,6 @@ export class HonourBoardRepository {
     if (start > new Date()) {
       return [];
     }
-    return this.cacheFor(quarter).get(`${siteId}:${quarter}`, () => this.fetchCounts(siteId, start, end));
+    return this.cacheFor(quarter).get(siteId, quarter, () => this.fetchCounts(siteId, start, end));
   }
 }

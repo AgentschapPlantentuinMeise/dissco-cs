@@ -1,0 +1,35 @@
+import { ProjectProgressDto } from '@dissco-cs/shared-types';
+import type { QuarterCount } from '../../logic/honour-board.logic.js';
+import type { InstitutionCounts, SiteTaskTotals } from '../../madoc-db/stats.repository.js';
+import type { ProjectFormNames } from '../../services/forms.service.js';
+import { SiteCache } from './site-cache.js';
+
+// Every cache of the backend, with how long an entry stays fresh and why. Values are the same for
+// every visitor of a site; nothing per user is cached here. Each cache lives in this one process's
+// memory: with several backend containers, a change would only reach the cache of the one that
+// handled it. A ttlMs of 0 means: every read answers from the cache and starts a refresh.
+//
+// Not here: the site id per slug (madoc-client/site.ts). It only keeps slugs Madoc knows and never
+// expires; a SwrCache would also keep the unknown ones, so random slugs would fill the memory.
+export const caches = {
+  // The numbers on a project card, computed from all of the project's tasks in Madoc. Refreshed in
+  // the background after 30 s. Submitting a task and releasing one in review mark the site stale,
+  // because those routes only know the task id, not its project.
+  projectProgress: new SiteCache<ProjectProgressDto>('project-progress', { ttlMs: 30_000 }),
+
+  // The form name and status of every project (key 'all'), from every page of Madoc's project list
+  // plus its model list; public pages need it on every visit. A new project or a renamed model
+  // shows up with up to a minute's delay.
+  projectFormNames: new SiteCache<ProjectFormNames>('project-form-names', { ttlMs: 60_000 }),
+
+  // The site's number of volunteers (key 'all'): changes slowly, so at most every 5 minutes.
+  siteVolunteers: new SiteCache<number>('stats:site-volunteers', { ttlMs: 5 * 60 * 1000 }),
+  // The site's completed and total tasks (key 'all'), and an institution's numbers (key: its id).
+  siteTaskTotals: new SiteCache<SiteTaskTotals>('stats:site-task-totals', { ttlMs: 0 }),
+  institutionStats: new SiteCache<InstitutionCounts>('stats:institution', { ttlMs: 0 }),
+
+  // Tasks per volunteer in a quarter (key: the quarter, e.g. '2026-Q4'). A closed quarter only
+  // changes when a reviewer rejects one of its tasks, so an hour is fresh enough.
+  honourBoardRunning: new SiteCache<QuarterCount[]>('honour-board', { ttlMs: 0 }),
+  honourBoardClosed: new SiteCache<QuarterCount[]>('honour-board-closed', { ttlMs: 60 * 60 * 1000 }),
+};

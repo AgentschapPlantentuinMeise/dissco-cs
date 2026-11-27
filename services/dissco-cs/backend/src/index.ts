@@ -3,6 +3,7 @@ import { serve } from '@hono/node-server';
 import { appConfig } from './config.js';
 import { DisscoCSDatabase } from './database/database.js';
 import { describeError } from './infrastructure/describe-error.js';
+import { reportBackgroundErrorsTo } from './infrastructure/cache/swr-cache.js';
 import { HonourBoardRepository } from './madoc-db/honour-board.repository.js';
 import { MadocDbPools } from './madoc-db/pools.js';
 import { StatsRepository } from './madoc-db/stats.repository.js';
@@ -17,6 +18,19 @@ export async function bootstrap(): Promise<void> {
   process.on('unhandledRejection', reason => {
     console.error('[process] unhandled rejection', reason);
     void database.appLog.record({ level: 'error', source: 'backend', ...describeError(reason) });
+  });
+
+  // A cache refresh in the background: no request to attach it to either.
+  reportBackgroundErrorsTo((cache, key, err) => {
+    console.error(`[${cache}] background refresh failed`, key, err);
+    const { message, stack } = describeError(err);
+    void database.appLog.record({
+      level: 'error',
+      source: 'backend',
+      message: `[${cache}] background refresh failed: ${message}`,
+      stack,
+      details: { cache, key: String(key) },
+    });
   });
 
   // A throw nobody caught leaves the process in an unknown state (Node's own advice: stop), so log

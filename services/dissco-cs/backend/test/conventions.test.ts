@@ -46,7 +46,15 @@ const rules: ConventionRule[] = [
       'infrastructure/request-log.ts': 'the one request line on stdout',
       'infrastructure/error-response.ts': 'app.onError, the central error handler',
       'repositories/app-log.repository.ts': 'fallback when app_log itself cannot be written',
-      'madoc-db/swr-cache.ts': 'background refresh, outside any request',
+    },
+  },
+  {
+    name: 'Every cache is listed in caches.ts',
+    pattern: /new (SwrCache|SiteCache)\b/,
+    instead: 'an entry in infrastructure/cache/caches.ts, with its ttl and why',
+    allowedIn: {
+      'infrastructure/cache/caches.ts': 'the list of caches itself',
+      'infrastructure/cache/site-cache.ts': 'a SiteCache is built on one SwrCache',
     },
   },
   {

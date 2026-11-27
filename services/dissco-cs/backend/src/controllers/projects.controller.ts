@@ -21,6 +21,7 @@ import { FormsRepository, toFormLayoutDto } from '../repositories/forms.reposito
 import { fromBigint } from '../database/bigint.js';
 import { getProjectForm, listInstitutionIdsBySlug } from '../services/forms.service.js';
 import { sendFile } from '../infrastructure/file-http.js';
+import { caches } from '../infrastructure/cache/caches.js';
 import { safeSegment, siteLang, validateParams } from '../infrastructure/validate-params.js';
 import { computeProjectProgress, computeTaskDebug } from '../logic/projects.logic.js';
 import { MadocProjectListPageDto } from '@dissco-cs/shared-types';
@@ -186,21 +187,31 @@ export function projectsController(
     }
 
     const { projectId } = c.req.valid('param');
-    // Only the project page lists the available manifests. Project cards show just the numbers,
-    // so for them the thumbnails (a Madoc call per 24 manifests) are not fetched and the list is
-    // left out of the answer.
-    const withManifests = c.req.query('manifests') === 'true';
 
+    // Only the project page lists the available manifests, live: it is where a volunteer picks
+    // one. Project cards show just the numbers, so for them the thumbnails (a Madoc call per 24
+    // manifests) are not fetched, and the numbers come from the cache.
+    if (c.req.query('manifests') === 'true') {
+      return c.json(await computeProgress(siteId, projectId, true));
+    }
+
+    return c.json(
+      await caches.projectProgress.get(siteId, projectId, async () => {
+        const { availableManifests, ...numbers } = await computeProgress(siteId, projectId, false);
+        return numbers;
+      })
+    );
+  });
+
+  async function computeProgress(siteId: number, projectId: string, withThumbnails: boolean) {
     const project = await getMadocProject(siteId, projectId);
     const [manifestItems, tasks, thumbnails] = await Promise.all([
       getMadocProjectManifests(siteId, project.collection_id),
       getMadocProjectTasks(siteId, project.task_id),
-      withManifests ? getMadocCollectionManifestThumbnails(siteId, project.collection_id) : new Map<number, string | undefined>(),
+      withThumbnails ? getMadocCollectionManifestThumbnails(siteId, project.collection_id) : new Map<number, string | undefined>(),
     ]);
-
-    const { availableManifests, ...numbers } = computeProjectProgress({ manifestItems, thumbnails, tasks, config: project.config ?? {} });
-    return c.json(withManifests ? { ...numbers, availableManifests } : numbers);
-  });
+    return computeProjectProgress({ manifestItems, thumbnails, tasks, config: project.config ?? {} });
+  }
 
   // ---- logged-in user: manifest claim resync ----
 

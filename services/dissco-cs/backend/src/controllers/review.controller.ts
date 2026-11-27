@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { requestBearerToken, requireReviewerOrAdmin, requireUser } from '../auth/auth.js';
 import { forwardJsonBody } from '../madoc-client/client.js';
 import { fetchMadocReviewLookup } from '../madoc-client/reviews.js';
+import { markProgressStaleAfter } from '../services/project-progress.service.js';
 import { toReviewTaskListDto } from '../logic/review.logic.js';
 import { getMadocSiteUserRole } from '../madoc-client/users.js';
 import { safeSegment, validateParams } from '../infrastructure/validate-params.js';
@@ -44,7 +45,10 @@ export function reviewController(): Hono {
   app.patch('/tasks/:taskId', validateParams({ taskId: safeSegment }), async c => {
     const { taskId } = c.req.valid('param');
 
-    return forwardJsonBody(c, `/api/madoc/crowdsourcing/task/${taskId}`, 'PATCH', requestBearerToken(c));
+    const response = await forwardJsonBody(c, `/api/madoc/crowdsourcing/task/${taskId}`, 'PATCH', requestBearerToken(c));
+    // Status -1: the reviewer released the task, so its manifest counts as open again.
+    await markProgressStaleAfter(c, response, -1);
+    return response;
   });
 
   return app;

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SwrCache } from '../../src/madoc-db/swr-cache.js';
+import { SwrCache } from '../../../src/infrastructure/cache/swr-cache.js';
 
 // A load function that answers 1, 2, 3, ... and can be told to fail or to hang.
 function counter() {
@@ -121,5 +121,85 @@ describe('SwrCache', () => {
     await cache.get('k', load);
     expect(cache.peek('k')).toBe(1);
     expect(load).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('SwrCache markStale and clear', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  // A load that finishes only when the test says so, like a slow database query.
+  function slowLoad() {
+    let finish: (value: number) => void = () => {};
+    const load = () => new Promise<number>(resolve => (finish = resolve));
+    return { load, finish: (value: number) => finish(value) };
+  }
+
+  it('markStale answers with the cached value and refreshes before ttlMs has passed', async () => {
+    const cache = new SwrCache<string, number>('test', 60_000);
+    const { load } = counter();
+    await cache.get('k', load);
+
+    cache.markStale(() => true);
+    expect(await cache.get('k', load)).toBe(1);
+    await settle();
+    expect(await cache.get('k', load)).toBe(2);
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it('markStale only touches the matching keys', async () => {
+    const cache = new SwrCache<string, number>('test', 60_000);
+    const { load } = counter();
+    await cache.get('a', load);
+    await cache.get('b', load);
+
+    cache.markStale(key => key === 'a');
+    await cache.get('a', load);
+    await cache.get('b', load);
+    expect(load).toHaveBeenCalledTimes(3);
+  });
+
+  it('clear makes the next read wait for a new load', async () => {
+    const cache = new SwrCache<string, number>('test', 60_000);
+    const { load } = counter();
+    await cache.get('k', load);
+
+    cache.clear(() => true);
+    expect(cache.peek('k')).toBeNull();
+    expect(await cache.get('k', load)).toBe(2);
+  });
+
+  it('a refresh that started before markStale is stored, but stays stale', async () => {
+    const cache = new SwrCache<string, number>('test', 60_000);
+    await cache.get('k', async () => 1);
+    cache.markStale(() => true);
+
+    const slow = slowLoad();
+    await cache.get('k', slow.load);
+    cache.markStale(() => true);
+    slow.finish(2);
+    await settle();
+
+    const next = vi.fn(async () => 3);
+    expect(await cache.get('k', next)).toBe(2);
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('a refresh that started before clear does not put its result back', async () => {
+    const cache = new SwrCache<string, number>('test');
+    await cache.get('k', async () => 1);
+
+    const slow = slowLoad();
+    await cache.get('k', slow.load);
+    cache.clear(() => true);
+    slow.finish(2);
+    await settle();
+
+    expect(cache.peek('k')).toBeNull();
   });
 });

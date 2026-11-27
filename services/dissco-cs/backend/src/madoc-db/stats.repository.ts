@@ -1,15 +1,13 @@
 import { MadocDbPools } from './pools.js';
-import { SwrCache } from './swr-cache.js';
+import { caches } from '../infrastructure/cache/caches.js';
 import { InstitutionStatsDto, SiteStatsDto } from '@dissco-cs/shared-types';
 
 export type InstitutionProjectRow = { id: number; task_id: string; status: number };
 
-type SiteTaskTotals = { completed: number; total: number };
+export type SiteTaskTotals = { completed: number; total: number };
 
 // What the cache holds; whether a recalculation runs is added when answering.
-type InstitutionCounts = Omit<InstitutionStatsDto, 'refreshing'>;
-
-const VOLUNTEERS_CACHE_TTL_MS = 5 * 60 * 1000;
+export type InstitutionCounts = Omit<InstitutionStatsDto, 'refreshing'>;
 
 // The manifest a volunteer task is about: `subject` when the project hands out whole manifests,
 // otherwise `subject_parent` (the manifest of the single image). "Completed" counts each manifest
@@ -40,10 +38,6 @@ const EMPTY_INSTITUTION_STATS: InstitutionCounts = {
 // assignee with at least one finished task on that institution's projects. Aligning the two is a
 // content decision, not a refactor.
 export class StatsRepository {
-  private readonly siteVolunteers = new SwrCache<number, number>('stats:site-volunteers', VOLUNTEERS_CACHE_TTL_MS);
-  private readonly siteTaskTotals = new SwrCache<number, SiteTaskTotals>('stats:site-task-totals');
-  private readonly institutionStats = new SwrCache<string, InstitutionCounts>('stats:institution');
-
   constructor(private readonly pools: MadocDbPools) {}
 
   // ---- site ----
@@ -51,7 +45,7 @@ export class StatsRepository {
   async getSite(siteId: number): Promise<SiteStatsDto> {
     const [volunteers, taskTotals] = await Promise.all([
       this.getSiteVolunteers(siteId),
-      this.siteTaskTotals.get(siteId, () => this.fetchSiteTaskTotals(siteId)),
+      caches.siteTaskTotals.get(siteId, 'all', () => this.fetchSiteTaskTotals(siteId)),
     ]);
     return this.siteStats(siteId, volunteers, taskTotals);
   }
@@ -61,7 +55,7 @@ export class StatsRepository {
   async getSiteCurrent(siteId: number): Promise<SiteStatsDto> {
     const [volunteers, taskTotals] = await Promise.all([
       this.getSiteVolunteers(siteId),
-      this.siteTaskTotals.peek(siteId) ?? this.siteTaskTotals.get(siteId, () => this.fetchSiteTaskTotals(siteId)),
+      caches.siteTaskTotals.peek(siteId, 'all') ?? caches.siteTaskTotals.get(siteId, 'all', () => this.fetchSiteTaskTotals(siteId)),
     ]);
     return this.siteStats(siteId, volunteers, taskTotals);
   }
@@ -71,12 +65,12 @@ export class StatsRepository {
       volunteers,
       tasksCompleted: taskTotals.completed,
       tasksTotal: taskTotals.total,
-      refreshing: this.siteVolunteers.isRefreshing(siteId) || this.siteTaskTotals.isRefreshing(siteId),
+      refreshing: caches.siteVolunteers.isRefreshing(siteId, 'all') || caches.siteTaskTotals.isRefreshing(siteId, 'all'),
     };
   }
 
   private getSiteVolunteers(siteId: number): Promise<number> {
-    return this.siteVolunteers.get(siteId, () => this.fetchSiteVolunteers(siteId));
+    return caches.siteVolunteers.get(siteId, 'all', () => this.fetchSiteVolunteers(siteId));
   }
 
   private async fetchSiteVolunteers(siteId: number): Promise<number> {
@@ -153,18 +147,18 @@ export class StatsRepository {
   }
 
   peekInstitution(siteId: number, institutionId: number): InstitutionStatsDto | null {
-    const key = `${siteId}:${institutionId}`;
-    const counts = this.institutionStats.peek(key);
-    return counts && { ...counts, refreshing: this.institutionStats.isRefreshing(key) };
+    const key = String(institutionId);
+    const counts = caches.institutionStats.peek(siteId, key);
+    return counts && { ...counts, refreshing: caches.institutionStats.isRefreshing(siteId, key) };
   }
 
   async getInstitution(siteId: number, institutionId: number, projectSlugs: string[]): Promise<InstitutionStatsDto> {
-    const key = `${siteId}:${institutionId}`;
-    const counts = await this.institutionStats.get(key, async () => {
+    const key = String(institutionId);
+    const counts = await caches.institutionStats.get(siteId, key, async () => {
       const projects = await this.resolveProjects(siteId, projectSlugs);
       return this.fetchInstitutionStats(projects);
     });
-    return { ...counts, refreshing: this.institutionStats.isRefreshing(key) };
+    return { ...counts, refreshing: caches.institutionStats.isRefreshing(siteId, key) };
   }
 
   // Scoped to one institution's projects (through dissco_cs.forms) instead of

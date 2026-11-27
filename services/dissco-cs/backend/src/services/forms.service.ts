@@ -1,25 +1,20 @@
 import { fromBigint } from '../database/bigint.js';
-import { SwrCache } from '../madoc-db/swr-cache.js';
+import { caches } from '../infrastructure/cache/caches.js';
 import { listAllMadocProjects } from '../madoc-client/projects.js';
 import { listMadocProjectModels } from '../madoc-client/capture-models.js';
 import { FormRow, FormsRepository, toStoredFormDto } from '../repositories/forms.repository.js';
 import { formNamesBySlug, institutionIdsBySlug, slugsWithFormNames } from '../logic/forms.logic.js';
 import { MadocProjectStatus, madocProjectVisibility } from '@dissco-cs/shared-types';
 
-type ProjectFormNames = {
+export type ProjectFormNames = {
   namesBySlug: Record<string, string>;
   statusBySlug: Record<string, MadocProjectStatus>;
 };
 
 // Public pages (a project's institution and manual, an institution's projects and numbers) need
-// the form name of projects on every visit, and that costs every page of Madoc's project list
-// plus its model list. So it is cached: a new project or a renamed model shows up here with up to
-// a minute's delay.
-const CACHE_TTL_MS = 60_000;
-const namesCache = new SwrCache<number, ProjectFormNames>('project-form-names', CACHE_TTL_MS);
-
+// the form name of projects on every visit; see caches.projectFormNames.
 function getProjectFormNames(siteId: number): Promise<ProjectFormNames> {
-  return namesCache.get(siteId, async () => {
+  return caches.projectFormNames.get(siteId, 'all', async () => {
     const [projects, models] = await Promise.all([listAllMadocProjects(siteId), listMadocProjectModels(siteId)]);
     return {
       namesBySlug: formNamesBySlug(projects, models),
